@@ -1,0 +1,150 @@
+import api from "@/util/api";
+import { apiEndpoints } from "@/util/endpoints";
+
+export interface PaymentLinkPayload {
+  title: string;
+  amount: string;
+  description: string;
+  redirect_url?: string;
+  account_type: string;
+  subaccount_id?: string;
+}
+
+export async function getCollectionHistory(params?: object) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.collections.GET_COLLECTION_HISTORY}`,
+      { params }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getPaymentLinks(getTransactions: boolean, id?: number) {
+  const endpoint = getTransactions
+    ? `${apiEndpoints.collections.GET_PAYMENT_LINKS}/${id}`
+    : apiEndpoints.collections.GET_PAYMENT_LINKS;
+  try {
+    const response = await api.get(endpoint);
+
+    const res = id ? response.data.payment_link_transactions : response.data;
+    return res;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function addPaymentLink(
+  payload: PaymentLinkPayload,
+  willUpdate: boolean,
+  id: number
+) {
+  const { CREATE_PAYMENT_LINK, UPDATE_PAYMENT_LINK } = apiEndpoints.collections;
+
+  const endpoint = willUpdate
+    ? api.put(`${UPDATE_PAYMENT_LINK}/${id}`, payload)
+    : api.post(CREATE_PAYMENT_LINK, payload);
+
+  try {
+    const response = await endpoint;
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function disablePaymentLink(id: string) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.collections.UPDATE_PAYMENT_LINK}/${id}/status`
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getVirtualAccounts(params?: object) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.collections.GET_VIRTUAL_ACCOUNTS}`,
+      { params }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getVirtualAccountTransactions(
+  id: string | string[] | undefined
+) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.collections.GET_VIRTUAL_ACCOUNTS}/${id}`
+    );
+    return response.data.transactions;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function createVirtualAccount(payload: any) {
+  try {
+    const response = await api.post(
+      apiEndpoints.collections.REQUEST_VIRTUAL_ACCOUNT,
+      payload
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function repushNotification(id: string | undefined) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.collections.REPUSH_NOTIFICATION}/${id}/re-push`
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getPaymentMandates(params?: object) {
+  try {
+    const response = await api.get(
+      apiEndpoints.collections.GET_PAYMENT_MANDATES,
+      { params }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function refreshStatus(id: string) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.collections.REFRESH_STATUS}/${id}/status`
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function createPaymentMandate(payload: any) {
+  try {
+    const response = await api.post(
+      apiEndpoints.collections.CREATE_PAYMENT_MANDATE,
+      payload
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}

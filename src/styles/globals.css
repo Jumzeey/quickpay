@@ -1,0 +1,272 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+body {
+  overflow: auto;
+}
+
+html,
+body,
+#__next {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: "Poppins-Semibold";
+  src: url("../../public/fonts/Poppins-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Poppins-Regular";
+  src: url("../../public/fonts/Poppins-Regular.ttf") format("truetype");
+}
+
+.appInput {
+  position: relative;
+}
+
+.sarepayAsh {
+  color: #9499a1;
+}
+
+.sarepayGreen {
+  color: #17da7c;
+}
+.secondaryColor {
+  color: #36a2eb;
+}
+.sarepayPrimary {
+  color: #164988;
+}
+
+.sarepayGrey {
+  color: #6e6893;
+}
+
+.infoGrey {
+  color: #8692a6;
+}
+
+.activeButton {
+  background-color: #e6e6f2;
+  color: #4a4aff;
+}
+
+.bg-sarepay {
+  background-image: url("/images/background-pattern.svg");
+  background-color: #164988;
+  min-height: 100vh;
+}
+
+.pendingButton {
+  background-color: #ffe8ae;
+  padding: 4px;
+  border-radius: 5px;
+  width: 6rem;
+  text-align: center;
+}
+
+.successButton {
+  background-color: #71ffd4;
+  padding: 4px;
+  border-radius: 5px;
+  width: 6rem;
+  text-align: center;
+}
+
+.failButton {
+  background-color: #b7241b80;
+  color: #b7241b;
+  padding: 4px;
+  border-radius: 999px;
+  width: 3rem;
+  text-align: center;
+}
+
+.appInput label {
+  display: block;
+  margin-bottom: 5px;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  font-family: "InterLight";
+  font-size: 14px;
+}
+
+.appInput ::placeholder {
+  color: #9a9ab0;
+  font-size: 12px;
+}
+
+.appInput input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.appInput input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.appInput button {
+  position: absolute;
+  top: 70%;
+  transform: translateY(-50%);
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.otpInput input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.otpInput input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.box-container {
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.box-text {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.dashboardSideNav {
+  background-image: url("/images/background.png");
+  width: 20%;
+  height: 100vh;
+}
+
+.upload-container {
+  border: 2px dotted #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+.uploadP {
+  color: #25213b66;
+}
+.uploadButton {
+  border: 1px solid #164988b2;
+  color: #164988b2;
+  padding: 0.5rem;
+  border-radius: 5px;
+}
+
+.class-0 {
+  font-weight: 700;
+}
+.class-1 {
+  font-weight: 300;
+}
+.class-2 {
+  font-weight: 300;
+}
+.border-bottom {
+  border: 1px solid #f5f8fa;
+}
+
+.overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.inactive {
+  color: #9499a1;
+}
+
+.underline-animation {
+  position: relative;
+}
+
+.underline-animation::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 15px;
+  height: 1.5px;
+  background-color: #164988;
+  transition: width 0.3s ease-in-out;
+}
+
+.underline-animation:hover::after {
+  width: 100%;
+}
+
+.Poppins-Regular {
+  font-family: "Poppins-Regular", sans-serif;
+}
+
+.Poppins-Semibold {
+  font-family: "Poppins-Semibold", sans-serif;
+}
+.testimonials-section {
+  background-image: url("../../public/images/testimonials-bg.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.webhookInput {
+  border: none !important;
+}
+
+.modal-special-class {
+  width: 700px !important;
+}
+
+.landing-page-hover {
+  position: relative;
+}
+
+.landing-page-hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0px;
+  height: 1.5px;
+  background-color: #164988;
+  transition: width 0.3s ease-in-out;
+}
+
+.landing-page-hover:hover::after {
+  width: 100%;
+}
+
+.Roboto-Bold {
+  font-family: "Roboto-Bold", Fallback, sans-serif;
+}
+
+.description input{
+  text-transform: capitalize;
+}
+.customPassword{
+  margin: 0;
+  padding: 0;
+}
+
+

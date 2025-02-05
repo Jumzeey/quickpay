@@ -64,10 +64,22 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-danger flex justify-center text-white">
-      <WebPageTitle title="Login | Ramp Merchant Portal" />
+    <div className="flex w-full min-h-screen">
+      <WebPageTitle title="Login | Sarepay Merchant Portal" />
+      <Sidebar />
       <NoSSR>
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-white/10 backdrop-blur-xl rounded-lg shadow-lg">
+        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10">
+          <div className="flex w-full justify-end">
+            <h6 className="text-sm">
+              Don&apos;t have an account?
+              <Link
+                href="/onboarding/join-us"
+                className="underline-animation text-primary font-medium ml-1"
+              >
+                Sign Up
+              </Link>
+            </h6>
+          </div>
           <motion.div
             className="mt-52"
             variants={MultiStepAnimation}
@@ -98,7 +110,7 @@ const SignInPage: React.FC = () => {
                 />
                 <Link
                   href="/onboarding/forgot-password"
-                  className="sarepayPrimary text-sm font-medium flex justify-end"
+                  className="sarepayPrimary text-sm font-medium  flex justify-end"
                 >
                   <span className="underline-animation">Forgot Password</span>
                 </Link>
@@ -124,18 +136,6 @@ const SignInPage: React.FC = () => {
                   Your Info is safely secured
                 </span>
               </div>
-            </div>
-
-            <div className="flex w-full justify-end my-5">
-              <h6 className="text-sm">
-                Don&apos;t have an account?
-                <Link
-                  href="/onboarding/join-us"
-                  className="underline-animation text-primary font-medium ml-1"
-                >
-                  Sign Up
-                </Link>
-              </h6>
             </div>
           </motion.div>
         </div>

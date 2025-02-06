@@ -49,7 +49,7 @@ body,
   color: #36a2eb;
 }
 .sarepayPrimary {
-  color: #164988;
+  color: #042468;
 }
 
 .sarepayGrey {
@@ -67,7 +67,7 @@ body,
 
 .bg-sarepay {
   background-image: url("/images/background-pattern.svg");
-  background-color: #164988;
+  background-color: #042468;
   min-height: 100vh;
 }
 
@@ -169,8 +169,8 @@ body,
   color: #25213b66;
 }
 .uploadButton {
-  border: 1px solid #164988b2;
-  color: #164988b2;
+  border: 1px solid #042468b2;
+  color: #042468b2;
   padding: 0.5rem;
   border-radius: 5px;
 }
@@ -207,7 +207,7 @@ body,
   bottom: -2px;
   width: 15px;
   height: 1.5px;
-  background-color: #164988;
+  background-color: #042468;
   transition: width 0.3s ease-in-out;
 }
 
@@ -248,7 +248,7 @@ body,
   bottom: -2px;
   width: 0px;
   height: 1.5px;
-  background-color: #164988;
+  background-color: #042468;
   transition: width 0.3s ease-in-out;
 }
 

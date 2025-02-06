@@ -95,12 +95,12 @@ const OtpPage = () => {
   };
 
   return (
-    <div>
-      <WebPageTitle title="OTP | Sarepay Merchant Portal" />
+    <div className="w-full min-h-screen flex justify-center text-white bg-cover bg-no-repeat bg-[url('/images/background-padlock.jpg')]">
+      <WebPageTitle title="OTP | Ramp Merchant Portal" />
       <NoSSR>
-        <div className="flex w-full min-h-screen">
-          <Sidebar />
-          <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10">
+        <div className="flex w-full min-h-screen justify-center">
+          {/* <Sidebar /> */}
+          <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-white/10 backdrop-blur-xs shadow-lg">
             <div className="flex w-full justify-end">
               <h6 className="text-sm">
                 Already have an account?
@@ -121,7 +121,7 @@ const OtpPage = () => {
               <div className="mb-7">
                 <h1 className="font-semibold text-2xl">OTP Verification</h1>
                 <p className="font-light text-sm mt-2 mb-2 leading-6">
-                  We sent you a one time password to this email address: 
+                  We sent you a one time password to this email address:
                   <span className="font-medium">({userEmail})</span>
                 </p>
               </div>
@@ -132,7 +132,7 @@ const OtpPage = () => {
                   initialValue=""
                   type="numeric"
                   inputMode="number"
-                  onComplete={(value) => {
+                  onComplete={value => {
                     setOtp(value);
                   }}
                   style={screenWidth < 700 ? mobileStyle : desktopStyle}
@@ -167,7 +167,7 @@ const OtpPage = () => {
                           : "text-primary"
                       }`}
                       onClick={
-                        isDisabled ? (e) => e.preventDefault() : resendOtpSubmit
+                        isDisabled ? e => e.preventDefault() : resendOtpSubmit
                       }
                     >
                       {resendOtpLoading ? (

@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-plus)", ...fontFamily.sans],
+        sans: ["var(--font-plus-jakarta)", ...fontFamily.sans],
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -19,7 +19,7 @@ const config: Config = {
       },
     },
     colors: {
-      primary: "#164988",
+      primary: "#042468",
       white: "#fff",
       black: "#000",
       "grey-100": "#A0A0A0",

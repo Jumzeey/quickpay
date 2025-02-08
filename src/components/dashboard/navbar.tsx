@@ -56,11 +56,11 @@ const Navbar = ({
             </div>
           </div>
 
-          <div> 
+          {/* <div> 
             <p onClick={openModal} className="underline text-sm sarepayPrimary lg:text-base cursor-pointer">
               Switch To The Old Dashboard
             </p>
-          </div>
+          </div> */}
 
           <div className="flex items-center cursor-pointer">
             <div className="flex gap-5 items-center">

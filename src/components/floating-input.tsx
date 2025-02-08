@@ -91,7 +91,7 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
         onBlur={onBlur}
         onFocus={onFocus}
         onKeyDown={handleNumberInput}
-        className={`tracking-body-large w-full h-[60px] text-sm text-gray-900 bg-transparent rounded-md border-[1px] focus:outline-none focus:border-black peer ${
+        className={`tracking-body-large w-full h-[60px] text-sm text-black bg-transparent rounded-md border-[1px] focus:outline-none focus:border-black peer ${
           hasError ? "border-danger" : "border-[#dcdcdc]"
         } ${name === "amount" ? "pl-10" : hasLink ? "pl-[66px]" : "px-3"}`}
         readOnly={readOnly}

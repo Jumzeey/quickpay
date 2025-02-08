@@ -28,7 +28,7 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ initialSeconds }) => {
   return (
     <div className="flex flex-col items-center mt-5">
       <p id="countdown" className="text-sm">
-        You can resend a new code in <span className="text-primary text-sm">{formatTime(seconds)} secs</span>
+        You can resend a new code in <span className="text-white text-sm">{formatTime(seconds)} secs</span>
       </p>
     </div>
   );

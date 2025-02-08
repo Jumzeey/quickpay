@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-const { fontFamily } = require('tailwindcss/defaultTheme')
+const { fontFamily } = require("tailwindcss/defaultTheme");
 
 const config: Config = {
   content: [
@@ -26,6 +26,7 @@ const config: Config = {
       "grey-200": "#D9D9D9",
       "grey-300": "#8C8C8C",
       "grey-400": "#3d3939",
+      "grey-500": "#9499a1",
       danger: "#EB5757",
       disabled: "#eeeeee",
       success: "#27AE60",

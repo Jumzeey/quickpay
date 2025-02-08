@@ -64,10 +64,10 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex justify-center text-white bg-cover bg-no-repeat bg-[url('/images/background-padlock.jpg')]">
+    <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
       <WebPageTitle title="Login | Ramp Merchant Portal" />
       <NoSSR>
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-white/10 backdrop-blur-xs shadow-lg">
+        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
           <motion.div
             className=""
             variants={MultiStepAnimation}
@@ -109,7 +109,9 @@ const SignInPage: React.FC = () => {
                   href="/onboarding/forgot-password"
                   className="sarepayPrimary text-sm font-medium flex justify-end"
                 >
-                  <span className="underline text-white">Forgot Password</span>
+                  <span className="underline-animation text-white">
+                    Forgot Password
+                  </span>
                 </Link>
 
                 <div className="flex justify-center mt-12">

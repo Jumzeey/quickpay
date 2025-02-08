@@ -95,23 +95,12 @@ const OtpPage = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex justify-center text-white bg-cover bg-no-repeat bg-[url('/images/background-padlock.jpg')]">
+    <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
       <WebPageTitle title="OTP | Ramp Merchant Portal" />
       <NoSSR>
         <div className="flex w-full min-h-screen justify-center">
           {/* <Sidebar /> */}
-          <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-white/10 backdrop-blur-xs shadow-lg">
-            <div className="flex w-full justify-end">
-              <h6 className="text-sm">
-                Already have an account?
-                <Link
-                  href="/onboarding/sign-in"
-                  className="ml-1 underline-animation sarepayPrimary font-medium"
-                >
-                  Sign In
-                </Link>
-              </h6>
-            </div>
+          <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
             <motion.div
               className="mt-52"
               variants={MultiStepAnimation}
@@ -140,6 +129,7 @@ const OtpPage = () => {
                     border: "1px solid #d6d7df",
                     borderRadius: "5px",
                     background: "#f4f5fb",
+                    color: "#042468",
                   }}
                   inputFocusStyle={{ border: "2px solid #164988" }}
                   autoSelect={true}
@@ -182,6 +172,17 @@ const OtpPage = () => {
                     </span>
                   </p>
                 )}
+              </div>
+              <div className="flex w-full justify-end my-16">
+                <h6 className="text-sm">
+                  Already have an account?
+                  <Link
+                    href="/onboarding/sign-in"
+                    className="ml-1 underline-animation text-white font-medium"
+                  >
+                    Sign In
+                  </Link>
+                </h6>
               </div>
             </motion.div>
           </div>

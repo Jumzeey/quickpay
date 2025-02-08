@@ -88,13 +88,13 @@ const WalletHistory = () => {
   }, [currentPage, filter.endDate, filter.startDate]);
 
   return (
-    <Layout pageTitle="Wallet History" icon="wallet-history">
-      <WebPageTitle title="Wallet History | Sarepay Merchant Portal" />
+    <Layout pageTitle="Balance History" icon="wallet-history">
+      <WebPageTitle title="Balance History | Sarepay Merchant Portal" />
       <div className="">
-        <h2 className="text-xl font-semibold">Manage Wallet History</h2>
+        {/* <h2 className="text-xl font-semibold">Manage Wallet History</h2>
         <p className="text-sm pt-3 pb-5">
           Manage wallet history within your company
-        </p>
+        </p> */}
         {getWalletHistoryLoading ? (
           <TableSkeleton singleButton />
         ) : wallet_history.length !== 0 ? (
@@ -190,8 +190,8 @@ const WalletHistory = () => {
           </Fragment>
         ) : (
           <EmptyState
-            title="No Wallet History found"
-            subTitle="We couldn't find any wallet history to this account"
+            title="No Balance History found"
+            subTitle="We couldn't find any balance history to this account"
             image="/images/dashboard/disbursement/disbursement-empty-state.svg"
           ></EmptyState>
         )}

@@ -39,7 +39,7 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
         setState({
           ...state,
           activeSidebar: yourBusiness,
-          subLinksTitle: "Your Business",
+          subLinksTitle: "Business Information",
         });
         break;
   
@@ -108,10 +108,10 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
             <li className="mb-3.5 font-semibold">
               <Link href="/dashboard">
                 <Image
-                  src="/images/sarepay-logo.svg"
-                  alt="SarePayLogo"
+                  src="/images/ramp-logo.svg"
+                  alt="RampLogo"
                   className="mt-3"
-                  width={127}
+                  width={200}
                   height={29}
                   priority
                 />

@@ -7,12 +7,12 @@ export const sidebarLinks = [
   {
     href: "/wallet-history",
     icon: "wallet-history",
-    title: "Wallet History",
+    title: "Balance History",
   },
   {
     href: "/your-business/kyc-verification",
     icon: "business",
-    title: "Your Business",
+    title: "Business Information",
   },
   {
     href: "/disbursements",

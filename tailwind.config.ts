@@ -20,6 +20,9 @@ const config: Config = {
     },
     colors: {
       primary: "#042468",
+      available: "#6147db",
+      income: "#12B593",
+      expenses: "#FF5555",
       white: "#fff",
       black: "#000",
       "grey-100": "#A0A0A0",

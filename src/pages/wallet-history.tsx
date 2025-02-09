@@ -82,14 +82,17 @@ const WalletHistory = () => {
     fetchWalletHistory({
       page: currentPage,
       ...(filter.startDate
-        ? { start_date: formatDate(filter.startDate), end_date: formatDate(filter.endDate) }
+        ? {
+            start_date: formatDate(filter.startDate),
+            end_date: formatDate(filter.endDate),
+          }
         : {}),
     });
   }, [currentPage, filter.endDate, filter.startDate]);
 
   return (
     <Layout pageTitle="Balance History" icon="wallet-history">
-      <WebPageTitle title="Balance History | Sarepay Merchant Portal" />
+      <WebPageTitle title="Balance History | Ramp Merchant Portal" />
       <div className="">
         {/* <h2 className="text-xl font-semibold">Manage Wallet History</h2>
         <p className="text-sm pt-3 pb-5">

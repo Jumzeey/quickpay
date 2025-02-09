@@ -110,7 +110,7 @@ const SubaccountTransactions = () => {
   return (
     <>
       <Layout pageTitle="Subaccount Transactions" icon="SUBACCOUNT">
-        <WebPageTitle title="Subaccount Transactions| Sarepay Merchant Portal" />
+        <WebPageTitle title="Subaccount Transactions| Ramp Merchant Portal" />
         <div>
           <h2 className="text-xl font-semibold">
             Manage Subaccount Transactions

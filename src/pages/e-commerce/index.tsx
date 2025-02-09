@@ -6,8 +6,8 @@ import WebPageTitle from "@/components/WebPageTitle";
 const Ecommerce = () => {
   return (
     <Layout pageTitle="E-commerce" icon="ecommerce">
-      <WebPageTitle title="E-commerce | Sarepay Merchant Portal" />
-      <ComingSoon/>
+      <WebPageTitle title="E-commerce | Ramp Merchant Portal" />
+      <ComingSoon />
     </Layout>
   );
 };

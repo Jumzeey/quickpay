@@ -61,7 +61,7 @@ const PaymentLinkTransactions = () => {
 
   return (
     <Layout pageTitle="Payment Link Transactions" icon="link">
-      <WebPageTitle title="Payment Link Transactions | Sarepay Merchant Portal" />
+      <WebPageTitle title="Payment Link Transactions | Ramp Merchant Portal" />
       <div className="mt-5">
         <Image
           src="/images/arrow-back.svg"

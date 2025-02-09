@@ -7,7 +7,11 @@ import useDisbursement from "@/stores/useDisbursement";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/router";
-import { notifyError, notifySuccess, removeCommasFromValue } from "@/util/utils";
+import {
+  notifyError,
+  notifySuccess,
+  removeCommasFromValue,
+} from "@/util/utils";
 import { Spinner } from "@/components/Spinner";
 import Loader from "@/components/loader";
 import Layout from "@/components/layout";
@@ -47,8 +51,7 @@ const AddDisbursementAccount: React.FC = () => {
           "Account number must be exactly 10 digits and contain only numbers"
         ),
       accountName: Yup.string().required("Account name is required!"),
-      amount: Yup.string()
-        .required("Amount is required!"),
+      amount: Yup.string().required("Amount is required!"),
     }),
     validateOnMount: true,
     onSubmit: async () => {
@@ -66,7 +69,7 @@ const AddDisbursementAccount: React.FC = () => {
   });
 
   const getBankName = (code: any) => {
-    const bank = state.banks.find((bank) => bank.code === code);
+    const bank = state.banks.find(bank => bank.code === code);
     return bank ? bank.name : "Bank not found";
   };
 
@@ -111,8 +114,8 @@ const AddDisbursementAccount: React.FC = () => {
       });
     } catch (error: any) {
       notifyError(error.message);
-    }finally {
-      setState({ ...state, isSubmitting: false});
+    } finally {
+      setState({ ...state, isSubmitting: false });
     }
   };
 
@@ -134,11 +137,13 @@ const AddDisbursementAccount: React.FC = () => {
 
   return (
     <Layout pageTitle="Disbursement" icon="disbursement">
-      <WebPageTitle title="Disbursement | Sarepay Merchant Portal" />
+      <WebPageTitle title="Disbursement | Ramp Merchant Portal" />
       <div className="flex justify-center">
         <Card extraPadding>
           <form onSubmit={formik.handleSubmit}>
-            <h1 className="font-semibold mb-10">Make New Interbank Disbursement</h1>
+            <h1 className="font-semibold mb-10">
+              Make New Interbank Disbursement
+            </h1>
             <label className="text-sm">Select bank</label>
             <select
               className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"

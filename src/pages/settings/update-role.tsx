@@ -37,7 +37,7 @@ const UpdateRole = () => {
 
     validateOnMount: true,
 
-    onSubmit: async (values) => {
+    onSubmit: async values => {
       const payload = {
         id: selectedItem?.id,
         name: values.roleName,
@@ -80,7 +80,6 @@ const UpdateRole = () => {
     });
 
     setSelectedIds(result);
-
   }, [selectedItem?.permissions]);
 
   useEffect(() => {
@@ -111,7 +110,7 @@ const UpdateRole = () => {
 
   return (
     <Layout pageTitle="Update Role" icon="person">
-      <WebPageTitle title="Update Role | Sarepay Merchant Portal" />
+      <WebPageTitle title="Update Role | Ramp Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"
@@ -170,7 +169,7 @@ const UpdateRole = () => {
                                       name="checkbox"
                                       checked={selectedItem?.permissions?.find(
                                         (item: any) => item.id === item2.id
-                                       )}
+                                      )}
                                       onChange={() =>
                                         handleCheckboxChange(item2.id)
                                       }

@@ -41,14 +41,14 @@ const SettlementAccounts = () => {
   const fetchSettlementAccounts = async () => {
     try {
       const accounts = await getSettlementAccounts();
-      setState((prevState) => ({
+      setState(prevState => ({
         ...prevState,
         accounts,
         isLoading: false,
       }));
     } catch (error) {
     } finally {
-      setState((prevState) => ({
+      setState(prevState => ({
         ...prevState,
         isLoading: false,
       }));
@@ -66,27 +66,27 @@ const SettlementAccounts = () => {
   ];
 
   const openAddAccountModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isAddAccountModalOpen: true,
     }));
   };
   const closeAddAccountModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isAddAccountModalOpen: false,
     }));
   };
 
   const openChangeStatusModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isChangeStatusModalOpen: true,
     }));
   };
 
   const closeChangeStatusModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isChangeStatusModalOpen: false,
     }));
@@ -126,7 +126,7 @@ const SettlementAccounts = () => {
 
   const fetchSearchedSettlementAccounts = async () => {
     const accounts = await getSettlementAccounts({ search: searchInput });
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       accounts,
       isLoading: false,
@@ -143,7 +143,7 @@ const SettlementAccounts = () => {
 
   return (
     <Layout pageTitle="Settlement Accounts" icon="settlement-accounts">
-      <WebPageTitle title="Settlement Accounts | Sarepay Merchant Portal" />
+      <WebPageTitle title="Settlement Accounts | Ramp Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Settlement Accounts</h2>
         <p className="text-sm pt-3 pb-5">

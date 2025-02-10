@@ -86,7 +86,7 @@ const CreateProduct: React.FC = () => {
     document_file: Yup.string().required("Document File is required!"),
   });
 
-  const validationSchema = Yup.lazy((values) => {
+  const validationSchema = Yup.lazy(values => {
     return values.business_type === "starter"
       ? starterSchema
       : registeredSchema;
@@ -116,7 +116,7 @@ const CreateProduct: React.FC = () => {
     },
     validationSchema,
     validateOnMount: true,
-    onSubmit: async (values) => {
+    onSubmit: async values => {
       handleSubmit(values);
     },
   });
@@ -173,7 +173,7 @@ const CreateProduct: React.FC = () => {
 
   return (
     <Layout pageTitle="Product Page" icon="kyc">
-      <WebPageTitle title="Submit Product | Sarepay Merchant Portal" />
+      <WebPageTitle title="Submit Product | Ramp Merchant Portal" />
       <div className="pt-5">
         <Image
           src="/images/arrow-back.svg"

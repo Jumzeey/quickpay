@@ -28,14 +28,14 @@ const SettlementAccounts = () => {
   const fetchShippingFees = async () => {
     try {
       const shippingData = await getShippingSettings();
-      setState((prevState) => ({
+      setState(prevState => ({
         ...prevState,
         shippingData,
         isLoading: false,
       }));
     } catch (error) {
     } finally {
-      setState((prevState) => ({
+      setState(prevState => ({
         ...prevState,
         isLoading: false,
       }));
@@ -45,13 +45,13 @@ const SettlementAccounts = () => {
   const columns = ["s/n", "region", "amount", "action"];
 
   const openAddShippingModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isAddShippingModalOpen: true,
     }));
   };
   const closeAddShippingModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isAddShippingModalOpen: false,
     }));
@@ -63,7 +63,7 @@ const SettlementAccounts = () => {
 
   return (
     <Layout pageTitle="Shipping Settings" icon="ecommerce">
-      <WebPageTitle title="E-commerce - Shipping Settings | Sarepay Merchant Portal" />
+      <WebPageTitle title="E-commerce - Shipping Settings | Ramp Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Shipping Settings</h2>
         <p className="text-sm pt-3 pb-5">

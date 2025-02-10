@@ -51,14 +51,14 @@ const Settings = () => {
   const selectedSettingsTab = settingsTabMap[selectedTab];
 
   return (
-    <Layout pageTitle="Settings" icon="settings">
-      <WebPageTitle title="Settings | Sarepay Merchant Portal" />
+    <Layout pageTitle="Business Settings" icon="settings">
+      <WebPageTitle title="Business Settings | Ramp Merchant Portal" />
       <div className="px-4 sm:px-16 md:px-32 mt-8 sm:mt-12 md:mt-16">
-        <h2 className="text-2xl sm:text-3xl font-semibold">Settings</h2>
+        <h2 className="text-2xl sm:text-3xl font-semibold">Business Settings</h2>
         <p className="font-normal pt-1">Manage Your Profile</p>
 
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 md:gap-10 mt-7 border-b border-solid border-grey-200 cursor-pointer">
-          {tabs.map((tab) => (
+          {tabs.map(tab => (
             <div
               key={tab.id}
               className={`text-sm sm:text-base ${

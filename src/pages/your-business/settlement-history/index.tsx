@@ -72,7 +72,7 @@ const SettlementHistory = () => {
   const debouncedHandleParamsChange = useCallback(
     debounce((value: string) => {
       setSearchInput(value);
-    }, 300), 
+    }, 300),
     []
   );
 
@@ -100,7 +100,7 @@ const SettlementHistory = () => {
   const fetchBankDetails = async () => {
     try {
       const bankDetails = await getBankDetails();
-      setState((prevState) => ({
+      setState(prevState => ({
         ...prevState,
         bankDetails,
         isLoading: false,
@@ -116,14 +116,17 @@ const SettlementHistory = () => {
       page: currentPage,
       ...(searchInput ? { search: searchInput } : {}),
       ...(filter.startDate
-        ? { start_date: formatDate(filter.startDate), end_date: formatDate(filter.endDate) }
+        ? {
+            start_date: formatDate(filter.startDate),
+            end_date: formatDate(filter.endDate),
+          }
         : {}),
     });
-  }, [searchInput,currentPage,filter.endDate,filter.startDate]);
+  }, [searchInput, currentPage, filter.endDate, filter.startDate]);
 
   return (
     <Layout pageTitle="Settlement History" icon="history">
-      <WebPageTitle title="Settlement History | Sarepay Merchant Portal" />
+      <WebPageTitle title="Settlement History | Ramp Merchant Portal" />
       <div>
         {getSettlementHistoryLoading ? (
           <Fragment>

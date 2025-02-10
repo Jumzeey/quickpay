@@ -151,7 +151,7 @@ const PaymentMandate = () => {
 
   return (
     <Layout pageTitle="Payment Mandate" icon="payment-mandate">
-      <WebPageTitle title="Payment Mandate | Sarepay Merchant Portal" />
+      <WebPageTitle title="Payment Mandate | Ramp Merchant Portal" />
 
       {showMandates ? (
         <TransactionDetails

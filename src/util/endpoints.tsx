@@ -77,12 +77,15 @@ export const apiEndpoints = {
     UPDATE_PROFILE: "/merchant/profile/update",
     GET_USER_LOG: "/merchant/profile/logs",
   },
+  mids: {
+    GET_MIDS: "/merchant/mids",
+  },
   utilities: {
     UPLOAD_FILE: "/utilities/upload",
   },
   ecommerce: {
     GET_SHIPPING_SETTINGS: "/merchant/ecommerce/shippings",
     ADD_SHIPPING_FEE: "/merchant/ecommerce/shippings/store",
-    GET_SHIPPING_ORDERS: "/merchant/ecommerce/orders"
+    GET_SHIPPING_ORDERS: "/merchant/ecommerce/orders",
   },
 };

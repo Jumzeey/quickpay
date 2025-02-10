@@ -156,4 +156,16 @@ export async function getUserLog(params?: object) {
   }
 }
 
+export async function getMids(params?: object) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.mids.GET_MIDS}`,
+      {params}
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
 

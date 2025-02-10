@@ -60,8 +60,8 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
   }, [getKyc]);
 
   return (
-    <Layout pageTitle="KYC Verification" icon="kyc">
-      <WebPageTitle title="KYC | Sarepay Merchant Portal" />
+    <Layout pageTitle="Business KYC Verification" icon="kyc">
+      <WebPageTitle title="Business KYC | Ramp Merchant Portal" />
       <div className="p-4">
         {getKycLoading ? (
           <Fragment>
@@ -431,7 +431,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
           </Card>
         ) : (
           <EmptyState
-            title="No KYC found"
+            title="No Business KYC found"
             subTitle="We couldn't find any KYC"
             image="/images/dashboard/your-business/kyc-emptystate.svg"
           >

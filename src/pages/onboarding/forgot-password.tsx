@@ -61,16 +61,16 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
-      <WebPageTitle title="Forgot Password | Ramp Merchant Portal" />
-      {/* <Sidebar /> */}
-      <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
+    <div className="flex w-full min-h-screen">
+      <WebPageTitle title="Forgot Password | Sarepay Merchant Portal" />
+      <Sidebar />
+      <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10">
         <div className="flex w-full justify-end">
           <h6 className="text-sm">
             Already have an account?
             <Link
               href="/onboarding/sign-in"
-              className="font-medium text-white underline-animation"
+              className="font-medium sarepayPrimary underline-animation"
             >
               Sign In
             </Link>
@@ -110,7 +110,7 @@ const ForgotPassword: React.FC = () => {
                 <p className="text-center text-sm">
                   Remember account password?&nbsp;
                   <Link href="/onboarding/sign-in">
-                    <span className="text-white text-sm font-medium underline-animation">
+                    <span className="sarepayPrimary text-sm font-medium underline-animation">
                       Sign In
                     </span>
                   </Link>

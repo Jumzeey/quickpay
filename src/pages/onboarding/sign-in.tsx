@@ -64,26 +64,29 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
-      <WebPageTitle title="Login | Ramp Merchant Portal" />
+    <div className="flex w-full min-h-screen">
+      <WebPageTitle title="Login | Sarepay Merchant Portal" />
+      <Sidebar />
       <NoSSR>
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
+        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10">
+          <div className="flex w-full justify-end">
+            <h6 className="text-sm">
+              Don&apos;t have an account?
+              <Link
+                href="/onboarding/join-us"
+                className="underline-animation text-primary font-medium ml-1"
+              >
+                Sign Up
+              </Link>
+            </h6>
+          </div>
           <motion.div
-            className=""
+            className="mt-52"
             variants={MultiStepAnimation}
             initial="hidden"
             animate="visible"
           >
-            <div className="flex justify-center items-center w-full ">
-              <Image
-                src="/images/ramp-logo.svg"
-                alt="ramp-logo"
-                width={200}
-                height={50}
-                priority
-              />
-            </div>
-            <div className="mt-52">
+            <div>
               <h1 className="font-semibold text-2xl">Sign In</h1>
               <p className="font-light text-sm mt-2 mb-2">
                 Kindly provide your login details
@@ -107,11 +110,9 @@ const SignInPage: React.FC = () => {
                 />
                 <Link
                   href="/onboarding/forgot-password"
-                  className="sarepayPrimary text-sm font-medium flex justify-end"
+                  className="sarepayPrimary text-sm font-medium  flex justify-end"
                 >
-                  <span className="underline-animation text-white">
-                    Forgot Password
-                  </span>
+                  <span className="underline-animation">Forgot Password</span>
                 </Link>
 
                 <div className="flex justify-center mt-12">
@@ -135,18 +136,6 @@ const SignInPage: React.FC = () => {
                   Your Info is safely secured
                 </span>
               </div>
-            </div>
-
-            <div className="flex w-full justify-end my-5">
-              <h6 className="text-sm">
-                Don&apos;t have an account?
-                <Link
-                  href="/onboarding/join-us"
-                  className="underline-animation text-white font-medium ml-1"
-                >
-                  Sign Up
-                </Link>
-              </h6>
             </div>
           </motion.div>
         </div>

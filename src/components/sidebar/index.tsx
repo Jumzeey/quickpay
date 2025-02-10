@@ -39,26 +39,26 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
         setState({
           ...state,
           activeSidebar: yourBusiness,
-          subLinksTitle: "Business Information",
+          subLinksTitle: "Your Business",
         });
         break;
-
-      case router.pathname.includes("/e-commerce"):
+  
+      case router.pathname.includes("/e-commerce"): 
         setState({
           ...state,
           activeSidebar: eCommerce,
           subLinksTitle: "E-Commerce",
         });
         break;
-
-      case router.pathname.includes("/e-commerce/product"):
+  
+      case router.pathname.includes("/e-commerce/product"): 
         setState({
           ...state,
           activeSidebar: product,
           subLinksTitle: "Product",
         });
         break;
-
+  
       case router.pathname.includes("/disbursements"):
         setState({
           ...state,
@@ -66,15 +66,15 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
           subLinksTitle: "Disbursement History",
         });
         break;
-
+  
       case router.pathname.includes("/collections"):
         setState({
           ...state,
           activeSidebar: collections,
-          subLinksTitle: "Pay Ins",
+          subLinksTitle: "Collections",
         });
         break;
-
+  
       default:
         setState({
           ...state,
@@ -84,21 +84,21 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
         break;
     }
   };
-
+  
   useLayoutEffect(() => {
     renderSidebarMenu();
   }, []);
 
   return (
     <Fragment>
-      {!showSidebar && (
+      {showSidebar && (
         <div
           className="absolute left-0 top-0 z-9 h-screen w-screen md:h-0 md:w-0"
           onClick={() => setShowSidebar(false)}
         ></div>
       )}
       <aside
-        className={`lg:flex flex-col fixed h-screen overflow-y-scroll bg-[#fff] min-h-screen overflow-x-hidden pl-3 pt-2 w-[250px] ease-in-out duration-500 top-0 z-10 shadow-lg ${
+        className={`lg:flex flex-col fixed h-screen overflow-y-scroll bg-[url('/images/background-pattern.png')] bg-cover bg-no-repeat bg-primary min-h-screen overflow-x-hidden pl-3 pt-2 w-[250px] ease-in-out duration-500 top-0 z-10 ${
           showSidebar ? "flex" : "hidden"
         }`}
         ref={bgRef}
@@ -108,10 +108,10 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
             <li className="mb-3.5 font-semibold">
               <Link href="/dashboard">
                 <Image
-                  src="/images/ramp-logo.svg"
-                  alt="RampLogo"
+                  src="/images/sarepay-logo.svg"
+                  alt="SarePayLogo"
                   className="mt-3"
-                  width={130}
+                  width={127}
                   height={29}
                   priority
                 />
@@ -130,7 +130,7 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
                       <span className="text-[#a4b0c3] text-sm">Main Menu</span>
                     </div>
 
-                    <p className="text-base text-primary pb-7 font-semibold">
+                    <p className="text-base text-white pb-7 font-semibold">
                       {state.subLinksTitle}
                     </p>
                   </>

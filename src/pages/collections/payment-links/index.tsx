@@ -69,7 +69,7 @@ const PaymentLinks = () => {
       const response = await getPaymentLinks(false);
       const { total_links, active_links, paused_links } = response || {};
 
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         paymentLinks: response?.payment_links,
         totalLinks: total_links,
@@ -79,7 +79,7 @@ const PaymentLinks = () => {
     } catch (error: any) {
       notifyError(error.message);
     } finally {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         isLoading: false,
         isInitialLoad: false,
@@ -125,7 +125,7 @@ const PaymentLinks = () => {
 
   return (
     <Layout pageTitle="Payment Links" icon="link">
-      <WebPageTitle title="Payment Links | Ramp Merchant Portal" />
+      <WebPageTitle title="Payment Links | Sarepay Merchant Portal" />
       {state.isLoading && state.isInitialLoad ? (
         <Fragment>
           <div className="grid md:grid-cols-3 gap-5 mb-7">
@@ -259,9 +259,7 @@ const PaymentLinks = () => {
                     key={index}
                     className="border-b last:border-none border-grey-200"
                   >
-                    <td className="text-sm px-5 py-6 capitalize">
-                      {item.title}
-                    </td>
+                    <td className="text-sm px-5 py-6 capitalize">{item.title}</td>
                     <td className="text-sm px-5 py-6">
                       &#8358;&nbsp;{numberWithCommas(item.amount)}
                     </td>
@@ -373,10 +371,10 @@ const PaymentLinks = () => {
                 <div className="mt-3">
                   <p className="text-3xl font-semibold py-2">Head up!</p>
                   <p className="">
-                    Are you sure you want to
+                    Are you sure you want to 
                     {sharedState?.selectedItem?.status === 1
                       ? "disable"
-                      : "enable"}
+                      : "enable"} 
                     this payment link?
                   </p>
                 </div>

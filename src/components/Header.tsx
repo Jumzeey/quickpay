@@ -43,18 +43,14 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header
-      className={`fixed left-0 right-0 top-0 bg-white z-10 lg:flex items-center gap-3 lg:gap-6 justify-between lg:justify-around py-3 pt-5 px-4 lg:px-0 shadow-sm ${
-        isOpen ? "h-screen" : "h-auto"
-      }`}
-    >
+    <header className={`fixed left-0 right-0 top-0 bg-white z-10 lg:flex items-center gap-3 lg:gap-6 justify-between lg:justify-around py-3 pt-5 px-4 lg:px-0 shadow-sm ${isOpen ? "h-screen" : "h-auto"}`}>
       <div className="flex justify-between items-center">
         <Link href="/">
           <Image
             src="/images/logo-blue.svg"
             width={169}
             height={42}
-            alt="Ramp Logo"
+            alt="Sarepay Logo"
             priority
           />
         </Link>
@@ -71,7 +67,7 @@ const Header = () => {
           isOpen ? "flex flex-col items-center pt-14" : "hidden"
         }`}
       >
-        {links.map(link => (
+        {links.map((link) => (
           <li
             key={link.id}
             className={`text-sm font-semibold text-[#1C192D] hover:text-primary ${

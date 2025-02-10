@@ -3,47 +3,28 @@ import React from "react";
 const SVG = () => {
   return (
     <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
+      width="28"
+      height="28"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g clip-path="url(#clip0_2497_25975)">
-        <path
-          d="M3 11.9998C3 7.02919 7.02944 2.99976 12 2.99976C14.8273 2.99976 17.35 4.30342 19 6.34242"
-          stroke="black"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M19.5 2.99976L19.5 6.99976L15.5 6.99976"
-          stroke="black"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M21 11.9998C21 16.9703 16.9706 20.9998 12 20.9998C9.17273 20.9998 6.64996 19.6961 5 17.6571"
-          stroke="black"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M4.5 20.9998L4.5 16.9998L8.5 16.9998"
-          stroke="black"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </g>
-      <defs>
-        <clipPath id="clip0_2497_25975">
-          <rect width="24" height="24" fill="white" />
-        </clipPath>
-      </defs>
+      <rect
+        x="32"
+        y="32"
+        width="32"
+        height="32"
+        rx="16"
+        transform="rotate(-180 32 32)"
+        fill="#1e4f8a1a"
+      />
+      <path
+        d="M16 22C12.6863 22 10 19.3137 10 16C10 13.7236 11.2677 11.7433 13.1357 10.7265M10.7786 10.4096L13.1357 10.4096V10.7265M13.1357 10.7265L13.1357 12.7667M16 10C19.3137 10 22 12.6863 22 16C22 18.2764 20.7323 20.2567 18.8643 21.2735M21.2214 21.5904H18.8643V21.2735M18.8643 21.2735L18.8643 19.2333"
+        stroke="#164988"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 };

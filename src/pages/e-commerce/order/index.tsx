@@ -35,8 +35,12 @@ const Orders = () => {
     startDate: null,
     endDate: null,
   });
-  const { fetchShippingOrders, orders, pagination, getShippingOrdersLoading } =
-    useEcommerce();
+  const {
+    fetchShippingOrders,
+    orders,
+    pagination,
+    getShippingOrdersLoading,
+  } = useEcommerce();
 
   const { showFilter, toggleFilter } = useFilter();
 
@@ -103,10 +107,7 @@ const Orders = () => {
       ...(searchInput ? { search: searchInput } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
       ...(filter.startDate
-        ? {
-            start_date: formatDate(filter.startDate),
-            end_date: formatDate(filter.endDate),
-          }
+        ? { start_date: formatDate(filter.startDate), end_date: formatDate(filter.endDate) }
         : {}),
     });
   }, [
@@ -120,7 +121,7 @@ const Orders = () => {
 
   return (
     <Layout pageTitle="Ecommerce Orders" icon="order">
-      <WebPageTitle title="Shipping Orders | Ramp Merchant Portal" />
+      <WebPageTitle title="Shipping Orders | Sarepay Merchant Portal" />
       {state.showOrders ? (
         <TransactionDetails
           selectedItem={selectedItem}
@@ -131,7 +132,9 @@ const Orders = () => {
       ) : (
         <div>
           <h2 className="text-xl font-semibold">Manage Orders</h2>
-          <p className="text-sm pt-3 pb-5">Manage orders within your company</p>
+          <p className="text-sm pt-3 pb-5">
+            Manage orders within your company
+          </p>
           {getShippingOrdersLoading ? (
             <Fragment>
               <TableSkeleton />

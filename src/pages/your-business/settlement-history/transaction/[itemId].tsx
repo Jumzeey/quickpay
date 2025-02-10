@@ -65,8 +65,11 @@ const SettlementTransaction = () => {
   ];
 
   return (
-    <Layout pageTitle="Settlement Transaction" icon="history">
-      <WebPageTitle title="Settlement Transactions | Ramp Merchant Portal" />
+    <Layout
+      pageTitle="Settlement Transaction"
+      icon="history"
+    >
+      <WebPageTitle title="Settlement Transactions | Sarepay Merchant Portal" />
       {state.showCollections ? (
         <TransactionDetails
           selectedItem={state.selectedItem}
@@ -92,7 +95,7 @@ const SettlementTransaction = () => {
                 Manage Settlement Transaction
               </h2>
               <p className="text-sm pt-3 pb-5">
-                Manage settlement transaction within your company
+                Manage settlement transaction within your company 
               </p>
               <Card>
                 <div className="flex justify-between pb-5">

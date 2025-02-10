@@ -39,7 +39,7 @@ const Product = () => {
   const { handleClick, selectedItem } = useClickEvent();
 
   const getDummySettlementAccounts = async () => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       setTimeout(() => {
         resolve([
           {
@@ -132,27 +132,27 @@ const Product = () => {
   ];
 
   const openAddCategoryModal = () => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       isAddCategoryModalOpen: true,
     }));
   };
   const closeAddCategoryModal = () => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       isAddCategoryModalOpen: false,
     }));
   };
 
   const openChangeStatusModal = () => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       isChangeStatusModalOpen: true,
     }));
   };
 
   const closeChangeStatusModal = () => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       isChangeStatusModalOpen: false,
     }));
@@ -192,7 +192,7 @@ const Product = () => {
 
   const fetchSearchedSettlementAccounts = async () => {
     const accounts = await getSettlementAccounts({ search: searchInput });
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       accounts,
       isLoading: false,
@@ -209,7 +209,7 @@ const Product = () => {
 
   return (
     <Layout pageTitle="Products" icon="settlement-accounts">
-      <WebPageTitle title="All Products | Ramp Merchant Portal" />
+      <WebPageTitle title="All Products | Sarepay Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Product</h2>
         <p className="text-sm pt-3 pb-5">Manage product within your company</p>
@@ -238,13 +238,14 @@ const Product = () => {
                   />
                 </div>
                 <Link href="/e-commerce/product/create">
-                  <Button
-                    ariaLabel="add product button"
-                    text="Add Product"
-                    primary
-                    medium
-                  />
-                </Link>
+                <Button
+                  ariaLabel="add product button"
+                  text="Add Product"
+                  primary
+                  medium
+                />
+              </Link>
+           
               </div>
               <Table columns={columns} className="mt-7">
                 {state.accounts.map((item: any, index: number) => {

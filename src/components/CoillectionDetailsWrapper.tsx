@@ -64,7 +64,7 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
         alt="back icon"
       />
       <Card className="!px-5 md:!px-7 !pb-10 md:!pb-20">
-        <h2 className="text-xl md:text-2xl">Pay Ins Info</h2>
+        <h2 className="text-xl md:text-2xl">Collection Info</h2>
 
         <div className="border border-grey-200 rounded-xl mt-5 p-4 md:p-9">
           <>

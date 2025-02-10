@@ -52,7 +52,7 @@ const ManageRoles = () => {
     } catch (error: any) {
       notifyError(error.message);
     } finally {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         isLoading: false,
         isInitialLoad: false,
@@ -80,7 +80,7 @@ const ManageRoles = () => {
   };
 
   const handleDeleteRole = async () => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       isLoading: true,
     }));
@@ -92,7 +92,7 @@ const ManageRoles = () => {
     } catch (error: any) {
       notifyError(error.message);
     } finally {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         isLoading: false,
       }));
@@ -111,7 +111,7 @@ const ManageRoles = () => {
 
   return (
     <Layout pageTitle="Manage Roles" icon="person">
-      <WebPageTitle title="Manage Roles | Ramp Merchant Portal" />
+      <WebPageTitle title="Manage Roles | Sarepay Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"
@@ -219,7 +219,7 @@ const ManageRoles = () => {
                 <div className="mt-3">
                   <p className="text-3xl font-semibold py-2">Head up!</p>
                   <p className="">
-                    Are you sure you want to delete this role?
+                    Are you sure you want to delete this role? 
                     <span className="font-semibold">
                       ({sharedState?.selectedItem?.name})
                     </span>

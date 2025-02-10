@@ -1,19 +1,29 @@
 import React from "react";
 
-const SVG = (  ) => {
+const SVG: React.FC<{ color: string }> = ({ color }) => {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_2497_26835)">
-<path d="M3 9H12H21M3 5H21V17C21 18.1046 20.1046 19 19 19H5C3.89543 19 3 18.1046 3 17V5Z" stroke="#A4B0C3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M7 13H10" stroke="#A4B0C3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-<defs>
-<clipPath id="clip0_2497_26835">
-<rect width="24" height="24" fill="white"/>
-</clipPath>
-</defs>
-</svg>
-
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 19"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M21 1.22852H3C1.89543 1.22852 1 2.12395 1 3.22852V15.2285C1 16.3331 1.89543 17.2285 3 17.2285H21C22.1046 17.2285 23 16.3331 23 15.2285V3.22852C23 2.12395 22.1046 1.22852 21 1.22852Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M1 7.22852H23"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 };
 

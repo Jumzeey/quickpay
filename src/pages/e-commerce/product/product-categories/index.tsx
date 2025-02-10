@@ -39,11 +39,11 @@ const ProductCategories = () => {
   const { handleClick, selectedItem } = useClickEvent();
 
   const getDummySettlementAccounts = async () => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(() => {
         resolve([
-          { id: 1, name: "Business Account", created_at: '15 Aug, 2023' },
-          { id: 2, name: "Business Account", created_at: '18 Aug, 2023' },
+          { id: 1, name: "Business Account", created_at: "15 Aug, 2023" },
+          { id: 2, name: "Business Account", created_at: "18 Aug, 2023" },
         ]);
       }, 1000);
     });
@@ -70,27 +70,27 @@ const ProductCategories = () => {
   const columns = ["s/n", "name", "created at", "action"];
 
   const openAddCategoryModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isAddCategoryModalOpen: true,
     }));
   };
   const closeAddCategoryModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isAddCategoryModalOpen: false,
     }));
   };
 
   const openChangeStatusModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isChangeStatusModalOpen: true,
     }));
   };
 
   const closeChangeStatusModal = () => {
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       isChangeStatusModalOpen: false,
     }));
@@ -130,7 +130,7 @@ const ProductCategories = () => {
 
   const fetchSearchedSettlementAccounts = async () => {
     const accounts = await getSettlementAccounts({ search: searchInput });
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       accounts,
       isLoading: false,
@@ -147,7 +147,7 @@ const ProductCategories = () => {
 
   return (
     <Layout pageTitle="Product Categories" icon="settlement-accounts">
-      <WebPageTitle title="Product Categories | Sarepay Merchant Portal" />
+      <WebPageTitle title="Product Categories | Ramp Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Product Categories</h2>
         <p className="text-sm pt-3 pb-5">

@@ -25,7 +25,7 @@ const Layout: React.FC<DashboardLayoutProps> = ({
           setShowSidebar={setShowSidebar}
         />
         <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
-        <div className="lg:ml-[250px] h-screen overflow-y-scroll pt-24 pb-10 px-5 md:px-7 bg-[#fbfbfb]">
+        <div className="lg:ml-[250px] h-screen overflow-y-scroll pt-24 pb-10 px-5 md:px-7 bg-[#F2F3F5]">
           {children}
         </div>
       </div>

@@ -41,7 +41,7 @@ const Permissions = () => {
   };
   return (
     <Layout pageTitle="Role Permissions" icon="person">
-      <WebPageTitle title="Role Permissions | Sarepay Merchant Portal" />
+      <WebPageTitle title="Role Permissions | Ramp Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"
@@ -66,7 +66,7 @@ const Permissions = () => {
             </div>
           </Fragment>
         ) : state.permissions?.length !== 0 ? (
-          state.data.map((item) => {
+          state.data.map(item => {
             return (
               <Card key={item.id}>
                 <h1 className="text-xl font-semibold">

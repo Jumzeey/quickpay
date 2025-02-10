@@ -76,7 +76,7 @@ const ResetPasswordPage: React.FC = () => {
 
   return (
     <div className="flex w-full">
-      <WebPageTitle title="Login | Sarepay Merchant Portal" />
+      <WebPageTitle title="Login | Ramp Merchant Portal" />
       <Sidebar />
       <NoSSR>
         <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10">

@@ -194,18 +194,18 @@ const RegisterPage: React.FC = () => {
   }, [formik.values.password]);
   return (
     <>
-      <div className="flex w-full">
+      <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
         <WebPageTitle
           title={`${capitalizeFirstLetter(
             params?.business as string
-          )} | Sarepay Merchant Portal`}
+          )} | Ramp Merchant Portal`}
         />
-        <Sidebar />
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 h-screen overflow-scroll">
+        {/* <Sidebar /> */}
+        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
           <div className="flex w-full justify-between">
             <div className="flex cursor-pointer" onClick={navigateBack}>
               <Image
-                src="/images/black-back-arrow.svg"
+                src="/images/arrow-back.svg"
                 width={15}
                 height={5}
                 onClick={() => router.back()}
@@ -216,7 +216,7 @@ const RegisterPage: React.FC = () => {
             <Link href="/onboarding/sign-in">
               <h6 className="font-light text-sm">
                 Already have an account?
-                <span className="font-medium ml-1 sarepayPrimary underline-animation">
+                <span className="font-medium ml-1 text-white underline-animation">
                   Sign In
                 </span>
               </h6>
@@ -393,9 +393,9 @@ const RegisterPage: React.FC = () => {
                     <a
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-1 font-medium text-primary cursor-pointer"
+                      className="ml-1 font-medium underline-animation cursor-pointer"
                     >
-                      Sarepay Privacy Policy
+                      Ramp Privacy Policy
                     </a>
                   </Link>
                 </label>

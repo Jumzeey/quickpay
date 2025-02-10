@@ -26,66 +26,63 @@ const JoinUsPage: React.FC = () => {
 
   return (
     <NoSSR>
-      <WebPageTitle title="Join Us | Sarepay Merchant Portal" />
-      <div className="flex w-full">
-        <Sidebar />
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-20 lg:py-10">
-          <div className="flex w-full justify-between">
-            <div className="flex cursor-pointer" onClick={navigateBack}>
-              <Image
-                src="/images/black-back-arrow.svg"
-                width={15}
-                height={5}
-                onClick={() => router.back()}
-                alt="Back Icon"
-              />
-              <span className="ml-1 font-light">Back</span>
-            </div>
-            <h6 className="font-light text-sm">
-              Already have an account?
-              <Link
-                href="/onboarding/sign-in"
-                className="ml-1 font-medium sarepayPrimary underline-animation"
+      <WebPageTitle title="Join Us | Ramp Merchant Portal" />
+      <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
+        <div className="flex w-full min-h-screen justify-center">
+          {/* <Sidebar /> */}
+          <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
+            <div className="flex w-full justify-between">
+              <div
+                className="flex cursor-pointer"
+                onClick={navigateBack}
               >
-                Sign In
-              </Link>
-            </h6>
-          </div>
-          <motion.div
-            className="mt-10"
-            variants={MultiStepAnimation}
-            initial="hidden"
-            animate="visible"
-          >
-          <div>
-            <h1 className="font-semibold text-2xl">Join Us!</h1>
-            <p className="font-light mt-1 text-sm">
-              Choose the best account type for you
-            </p>
-            <div className="mt-10">
-              <BoxComponent
-                imageUrl1="/images/starter.svg"
-                headerText="Starter Business"
-                descriptionText="For Started Business:"
-                firstItem="A government-issued ID"
-                secondItem="Bank Verification Number (BVN)"
-                imageUrl2="/images/next-icon.svg"
-                businessType="starter"
-                onClick={() => router.push("/onboarding/join-us/starter")}
-              />
-            <BoxComponent
-                imageUrl1="/images/registered.svg"
-                headerText="Registered business account"
-                descriptionText="For registered businesses with corporate account information:"
-                firstItem="A government-issued ID"
-                secondItem="Bank Verification Number (BVN)"
-                thirdItem="Business Registration Number"
-                imageUrl2="/images/next-icon.svg"
-                businessType="registered"
-                onClick={() => router.push("/onboarding/join-us/registered")}
-              />
+                <Image
+                  src="/images/arrow-back.svg"
+                  width={15}
+                  height={5}
+                  onClick={() => router.back()}
+                  alt="Back Icon"
+                />
+                <span className="ml-1 font-light">Back</span>
+              </div>
+            </div>
+            <motion.div
+              className="mt-10"
+              variants={MultiStepAnimation}
+              initial="hidden"
+              animate="visible"
+            >
+              <div>
+                <h1 className="font-semibold text-2xl">Join Us!</h1>
+                <p className="font-light mt-1 text-sm">
+                  Choose the best account type for you
+                </p>
+                <div className="mt-10 flex flex-col gap-10">
+                  <BoxComponent
+                    imageUrl1="/images/starter.svg"
+                    headerText="Starter Business"
+                    descriptionText="For Started Business:"
+                    firstItem="A government-issued ID"
+                    secondItem="Bank Verification Number (BVN)"
+                    imageUrl2="/images/next-icon.svg"
+                    businessType="starter"
+                    onClick={() => router.push("/onboarding/join-us/starter")}
+                  />
+                  <BoxComponent
+                    imageUrl1="/images/registered.svg"
+                    headerText="Registered business account"
+                    descriptionText="For registered businesses with corporate account information:"
+                    firstItem="A government-issued ID"
+                    secondItem="Bank Verification Number (BVN)"
+                    thirdItem="Business Registration Number"
+                    imageUrl2="/images/next-icon.svg"
+                    businessType="registered"
+                    onClick={() =>
+                      router.push("/onboarding/join-us/registered")
+                    }
+                  />
 
-              <BoxComponent
+                  {/* <BoxComponent
                 imageUrl1="/images/non-profit.svg"
                 headerText="Non-profit Entites"
                 descriptionText="For charity organisations, NGOs, Churches, Mosques and others:"
@@ -96,10 +93,11 @@ const JoinUsPage: React.FC = () => {
                 imageUrl2="/images/next-icon.svg"
                 businessType="non-profit"
                 onClick={() => router.push("/onboarding/join-us/non-profit")}
-              />
-            </div>
+              /> */}
+                </div>
+              </div>
+            </motion.div>
           </div>
-          </motion.div>
         </div>
       </div>
       <Modal isOpen={isModalOpen} onClose={closeModal}>

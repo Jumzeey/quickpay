@@ -125,8 +125,8 @@ const CollectionHistory = () => {
   ]);
 
   return (
-    <Layout pageTitle="Collections History" icon="collection-history">
-      <WebPageTitle title="Collections History | Sarepay Merchant Portal" />
+    <Layout pageTitle="Pay Ins History" icon="collection-history">
+      <WebPageTitle title="Pay Ins History | Ramp Merchant Portal" />
       {state.showCollections ? (
         <TransactionDetails
           selectedItem={selectedItem}
@@ -136,10 +136,10 @@ const CollectionHistory = () => {
         />
       ) : (
         <div>
-          <h2 className="text-xl font-semibold">Manage Collections</h2>
+          {/* <h2 className="text-xl font-semibold">Manage Pay Ins</h2>
           <p className="text-sm pt-3 pb-5">
-            Manage collections within your company
-          </p>
+            Manage pay ins within your company
+          </p> */}
           {getCollectionHistoryLoading ? (
             <Fragment>
               <TableSkeleton />
@@ -266,8 +266,8 @@ const CollectionHistory = () => {
             </Fragment>
           ) : (
             <EmptyState
-              title="No Collections found"
-              subTitle="We couldn't find any collections for this account"
+              title="No Pay Ins found"
+              subTitle="We couldn't find any pay ins for this account"
               image="/images/collections.svg"
             />
           )}

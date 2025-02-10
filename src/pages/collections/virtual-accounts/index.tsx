@@ -118,7 +118,7 @@ const VirtualAccounts = () => {
 
   return (
     <Layout pageTitle="Virtual Accounts" icon="virtual-accounts">
-      <WebPageTitle title="Virtual Accounts | Sarepay Merchant Portal" />
+      <WebPageTitle title="Virtual Accounts | Ramp Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Virtual Accounts</h2>
         <p className="text-sm pt-3 pb-5">

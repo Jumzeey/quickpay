@@ -17,7 +17,7 @@ import { useRouter } from "next/router";
 import Pagination from "@/components/pagination";
 import "react-loading-skeleton/dist/skeleton.css";
 import { getDisbursementHistory } from "@/services/disbursement";
-import { downloadFile, notifyError,formatDate } from "@/util/utils";
+import { downloadFile, notifyError, formatDate } from "@/util/utils";
 import debounce from "@/util/debounce";
 interface Disbursement {
   reference: string;
@@ -82,7 +82,7 @@ const DisbursementHistory = () => {
   const lastPage = pagination?.last_page;
   const fetchBankDetails = async () => {
     const bankDetails = await getBankDetails();
-    setState((prevState) => ({
+    setState(prevState => ({
       ...prevState,
       bankDetails,
       isLoading: false,
@@ -120,21 +120,29 @@ const DisbursementHistory = () => {
     fetchBankDetails();
   }, []);
 
-
   useEffect(() => {
     fetchDisbursementHistory({
       page: currentPage,
       ...(searchInput ? { search: searchInput } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
       ...(filter.startDate
-        ? { start_date: formatDate(filter.startDate), end_date: formatDate(filter.endDate) }
+        ? {
+            start_date: formatDate(filter.startDate),
+            end_date: formatDate(filter.endDate),
+          }
         : {}),
     });
-  }, [searchInput,currentPage,filter.endDate,filter.startDate,statusFilter]);
+  }, [
+    searchInput,
+    currentPage,
+    filter.endDate,
+    filter.startDate,
+    statusFilter,
+  ]);
 
   return (
     <Layout pageTitle="Disbursement History" icon="disbursement">
-      <WebPageTitle title="Disbursement History | Sarepay Merchant Portal" />
+      <WebPageTitle title="Disbursement History | Ramp Merchant Portal" />
       <div>
         <h2 className="text-xl font-semibold">Manage Disbursement History</h2>
         <p className="text-sm pt-3 pb-5">
@@ -202,11 +210,22 @@ const DisbursementHistory = () => {
                   onOpen={state.showFilterStatus}
                   onClose={closeDropdown}
                 >
-                  <p onClick={() => setStatusFilter("Pending")} className="font-bold">Pending</p>
-                  <p onClick={() => setStatusFilter("Successful")} className="font-bold">
+                  <p
+                    onClick={() => setStatusFilter("Pending")}
+                    className="font-bold"
+                  >
+                    Pending
+                  </p>
+                  <p
+                    onClick={() => setStatusFilter("Successful")}
+                    className="font-bold"
+                  >
                     Successful
                   </p>
-                  <p onClick={() => setStatusFilter("Failed")} className="font-bold">
+                  <p
+                    onClick={() => setStatusFilter("Failed")}
+                    className="font-bold"
+                  >
                     Failed
                   </p>
                 </Dropdown>

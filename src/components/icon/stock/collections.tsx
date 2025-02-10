@@ -1,6 +1,6 @@
-import React from "react";
 
-const SVG: React.FC<{ color: string }> = ({ color }) => {
+
+const SVG = () => {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_2497_26827)">

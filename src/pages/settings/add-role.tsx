@@ -36,7 +36,7 @@ const AddRole = () => {
 
     validateOnMount: true,
 
-    onSubmit: async values => {
+    onSubmit: async (values) => {
       const payload = {
         name: values.roleName,
         permissions: selectedIds,
@@ -93,7 +93,7 @@ const AddRole = () => {
 
   return (
     <Layout pageTitle="Add Role" icon="person">
-      <WebPageTitle title="Add Role | Ramp Merchant Portal" />
+      <WebPageTitle title="Add Role | Sarepay Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"

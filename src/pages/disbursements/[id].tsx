@@ -30,7 +30,7 @@ const DisbursementDetails = () => {
 
   return (
     <Layout pageTitle="Disbursement Details" icon="disbursement">
-      <WebPageTitle title="Disbursement Breakdown | Ramp Merchant Portal" />
+      <WebPageTitle title="Disbursement Breakdown | Sarepay Merchant Portal" />
       <div>
         <div>
           <Image

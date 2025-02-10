@@ -1,13 +1,13 @@
-import React, { ChangeEvent } from "react";
+import React, { ChangeEvent, Fragment } from "react";
 import { Chart as ChartJS, defaults } from "chart.js/auto";
 import { Line } from "react-chartjs-2";
 import Select from "../select";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { motion } from "framer-motion";
 
 defaults.maintainAspectRatio = false;
 defaults.responsive = true;
+
 defaults.plugins.title.display = true;
 defaults.plugins.title.align = "start";
 defaults.plugins.title.color = "black";
@@ -17,7 +17,6 @@ interface LineChartProps {
   selectedOption: string;
   handleChange: (event: ChangeEvent<HTMLSelectElement>) => void;
 }
-
 interface ChartProps {
   labels: string[];
   chartData: any[];
@@ -34,87 +33,50 @@ const LineChart = ({
   isChartRefresh,
 }: ChartProps) => {
   const { secondOptions, selectedOption, handleChange } = lineChartProps || {};
-
-  const chartConfig = {
-    labels,
-    datasets: [
-      {
-        label: "Disbursement",
-        data: chartData?.map((data: any) => data.disbursements),
-        fill: false,
-        borderColor: "#cc3a40",
-        backgroundColor: "#cc3a40",
-      },
-      {
-        label: "Pay In",
-        data: chartData?.map((data: any) => data.collections),
-        fill: false,
-        borderColor: "#59bc79",
-        backgroundColor: "#59bc79",
-      },
-    ],
-  };
-
-  const chartOptions = {
-    elements: {
-      line: { tension: 0.2 },
-    },
-    plugins: {
-      legend: {
-        display: true,
-        labels: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          font: { size: 12, family: "Inter, sans-serif" },
-        },
-      },
-    },
-    scales: {
-      y: { grid: { display: true, color: "#e5e7eb" } },
-      x: { grid: { display: false } },
-    },
-  };
-
   return (
     <div className="bg-white pt-5 px-5 pb-10 rounded-xl h-[480px]">
       {isLoading ? (
-        <>
+        <Fragment>
           <div className="flex justify-between items-center">
-            <Skeleton width={170} height={20} />
+            <span className="block w-[170px] rounded-lg pb-1">
+              <Skeleton className="h-2.5" />
+            </span>
             <Skeleton width={120} height={40} />
           </div>
+
           <div className="mt-16">
             {Array.from({ length: 7 }).map((_, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Skeleton className="h-2.5 mb-5" />
-              </motion.div>
+              <Skeleton key={index} className="h-2.5 mb-5" />
             ))}
           </div>
-        </>
+        </Fragment>
       ) : (
-        <>
+        <Fragment>
           <div className="flex justify-between items-center">
-            <span className="text-base font-medium text-grey-400">
-              Disbursements and Pay Ins
+            <span className="block text-base font-medium text-grey-400">
+              Disbursements and Collections
             </span>
-            <Select
-              options={secondOptions}
-              value={selectedOption}
-              onChange={handleChange}
-              forCharts
-            />
+
+            <div className="">
+              {/* <Select
+                options={options}
+                value={selectedOption}
+                onChange={handleChange}
+              /> */}
+
+              <Select
+                options={secondOptions}
+                value={selectedOption}
+                onChange={handleChange}
+                forCharts
+              />
+            </div>
           </div>
 
           {isChartRefresh ? (
             <div className="h-[480px] flex flex-col items-center justify-center">
               <svg
-                className="animate-spin w-10 text-[#164988]"
+                className={`animate-spin w-10 text-[#164988]`}
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -136,12 +98,60 @@ const LineChart = ({
               <p className="text-sm font-medium mt-2">Loading chart data...</p>
             </div>
           ) : (
-            <Line data={chartConfig} options={chartOptions} />
+            <Line
+              data={{
+                labels,
+                datasets: [
+                  {
+                    label: "Disbursement",
+                    data: chartData?.map((data: any) => data.disbursements),
+                    fill: false,
+                    borderColor: "#cc3a40",
+                    backgroundColor: "#cc3a40",
+                  },
+                  {
+                    label: "Collection",
+                    data: chartData?.map((data: any) => data.collections),
+                    fill: false,
+                    borderColor: "#59bc79",
+                    backgroundColor: "#59bc79",
+                  },
+                ],
+              }}
+              options={{
+                elements: {
+                  line: {
+                    tension: 0.2,
+                  },
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    labels: {
+                      usePointStyle: true,
+                      boxWidth: 6,
+                      boxHeight: 6,
+                    },
+                  },
+                },
+                scales: {
+                  y: {
+                    grid: {
+                      display: true,
+                    },
+                  },
+                  x: {
+                    grid: {
+                      display: false,
+                    },
+                  },
+                },
+              }}
+            />
           )}
-        </>
+        </Fragment>
       )}
     </div>
   );
 };
-
 export default LineChart;

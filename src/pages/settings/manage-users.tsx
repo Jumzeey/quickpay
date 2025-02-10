@@ -51,14 +51,14 @@ const ManageUsers = () => {
   const fetchUsers = async () => {
     try {
       const users = await getUsers();
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         users,
       }));
     } catch (error: any) {
       notifyError(error.message);
     } finally {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         isLoading: false,
         isInitialLoad: false,
@@ -71,7 +71,7 @@ const ManageUsers = () => {
       ...state,
       dropdownIndex: null,
     });
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       dropdownIndex: null,
     }));
@@ -79,7 +79,7 @@ const ManageUsers = () => {
   };
 
   const handleDropdownToggle = (index: number | null, selectedItem: any) => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       dropdownIndex: state.dropdownIndex === index ? null : index,
     }));
@@ -100,7 +100,7 @@ const ManageUsers = () => {
 
   const handleChangeUserStatus = async () => {
     try {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         isLoading: true,
       }));
@@ -114,7 +114,7 @@ const ManageUsers = () => {
       closeDisableModal();
       notifyError(error.message);
     } finally {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         isLoading: false,
       }));
@@ -138,7 +138,7 @@ const ManageUsers = () => {
 
   return (
     <Layout pageTitle="Manage Users" icon="user">
-      <WebPageTitle title="Manage Users | Ramp Merchant Portal" />
+      <WebPageTitle title="Manage Users | Sarepay Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer pb-5"
@@ -256,8 +256,7 @@ const ManageUsers = () => {
                     Are you sure you want to&nbsp;
                     {sharedState?.selectedItem?.status === "Active"
                       ? "deactivate"
-                      : "activate"}
-                    &nbsp;this user?
+                      : "activate"}&nbsp;this user?
                   </p>
                 </div>
 

@@ -85,7 +85,7 @@ const OnlineStore = () => {
   const lastPage = pagination?.last_page;
   const fetchBankDetails = async () => {
     const bankDetails = await getBankDetails();
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       bankDetails,
       isLoading: false,
@@ -145,7 +145,7 @@ const OnlineStore = () => {
 
   return (
     <Layout pageTitle="Online Store History" icon="ecommerce">
-      <WebPageTitle title="Online Store History | Ramp Merchant Portal" />
+      <WebPageTitle title="Online Store History | Sarepay Merchant Portal" />
       <div>
         <h2 className="text-xl font-semibold">Manage Your Online Store</h2>
         <p className="text-sm pt-3 pb-5">
@@ -200,12 +200,13 @@ const OnlineStore = () => {
                     plain
                   />
                   <Link href="/e-commerce/online-store/create">
-                    <Button
-                      ariaLabel="Create Online Store"
-                      text="Create Online Store"
-                      className="md:!w-48 !h-10 mb-5 md:mb-0"
-                      primary
-                    />
+
+                  <Button
+                    ariaLabel="Create Online Store"
+                    text="Create Online Store"
+                    className="md:!w-48 !h-10 mb-5 md:mb-0"
+                    primary
+                  />
                   </Link>
                 </div>
               </div>

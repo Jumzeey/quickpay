@@ -29,11 +29,9 @@ const VirtualAccountTransaction = () => {
     fetchVirtualAccountTransactions();
   }, [rehydrated, selectedItem]);
 
-  const fetchVirtualAccountTransactions = async () => {
+  const fetchVirtualAccountTransactions = async () => {    
     if (rehydrated) {
-      const transactions = await getVirtualAccountTransactions(
-        selectedItem.account_number
-      );
+      const transactions = await getVirtualAccountTransactions(selectedItem.account_number);
       setState({ ...state, transactions, isLoading: false });
     }
   };
@@ -42,7 +40,7 @@ const VirtualAccountTransaction = () => {
 
   return (
     <Layout pageTitle="Virtual Account Transactions" icon="virtual-accounts">
-      <WebPageTitle title="Virtual Account Transactions | Ramp Merchant Portal" />
+      <WebPageTitle title="Virtual Account Transactions | Sarepay Merchant Portal" />
       <div className="pt-5">
         {state.isLoading ? (
           <TableSkeleton />
@@ -60,7 +58,7 @@ const VirtualAccountTransaction = () => {
               Manage Virtual Accounts Transactions
             </h2>
             <p className="text-sm pt-3 pb-5">
-              Manage virtual accounts transaction within your company
+              Manage virtual accounts transaction within your company 
             </p>
             <Card>
               <div className="flex justify-between pb-5">

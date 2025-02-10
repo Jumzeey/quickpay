@@ -93,7 +93,7 @@ const CreatePaymentMandate = () => {
 
     validateOnMount: true,
 
-    onSubmit: async values => {
+    onSubmit: async (values) => {
       setIsLoading(true);
 
       const {
@@ -191,7 +191,7 @@ const CreatePaymentMandate = () => {
 
   return (
     <Layout pageTitle="Create Payment Mandate" icon="payment-mandate">
-      <WebPageTitle title="Create Payment Mandate | Ramp Merchant Portal" />
+      <WebPageTitle title="Create Payment Mandate | Sarepay Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"

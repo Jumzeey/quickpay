@@ -32,7 +32,7 @@ const Webhook = () => {
   const newUrl = removeHTTP(webhook?.webhook_url || "");
 
   const handleCheckboxChange = () => {
-    setWebhook(prevWebhook => ({
+    setWebhook((prevWebhook) => ({
       ...prevWebhook,
       enable_webhook: !prevWebhook.enable_webhook,
     }));
@@ -40,7 +40,7 @@ const Webhook = () => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
-    setWebhook(prevWebhook => ({
+    setWebhook((prevWebhook) => ({
       ...prevWebhook,
       webhook_url: value,
     }));
@@ -86,12 +86,12 @@ const Webhook = () => {
   };
 
   const updateWebhook = (values: any) => {
-    setWebhook(prev => ({ ...prev, ...values }));
+    setWebhook((prev) => ({ ...prev, ...values }));
   };
 
   return (
     <Layout pageTitle="Webhook" icon="webhook">
-      <WebPageTitle title="Webhook | Ramp Merchant Portal" />
+      <WebPageTitle title="Webhook | Sarepay Merchant Portal" />
       <div className="p-4 sm:p-6 lg:p-12 xl:p-36">
         {webhookLoading ? (
           <CardSkeleton />
@@ -114,35 +114,36 @@ const Webhook = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center rounded-lg mt-4 sm:mt-6">
-              <span className="bg-[#D3D3D3] sarepayPrimary font-semibold px-3 py-2 w-full sm:w-auto text-center">
-                URL
-              </span>
-              <div className="relative flex-1 bg-[#EEEEEE] text-gray-700 font-mono flex items-center">
-                <span className="absolute text-base left-3 text-gray-500 top-1/2 transform -translate-y-1/2">
-                  Https://
-                </span>
-                <input
-                  type="text"
-                  className="bg-[#EEEEEE] border-none webhookInput w-full pl-24 py-3 text-base h-full rounded-lg"
-                  value={newUrl || ""}
-                  onChange={handleChange}
-                  placeholder="Enter webhook URL"
-                  style={{ lineHeight: "1.5" }}
-                />
-                <span
-                  className="bg-[#D3D3D3] p-2 cursor-pointer ml-2 flex justify-center items-center rounded-lg"
-                  onClick={() => copyToClipboard(webhook?.webhook_url || "")}
-                  aria-label="Copy URL"
-                >
-                  <Image
-                    src="/images/dashboard/copy.svg"
-                    alt="Copy Icon"
-                    width={22}
-                    height={26}
-                  />
-                </span>
-              </div>
-            </div>
+  <span className="bg-[#D3D3D3] sarepayPrimary font-semibold px-3 py-2 w-full sm:w-auto text-center">
+    URL
+  </span>
+  <div className="relative flex-1 bg-[#EEEEEE] text-gray-700 font-mono flex items-center">
+    <span className="absolute text-base left-3 text-gray-500 top-1/2 transform -translate-y-1/2">
+      Https://
+    </span>
+    <input
+      type="text"
+      className="bg-[#EEEEEE] border-none webhookInput w-full pl-24 py-3 text-base h-full rounded-lg"
+      value={newUrl || ""}
+      onChange={handleChange}
+      placeholder="Enter webhook URL"
+      style={{ lineHeight: "1.5" }}
+    />
+    <span
+      className="bg-[#D3D3D3] p-2 cursor-pointer ml-2 flex justify-center items-center rounded-lg"
+      onClick={() => copyToClipboard(webhook?.webhook_url || "")}
+      aria-label="Copy URL"
+    >
+      <Image
+        src="/images/dashboard/copy.svg"
+        alt="Copy Icon"
+        width={22}
+        height={26}
+      />
+    </span>
+  </div>
+</div>
+         
 
             <div className="flex justify-end mt-8 sm:mt-12">
               <Button

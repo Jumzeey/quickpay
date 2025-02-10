@@ -3,17 +3,17 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Toaster } from "sonner";
 import SharedState from "@/context/sharedState";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { useState, useEffect, useRef, MutableRefObject } from "react";
 import { handleLogOut } from "@/util/utils";
 import { getToken } from "@/util/utils";
 import useAuthentication from "@/stores/useAuthentication";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["200", "300", "400", "500", "600", "700"],
-  variable: "--font-plus-jakarta",
-  display: "swap",
+  variable: "--font-plus",
+  display: 'swap',
 });
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -33,14 +33,11 @@ export default function App({ Component, pageProps }: AppProps) {
   };
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_APPLICATION_ENV === "production"
-    ) {
+    if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_APPLICATION_ENV === "production") {
       const initOpenReplay = async () => {
         const Tracker = (await import("@openreplay/tracker")).default;
         const trackerInstance = new Tracker({
-          projectKey: process.env.NEXT_PUBLIC_OPEN_REPLAY_KEY,
+          projectKey: process.env.NEXT_PUBLIC_OPEN_REPLAY_KEY
         });
         trackerInstance.start();
         setTracker(trackerInstance);
@@ -52,8 +49,8 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     if (tracker && user) {
       tracker.setUserID(user.email);
-      tracker.setMetadata("business_name", user.business_name);
-      tracker.setMetadata("business_type", user.business_type);
+      tracker.setMetadata('business_name', user.business_name);
+      tracker.setMetadata('business_type', user.business_type);
     }
   }, [tracker, user]);
 
@@ -82,7 +79,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <SharedState>
-      <main className={`${plusJakartaSans.variable} font-sans`}>
+      <main className={`${inter.variable} font-sans`}>
         <Toaster position="top-center" richColors />
         <meta
           name="viewport"

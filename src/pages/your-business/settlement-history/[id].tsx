@@ -31,14 +31,14 @@ const SettlementBreakdown = () => {
   ) => {
     try {
       const settlementRefs = await getSettlementBreakdown(id);
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         settlementRefs,
       }));
     } catch (error: any) {
       notifyError(error.message);
     } finally {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         isLoading: false,
       }));
@@ -66,7 +66,7 @@ const SettlementBreakdown = () => {
 
   return (
     <Layout pageTitle="Settlement Breakdown" icon="history">
-      <WebPageTitle title="Settlement Breakdown | Ramp Merchant Portal" />
+      <WebPageTitle title="Settlement Breakdown | Sarepay Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer pb-5"

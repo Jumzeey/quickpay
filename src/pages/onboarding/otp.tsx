@@ -95,12 +95,23 @@ const OtpPage = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
-      <WebPageTitle title="OTP | Ramp Merchant Portal" />
+    <div>
+      <WebPageTitle title="OTP | Sarepay Merchant Portal" />
       <NoSSR>
-        <div className="flex w-full min-h-screen justify-center">
-          {/* <Sidebar /> */}
-          <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
+        <div className="flex w-full min-h-screen">
+          <Sidebar />
+          <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10">
+            <div className="flex w-full justify-end">
+              <h6 className="text-sm">
+                Already have an account?
+                <Link
+                  href="/onboarding/sign-in"
+                  className="ml-1 underline-animation sarepayPrimary font-medium"
+                >
+                  Sign In
+                </Link>
+              </h6>
+            </div>
             <motion.div
               className="mt-52"
               variants={MultiStepAnimation}
@@ -110,7 +121,7 @@ const OtpPage = () => {
               <div className="mb-7">
                 <h1 className="font-semibold text-2xl">OTP Verification</h1>
                 <p className="font-light text-sm mt-2 mb-2 leading-6">
-                  We sent you a one time password to this email address:
+                  We sent you a one time password to this email address: 
                   <span className="font-medium">({userEmail})</span>
                 </p>
               </div>
@@ -121,7 +132,7 @@ const OtpPage = () => {
                   initialValue=""
                   type="numeric"
                   inputMode="number"
-                  onComplete={value => {
+                  onComplete={(value) => {
                     setOtp(value);
                   }}
                   style={screenWidth < 700 ? mobileStyle : desktopStyle}
@@ -129,7 +140,6 @@ const OtpPage = () => {
                     border: "1px solid #d6d7df",
                     borderRadius: "5px",
                     background: "#f4f5fb",
-                    color: "#042468",
                   }}
                   inputFocusStyle={{ border: "2px solid #164988" }}
                   autoSelect={true}
@@ -157,7 +167,7 @@ const OtpPage = () => {
                           : "text-primary"
                       }`}
                       onClick={
-                        isDisabled ? e => e.preventDefault() : resendOtpSubmit
+                        isDisabled ? (e) => e.preventDefault() : resendOtpSubmit
                       }
                     >
                       {resendOtpLoading ? (
@@ -172,17 +182,6 @@ const OtpPage = () => {
                     </span>
                   </p>
                 )}
-              </div>
-              <div className="flex w-full justify-end my-16">
-                <h6 className="text-sm">
-                  Already have an account?
-                  <Link
-                    href="/onboarding/sign-in"
-                    className="ml-1 underline-animation text-white font-medium"
-                  >
-                    Sign In
-                  </Link>
-                </h6>
               </div>
             </motion.div>
           </div>

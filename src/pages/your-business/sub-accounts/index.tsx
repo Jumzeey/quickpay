@@ -33,12 +33,7 @@ import Modal from "@/components/modal";
 import Loader from "@/components/loader";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import {
-  copyToClipboard,
-  notifyError,
-  notifySuccess,
-  truncateText,
-} from "@/util/utils";
+import { copyToClipboard, notifyError, notifySuccess, truncateText } from "@/util/utils";
 import Link from "next/link";
 import Pagination from "@/components/pagination";
 import debounce from "@/util/debounce";
@@ -245,7 +240,7 @@ const SubaccountHistory = () => {
 
   const fetchBankDetails = async () => {
     const bankDetails = await getBankDetails();
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       bankDetails,
       isLoading: false,
@@ -286,7 +281,7 @@ const SubaccountHistory = () => {
   return (
     <>
       <Layout pageTitle="Subaccounts" icon="sub-accounts">
-        <WebPageTitle title="Subaccounts| Ramp Merchant Portal" />
+        <WebPageTitle title="Subaccounts| Sarepay Merchant Portal" />
         <div>
           <h2 className="text-xl font-semibold">Manage Subaccounts</h2>
           <p className="text-sm pt-3 pb-5">
@@ -387,7 +382,7 @@ const SubaccountHistory = () => {
                         </div>
                       </td>
                       <td className="text-sm px-5 py-6">
-                        {truncateText(item.message, 25) || "N/A"}
+                      {truncateText(item.message, 25) || "N/A"}
                       </td>
                       <td className="text-sm px-5 py-6">
                         {item.created_at || "N/A"}
@@ -555,7 +550,7 @@ const SubaccountHistory = () => {
             </label>
             <select
               className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-              onChange={e => {
+              onChange={(e) => {
                 formik.setFieldValue("mode", e.target.value === "true");
               }}
               name="mode"
@@ -639,12 +634,12 @@ const SubaccountHistory = () => {
             {...formik.getFieldProps("message")}
           />
           <Button
-            className="text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded"
-            text={isLoading ? <Loader /> : "Submit"}
-            ariaLabel="Submit Button"
-            disabled={!formik.isValid || isLoading}
-            primary
-          />
+              className="text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded"
+              text={isLoading ? <Loader /> : "Submit"}
+              ariaLabel="Submit Button"
+              disabled={!formik.isValid || isLoading}
+              primary
+            />
         </form>
       </Modal>
     </>

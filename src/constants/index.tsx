@@ -7,22 +7,22 @@ export const sidebarLinks = [
   {
     href: "/wallet-history",
     icon: "wallet-history",
-    title: "Balance History",
+    title: "Wallet History",
   },
   {
     href: "/your-business/kyc-verification",
     icon: "business",
-    title: "Business Information",
+    title: "Your Business",
   },
-  // {
-  //   href: "/disbursements",
-  //   icon: "disbursement",
-  //   title: "Disbursements",
-  // },
+  {
+    href: "/disbursements",
+    icon: "disbursement",
+    title: "Disbursements",
+  },
   {
     href: "/collections",
     icon: "collections",
-    title: "Pay Ins",
+    title: "Collections",
   },
   // {
   //   href: "/e-commerce/online-store",
@@ -30,19 +30,14 @@ export const sidebarLinks = [
   //   title: "E-commerce",
   // },
   {
-    href: "/mids",
-    icon: "mids",
-    title: "MIDS",
-  },
-  {
     href: "/activity-log",
     icon: "activity-log",
-    title: "Audit Trail",
+    title: "Activity Log",
   },
   {
     href: "/settings",
     icon: "settings",
-    title: "Business Settings",
+    title: "Settings",
   },
 ];
 
@@ -50,7 +45,7 @@ export const yourBusiness = [
   {
     href: "/your-business/kyc-verification",
     icon: "kyc",
-    title: "Business Kyc Verification",
+    title: "Kyc Verification",
   },
   {
     href: "/your-business/webhook",
@@ -62,11 +57,11 @@ export const yourBusiness = [
     icon: "sub-accounts",
     title: "Sub Accounts",
   },
-  // {
-  //   href: "/your-business/settlement-accounts",
-  //   icon: "settlement-accounts",
-  //   title: "Settlement Accounts",
-  // },
+  {
+    href: "/your-business/settlement-accounts",
+    icon: "settlement-accounts",
+    title: "Settlement Accounts",
+  },
   {
     href: "/your-business/settlement-history",
     icon: "history",
@@ -127,21 +122,21 @@ export const collections = [
   {
     href: "/collections",
     icon: "collection-history",
-    title: "Pay In History",
+    title: "Collection History",
   },
-  // {
-  //   href: "/collections/virtual-accounts",
-  //   icon: "virtual-accounts",
-  //   title: "Virtual Accounts",
-  // },
+  {
+    href: "/collections/virtual-accounts",
+    icon: "virtual-accounts",
+    title: "Virtual Accounts",
+  },
   {
     href: "/collections/payment-links",
     icon: "link",
     title: "Payment Links",
   },
-  // {
-  //   href: "/collections/payment-mandate",
-  //   icon: "payment-mandate",
-  //   title: "Payment Mandate",
-  // },
+  {
+    href: "/collections/payment-mandate",
+    icon: "payment-mandate",
+    title: "Payment Mandate",
+  },
 ];

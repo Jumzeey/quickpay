@@ -67,18 +67,18 @@ const Dashboard = () => {
     setSelectedOption(value);
 
     try {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         refreshChart: true,
       }));
       const response = await populateCharts(value);
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         transactions: response,
       }));
     } catch (error) {
     } finally {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         refreshChart: false,
       }));
@@ -91,7 +91,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     const response = await handleDashboardData();
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       isLoading: false,
     }));
@@ -105,7 +105,7 @@ const Dashboard = () => {
       total_disbursements,
       total_collections,
     } = balances?.data || {};
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       available_balance,
       ledger_balance,
@@ -127,14 +127,12 @@ const Dashboard = () => {
 
   return (
     <Layout pageTitle="Dashboard" icon="dashboard">
-      <WebPageTitle title="Dashboard | Ramp Merchant Portal" />
+      <WebPageTitle title="Dashboard | Sarepay Merchant Portal" />
       <div>
         <div>
           <div className="flex xl:justify-between xl:grid xl:grid-cols-4 items-center gap-44 mb-2">
             <div className="flex items-center gap-3">
-              <span className="col-span-2 text-2xl text-primary font-semibold">
-                Balances
-              </span>
+              <span className="col-span-2">My Balances</span>
               <div>
                 <Image
                   src={
@@ -154,23 +152,21 @@ const Dashboard = () => {
             <div className="relative">
               <Icon
                 name="refresh"
-                className={`md:absolute md:-top-2 cursor-pointer transition-transform duration-500 ease-in-out`}
+                className={`md:absolute md:-top-4 cursor-pointer transition-transform duration-500 ease-in-out`}
                 style={{ transform: `rotate(${rotation}deg)` }}
-                onClick={e => handleRefresh(e)}
+                onClick={(e) => handleRefresh(e)}
               />
             </div>
           </div>
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {state.isLoading ? (
-              <Card className="flex flex-col justify-between h-[200px] !bg-available transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-                <div className="flex justify-end">
-                  <Skeleton width={30} height={20} />
-                </div>
+              <Card className="flex flex-col justify-between h-[170px]">
                 <div className="">
                   <div className="flex justify-between">
                     <span className="block w-[130px] rounded-lg pb-1">
                       <Skeleton className="h-2.5" />
                     </span>
+                    <Skeleton width={30} height={20} />
                   </div>
 
                   <span className="block w-[100px] rounded-lg pb-1">
@@ -181,20 +177,25 @@ const Dashboard = () => {
                   <span className="block w-[120px] rounded-lg pb-1">
                     <Skeleton className="h-2.5" />
                   </span>
-                  <span className="block w-[100px] rounded-lg pb-1">
+                <span className="block w-[100px] rounded-lg pb-1">
                     <Skeleton className="h-2.5" />
                   </span>
                 </div>
               </Card>
             ) : (
-              <Card className="h-[200px] text-white flex flex-col justify-between !bg-available transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-                <div className="flex justify-end">
-                  <Icon name="wallet" />
-                </div>
-
+              <Card className="bg-[url('/images/dashboard/card-background.svg')] h-[170px] bg-cover bg-no-repeat text-white flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between">
-                    <span className="text-lg">Available</span>
+                    <span className="text-sm">Available Balance</span>
+                    <div>
+                      <Image
+                        src="/images/dashboard/nigeria-flag.svg"
+                        alt="Image 1"
+                        width={30}
+                        height={30}
+                        priority
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -224,57 +225,45 @@ const Dashboard = () => {
             {dashboardAnalytics.map((item: any, index: number) => (
               <Card
                 key={index}
-                className={`flex flex-col justify-between h-[200px] text-white transition-all duration-300 transform hover:scale-105 hover:shadow-xl ${
-                  item.name.includes("Disbursements")
-                    ? "!bg-expenses"
-                    : "!bg-income"
-                }`}
+                className="flex flex-col justify-between h-[170px]"
               >
                 {state.isLoading ? (
                   <Fragment>
-                    <div className="flex justify-end">
-                      <Skeleton width={30} height={20} />
+                    <div className="flex justify-between items-center">
+                      <span className="block w-[130px] rounded-lg pb-1">
+                        <Skeleton className="h-2.5" />
+                      </span>
+                      <Skeleton circle width={48} height={48} />
                     </div>
-                    <div className="mb-6">
-                      <div className="flex justify-between">
-                        <span className="block w-[130px] rounded-lg pb-1">
-                          <Skeleton className="h-2.5" />
-                        </span>
-                      </div>
 
-                      <span className="block w-[100px] rounded-lg pb-1">
+                    <div className="">
+                      <span className="block pb-1 w-[80px] rounded-lg">
                         <Skeleton className="h-2.5" />
                       </span>
                     </div>
-                    <div></div>
                   </Fragment>
                 ) : (
                   <Fragment>
-                    <div className="flex justify-end">
-                      <Icon
-                        name={
-                          item.name.includes("Disbursements")
-                            ? "outgoing"
-                            : "incoming"
-                        }
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="pb-1 text-grey-400">{item.name}</span>
+                      <Image
+                        src={item.icon}
+                        alt="Card icons"
+                        width={32}
+                        height={32}
+                        priority
                       />
                     </div>
-                    <div className="mb-2">
-                      <div className="flex justify-between">
-                        <span className="text-lg">{item.name}</span>
-                      </div>
 
-                      <div>
-                        <h1 className="font-medium mt-2 text-xl">
-                          {isVisible
-                            ? item.name.includes("Disbursements")
-                              ? state.total_disbursements
-                              : state.total_collections
-                            : "********"}
-                        </h1>
-                      </div>
+                    <div className="flex flex-col text-sm">
+                      <span className="font-semibold text-grey-400 text-xl">
+                        {isVisible
+                          ? item.name.includes("Disbursements")
+                            ? state.total_disbursements
+                            : state.total_collections
+                          : "********"}
+                      </span>
                     </div>
-                    <div></div>
                   </Fragment>
                 )}
               </Card>

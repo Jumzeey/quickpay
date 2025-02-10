@@ -64,7 +64,7 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
+    <div className="w-full min-h-screen flex justify-center text-white bg-ramp ">
       <WebPageTitle title="Login | Ramp Merchant Portal" />
       <NoSSR>
         <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">

@@ -1,4 +1,4 @@
-import React from "react";
+
 
 const SVG: React.FC<{ color: string }> = ({ color }) => {
   return (

@@ -1,21 +1,19 @@
 
 
-const SVG = () => {
+const SVG: React.FC<{ color: string }> = ({ color }) => {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_2497_26428)">
-<path d="M5 16H19V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V16Z" stroke="#A4B0C3" stroke-width="2" stroke-linejoin="round"/>
-<path d="M4 7H20V14C20 15.1046 19.1046 16 18 16H6C4.89543 16 4 15.1046 4 14V7Z" stroke="#A4B0C3" stroke-width="2" stroke-linejoin="round"/>
-<rect x="12" y="12" width="0.01" height="0.01" stroke="#A4B0C3" stroke-width="3" stroke-linejoin="round"/>
-<path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#A4B0C3" stroke-width="2" stroke-linejoin="round"/>
-</g>
-<defs>
-<clipPath id="clip0_2497_26428">
-<rect width="24" height="24" fill="white"/>
-</clipPath>
-</defs>
-</svg>
-
+    <svg
+      width="20"
+      height="19"
+      viewBox="0 0 20 19"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M2 19C1.45 19 0.979002 18.804 0.587002 18.412C0.195002 18.02 -0.000664969 17.5493 1.69779e-06 17V6C1.69779e-06 5.45 0.196002 4.979 0.588002 4.587C0.980002 4.195 1.45067 3.99934 2 4H6V2C6 1.45 6.196 0.979002 6.588 0.587002C6.98 0.195002 7.45067 -0.000664969 8 1.69779e-06H12C12.55 1.69779e-06 13.021 0.196002 13.413 0.588002C13.805 0.980002 14.0007 1.45067 14 2V4H18C18.55 4 19.021 4.196 19.413 4.588C19.805 4.98 20.0007 5.45067 20 6V17C20 17.55 19.804 18.021 19.412 18.413C19.02 18.805 18.5493 19.0007 18 19H2ZM8 4H12V2H8V4ZM18 13H13V15H7V13H2V17H18V13ZM9 13H11V11H9V13ZM2 11H7V9H13V11H18V6H2V11Z"
+        fill={color}
+      />
+    </svg>
   );
 };
 

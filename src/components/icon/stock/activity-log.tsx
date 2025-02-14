@@ -1,7 +1,8 @@
-import React from "react";
+
 
 const SVG = () => {
   return (
+
     <svg
       width="24"
       height="24"

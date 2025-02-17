@@ -7,7 +7,7 @@ import Link from "next/link";
 import * as Yup from "yup";
 import {
   capitalizeFirstLetter,
-  nigerianPhoneNumberSchema,
+  // nigerianPhoneNumberSchema,
   notifyError,
 } from "@/util/utils";
 import { useFormik } from "formik";
@@ -20,13 +20,20 @@ import WebPageTitle from "@/components/WebPageTitle";
 import { MultiStepAnimation } from "@/animations";
 import { motion } from "framer-motion";
 import env from "@/config/env";
+import useLoadRecaptcha from "@/util/useLoadRecaptcha";
+
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
+}
 
 type RegisterType = {
   firstname: string;
   lastname: string;
   email: string;
   phone: string;
-  bvn: string;
+  // bvn: string;
   cac_document: string;
   nin: string;
   registration_number: string;
@@ -56,7 +63,7 @@ const RegisterPage: React.FC = () => {
     lastname: "",
     email: "",
     phone: "",
-    bvn: "",
+    // bvn: "",
     cac_document: "",
     nin: "",
     registration_number: "",
@@ -96,7 +103,7 @@ const RegisterPage: React.FC = () => {
       lastname: "",
       email: "",
       phone: "",
-      bvn: "",
+      // bvn: "",
       cac_document: "",
       nin: "",
       registration_number: "",
@@ -109,10 +116,10 @@ const RegisterPage: React.FC = () => {
     validationSchema: Yup.object().shape({
       firstname: Yup.string().required("First Name is required!"),
       lastname: Yup.string().required("Last Name is required!"),
-      phone: nigerianPhoneNumberSchema,
-      bvn: Yup.string()
-        .required("BVN is required!")
-        .matches(/^\d{11}$/, "BVN must be exactly 11 digits"),
+      phone: Yup.string().required("Phone number is required!"),
+      // bvn: Yup.string()
+      //   .required("BVN is required!")
+      //   .matches(/^\d{11}$/, "BVN must be exactly 11 digits"),
       nin: Yup.string().matches(/^\d{11}$/, "NIN must be exactly 11 digits"),
       cac_document: Yup.string(),
       registration_number: Yup.string(),
@@ -133,49 +140,62 @@ const RegisterPage: React.FC = () => {
         .required("You must agree to the terms"),
     }),
     validateOnMount: true,
-    onSubmit: async (values) => {
+    onSubmit: async values => {
       handleSubmit(values);
     },
   });
 
-  const recaptchaToken = (callback: Function) => {
-    const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    //@ts-ignore
-    grecaptcha.ready(function () {
-      //@ts-ignore
-      grecaptcha
-        .execute(recaptchaSiteKey, { action: "submit" })
-        .then(function (token: any) {
-          callback();
-        });
-    });
+  useLoadRecaptcha();
+
+  const recaptchaToken = async (): Promise<string | null> => {
+    if (!window.grecaptcha) {
+      console.error("reCAPTCHA is not loaded yet.");
+      return null;
+    }
+
+    try {
+      const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+      return await window.grecaptcha.execute(recaptchaSiteKey, {
+        action: "submit",
+      });
+    } catch (error) {
+      console.error("reCAPTCHA execution failed:", error);
+      return null;
+    }
   };
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     setIsLoading(true);
-    recaptchaToken(async () => {
+
+    try {
+      const token = await recaptchaToken();
+      if (!token) {
+        notifyError("Failed to verify reCAPTCHA. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
       const payload = {
         firstname: values.firstname,
         lastname: values.lastname,
         email: values.email,
         phone: values.phone,
-        bvn: values.bvn,
         password: values.password,
         password_confirmation: values.password_confirmation,
         business_name: values.business_name,
         agree_to_terms: values.agree_to_terms,
         business_type: params?.business,
+        recaptchaToken: token, // ✅ Send token to backend
       };
-      try {
-        const response = await signUp(payload);
-        formik.resetForm();
-        setSuccessModal(true);
-      } catch (error: any) {
-        notifyError(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    });
+
+      const response = await signUp(payload);
+      formik.resetForm();
+      setSuccessModal(true);
+    } catch (error: any) {
+      notifyError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Function to update password requirements
@@ -265,7 +285,7 @@ const RegisterPage: React.FC = () => {
                   {...formik.getFieldProps("business_name")}
                 />
                 <div className="flex">
-                  <div className="border-[1px] border-[#dcdcdc] rounded-md h-[60px] flex justify-center items-center px-[0.8rem] mr-2">
+                  {/* <div className="border-[1px] border-[#dcdcdc] rounded-md h-[60px] flex justify-center items-center px-[0.8rem] mr-2">
                     <Image
                       src="/images/nigeria.svg"
                       width={14}
@@ -275,7 +295,7 @@ const RegisterPage: React.FC = () => {
                     <span className="text-[#49454F] ml-1 text-[12px]">
                       +234
                     </span>
-                  </div>
+                  </div> */}
                   <FloatingLabelInput
                     label="Phone Number"
                     id="phone"
@@ -283,12 +303,12 @@ const RegisterPage: React.FC = () => {
                     htmlFor="phone"
                     formik={formik}
                     {...formik.getFieldProps("phone")}
-                    maxLength={10}
+                    maxLength={11}
                     numberOnly
                   />
                 </div>
               </div>
-              <FloatingLabelInput
+              {/* <FloatingLabelInput
                 label="BVN"
                 id="bvn"
                 type="text"
@@ -297,7 +317,7 @@ const RegisterPage: React.FC = () => {
                 maxLength={11}
                 {...formik.getFieldProps("bvn")}
                 numberOnly
-              />
+              /> */}
               <FloatingLabelInput
                 label="Email Address"
                 id="email"

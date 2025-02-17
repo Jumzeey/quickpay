@@ -63,8 +63,8 @@ const JoinUsPage: React.FC = () => {
                     headerText="Starter Business"
                     descriptionText="For Started Business:"
                     firstItem="A government-issued ID"
-                    secondItem="Bank Verification Number (BVN)"
-                    imageUrl2="/images/next-icon.svg"
+                    // secondItem="Bank Verification Number (BVN)"
+                    imageUrl2="/images/next-icon-alt.svg"
                     businessType="starter"
                     onClick={() => router.push("/onboarding/join-us/starter")}
                   />
@@ -73,9 +73,9 @@ const JoinUsPage: React.FC = () => {
                     headerText="Registered business account"
                     descriptionText="For registered businesses with corporate account information:"
                     firstItem="A government-issued ID"
-                    secondItem="Bank Verification Number (BVN)"
+                    // secondItem="Bank Verification Number (BVN)"
                     thirdItem="Business Registration Number"
-                    imageUrl2="/images/next-icon.svg"
+                    imageUrl2="/images/next-icon-alt.svg"
                     businessType="registered"
                     onClick={() =>
                       router.push("/onboarding/join-us/registered")

@@ -7,7 +7,7 @@ interface BoxProps {
   headerText: string;
   descriptionText: string;
   firstItem: string;
-  secondItem: string;
+  secondItem?: string;
   thirdItem?: string;
   fourthItem?: string;
   businessType?: string;
@@ -65,7 +65,7 @@ const BoxComponent: React.FC<BoxProps> = ({
         <p className="text-gray-300 text-sm mb-3">{descriptionText}</p>
         <ul className="space-y-1">
           <ListItemWithDot text={firstItem} />
-          <ListItemWithDot text={secondItem} />
+          {secondItem && <ListItemWithDot text={secondItem} />}
           {thirdItem && <ListItemWithDot text={thirdItem} />}
           {fourthItem && <ListItemWithDot text={fourthItem} />}
         </ul>

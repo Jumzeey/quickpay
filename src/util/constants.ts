@@ -1,6 +1,6 @@
 export const dashboardAnalytics = [
   {
-    name: "Total Disbursements",
+    name: "Rolling Reserve Balance",
     total: "2000",
     icon: "/images/dashboard/outflow.svg",
     percentage: "10%",

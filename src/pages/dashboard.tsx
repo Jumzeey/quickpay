@@ -162,7 +162,7 @@ const Dashboard = () => {
           </div>
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {state.isLoading ? (
-              <Card className="flex flex-col justify-between h-[200px] !bg-available transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+              <Card className="flex flex-col justify-between h-[200px] !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
                 <div className="flex justify-end">
                   <Skeleton width={30} height={20} />
                 </div>
@@ -187,7 +187,7 @@ const Dashboard = () => {
                 </div>
               </Card>
             ) : (
-              <Card className="h-[200px] text-white flex flex-col justify-between !bg-available transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+              <Card className="h-[200px] text-white flex flex-col justify-between !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
                 <div className="flex justify-end">
                   <Icon name="wallet" />
                 </div>
@@ -224,11 +224,7 @@ const Dashboard = () => {
             {dashboardAnalytics.map((item: any, index: number) => (
               <Card
                 key={index}
-                className={`flex flex-col justify-between h-[200px] text-white transition-all duration-300 transform hover:scale-105 hover:shadow-xl ${
-                  item.name.includes("Disbursements")
-                    ? "!bg-expenses"
-                    : "!bg-income"
-                }`}
+                className="flex flex-col justify-between h-[200px] text-black transition-all duration-300 transform hover:scale-105 hover:shadow-xl bg-white"
               >
                 {state.isLoading ? (
                   <Fragment>
@@ -253,7 +249,7 @@ const Dashboard = () => {
                     <div className="flex justify-end">
                       <Icon
                         name={
-                          item.name.includes("Disbursements")
+                          item.name.includes("Rolling Reserve Balance")
                             ? "outgoing"
                             : "incoming"
                         }
@@ -267,7 +263,7 @@ const Dashboard = () => {
                       <div>
                         <h1 className="font-medium mt-2 text-xl">
                           {isVisible
-                            ? item.name.includes("Disbursements")
+                            ? item.name.includes("Rolling Reserve Balance")
                               ? state.total_disbursements
                               : state.total_collections
                             : "********"}

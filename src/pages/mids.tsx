@@ -47,12 +47,12 @@ const Mids = () => {
                   >
                     <td className="text-sm px-5 py-6">{index + 1}</td>
                     <td className="text-sm px-5 py-6">
-                      {item.merchant_id || "N/A"}
+                      {item.merchantId || "N/A"}
                     </td>
                     <td className="text-sm px-5 py-6">
                       {item.business_name || "N/A"}
                     </td>
-                    <td className="text-sm px-5 py-6">
+                    <td className="text-sm px-5 py-6 capitalize">
                       {item.status || "N/A"}
                     </td>
                   </tr>

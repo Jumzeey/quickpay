@@ -1,5 +1,6 @@
 import api from "@/util/api";
 import { apiEndpoints } from "@/util/endpoints";
+import { notifyError } from "@/util/utils";
 
 export interface PaymentLinkPayload {
   title: string;
@@ -17,8 +18,8 @@ export async function getCollectionHistory(params?: object) {
       { params }
     );
     return response.data;
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    notifyError(error.message);
   }
 }
 

@@ -22,13 +22,17 @@ interface StateProps {
   mode: boolean | undefined;
   contactEmail: string;
   amount: string;
-  banks: [];
+  //   banks: [];
   selectedOption: string;
   accountName: string;
   percentage: string;
-  message: string;
+  description: string;
   accountNumber: string;
   isLoading: boolean;
+  siteName: string;
+  websiteUrl: string;
+  riskRating: string;
+  category: string;
 }
 
 const SubAccountForm: React.FC = () => {
@@ -45,7 +49,11 @@ const SubAccountForm: React.FC = () => {
       mode: undefined,
       contactEmail: "",
       percentage: "",
-      message: "",
+      description: "",
+      siteName: "",
+      websiteUrl: "",
+      riskRating: "",
+      category: "",
     },
     validationSchema: Yup.object().shape({
       accountNumber: Yup.string()
@@ -59,6 +67,12 @@ const SubAccountForm: React.FC = () => {
         .email("Invalid email format")
         .required("Contact email is required!"),
       percentage: Yup.string().required("Percentage is required!"),
+      siteName: Yup.string().required("Site name is required!"),
+      websiteUrl: Yup.string()
+        .url("Invalid URL format")
+        .required("Website URL is required!"),
+      riskRating: Yup.string().required("Risk rating is required!"),
+      category: Yup.string().required("Category is required!"),
     }),
     validateOnMount: true,
     onSubmit: async () => {
@@ -67,7 +81,7 @@ const SubAccountForm: React.FC = () => {
   });
 
   const [state, setState] = useState<StateProps>({
-    banks: [],
+    //     banks: [],
     selectedOption: "",
     accountNumber: "",
     accountName: "",
@@ -76,15 +90,19 @@ const SubAccountForm: React.FC = () => {
     mode: undefined,
     contactEmail: "",
     percentage: "",
-    message: "",
+    description: "",
     isLoading: false,
+    siteName: "",
+    websiteUrl: "",
+    riskRating: "",
+    category: "",
   });
 
   const accountNumber = formik.values.accountNumber;
-
+  /*
   useEffect(() => {
     fetchBanks();
-  }, []);
+  }, []);*/
 
   useEffect(() => {
     if (accountNumber.length === 10) {
@@ -92,10 +110,10 @@ const SubAccountForm: React.FC = () => {
     }
   }, [accountNumber]);
 
-  const fetchBanks = async () => {
-    const banks = await getBanks();
-    setState({ ...state, banks });
-  };
+  //   const fetchBanks = async () => {
+  //     const banks = await getBanks();
+  //     setState({ ...state, banks });
+  //   };
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const { value } = e.target;
@@ -106,14 +124,17 @@ const SubAccountForm: React.FC = () => {
     setIsLoading(true);
     const payload = {
       amount: removeCommasFromValue(formik.values.amount),
-      bank_code: state.selectedOption,
       account_number: formik.values.accountNumber,
       account_name: formik.values.accountName,
       merchant_name: formik.values.merchant_name,
       email: formik.values.contactEmail,
       mode: formik.values.mode,
       percentage: formik.values.percentage,
-      message: formik.values.message,
+      description: formik.values.description,
+      siteName: formik.values.siteName,
+      websiteUrl: formik.values.websiteUrl,
+      riskRating: formik.values.riskRating,
+      category: formik.values.category,
     };
     try {
       const response = await postSubAccountAmount(payload);
@@ -165,7 +186,7 @@ const SubAccountForm: React.FC = () => {
               </label>
               <select
                 className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                onChange={(e) => {
+                onChange={e => {
                   formik.setFieldValue("mode", e.target.value === "true");
                 }}
                 name="mode"
@@ -186,6 +207,24 @@ const SubAccountForm: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+              <FloatingLabelInput
+                label="Site Name"
+                id="siteName"
+                type="text"
+                htmlFor="siteName"
+                formik={formik}
+                {...formik.getFieldProps("siteName")}
+              />
+
+              <FloatingLabelInput
+                label="Website URL"
+                id="websiteUrl"
+                type="text"
+                htmlFor="websiteUrl"
+                formik={formik}
+                {...formik.getFieldProps("websiteUrl")}
+              />  
+
               <FloatingLabelInput
                 label="Merchant Name"
                 id="merchant_name"
@@ -212,7 +251,15 @@ const SubAccountForm: React.FC = () => {
               formik={formik}
               {...formik.getFieldProps("contactEmail")}
             />
-            <div>
+            <FloatingLabelInput
+              label="Risk Rating"
+              id="riskRating"
+              type="text"
+              htmlFor="riskRating"
+              formik={formik}
+              {...formik.getFieldProps("riskRating")}
+            />
+            {/*<div>
               <label className="text-sm block mb-2">Select bank</label>
               <select
                 className="h-[45px] sm:h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm sm:text-base"
@@ -227,8 +274,19 @@ const SubAccountForm: React.FC = () => {
                   </option>
                 ))}
               </select>
+            </div>*/}
+            <div>
+              <label className="font-semibold">Category</label>
+              <select
+                className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+                {...formik.getFieldProps("category")}
+              >
+                <option value="">--Select Category--</option>
+                <option value="finance">Finance</option>
+                <option value="ecommerce">E-commerce</option>
+                <option value="healthcare">Healthcare</option>
+              </select>
             </div>
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 mt-4">
               <div>
                 <FloatingLabelInput
@@ -272,12 +330,12 @@ const SubAccountForm: React.FC = () => {
               )}
             </div>
             <FloatingLabelInput
-              label="Message"
-              id="message"
+              label="Description"
+              id="description"
               type="text"
               htmlFor="message"
               formik={formik}
-              {...formik.getFieldProps("message")}
+              {...formik.getFieldProps("description")}
             />
             <Button
               className="text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded"

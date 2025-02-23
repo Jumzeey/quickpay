@@ -20,6 +20,8 @@ interface stateProps {
   ledger_balance: string;
   locked_balance: string;
   settlement_balance: string;
+  rolling_reserve: string;
+  rolling_reserve_ledger: string;
   total_disbursements: string;
   total_collections: string;
   transactions: any[];
@@ -56,8 +58,10 @@ const Dashboard = () => {
     ledger_balance: "",
     locked_balance: "",
     settlement_balance: "",
-    total_disbursements: "",
+    rolling_reserve: "",
+    rolling_reserve_ledger: "",
     total_collections: "",
+    total_disbursements: "",
     transactions: [],
     settlements: [],
   });
@@ -98,23 +102,24 @@ const Dashboard = () => {
     const { balances, transactions, settlements } = response;
 
     const {
-      available_balance,
-      ledger_balance,
-      locked_balance,
-      settlement_balance,
-      total_disbursements,
-      total_collections,
-    } = balances?.data || {};
+      main_account_balance,
+      rolling_reserve_account_balance,
+      // locked_balance,
+      // settlement_balance,
+      // total_disbursements,
+      // total_collections,
+    } = balances?.data?.balances || {};
     setState(prevState => ({
       ...prevState,
-      available_balance,
-      ledger_balance,
-      locked_balance,
-      settlement_balance,
+      available_balance: `$${main_account_balance?.available_balance}`,
+      ledger_balance: `$${main_account_balance?.ledger_balance}`,
+      locked_balance: `$${main_account_balance?.available_balance}`,
+      settlement_balance:  `$${main_account_balance?.available_balance}`,
       transactions,
       settlements,
-      total_disbursements,
-      total_collections,
+      rolling_reserve: `$${rolling_reserve_account_balance?.available_balance}`,
+      rolling_reserve_ledger: `$${rolling_reserve_account_balance?.ledger_balance}`,
+      // total_collections,
     }));
   };
 
@@ -181,9 +186,9 @@ const Dashboard = () => {
                   <span className="block w-[120px] rounded-lg pb-1">
                     <Skeleton className="h-2.5" />
                   </span>
-                  <span className="block w-[100px] rounded-lg pb-1">
+                  {/*<span className="block w-[100px] rounded-lg pb-1">
                     <Skeleton className="h-2.5" />
-                  </span>
+                  </span>*/}
                 </div>
               </Card>
             ) : (
@@ -211,12 +216,12 @@ const Dashboard = () => {
                       {isVisible ? state.ledger_balance : "********"}
                     </span>
                   </p>
-                  <p className="text-xs">
+                  {/* <p className="text-xs">
                     Locked:&nbsp;
                     <span className="font-semibold text-xs">
                       {isVisible ? state.locked_balance : "********"}
                     </span>
-                  </p>
+                  </p> */}
                 </div>
               </Card>
             )}
@@ -231,7 +236,7 @@ const Dashboard = () => {
                     <div className="flex justify-end">
                       <Skeleton width={30} height={20} />
                     </div>
-                    <div className="mb-6">
+                    <div className="">
                       <div className="flex justify-between">
                         <span className="block w-[130px] rounded-lg pb-1">
                           <Skeleton className="h-2.5" />
@@ -242,7 +247,14 @@ const Dashboard = () => {
                         <Skeleton className="h-2.5" />
                       </span>
                     </div>
-                    <div></div>
+                    <div className="flex items-center justify-between flex-wrap">
+                  <span className="block w-[120px] rounded-lg pb-1">
+                    <Skeleton className="h-2.5" />
+                  </span>
+                  {/*<span className="block w-[100px] rounded-lg pb-1">
+                    <Skeleton className="h-2.5" />
+                  </span>*/}
+                </div>
                   </Fragment>
                 ) : (
                   <Fragment>
@@ -250,8 +262,8 @@ const Dashboard = () => {
                       <Icon
                         name={
                           item.name.includes("Rolling Reserve Balance")
-                            ? "outgoing"
-                            : "incoming"
+                              ? "outgoing"
+                              : "incoming"
                         }
                       />
                     </div>
@@ -264,13 +276,21 @@ const Dashboard = () => {
                         <h1 className="font-medium mt-2 text-xl">
                           {isVisible
                             ? item.name.includes("Rolling Reserve Balance")
-                              ? state.total_disbursements
+                              ? state.rolling_reserve
                               : state.total_collections
                             : "********"}
                         </h1>
                       </div>
                     </div>
-                    <div></div>
+                   <div className="flex items-center justify-between flex-wrap">
+                  <p className="text-xs">
+                    Ledger:&nbsp;
+                    <span className="font-semibold text-xs">
+                      {isVisible ? state.rolling_reserve_ledger : "********"}
+                    </span>
+                  </p>
+
+                </div>
                   </Fragment>
                 )}
               </Card>

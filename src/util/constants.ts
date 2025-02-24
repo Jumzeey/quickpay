@@ -9,7 +9,7 @@ export const dashboardAnalytics = [
     name: "Total Pay Ins",
     total: "5000",
     icon: "/images/dashboard/inflow.svg",
-    percentage: "20%", 
+    percentage: "20%",
   },
 ];
 

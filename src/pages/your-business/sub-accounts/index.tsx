@@ -51,7 +51,7 @@ interface SubaccountsProps {
   dropdownIndex: null | number;
   showFilter: boolean;
   selectedOption: string;
-  banks: [];
+  //   banks: [];
   accountNumber: string;
   mode: string | undefined;
 }
@@ -96,9 +96,13 @@ const SubaccountHistory = () => {
       accountName: "",
       merchant_name: "",
       mode: undefined,
-      email: "",
-      message: "",
+      contactEmail: "",
       percentage: "",
+      description: "",
+      siteName: "",
+      websiteUrl: "",
+      riskRating: "",
+      category: "",
     },
     validationSchema: Yup.object().shape({
       accountNumber: Yup.string()
@@ -106,12 +110,17 @@ const SubaccountHistory = () => {
         .min(10, "Account number must be 10 digits"),
       accountName: Yup.string().required("Account name is required!"),
       merchant_name: Yup.string().required("Merchant name is required!"),
-      mode: Yup.boolean().required("Sub Account Mode is required!"),
-      email: Yup.string()
+      mode: Yup.boolean().required("Mode is required!"),
+      contactEmail: Yup.string()
         .email("Invalid email format")
         .required("Contact email is required!"),
-      message: Yup.string().required("Message is required!"),
       percentage: Yup.string().required("Percentage is required!"),
+      siteName: Yup.string().required("Site name is required!"),
+      websiteUrl: Yup.string()
+        .url("Invalid URL format")
+        .required("Website URL is required!"),
+      riskRating: Yup.string().required("Risk rating is required!"),
+      category: Yup.string().required("Category is required!"),
     }),
     validateOnMount: true,
     onSubmit: async (values, { resetForm }) => {
@@ -125,17 +134,17 @@ const SubaccountHistory = () => {
     showSubaccounts: false,
     dropdownIndex: null,
     showFilter: false,
-    banks: [],
+    //     banks: [],
     selectedOption: "",
     accountNumber: "",
     mode: undefined,
   });
-  const accountNumber = formik.values.accountNumber;
+  // const accountNumber = formik.values.accountNumber;
 
-  const fetchBanks = async () => {
-    const banks = await getBanks();
-    setState({ ...state, banks });
-  };
+  //   const fetchBanks = async () => {
+  //     const banks = await getBanks();
+  //     setState({ ...state, banks });
+  //   };
 
   const handleModalChange = async () => {
     const payload = {
@@ -166,33 +175,36 @@ const SubaccountHistory = () => {
     });
   };
 
-  const nameCheck = async () => {
-    const payload = {
-      bank_code: state.selectedOption,
-      account_number: accountNumber,
-    };
-    try {
-      setState({ ...state, isLoading: true });
-      const accountName = await performNameCheck(payload);
-      formik.setFieldValue("accountName", accountName);
-    } catch (error: any) {
-      notifyError(error.message);
-    } finally {
-      setState({ ...state, isLoading: false });
-    }
-  };
+  // const nameCheck = async () => {
+  //   const payload = {
+  //     bank_code: state.selectedOption,
+  //     account_number: accountNumber,
+  //   };
+  //   try {
+  //     setState({ ...state, isLoading: true });
+  //     const accountName = await performNameCheck(payload);
+  //     formik.setFieldValue("accountName", accountName);
+  //   } catch (error: any) {
+  //     notifyError(error.message);
+  //   } finally {
+  //     setState({ ...state, isLoading: false });
+  //   }
+  // };
 
   const updateSubaccount = async (resetForm: () => void) => {
     setIsLoading(true);
     const payload = {
-      bank_code: state.selectedOption,
       account_number: formik.values.accountNumber,
       account_name: formik.values.accountName,
       merchant_name: formik.values.merchant_name,
-      email: formik.values.email,
+      email: formik.values.contactEmail,
       mode: formik.values.mode,
-      message: formik.values.message,
       percentage: formik.values.percentage,
+      description: formik.values.description,
+      siteName: formik.values.siteName,
+      websiteUrl: formik.values.websiteUrl,
+      riskRating: formik.values.riskRating,
+      category: formik.values.category,
       id: activeId,
     };
     try {
@@ -219,13 +231,13 @@ const SubaccountHistory = () => {
 
   const updateModal = async (id: any) => {
     setActiveId(id);
-    fetchBanks();
+    //     fetchBanks();
     setIsUpdateOpen(true);
   };
 
-  useEffect(() => {
-    fetchBankDetails();
-  }, []);
+  //   useEffect(() => {
+  //     fetchBankDetails();
+  //   }, []);
 
   const handleDropdownToggle = (index: number | null, selectedItem: any) => {
     setState({
@@ -243,14 +255,14 @@ const SubaccountHistory = () => {
     });
   };
 
-  const fetchBankDetails = async () => {
-    const bankDetails = await getBankDetails();
-    setState(prevState => ({
-      ...prevState,
-      bankDetails,
-      isLoading: false,
-    }));
-  };
+  //   const fetchBankDetails = async () => {
+  //     const bankDetails = await getBankDetails();
+  //     setState(prevState => ({
+  //       ...prevState,
+  //       bankDetails,
+  //       isLoading: false,
+  //     }));
+  //   };
 
   const debouncedHandleParamsChange = useCallback(
     debounce((value: string) => {
@@ -277,11 +289,11 @@ const SubaccountHistory = () => {
     });
   }, [searchInput, currentPage]);
 
-  useEffect(() => {
-    if (accountNumber.length === 10) {
-      nameCheck();
-    }
-  }, [accountNumber]);
+  // useEffect(() => {
+  //   if (accountNumber.length === 10) {
+  //     nameCheck();
+  //   }
+  // }, [accountNumber]);
 
   return (
     <>
@@ -532,6 +544,23 @@ const SubaccountHistory = () => {
         <form onSubmit={formik.handleSubmit}>
           <div className="grid grid-cols-2 gap-5">
             <FloatingLabelInput
+              label="Site Name"
+              id="siteName"
+              type="text"
+              htmlFor="siteName"
+              formik={formik}
+              {...formik.getFieldProps("siteName")}
+            />
+
+            <FloatingLabelInput
+              label="Website URL"
+              id="websiteUrl"
+              type="text"
+              htmlFor="websiteUrl"
+              formik={formik}
+              {...formik.getFieldProps("websiteUrl")}
+            />
+            <FloatingLabelInput
               label="Merchant Name"
               id="merchant_name"
               type="text"
@@ -585,7 +614,15 @@ const SubaccountHistory = () => {
           <p>
             If provided, this email address will get transaction notification
           </p>
-          <div className="mt-5">
+          <FloatingLabelInput
+            label="Risk Rating"
+            id="riskRating"
+            type="text"
+            htmlFor="riskRating"
+            formik={formik}
+            {...formik.getFieldProps("riskRating")}
+          />
+          {/* <div className="mt-5">
             <label className="font-semibold">Select bank</label>
             <select
               className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
@@ -600,7 +637,21 @@ const SubaccountHistory = () => {
                 </option>
               ))}
             </select>
+          </div> */}
+
+          <div>
+            <label className="font-semibold">Category</label>
+            <select
+              className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+              {...formik.getFieldProps("category")}
+            >
+              <option value="">--Select Category--</option>
+              <option value="finance">Finance</option>
+              <option value="ecommerce">E-commerce</option>
+              <option value="healthcare">Healthcare</option>
+            </select>
           </div>
+
           <div className="grid grid-cols-2 gap-5">
             <FloatingLabelInput
               label="Account number"
@@ -631,12 +682,12 @@ const SubaccountHistory = () => {
             </div>
           </div>
           <FloatingLabelInput
-            label="Message"
-            id="message"
+            label="Description"
+            id="description"
             type="text"
             htmlFor="message"
             formik={formik}
-            {...formik.getFieldProps("message")}
+            {...formik.getFieldProps("description")}
           />
           <Button
             className="text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded"

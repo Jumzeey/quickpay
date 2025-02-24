@@ -19,8 +19,8 @@ const ActiveLink = ({ router, href, icon, title }: ActiveLinkProps) => {
         href={href}
         className={`flex items-center gap-3 px-2.5 py-2.5 ${
           isActive
-            ? "bg-primary text-white w-[89%] rounded-lg"
-            : "text-[#696969] w-full hover:bg-[#8db6ec] hover:bg-opacity-10 hover:rounded-lg hover:w-[89%]"
+            ? "bg-primary text-white w-full rounded-lg"
+            : "text-[#696969] w-full hover:bg-[#8db6ec] hover:bg-opacity-10 hover:rounded-lg "
         }`}
       >
         <Icon

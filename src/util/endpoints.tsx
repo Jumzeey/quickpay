@@ -14,14 +14,14 @@ export const apiEndpoints = {
     GET_BANK_DETAILS: "/merchant/settlements/accounts/default-account",
   },
   transaction: {
-    GET_BALANCE: "/merchant/dashboard/balance",
+    GET_BALANCE: "/merchant/client/get-balance",
     GET_TRANSACTIONS: "/merchant/dashboard/transactions",
     GET_SETTLEMENT_ACCOUNTS: "/merchant/settlements/accounts",
     ADD_SETTLEMENT_ACCOUNT: "/merchant/settlements/accounts/store",
     GET_SETTLEMENT_HISTORY: "/merchant/settlements/history",
     POPULATE_SETTLEMENT_CHARTS: "/merchant/dashboard/settlement-chart",
     CHANGE_ACCOUNT_STATUS: "/merchant/settlements/accounts",
-    GET_WALLET_HISTORY: "/merchant/wallet-history",
+    GET_WALLET_HISTORY: "/merchant/client/get-wallet-logs",
   },
   collections: {
     GET_COLLECTION_HISTORY: "/merchant/collections-history",

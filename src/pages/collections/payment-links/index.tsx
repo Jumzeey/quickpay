@@ -77,7 +77,7 @@ const PaymentLinks = () => {
         pausedLinks: paused_links,
       }));
     } catch (error: any) {
-      notifyError(error.message);
+      notifyError("error.message");
     } finally {
       setState(prevState => ({
         ...prevState,

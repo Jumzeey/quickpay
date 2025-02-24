@@ -104,6 +104,7 @@ const Dashboard = () => {
     const {
       main_account_balance,
       rolling_reserve_account_balance,
+      totalPayIn,
       // locked_balance,
       // settlement_balance,
       // total_disbursements,
@@ -114,12 +115,12 @@ const Dashboard = () => {
       available_balance: `$${main_account_balance?.available_balance}`,
       ledger_balance: `$${main_account_balance?.ledger_balance}`,
       locked_balance: `$${main_account_balance?.available_balance}`,
-      settlement_balance:  `$${main_account_balance?.available_balance}`,
+      settlement_balance: `$${main_account_balance?.available_balance}`,
       transactions,
       settlements,
       rolling_reserve: `$${rolling_reserve_account_balance?.available_balance}`,
       rolling_reserve_ledger: `$${rolling_reserve_account_balance?.ledger_balance}`,
-      // total_collections,
+      total_collections: `$${totalPayIn}`,
     }));
   };
 
@@ -248,13 +249,13 @@ const Dashboard = () => {
                       </span>
                     </div>
                     <div className="flex items-center justify-between flex-wrap">
-                  <span className="block w-[120px] rounded-lg pb-1">
-                    <Skeleton className="h-2.5" />
-                  </span>
-                  {/*<span className="block w-[100px] rounded-lg pb-1">
+                      <span className="block w-[120px] rounded-lg pb-1">
+                        <Skeleton className="h-2.5" />
+                      </span>
+                      {/*<span className="block w-[100px] rounded-lg pb-1">
                     <Skeleton className="h-2.5" />
                   </span>*/}
-                </div>
+                    </div>
                   </Fragment>
                 ) : (
                   <Fragment>
@@ -262,8 +263,8 @@ const Dashboard = () => {
                       <Icon
                         name={
                           item.name.includes("Rolling Reserve Balance")
-                              ? "outgoing"
-                              : "incoming"
+                            ? "outgoing"
+                            : "incoming"
                         }
                       />
                     </div>
@@ -282,15 +283,18 @@ const Dashboard = () => {
                         </h1>
                       </div>
                     </div>
-                   <div className="flex items-center justify-between flex-wrap">
-                  <p className="text-xs">
-                    Ledger:&nbsp;
-                    <span className="font-semibold text-xs">
-                      {isVisible ? state.rolling_reserve_ledger : "********"}
-                    </span>
-                  </p>
-
-                </div>
+                    <div className="flex items-center justify-between flex-wrap">
+                      {item.name.includes("Rolling Reserve Balance") && (
+                        <p className="text-xs">
+                          Ledger:&nbsp;
+                          <span className="font-semibold text-xs">
+                            {isVisible
+                              ? state.rolling_reserve_ledger
+                              : "********"}
+                          </span>
+                        </p>
+                      )}
+                    </div>
                   </Fragment>
                 )}
               </Card>

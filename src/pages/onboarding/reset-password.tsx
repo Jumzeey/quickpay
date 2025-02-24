@@ -75,14 +75,20 @@ const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full min-h-screen justify-center text-white bg-ramp">
       <WebPageTitle title="Login | Ramp Merchant Portal" />
-      <Sidebar />
+      {/* <Sidebar /> */}
       <NoSSR>
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10">
+        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
           <div className="flex w-full justify-end">
             <h6 className="font-thin text-sm">
-              Already have an account? <Link href="/onboarding/sign-in" className="font-bold sarepayPrimary underline-animation">Sign In</Link>
+              Already have an account?{" "}
+              <Link
+                href="/onboarding/sign-in"
+                className="font-medium text-white underline-animation"
+              >
+                Sign In
+              </Link>
             </h6>
           </div>
           <motion.div
@@ -91,57 +97,59 @@ const ResetPasswordPage: React.FC = () => {
             initial="hidden"
             animate="visible"
           >
-          <div>
-            <h1 className="font-bold text-2xl">Reset Password</h1>
-            <p className="font-light text-sm mt-2 mb-2">Kindly provide your new password</p>
-            <form onSubmit={formik.handleSubmit} className="mt-10">
-              <FloatingLabelInput
-                label="Email Address"
-                id="email"
-                type="email"
-                htmlFor="email"
-                formik={formik}
-                {...formik.getFieldProps("email")}
-              />
-              <FloatingLabelInput
-                label="Password"
-                id="password"
-                type="password"
-                htmlFor="password"
-                formik={formik}
-                {...formik.getFieldProps("password")}
-              />
-              <FloatingLabelInput
-                label="Confirm Password"
-                id="password_confirmation"
-                type="password"
-                htmlFor="password_confirmation"
-                formik={formik}
-                {...formik.getFieldProps("password_confirmation")}
-              />
-
-              <div className="flex justify-center mt-12">
-                <Button
-                  text={isLoading ? <Loader /> : "Reset Password"}
-                  ariaLabel="Reset Password Button"
-                  disabled={isLoading}
-                  primary
+            <div>
+              <h1 className="font-bold text-2xl">Reset Password</h1>
+              <p className="font-light text-sm mt-2 mb-2">
+                Kindly provide your new password
+              </p>
+              <form onSubmit={formik.handleSubmit} className="mt-10">
+                <FloatingLabelInput
+                  label="Email Address"
+                  id="email"
+                  type="email"
+                  htmlFor="email"
+                  formik={formik}
+                  {...formik.getFieldProps("email")}
                 />
+                <FloatingLabelInput
+                  label="Password"
+                  id="password"
+                  type="password"
+                  htmlFor="password"
+                  formik={formik}
+                  {...formik.getFieldProps("password")}
+                />
+                <FloatingLabelInput
+                  label="Confirm Password"
+                  id="password_confirmation"
+                  type="password"
+                  htmlFor="password_confirmation"
+                  formik={formik}
+                  {...formik.getFieldProps("password_confirmation")}
+                />
+
+                <div className="flex justify-center mt-12">
+                  <Button
+                    text={isLoading ? <Loader /> : "Reset Password"}
+                    ariaLabel="Reset Password Button"
+                    disabled={isLoading}
+                    primary
+                  />
+                </div>
+              </form>
+              <div className="flex justify-center mt-5">
+                <Image
+                  src={"/images/lock.svg"}
+                  alt={"locked"}
+                  width={10}
+                  height={24}
+                  priority
+                />
+                <span className="ml-3 infoGrey text-xs">
+                  Your Info is safely secured
+                </span>
               </div>
-            </form>
-            <div className="flex justify-center mt-5">
-              <Image
-                src={"/images/lock.svg"}
-                alt={"locked"}
-                width={10}
-                height={24}
-                priority
-              />
-              <span className="ml-3 infoGrey text-xs">
-                Your Info is safely secured
-              </span>
             </div>
-          </div>
           </motion.div>
         </div>
       </NoSSR>

@@ -100,7 +100,7 @@ const WalletHistory = () => {
         </p> */}
         {getWalletHistoryLoading ? (
           <TableSkeleton singleButton />
-        ) : wallet_history.length !== 0 ? (
+        ) : wallet_history?.length !== 0 ? (
           <Fragment>
             <Card>
               <div className="flex flex-col md:flex-row justify-end gap-4 mt-5">
@@ -128,7 +128,7 @@ const WalletHistory = () => {
               </div>
               <div className="flex md:justify-end pb-5"></div>
               <Table columns={columns} className="mt-7">
-                {wallet_history.map((item: any, index: number) => {
+                {wallet_history?.map((item: any, index: number) => {
                   const activeItem = item.status === "Active";
                   return (
                     <tr

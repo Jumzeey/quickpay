@@ -8,7 +8,12 @@ import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import Button from "@/components/button";
 import Image from "next/image";
-import { downloadFile, formatBalance, formatDate, notifyError } from "@/util/utils";
+import {
+  downloadFile,
+  formatBalance,
+  formatDate,
+  notifyError,
+} from "@/util/utils";
 import useFilter from "@/stores/useFilter";
 import Dropdown from "@/components/Dropdown";
 import Filter from "@/components/Filter";
@@ -78,26 +83,22 @@ const WalletHistory = () => {
     }
   };
 
-   useEffect(() => {
-     fetchWalletHistory({
-       page: currentPage,
-       per_page: pagination.per_page,
-       ...(filter.startDate
-         ? {
-             start_date: formatDate(filter.startDate),
-             end_date: formatDate(filter.endDate),
-           }
-         : {}),
-     });
-   }, [currentPage, filter.endDate, filter.startDate, pagination.per_page]); // Added pagination.per_page to dependency array
+  useEffect(() => {
+    fetchWalletHistory({
+      page: currentPage,
+      ...(filter.startDate
+        ? {
+            start_date: formatDate(filter.startDate),
+            end_date: formatDate(filter.endDate),
+          }
+        : {}),
+    });
+  }, [currentPage, filter.endDate, filter.startDate]);
 
-   // Calculate the start and end index for the current page
-   const startIndex = (currentPage - 1) * pagination.per_page;
-   const endIndex = startIndex + pagination.per_page;
+  const startIndex = (currentPage - 1) * pagination.per_page;
+  const endIndex = startIndex + pagination.per_page;
 
-   // Slice the wallet_history array to display only the current page's items
-   const currentPageHistory = wallet_history.slice(startIndex, endIndex);
-
+  const currentPageHistory = wallet_history.slice(startIndex, endIndex);
 
   return (
     <Layout pageTitle="Balance History" icon="wallet-history">

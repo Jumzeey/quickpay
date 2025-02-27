@@ -21,13 +21,13 @@ interface StateProps {
   merchant_name: string;
   mode: boolean | undefined;
   contactEmail: string;
-  amount: string;
+  // amount: string;
   //   banks: [];
-  selectedOption: string;
-  accountName: string;
+  // selectedOption: string;
+  // accountName: string;
   percentage: string;
   description: string;
-  accountNumber: string;
+  // accountNumber: string;
   isLoading: boolean;
   siteName: string;
   websiteUrl: string;
@@ -42,9 +42,9 @@ const SubAccountForm: React.FC = () => {
 
   const formik = useFormik({
     initialValues: {
-      accountNumber: "",
-      accountName: "",
-      amount: "",
+      // accountNumber: "",
+      // accountName: "",
+      // amount: "",
       merchant_name: "",
       mode: undefined,
       contactEmail: "",
@@ -56,11 +56,11 @@ const SubAccountForm: React.FC = () => {
       category: "",
     },
     validationSchema: Yup.object().shape({
-      accountNumber: Yup.string()
-        .required("Account number is required!")
-        .min(10, "Account number must be 10 digits"),
-      accountName: Yup.string().required("Account name is required!"),
-      amount: Yup.string().required("Amount is required!"),
+      // accountNumber: Yup.string()
+      //   .required("Account number is required!")
+      //   .min(10, "Account number must be 10 digits"),
+      // accountName: Yup.string().required("Account name is required!"),
+      // amount: Yup.string().required("Amount is required!"),
       merchant_name: Yup.string().required("Merchant name is required!"),
       mode: Yup.boolean().required("Mode is required!"),
       contactEmail: Yup.string()
@@ -82,10 +82,10 @@ const SubAccountForm: React.FC = () => {
 
   const [state, setState] = useState<StateProps>({
     //     banks: [],
-    selectedOption: "",
-    accountNumber: "",
-    accountName: "",
-    amount: "",
+    // selectedOption: "",
+    // accountNumber: "",
+    // accountName: "",
+    // amount: "",
     merchant_name: "",
     mode: undefined,
     contactEmail: "",
@@ -98,43 +98,43 @@ const SubAccountForm: React.FC = () => {
     category: "",
   });
 
-  const accountNumber = formik.values.accountNumber;
+  // const accountNumber = formik.values.accountNumber;
   /*
   useEffect(() => {
     fetchBanks();
   }, []);*/
 
-  useEffect(() => {
-    if (accountNumber.length === 10) {
-      nameCheck();
-    }
-  }, [accountNumber]);
+  // useEffect(() => {
+  //   if (accountNumber.length === 10) {
+  //     nameCheck();
+  //   }
+  // }, [accountNumber]);
 
   //   const fetchBanks = async () => {
   //     const banks = await getBanks();
   //     setState({ ...state, banks });
   //   };
 
-  const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const { value } = e.target;
-    setState({ ...state, selectedOption: value });
-  };
+  // const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  //   const { value } = e.target;
+  //   setState({ ...state, selectedOption: value });
+  // };
 
   const postDisbursement = async () => {
     setIsLoading(true);
     const payload = {
-      amount: removeCommasFromValue(formik.values.amount),
-      account_number: formik.values.accountNumber,
-      account_name: formik.values.accountName,
+      // amount: removeCommasFromValue(formik.values.amount),
+      // account_number: formik.values.accountNumber,
+      // account_name: formik.values.accountName,
       merchant_name: formik.values.merchant_name,
-      email: formik.values.contactEmail,
       mode: formik.values.mode,
+      email: formik.values.contactEmail,
       percentage: formik.values.percentage,
-      description: formik.values.description,
-      siteName: formik.values.siteName,
-      websiteUrl: formik.values.websiteUrl,
-      riskRating: formik.values.riskRating,
+      website_url: formik.values.websiteUrl,
+      risk_rating: formik.values.riskRating,
+      site_name: formik.values.siteName,
       category: formik.values.category,
+      description: formik.values.description,
     };
     try {
       const response = await postSubAccountAmount(payload);
@@ -149,21 +149,21 @@ const SubAccountForm: React.FC = () => {
     }
   };
 
-  const nameCheck = async () => {
-    const payload = {
-      bank_code: state.selectedOption,
-      account_number: accountNumber,
-    };
-    try {
-      setState({ ...state, isLoading: true });
-      const accountName = await performNameCheck(payload);
-      formik.setFieldValue("accountName", accountName);
-    } catch (error: any) {
-      notifyError(error.message);
-    } finally {
-      setState({ ...state, isLoading: false });
-    }
-  };
+  // const nameCheck = async () => {
+  //   const payload = {
+  //     bank_code: state.selectedOption,
+  //     account_number: accountNumber,
+  //   };
+  //   try {
+  //     setState({ ...state, isLoading: true });
+  //     const accountName = await performNameCheck(payload);
+  //     formik.setFieldValue("accountName", accountName);
+  //   } catch (error: any) {
+  //     notifyError(error.message);
+  //   } finally {
+  //     setState({ ...state, isLoading: false });
+  //   }
+  // };
 
   return (
     <Layout pageTitle="Sub Account" icon="sub-accounts">
@@ -223,7 +223,7 @@ const SubAccountForm: React.FC = () => {
                 htmlFor="websiteUrl"
                 formik={formik}
                 {...formik.getFieldProps("websiteUrl")}
-              />  
+              />
 
               <FloatingLabelInput
                 label="Merchant Name"
@@ -251,15 +251,26 @@ const SubAccountForm: React.FC = () => {
               formik={formik}
               {...formik.getFieldProps("contactEmail")}
             />
-            <FloatingLabelInput
+            <div>
+              <label className="font-semibold">Risk Rating</label>
+              <select
+                className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+                {...formik.getFieldProps("riskRating")}
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            {/* <FloatingLabelInput
               label="Risk Rating"
               id="riskRating"
               type="text"
               htmlFor="riskRating"
               formik={formik}
               {...formik.getFieldProps("riskRating")}
-            />
-            {/*<div>
+            /> */}
+            {/* <div>
               <label className="text-sm block mb-2">Select bank</label>
               <select
                 className="h-[45px] sm:h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm sm:text-base"
@@ -274,7 +285,7 @@ const SubAccountForm: React.FC = () => {
                   </option>
                 ))}
               </select>
-            </div>*/}
+            </div> */}
             <div>
               <label className="font-semibold">Category</label>
               <select
@@ -287,7 +298,7 @@ const SubAccountForm: React.FC = () => {
                 <option value="healthcare">Healthcare</option>
               </select>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 mt-4">
+            {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 mt-4">
               <div>
                 <FloatingLabelInput
                   label="Account number"
@@ -310,8 +321,8 @@ const SubAccountForm: React.FC = () => {
                   {...formik.getFieldProps("amount")}
                 />
               </div>
-            </div>
-            <div className="relative mt-4">
+            </div> */}
+            {/* <div className="relative mt-4">
               <FloatingLabelInput
                 label="Account name"
                 id="accountName"
@@ -328,7 +339,7 @@ const SubAccountForm: React.FC = () => {
                   </span>
                 </div>
               )}
-            </div>
+            </div> */}
             <FloatingLabelInput
               label="Description"
               id="description"

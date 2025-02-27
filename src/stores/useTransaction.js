@@ -8,7 +8,7 @@ const initialState = {
   pagination: {
     count: 0,
     total: 0,
-    per_page: 10,
+    per_page: 20,
     current_page: 1,
     last_page: 1,
   },
@@ -32,7 +32,7 @@ const useTransaction = create((set, get) => ({
         pagination: {
           ...state.pagination,
           count: 20,
-          per_page: searchParams.per_page || 20,
+          per_page: state.pagination.per_page,
           total: total,
           current_page: searchParams.page || 1,
           last_page: total ? Math.ceil(total / state.pagination.per_page) : 1,

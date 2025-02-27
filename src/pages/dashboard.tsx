@@ -12,6 +12,7 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import WebPageTitle from "@/components/WebPageTitle";
 import { populateCharts } from "@/services/transaction";
+import { formatBalance } from "@/util/utils";
 
 interface stateProps {
   isLoading: boolean;
@@ -112,15 +113,21 @@ const Dashboard = () => {
     } = balances?.data?.balances || {};
     setState(prevState => ({
       ...prevState,
-      available_balance: `$${main_account_balance?.available_balance}`,
-      ledger_balance: `$${main_account_balance?.ledger_balance}`,
-      locked_balance: `$${main_account_balance?.available_balance}`,
-      settlement_balance: `$${main_account_balance?.available_balance}`,
+      available_balance: formatBalance(main_account_balance?.available_balance),
+      ledger_balance: formatBalance(main_account_balance?.ledger_balance),
+      locked_balance: formatBalance(main_account_balance?.locked_balance),
+      settlement_balance: formatBalance(
+        main_account_balance?.available_balance
+      ),
       transactions,
       settlements,
-      rolling_reserve: `$${rolling_reserve_account_balance?.available_balance}`,
-      rolling_reserve_ledger: `$${rolling_reserve_account_balance?.ledger_balance}`,
-      total_collections: `$${totalPayIn}`,
+      rolling_reserve: formatBalance(
+        rolling_reserve_account_balance?.available_balance
+      ),
+      rolling_reserve_ledger: formatBalance(
+        rolling_reserve_account_balance?.ledger_balance
+      ),
+      total_collections: formatBalance(totalPayIn),
     }));
   };
 

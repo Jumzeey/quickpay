@@ -8,7 +8,7 @@ import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import Button from "@/components/button";
 import Image from "next/image";
-import { downloadFile, formatDate, notifyError } from "@/util/utils";
+import { downloadFile, formatBalance, formatDate, notifyError } from "@/util/utils";
 import useFilter from "@/stores/useFilter";
 import Dropdown from "@/components/Dropdown";
 import Filter from "@/components/Filter";
@@ -50,17 +50,17 @@ const WalletHistory = () => {
     "s/n",
     "reference",
     "amount",
-    "balance type",
-    "previous balance",
-    "current balance",
-    "previous ledger balance",
-    "current ledger balance",
-    "previous locked balance",
-    "current locked balance",
-    "created at",
+    "running balance",
     "transaction type",
-    "status",
-    "description",
+    "created at",
+    // "balance type",
+    // "current balance",
+    // "previous ledger balance",
+    // "current ledger balance",
+    // "previous locked balance",
+    // "current locked balance",
+    // "status",
+    // "description",
   ];
 
   const closeDropdown = () => {
@@ -78,17 +78,26 @@ const WalletHistory = () => {
     }
   };
 
-  useEffect(() => {
-    fetchWalletHistory({
-      page: currentPage,
-      ...(filter.startDate
-        ? {
-            start_date: formatDate(filter.startDate),
-            end_date: formatDate(filter.endDate),
-          }
-        : {}),
-    });
-  }, [currentPage, filter.endDate, filter.startDate]);
+   useEffect(() => {
+     fetchWalletHistory({
+       page: currentPage,
+       per_page: pagination.per_page,
+       ...(filter.startDate
+         ? {
+             start_date: formatDate(filter.startDate),
+             end_date: formatDate(filter.endDate),
+           }
+         : {}),
+     });
+   }, [currentPage, filter.endDate, filter.startDate, pagination.per_page]); // Added pagination.per_page to dependency array
+
+   // Calculate the start and end index for the current page
+   const startIndex = (currentPage - 1) * pagination.per_page;
+   const endIndex = startIndex + pagination.per_page;
+
+   // Slice the wallet_history array to display only the current page's items
+   const currentPageHistory = wallet_history.slice(startIndex, endIndex);
+
 
   return (
     <Layout pageTitle="Balance History" icon="wallet-history">
@@ -128,8 +137,8 @@ const WalletHistory = () => {
               </div>
               <div className="flex md:justify-end pb-5"></div>
               <Table columns={columns} className="mt-7">
-                {wallet_history?.map((item: any, index: number) => {
-                  const activeItem = item.status === "Active";
+                {currentPageHistory.map((item: any, index: number) => {
+                  // const activeItem = item.status === "Active";
                   return (
                     <tr
                       key={index}
@@ -139,17 +148,17 @@ const WalletHistory = () => {
                       <td className="text-sm px-5 py-6">
                         {item.transaction_reference}
                       </td>
-                      <td className="text-sm px-5 py-6">{item.amount}</td>
-                      <td className="text-sm px-5 py-6">{item.balance_type}</td>
+                      <td className="text-sm px-5 py-6">${item.amount}</td>
+                      {/* <td className="text-sm px-5 py-6">{item.balance_type}</td> */}
 
-                      <td className="text-sm px-5 py-6">
+                      {/* <td className="text-sm px-5 py-6">
                         {item.previous_balance}
                       </td>
                       <td className="text-sm px-5 py-6">
                         {item.current_balance}
-                      </td>
+                      </td> */}
 
-                      <td className="text-sm px-5 py-6">
+                      {/* <td className="text-sm px-5 py-6">
                         {item.previous_ledger_balance}
                       </td>
                       <td className="text-sm px-5 py-6">
@@ -161,13 +170,16 @@ const WalletHistory = () => {
                       </td>
                       <td className="text-sm px-5 py-6">
                         {item.current_locked_balance}
+                      </td> */}
+                      <td className="text-sm px-5 py-6">
+                        {formatBalance(item.running_balance)}
                       </td>
-
-                      <td className="text-sm px-5 py-6">{item.created_at}</td>
                       <td className="text-sm px-5 py-6">
                         {item.transaction_type}
                       </td>
-                      <td className="text-xs px-5 py-6">
+
+                      <td className="text-sm px-5 py-6">{item.created_at}</td>
+                      {/* <td className="text-xs px-5 py-6">
                         <div
                           className={`text-center rounded-lg py-1 px-3 ${
                             item.status === "Successful"
@@ -178,7 +190,7 @@ const WalletHistory = () => {
                           {item.status}
                         </div>
                       </td>
-                      <td className="text-sm px-5 py-6">{item.description}</td>
+                      <td className="text-sm px-5 py-6">{item.description}</td> */}
                     </tr>
                   );
                 })}

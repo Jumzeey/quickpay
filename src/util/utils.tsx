@@ -10,7 +10,7 @@ export const capitalizeFirstLetter = (sentence: string) => {
 
   return sentence
     .split(" ")
-    .map((word) => {
+    .map(word => {
       if (word.length === 0) {
         return word;
       }
@@ -85,6 +85,10 @@ export const formatDate = (date: any) => {
 
 export const formatDateTime = (dateTimeString: any) => {
   return moment(dateTimeString).format("MMMM Do, YYYY, h:mm:ss A");
+};
+
+export const formatBalance = (number: number): string => {
+  return `$${Math.round(number).toLocaleString()}`;
 };
 
 // Define the list of Nigerian phone number prefixes (without the leading zero)

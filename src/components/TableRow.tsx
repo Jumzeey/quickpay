@@ -46,7 +46,7 @@ const TableRow: React.FC<TableProps> = ({ numbering, item, hasAction }) => {
           className="text-sm px-5 py-6"
           onClick={() => {
             handleClick(item);
-            router.push(`/your-business/settlement-history/${item.id}`);
+            router.push(`/settlement-history/${item.id}`);
           }}
         >
           <Image

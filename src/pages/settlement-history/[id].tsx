@@ -143,7 +143,7 @@ const SettlementBreakdown = () => {
                     className="text-sm px-5 py-6"
                     onClick={() => {
                       router.push(
-                        `/your-business/settlement-history/transaction/${item.id}`
+                        `/settlement-history/transaction/${item.id}`
                       );
                       handleClick(item);
                     }}

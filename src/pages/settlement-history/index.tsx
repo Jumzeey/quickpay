@@ -271,7 +271,7 @@ const SettlementHistory = () => {
                       onClick={() => {
                         handleClick(item);
                         router.push(
-                          `/your-business/settlement-history/${item.id}`
+                          `/settlement-history/${item.id}`
                         );
                       }}
                     >

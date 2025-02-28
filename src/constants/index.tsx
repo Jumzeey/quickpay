@@ -30,6 +30,11 @@ export const sidebarLinks = [
   //   title: "E-commerce",
   // },
   {
+    href: "/settlement-history",
+    icon: "history",
+    title: "Settlement History",
+  },
+  {
     href: "/mids",
     icon: "mids",
     title: "MIDS",
@@ -67,11 +72,11 @@ export const yourBusiness = [
   //   icon: "settlement-accounts",
   //   title: "Settlement Accounts",
   // },
-  {
-    href: "/your-business/settlement-history",
-    icon: "history",
-    title: "Settlement History",
-  },
+  // {
+  //   href: "/your-business/settlement-history",
+  //   icon: "history",
+  //   title: "Settlement History",
+  // },
 ];
 
 export const eCommerce = [

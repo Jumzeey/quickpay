@@ -109,7 +109,7 @@ const BarChart: React.FC<Props> = ({
             <Bar options={chartOptions} data={chartData} />
           </div>
 
-          <Link href="/your-business/settlement-history">
+          <Link href="/settlement-history">
             <Button
               text="See all settlements"
               ariaLabel="Settlements button"

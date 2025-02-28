@@ -50,9 +50,9 @@ interface SubaccountsProps {
   showSubaccounts: boolean;
   dropdownIndex: null | number;
   showFilter: boolean;
-  selectedOption: string;
+  // selectedOption: string;
   //   banks: [];
-  accountNumber: string;
+  // accountNumber: string;
   mode: string | undefined;
 }
 
@@ -92,8 +92,8 @@ const SubaccountHistory = () => {
 
   const formik = useFormik({
     initialValues: {
-      accountNumber: "",
-      accountName: "",
+      // accountNumber: "",
+      // accountName: "",
       merchant_name: "",
       mode: undefined,
       contactEmail: "",
@@ -105,10 +105,10 @@ const SubaccountHistory = () => {
       category: "",
     },
     validationSchema: Yup.object().shape({
-      accountNumber: Yup.string()
-        .required("Account number is required!")
-        .min(10, "Account number must be 10 digits"),
-      accountName: Yup.string().required("Account name is required!"),
+      // accountNumber: Yup.string()
+      //   .required("Account number is required!")
+      //   .min(10, "Account number must be 10 digits"),
+      // accountName: Yup.string().required("Account name is required!"),
       merchant_name: Yup.string().required("Merchant name is required!"),
       mode: Yup.boolean().required("Mode is required!"),
       contactEmail: Yup.string()
@@ -135,8 +135,8 @@ const SubaccountHistory = () => {
     dropdownIndex: null,
     showFilter: false,
     //     banks: [],
-    selectedOption: "",
-    accountNumber: "",
+    // selectedOption: "",
+    // accountNumber: "",
     mode: undefined,
   });
   // const accountNumber = formik.values.accountNumber;
@@ -166,14 +166,14 @@ const SubaccountHistory = () => {
       setIsModalOpen(false);
     }
   };
-  const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const { value } = e.target;
-    setState({
-      ...state,
-      selectedOption: value,
-      [e.target.name]: e.target.value,
-    });
-  };
+  // const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  //   const { value } = e.target;
+  //   setState({
+  //     ...state,
+  //     selectedOption: value,
+  //     [e.target.name]: e.target.value,
+  //   });
+  // };
 
   // const nameCheck = async () => {
   //   const payload = {
@@ -194,8 +194,8 @@ const SubaccountHistory = () => {
   const updateSubaccount = async (resetForm: () => void) => {
     setIsLoading(true);
     const payload = {
-      account_number: formik.values.accountNumber,
-      account_name: formik.values.accountName,
+      // account_number: formik.values.accountNumber,
+      // account_name: formik.values.accountName,
       merchant_name: formik.values.merchant_name,
       email: formik.values.contactEmail,
       mode: formik.values.mode,
@@ -614,14 +614,17 @@ const SubaccountHistory = () => {
           <p>
             If provided, this email address will get transaction notification
           </p>
-          <FloatingLabelInput
-            label="Risk Rating"
-            id="riskRating"
-            type="text"
-            htmlFor="riskRating"
-            formik={formik}
-            {...formik.getFieldProps("riskRating")}
-          />
+          <div>
+            <label className="font-semibold">Risk Rating</label>
+            <select
+              className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+              {...formik.getFieldProps("riskRating")}
+            >
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
           {/* <div className="mt-5">
             <label className="font-semibold">Select bank</label>
             <select
@@ -652,7 +655,7 @@ const SubaccountHistory = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          {/* <div className="grid grid-cols-2 gap-5">
             <FloatingLabelInput
               label="Account number"
               id="accountNumber"
@@ -680,7 +683,7 @@ const SubaccountHistory = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
           <FloatingLabelInput
             label="Description"
             id="description"

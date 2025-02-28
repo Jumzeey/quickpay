@@ -12,6 +12,7 @@ import {
   downloadFile,
   formatBalance,
   formatDate,
+  formattedDate,
   notifyError,
 } from "@/util/utils";
 import useFilter from "@/stores/useFilter";
@@ -179,7 +180,9 @@ const WalletHistory = () => {
                         {item.transaction_type}
                       </td>
 
-                      <td className="text-sm px-5 py-6">{item.created_at}</td>
+                      <td className="text-sm px-5 py-6">
+                        {formattedDate(item.created_at)}
+                      </td>
                       {/* <td className="text-xs px-5 py-6">
                         <div
                           className={`text-center rounded-lg py-1 px-3 ${

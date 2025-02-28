@@ -87,6 +87,37 @@ export const formatDateTime = (dateTimeString: any) => {
   return moment(dateTimeString).format("MMMM Do, YYYY, h:mm:ss A");
 };
 
+export const formattedDate = (dateString: string): string | null => {
+  try {
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+
+    const dayOfMonth = date.getDate();
+    let suffix = "th";
+
+    if (dayOfMonth === 1 || dayOfMonth === 21 || dayOfMonth === 31) {
+      suffix = "st";
+    } else if (dayOfMonth === 2 || dayOfMonth === 22) {
+      suffix = "nd";
+    } else if (dayOfMonth === 3 || dayOfMonth === 23) {
+      suffix = "rd";
+    }
+
+    return date
+      .toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+      .replace(/(\d+)(,)/, `$1${suffix}$2`); //Corrected regex
+  } catch {
+    return null;
+  }
+};
+
 export const formatBalance = (number: number): string => {
   return `$${Math.round(number).toLocaleString()}`;
 };

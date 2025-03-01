@@ -209,19 +209,19 @@ const SubAccountForm: React.FC = () => {
       site_name: formik.values.siteName,
       category: formik.values.category,
       description: formik.values.description,
-      supporting_documents: documents.map(doc => ({
-        title: doc.title,
-        file: doc.file,
-      })),
+      // supporting_documents: documents.map(doc => ({
+      //   title: doc.title,
+      //   file: doc.file,
+      // })),
     };
     try {
-      console.log(payload)
-      // const response = await postSubAccountAmount(payload);
-      // notifySuccess(response.message);
-      // setIsLoading(false);
-      // router.push({
-      //   pathname: "/your-business/sub-accounts",
-      // });
+      // console.log(payload)
+      const response = await postSubAccountAmount(payload);
+      notifySuccess(response.message);
+      setIsLoading(false);
+      router.push({
+        pathname: "/your-business/sub-accounts",
+      });
     } catch (error: any) {
       notifyError(error.message);
       setIsLoading(false);

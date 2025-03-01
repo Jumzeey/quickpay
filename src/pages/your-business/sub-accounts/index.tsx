@@ -471,7 +471,7 @@ const SubaccountHistory = () => {
                                   height={14}
                                   alt="Live icon"
                                 />
-                                <span>Transaction</span>
+                                <span>Transactions</span>
                               </li>
                             </ul>
                           </Dropdown>

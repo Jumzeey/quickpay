@@ -41,6 +41,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
   const cacDocument = getField("CAC Document");
   const statusOfCompany = getField("Status of Company");
   const beneficiaryDocument = getField("Beneficiary Document");
+  const beneficiaryId = getField("Beneficiary ID");
   const proofOfBusinessAddress = getField("Proof of Business Address");
   const idFile = getField("Document Type");
   const proofOfAddress = getField("Proof of Address");
@@ -286,7 +287,25 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
                           <h3 className="text-[#6E6893] font-semibold text-sm">
                             Beneficiary ID
                           </h3>
-                          <p>{getField("Beneficiary ID")}</p>
+                          <p>
+                            {beneficiaryId !== "N/A" ? (
+                              <Link
+                                href={`${imageUrl}/${beneficiaryId}`}
+                                passHref
+                                legacyBehavior
+                              >
+                                <a
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="sarepayPrimary underline font-bold text-sm"
+                                >
+                                  View Document
+                                </a>
+                              </Link>
+                            ) : (
+                              "N/A"
+                            )}
+                          </p>
                         </div>
                       </div>
                     </div>

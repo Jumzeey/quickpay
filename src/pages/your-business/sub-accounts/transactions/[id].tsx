@@ -40,6 +40,7 @@ interface SubaccountsTransactionsProps {
 const columns = [
   "s/n",
   "merchant name",
+  "reference",
   "amount",
   "charge",
   "status",
@@ -81,14 +82,14 @@ const SubaccountTransactions = () => {
     setCurrentPage(page);
   };
 
-  const handleExport = async () => {
-    try {
-      const response = await getSubaccountTransactions({ export: true });
-      downloadFile(response.export_link);
-    } catch (error: any) {
-      notifyError(error.message);
-    }
-  };
+  // const handleExport = async () => {
+  //   try {
+  //     const response = await getSubaccountTransactions({ export: true });
+  //     downloadFile(response.export_link);
+  //   } catch (error: any) {
+  //     notifyError(error.message);
+  //   }
+  // };
 
   const totalPages = pagination?.last_page;
   const lastPage = pagination?.last_page;
@@ -109,16 +110,16 @@ const SubaccountTransactions = () => {
 
   return (
     <>
-      <Layout pageTitle="Subaccount Transactions" icon="SUBACCOUNT">
-        <WebPageTitle title="Subaccount Transactions| Ramp Merchant Portal" />
-        <div>
+      <Layout pageTitle="Sub Account Transactions" icon="SUBACCOUNT">
+        <WebPageTitle title="Sub Account Transactions| Ramp Merchant Portal" />
+        {/* <div>
           <h2 className="text-xl font-semibold">
             Manage Subaccount Transactions
           </h2>
           <p className="text-sm pt-3 pb-5">
             Manage Subaccount Transactions Within Your Company
           </p>
-        </div>
+        </div> */}
         <div className="mt-5 mb-5">
           <Image
             src="/images/arrow-back.svg"
@@ -164,13 +165,13 @@ const SubaccountTransactions = () => {
                       className="!w-full md:!w-24 !h-10"
                       plain
                     />
-                    <Button
+                    {/* <Button
                       ariaLabel="Export button"
                       text="Export"
                       className="!w-full md:!w-24 !h-10"
                       onClick={handleExport}
                       plain
-                    />
+                    /> */}
                   </div>
                 </div>
 
@@ -188,6 +189,9 @@ const SubaccountTransactions = () => {
                       <td className="text-sm px-5 py-6">{index + 1}</td>
                       <td className="text-sm px-5 py-6">
                         {capitalizeFirstLetter(item.merchant_name) || "N/A"}
+                      </td>
+                      <td className="text-sm px-5 py-6">
+                        {item.reference || "N/A"}
                       </td>
                       <td className="text-sm px-5 py-6">
                         {item.amount || "N/A"}

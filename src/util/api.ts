@@ -91,14 +91,14 @@ api.interceptors.response.use(
       };
     }
 
-    if (status === 401 && data.data.error_code === "bank_01") {
-      notifyError("Create a Settlement Account.");
-      router.push("/your-business/settlement-accounts");
-      return {
-        success: false,
-        message: "Create a Settlement Account",
-      };
-    }
+    // if (status === 401 && data.data.error_code === "bank_01") {
+    //   notifyError("Create a Settlement Account.");
+    //   router.push("/your-business/settlement-accounts");
+    //   return {
+    //     success: false,
+    //     message: "Create a Settlement Account",
+    //   };
+    // }
 
     // if (status === 403) {
     //   notifyError("User does not have the right permissions.");

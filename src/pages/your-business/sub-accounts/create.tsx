@@ -36,7 +36,7 @@ import Image from "next/image";
 //   supportingDocuments: [];
 // }
 
-const API_URL =
+export const API_URL =
   "https://api.sheety.co/3e4167ce45e60748b1aedfad4e047b74/mccListing2024October/cardAcceptorBusiness";
 
 const SubAccountForm: React.FC = () => {

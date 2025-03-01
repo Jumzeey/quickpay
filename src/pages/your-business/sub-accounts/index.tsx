@@ -43,6 +43,7 @@ import Link from "next/link";
 import Pagination from "@/components/pagination";
 import debounce from "@/util/debounce";
 import { Spinner } from "@/components/Spinner";
+import { API_URL } from "./create";
 
 interface SubaccountsProps {
   subaccountsHistory: any[];
@@ -89,6 +90,40 @@ const SubaccountHistory = () => {
   } = useSubaccount();
 
   const { showFilter, toggleFilter } = useFilter();
+  const [categories, setCategories] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<
+    { title: string; file: File | null }[]
+  >([{ title: "", file: null }]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        const categorySet = new Set<string>();
+
+        data.cardAcceptorBusiness.forEach((item: any) => {
+          const name = item.tccName?.trim();
+          if (
+            name &&
+            name.toLowerCase() !== "this cell is intentionally left blank." &&
+            name.toLowerCase() !== "r, t" &&
+            name.toLowerCase() !== "u"
+          ) {
+            categorySet.add(name);
+          }
+        });
+
+        setCategories(Array.from(categorySet));
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        notifyError("Failed to load categories.");
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const formik = useFormik({
     initialValues: {
@@ -103,6 +138,7 @@ const SubaccountHistory = () => {
       websiteUrl: "",
       riskRating: "",
       category: "",
+      supportingDocuments: [],
     },
     validationSchema: Yup.object().shape({
       // accountNumber: Yup.string()
@@ -121,6 +157,7 @@ const SubaccountHistory = () => {
         .required("Website URL is required!"),
       riskRating: Yup.string().required("Risk rating is required!"),
       category: Yup.string().required("Category is required!"),
+      supportingDocuments: Yup.array().of(Yup.mixed()).notRequired(),
     }),
     validateOnMount: true,
     onSubmit: async (values, { resetForm }) => {
@@ -166,30 +203,37 @@ const SubaccountHistory = () => {
       setIsModalOpen(false);
     }
   };
-  // const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
-  //   const { value } = e.target;
-  //   setState({
-  //     ...state,
-  //     selectedOption: value,
-  //     [e.target.name]: e.target.value,
-  //   });
-  // };
 
-  // const nameCheck = async () => {
-  //   const payload = {
-  //     bank_code: state.selectedOption,
-  //     account_number: accountNumber,
-  //   };
-  //   try {
-  //     setState({ ...state, isLoading: true });
-  //     const accountName = await performNameCheck(payload);
-  //     formik.setFieldValue("accountName", accountName);
-  //   } catch (error: any) {
-  //     notifyError(error.message);
-  //   } finally {
-  //     setState({ ...state, isLoading: false });
-  //   }
-  // };
+  const handleFileChange = (
+    index: number,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0] || null;
+    const updatedDocs = [...documents];
+    updatedDocs[index].file = file;
+    setDocuments(updatedDocs);
+  };
+
+  // Handle title change
+  const handleTitleChange = (
+    index: number,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const updatedDocs = [...documents];
+    updatedDocs[index].title = event.target.value;
+    setDocuments(updatedDocs);
+  };
+
+  // Add new file upload field
+  const addNewFileUpload = () => {
+    setDocuments([...documents, { title: "", file: null }]);
+  };
+
+  // Remove a file upload entry
+  const removeFileUpload = (index: number) => {
+    const updatedDocs = documents.filter((_, i) => i !== index);
+    setDocuments(updatedDocs);
+  };
 
   const updateSubaccount = async (resetForm: () => void) => {
     setIsLoading(true);
@@ -649,41 +693,78 @@ const SubaccountHistory = () => {
               {...formik.getFieldProps("category")}
             >
               <option value="">--Select Category--</option>
-              <option value="finance">Finance</option>
-              <option value="ecommerce">E-commerce</option>
-              <option value="healthcare">Healthcare</option>
+              {categories.map((category, index) => (
+                <option key={index} value={category}>
+                  {category}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* <div className="grid grid-cols-2 gap-5">
-            <FloatingLabelInput
-              label="Account number"
-              id="accountNumber"
-              type="text"
-              htmlFor="accountNumber"
-              formik={formik}
-              maxLength={10}
-              {...formik.getFieldProps("accountNumber")}
-            />
-            <div className="relative">
-              <FloatingLabelInput
-                label="Account name"
-                id="accountName"
-                type="text"
-                htmlFor="accountName"
-                formik={formik}
-                {...formik.getFieldProps("accountName")}
-                readOnly
-              />
-              {state.isLoading && (
-                <div className="absolute right-2 top-5">
-                  <span>
-                    <Spinner />
-                  </span>
+          <div>
+            <label className="font-semibold text-gray-700">
+              Upload Supporting Documents
+            </label>
+            {documents.map((doc, index) => (
+              <div key={index} className="flex items-end gap-4 p-3 pl-0">
+                <div className="flex flex-col w-2/4">
+                  <label className="text-sm font-medium text-gray-600">
+                    Title
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter document title"
+                    value={doc.title}
+                    onChange={e => handleTitleChange(index, e)}
+                    className="p-2 border-b w-full bg-[#ececec]"
+                  />
                 </div>
-              )}
-            </div>
-          </div> */}
+
+                {/* Custom File Upload Button */}
+                <input
+                  type="file"
+                  onChange={e => handleFileChange(index, e)}
+                  // className="hidden"
+                  accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                />
+
+                {/* Remove Button */}
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeFileUpload(index)}
+                    className="text-red-600 hover:text-red-800 transition"
+                  >
+                    ❌
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* Plus Button to Add New Upload Field */}
+            <button
+              type="button"
+              onClick={addNewFileUpload}
+              className="mt-4 flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full hover:bg-gray-400 transition"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-6 h-6 text-gray-700"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+            </button>
+          </div>
+
           <FloatingLabelInput
             label="Description"
             id="description"

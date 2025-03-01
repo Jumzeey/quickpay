@@ -75,14 +75,14 @@ const WalletHistory = () => {
       showFilterStatus: false,
     });
   };
-  const handleExport = async () => {
-    try {
-      const response = await getWalletHistory({ export: true });
-      downloadFile(response.export_link);
-    } catch (error: any) {
-      notifyError(error.message);
-    }
-  };
+  // const handleExport = async () => {
+  //   try {
+  //     const response = await getWalletHistory({ export: true });
+  //     downloadFile(response.export_link);
+  //   } catch (error: any) {
+  //     notifyError(error.message);
+  //   }
+  // };
 
   useEffect(() => {
     fetchWalletHistory({
@@ -123,13 +123,13 @@ const WalletHistory = () => {
                     className="!w-full md:!w-32 !h-10"
                     plain
                   />
-                  <Button
+                  {/* <Button
                     ariaLabel="Export button"
                     text="Export"
                     className="!w-full md:!w-24 !h-10"
                     onClick={handleExport}
                     plain
-                  />
+                  /> */}
                 </div>
               </div>
               <div className="relative flex justify-end mt-4 md:mt-0">

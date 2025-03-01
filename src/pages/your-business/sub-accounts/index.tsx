@@ -297,14 +297,14 @@ const SubaccountHistory = () => {
 
   return (
     <>
-      <Layout pageTitle="Subaccounts" icon="sub-accounts">
-        <WebPageTitle title="Subaccounts| Ramp Merchant Portal" />
-        <div>
+      <Layout pageTitle="Sub Accounts" icon="sub-accounts">
+        <WebPageTitle title="Sub Accounts| Ramp Merchant Portal" />
+        {/* <div>
           <h2 className="text-xl font-semibold">Manage Subaccounts</h2>
           <p className="text-sm pt-3 pb-5">
             Manage Subaccounts Within Your Company
           </p>
-        </div>
+        </div> */}
         <div>
           {getSubaccountHistoryLoading ? (
             <Fragment>

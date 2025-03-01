@@ -250,7 +250,7 @@ const RegisterPage: React.FC = () => {
           >
             <form onSubmit={formik.handleSubmit}>
               <h1 className="text-2xl font-semibold">
-                Create {capitalizedBusiness} Business Account!
+                Create {capitalizedBusiness} a Business Account!
               </h1>
               {/* <p className="font-light mt-1 mb-5">
                 For the purpose of industry regulation, your details are

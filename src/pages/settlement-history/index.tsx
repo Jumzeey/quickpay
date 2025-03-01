@@ -130,7 +130,7 @@ const SettlementHistory = () => {
       <div>
         {getSettlementHistoryLoading ? (
           <Fragment>
-            <Card className="md:w-[477px] mb-7">
+            {/*  <Card className="md:w-[477px] mb-7">
               <div className="flex justify-start items-center">
                 <span className="block w-[130px] rounded-lg pb-1">
                   <Skeleton className="h-2.5" />
@@ -147,12 +147,12 @@ const SettlementHistory = () => {
                   <Skeleton className="h-2.5" width={80} />
                 </span>
               </div>
-            </Card>
+            </Card>*/}
             <TableSkeleton />
           </Fragment>
         ) : settlements?.length !== 0 ? (
           <Fragment>
-            <Card className="md:w-[477px] !rounded-xl mb-5">
+            {/*<Card className="md:w-[477px] !rounded-xl mb-5">
               <span className="font-semibold text-sm uppercase">Bank:</span>
               &nbsp;
               <span className="font-normal text-sm uppercase">
@@ -185,7 +185,7 @@ const SettlementHistory = () => {
                   </li>
                 </ul>
               </div>
-            </Card>
+            </Card>*/}
             <Card>
               <div className="flex justify-end pb-5">
                 {/* <div className="relative">

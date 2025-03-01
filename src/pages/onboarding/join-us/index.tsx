@@ -215,11 +215,7 @@ const RegisterPage: React.FC = () => {
   return (
     <>
       <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
-        <WebPageTitle
-          title={`${capitalizeFirstLetter(
-            params?.business as string
-          )} | Ramp Merchant Portal`}
-        />
+        <WebPageTitle title="Join Us | Ramp Merchant Portal" />
         {/* <Sidebar /> */}
         <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
           <div className="flex w-full justify-between">

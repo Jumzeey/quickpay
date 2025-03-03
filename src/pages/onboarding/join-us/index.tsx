@@ -184,8 +184,8 @@ const RegisterPage: React.FC = () => {
         password_confirmation: values.password_confirmation,
         business_name: values.business_name,
         agree_to_terms: values.agree_to_terms,
-        business_type: params?.business,
-        recaptchaToken: token, // ✅ Send token to backend
+        business_type: "starter",
+        recaptchaToken: token,
       };
 
       const response = await signUp(payload);

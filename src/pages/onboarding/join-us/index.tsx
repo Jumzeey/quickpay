@@ -184,8 +184,8 @@ const RegisterPage: React.FC = () => {
         password_confirmation: values.password_confirmation,
         business_name: values.business_name,
         agree_to_terms: values.agree_to_terms,
-        business_type: params?.business,
-        recaptchaToken: token, // ✅ Send token to backend
+        business_type: "starter",
+        recaptchaToken: token,
       };
 
       const response = await signUp(payload);
@@ -215,11 +215,7 @@ const RegisterPage: React.FC = () => {
   return (
     <>
       <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
-        <WebPageTitle
-          title={`${capitalizeFirstLetter(
-            params?.business as string
-          )} | Ramp Merchant Portal`}
-        />
+        <WebPageTitle title="Join Us | Ramp Merchant Portal" />
         {/* <Sidebar /> */}
         <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
           <div className="flex w-full justify-between">

@@ -1,20 +1,21 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
-import Button from "@/components/button";
-import Layout from "@/components/layout";
-import FloatingLabelInput from "@/components/floating-input";
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import Button from '@/components/button';
+import Layout from '@/components/layout';
+import FloatingLabelInput from '@/components/floating-input';
 // import { getBanks, performNameCheck } from "@/services/bank";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { useRouter } from "next/router";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { useRouter } from 'next/router';
 import {
   notifyError,
   notifySuccess,
   // removeCommasFromValue,
-} from "@/util/utils";
-import useSubAccount from "@/stores/useSubAccount";
-import Loader from "@/components/loader";
-import Card from "@/components/Card";
-import Image from "next/image";
+} from '@/util/utils';
+import useSubAccount from '@/stores/useSubAccount';
+import Loader from '@/components/loader';
+import Card from '@/components/Card';
+import Image from 'next/image';
+import FancyFileUpload from '@/components/FancyFileUpload';
 // import { Spinner } from "@/components/Spinner";
 
 // interface StateProps {
@@ -37,7 +38,7 @@ import Image from "next/image";
 // }
 
 export const API_URL =
-  "https://api.sheety.co/3e4167ce45e60748b1aedfad4e047b74/mccListing2024October/cardAcceptorBusiness";
+  'https://api.sheety.co/3e4167ce45e60748b1aedfad4e047b74/mccListing2024October/cardAcceptorBusiness';
 
 const SubAccountForm: React.FC = () => {
   const router = useRouter();
@@ -46,7 +47,7 @@ const SubAccountForm: React.FC = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [documents, setDocuments] = useState<
     { title: string; file: File | null }[]
-  >([{ title: "", file: null }]);
+  >([]);
 
   // Fetch categories from API
   useEffect(() => {
@@ -61,9 +62,9 @@ const SubAccountForm: React.FC = () => {
           const name = item.tccName?.trim();
           if (
             name &&
-            name.toLowerCase() !== "this cell is intentionally left blank." &&
-            name.toLowerCase() !== "r, t" &&
-            name.toLowerCase() !== "u"
+            name.toLowerCase() !== 'this cell is intentionally left blank.' &&
+            name.toLowerCase() !== 'r, t' &&
+            name.toLowerCase() !== 'u'
           ) {
             categorySet.add(name);
           }
@@ -71,8 +72,8 @@ const SubAccountForm: React.FC = () => {
 
         setCategories(Array.from(categorySet));
       } catch (error) {
-        console.error("Error fetching categories:", error);
-        notifyError("Failed to load categories.");
+        console.error('Error fetching categories:', error);
+        notifyError('Failed to load categories.');
       }
     };
 
@@ -84,15 +85,15 @@ const SubAccountForm: React.FC = () => {
       // accountNumber: "",
       // accountName: "",
       // amount: "",
-      merchant_name: "",
+      merchant_name: '',
       mode: undefined,
-      contactEmail: "",
-      percentage: "",
-      description: "",
-      siteName: "",
-      websiteUrl: "",
-      riskRating: "",
-      category: "",
+      contactEmail: '',
+      percentage: '',
+      description: '',
+      siteName: '',
+      websiteUrl: '',
+      riskRating: '',
+      category: '',
       supportingDocuments: [],
     },
     validationSchema: Yup.object().shape({
@@ -101,18 +102,18 @@ const SubAccountForm: React.FC = () => {
       //   .min(10, "Account number must be 10 digits"),
       // accountName: Yup.string().required("Account name is required!"),
       // amount: Yup.string().required("Amount is required!"),
-      merchant_name: Yup.string().required("Merchant name is required!"),
-      mode: Yup.boolean().required("Mode is required!"),
+      merchant_name: Yup.string().required('Merchant name is required!'),
+      mode: Yup.boolean().required('Mode is required!'),
       contactEmail: Yup.string()
-        .email("Invalid email format")
-        .required("Contact email is required!"),
-      percentage: Yup.string().required("Percentage is required!"),
-      siteName: Yup.string().required("Site name is required!"),
+        .email('Invalid email format')
+        .required('Contact email is required!'),
+      percentage: Yup.string().required('Percentage is required!'),
+      siteName: Yup.string().required('Site name is required!'),
       websiteUrl: Yup.string()
-        .url("Invalid URL format")
-        .required("Website URL is required!"),
-      riskRating: Yup.string().required("Risk rating is required!"),
-      category: Yup.string().required("Category is required!"),
+        .url('Invalid URL format')
+        .required('Website URL is required!'),
+      riskRating: Yup.string().required('Risk rating is required!'),
+      category: Yup.string().required('Category is required!'),
       supportingDocuments: Yup.array().of(Yup.mixed()).notRequired(),
     }),
     validateOnMount: true,
@@ -162,65 +163,39 @@ const SubAccountForm: React.FC = () => {
   //   setState({ ...state, selectedOption: value });
   // };
 
-  // Handle file uploads
-  const handleFileChange = (
-    index: number,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0] || null;
-    const updatedDocs = [...documents];
-    updatedDocs[index].file = file;
-    setDocuments(updatedDocs);
-  };
-
-  // Handle title change
-  const handleTitleChange = (
-    index: number,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const updatedDocs = [...documents];
-    updatedDocs[index].title = event.target.value;
-    setDocuments(updatedDocs);
-  };
-
-  // Add new file upload field
-  const addNewFileUpload = () => {
-    setDocuments([...documents, { title: "", file: null }]);
-  };
-
-  // Remove a file upload entry
-  const removeFileUpload = (index: number) => {
-    const updatedDocs = documents.filter((_, i) => i !== index);
-    setDocuments(updatedDocs);
-  };
-
   const postDisbursement = async () => {
     setIsLoading(true);
-    const payload = {
-      // amount: removeCommasFromValue(formik.values.amount),
-      // account_number: formik.values.accountNumber,
-      // account_name: formik.values.accountName,
-      merchant_name: formik.values.merchant_name,
-      mode: formik.values.mode,
-      email: formik.values.contactEmail,
-      percentage: formik.values.percentage,
-      website_url: formik.values.websiteUrl,
-      risk_rating: formik.values.riskRating,
-      site_name: formik.values.siteName,
-      category: formik.values.category,
-      description: formik.values.description,
-      // supporting_documents: documents.map(doc => ({
-      //   title: doc.title,
-      //   file: doc.file,
-      // })),
-    };
+
+    // Ensure mode is strictly a boolean
+    const modeValue =
+      formik.values.mode === 'true' || formik.values.mode === true;
+
+    // Create FormData object for file uploads
+    const formData = new FormData();
+    formData.append('merchant_name', formik.values.merchant_name);
+    formData.append('mode', String(modeValue));
+    formData.append('email', formik.values.contactEmail);
+    formData.append('percentage', String(formik.values.percentage));
+    formData.append('website_url', formik.values.websiteUrl);
+    formData.append('risk_rating', formik.values.riskRating);
+    formData.append('category', formik.values.category);
+
+    // Append files properly
+    documents.forEach((doc, index) => {
+      if (doc.file) {
+        formData.append(`documents[${index}][name]`, doc.title); // Title
+        formData.append(`documents[${index}][file]`, doc.file); // File
+      }
+    });
+
     try {
-      // console.log(payload)
-      const response = await postSubAccountAmount(payload);
+      // Send FormData (Don't set Content-Type, browser handles it)
+      const response = await postSubAccountAmount(formData);
+
       notifySuccess(response.message);
       setIsLoading(false);
       router.push({
-        pathname: "/your-business/sub-accounts",
+        pathname: '/your-business/sub-accounts',
       });
     } catch (error: any) {
       notifyError(error.message);
@@ -245,101 +220,101 @@ const SubAccountForm: React.FC = () => {
   // };
 
   return (
-    <Layout pageTitle="Sub Account" icon="sub-accounts">
-      <div className="flex justify-between items-center p-4 sm:p-6 lg:p-12">
+    <Layout pageTitle='Sub Account' icon='sub-accounts'>
+      <div className='flex justify-between items-center p-4 sm:p-6 lg:p-12'>
         <Image
-          src="/images/arrow-back.svg"
-          className="cursor-pointer"
+          src='/images/arrow-back.svg'
+          className='cursor-pointer'
           width={36}
           height={36}
           onClick={() => router.back()}
-          alt="back icon"
+          alt='back icon'
         />
       </div>
-      <div className="flex justify-center mt-4 sm:mt-6 lg:mt-2">
+      <div className='flex justify-center mt-4 sm:mt-6 lg:mt-2'>
         <Card extraPadding>
-          <form onSubmit={formik.handleSubmit} className="space-y-4">
+          <form onSubmit={formik.handleSubmit} className='space-y-4'>
             <div>
-              <label className="font-semibold">
+              <label className='font-semibold'>
                 Select Sub Account Mode Type
               </label>
               <select
-                className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+                className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
                 onChange={e => {
-                  formik.setFieldValue("mode", e.target.value === "true");
+                  formik.setFieldValue('mode', e.target.value === 'true');
                 }}
-                name="mode"
+                name='mode'
                 value={
                   formik.values.mode === undefined
-                    ? ""
+                    ? ''
                     : formik.values.mode
-                    ? "true"
-                    : "false"
+                    ? 'true'
+                    : 'false'
                 }
               >
                 {formik.values.mode === undefined && (
-                  <option value="">--Select--</option>
+                  <option value=''>--Select--</option>
                 )}
-                <option value="true">Live</option>
-                <option value="false">Test</option>
+                <option value='true'>Live</option>
+                <option value='false'>Test</option>
               </select>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6'>
               <FloatingLabelInput
-                label="Site Name"
-                id="siteName"
-                type="text"
-                htmlFor="siteName"
+                label='Site Name'
+                id='siteName'
+                type='text'
+                htmlFor='siteName'
                 formik={formik}
-                {...formik.getFieldProps("siteName")}
+                {...formik.getFieldProps('siteName')}
               />
 
               <FloatingLabelInput
-                label="Website URL"
-                id="websiteUrl"
-                type="text"
-                htmlFor="websiteUrl"
+                label='Website URL'
+                id='websiteUrl'
+                type='text'
+                htmlFor='websiteUrl'
                 formik={formik}
-                {...formik.getFieldProps("websiteUrl")}
+                {...formik.getFieldProps('websiteUrl')}
               />
 
               <FloatingLabelInput
-                label="Merchant Name"
-                id="merchant_name"
-                type="text"
-                htmlFor="merchant_name"
+                label='Merchant Name'
+                id='merchant_name'
+                type='text'
+                htmlFor='merchant_name'
                 formik={formik}
-                {...formik.getFieldProps("merchant_name")}
+                {...formik.getFieldProps('merchant_name')}
               />
               <FloatingLabelInput
-                label="Percentage"
-                id="percentage"
-                type="text"
-                htmlFor="percentage"
+                label='Percentage'
+                id='percentage'
+                type='text'
+                htmlFor='percentage'
                 formik={formik}
                 maxLength={10}
-                {...formik.getFieldProps("percentage")}
+                {...formik.getFieldProps('percentage')}
               />
             </div>
             <FloatingLabelInput
-              label="Contact Email"
-              id="contactEmail"
-              type="text"
-              htmlFor="contactEmail"
+              label='Contact Email'
+              id='contactEmail'
+              type='text'
+              htmlFor='contactEmail'
               formik={formik}
-              {...formik.getFieldProps("contactEmail")}
+              {...formik.getFieldProps('contactEmail')}
             />
             <div>
-              <label className="font-semibold">Risk Rating</label>
+              <label className='font-semibold'>Risk Rating</label>
               <select
-                className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                {...formik.getFieldProps("riskRating")}
+                className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
+                {...formik.getFieldProps('riskRating')}
               >
-                <option value="">--Select--</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
+                <option value=''>--Select--</option>
+                <option value='high'>High</option>
+                <option value='medium'>Medium</option>
+                <option value='low'>Low</option>
               </select>
             </div>
             {/* <FloatingLabelInput
@@ -367,12 +342,12 @@ const SubAccountForm: React.FC = () => {
               </select>
             </div> */}
             <div>
-              <label className="font-semibold">Category</label>
+              <label className='font-semibold'>Category</label>
               <select
-                className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                {...formik.getFieldProps("category")}
+                className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
+                {...formik.getFieldProps('category')}
               >
-                <option value="">--Select Category--</option>
+                <option value=''>--Select Category--</option>
                 {categories.map((category, index) => (
                   <option key={index} value={category}>
                     {category}
@@ -424,81 +399,28 @@ const SubAccountForm: React.FC = () => {
             </div> */}
 
             <div>
-              <label className="font-semibold text-gray-700">
+              <label className='font-semibold text-gray-700'>
                 Upload Supporting Documents
               </label>
-              {documents.map((doc, index) => (
-                <div key={index} className="flex items-end gap-4 p-3 pl-0">
-                  <div className="flex flex-col w-2/4">
-                    <label className="text-sm font-medium text-gray-600">
-                      Title
-                    </label>
 
-                    <input
-                      type="text"
-                      placeholder="Enter document title"
-                      value={doc.title}
-                      onChange={e => handleTitleChange(index, e)}
-                      className="p-2 border-b w-full bg-[#ececec]"
-                    />
-                  </div>
-
-                  {/* Custom File Upload Button */}
-                  <input
-                    type="file"
-                    onChange={e => handleFileChange(index, e)}
-                    // className="hidden"
-                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                  />
-
-                  {/* Remove Button */}
-                  {index > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => removeFileUpload(index)}
-                      className="text-red-600 hover:text-red-800 transition"
-                    >
-                      ❌
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {/* Plus Button to Add New Upload Field */}
-              <button
-                type="button"
-                onClick={addNewFileUpload}
-                className="mt-4 flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full hover:bg-gray-400 transition"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="w-6 h-6 text-gray-700"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-              </button>
+              <FancyFileUpload
+                documents={documents}
+                setDocuments={setDocuments}
+              />
             </div>
 
             <FloatingLabelInput
-              label="Description"
-              id="description"
-              type="text"
-              htmlFor="message"
+              label='Description'
+              id='description'
+              type='text'
+              htmlFor='message'
               formik={formik}
-              {...formik.getFieldProps("description")}
+              {...formik.getFieldProps('description')}
             />
             <Button
-              className="text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded"
-              text={isLoading ? <Loader /> : "Create Sub Account"}
-              ariaLabel="Create Sub Account Button"
+              className='text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded'
+              text={isLoading ? <Loader /> : 'Create Sub Account'}
+              ariaLabel='Create Sub Account Button'
               disabled={!formik.isValid || isLoading}
               primary
             />

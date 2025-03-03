@@ -13,6 +13,7 @@ import {
   // removeCommasFromValue,
 } from '@/util/utils';
 import useSubAccount from '@/stores/useSubAccount';
+import useCategories from '@/stores/useCategories';
 import Loader from '@/components/loader';
 import Card from '@/components/Card';
 import Image from 'next/image';
@@ -26,51 +27,13 @@ const SubAccountForm: React.FC = () => {
   const router = useRouter();
   const { postSubAccountAmount } = useSubAccount();
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<string[]>([
-    'Tecnology',
-    'Health',
-    'Finance',
-    'Education',
-    'Food',
-    'Clothing',
-    'Transport',
-    'Entertainment',
-    'Other',
-  ]);
+  const { categories, fetchCategories } = useCategories();
   const [documents, setDocuments] = useState<
     { title: string; file: File | null }[]
   >([]);
 
   // Fetch categories from API
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-
-        const categorySet = new Set<string>();
-
-        data.cardAcceptorBusiness.forEach((item: any) => {
-          const name = item.tccName?.trim();
-          if (
-            name &&
-            name.toLowerCase() !== 'this cell is intentionally left blank.' &&
-            name.toLowerCase() !== 'r, t' &&
-            name.toLowerCase() !== 'u'
-          ) {
-            categorySet.add(name);
-          }
-        });
-
-        setCategories(prev => {
-          return [...prev, ...Array.from(categorySet)];
-        });
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        // notifyError('Failed to load categories.');
-      }
-    };
-
     fetchCategories();
   }, []);
 
@@ -263,14 +226,14 @@ const SubAccountForm: React.FC = () => {
             <div>
               <label className='font-semibold'>Category</label>
               <Select
-                options={categories.map(category => ({
+                options={categories.map((category: any) => ({
                   value: category,
                   label: category,
                 }))}
                 isSearchable
                 placeholder='Search or select category'
                 value={
-                  categories.find(opt => opt === formik.values.category)
+                  categories.find((opt: string) => opt === formik.values.category)
                     ? {
                         value: formik.values.category,
                         label: formik.values.category,

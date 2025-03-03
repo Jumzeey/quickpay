@@ -47,6 +47,7 @@ import { API_URL } from './create';
 import Select from 'react-select';
 import FancyFileUpload from '@/components/FancyFileUpload';
 import { uploadFile } from '@/services/kyc';
+import useCategories from '@/stores/useCategories';
 
 interface SubaccountsProps {
   subaccountsHistory: any[];
@@ -93,38 +94,13 @@ const SubaccountHistory = () => {
   } = useSubaccount();
 
   const { showFilter, toggleFilter } = useFilter();
-  const [categories, setCategories] = useState<string[]>([]);
+  const { categories, fetchCategories } = useCategories();
   const [documents, setDocuments] = useState<
     { title: string; file: File | null }[]
   >([]);
 
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-
-        const categorySet = new Set<string>();
-
-        data.cardAcceptorBusiness.forEach((item: any) => {
-          const name = item.tccName?.trim();
-          if (
-            name &&
-            name.toLowerCase() !== 'this cell is intentionally left blank.' &&
-            name.toLowerCase() !== 'r, t' &&
-            name.toLowerCase() !== 'u'
-          ) {
-            categorySet.add(name);
-          }
-        });
-
-        setCategories(Array.from(categorySet));
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        // notifyError('Failed to load categories.');
-      }
-    };
-
     fetchCategories();
   }, []);
 
@@ -663,14 +639,14 @@ const SubaccountHistory = () => {
           <div>
             <label className='font-semibold'>Category</label>
             <Select
-              options={categories.map(category => ({
+              options={categories.map((category: any) => ({
                 value: category,
                 label: category,
               }))}
               isSearchable
               placeholder='Search or select category'
               value={
-                categories.find(opt => opt === formik.values.category)
+                categories.find((opt: string) => opt === formik.values.category)
                   ? {
                       value: formik.values.category,
                       label: formik.values.category,

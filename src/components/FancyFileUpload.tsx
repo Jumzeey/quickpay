@@ -1,15 +1,18 @@
-import React from "react";
+import React from 'react';
 
-const FancyFileUpload: React.FC<{ documents: any[], setDocuments: any }> = ({ documents, setDocuments }) => {
+const FancyFileUpload: React.FC<{ documents: any[]; setDocuments: any }> = ({
+  documents,
+  setDocuments,
+}) => {
   // Trigger file input when clicking the upload zone
   const handleZoneClick = () => {
-    document.getElementById("fileInput")?.click();
+    document.getElementById('fileInput')?.click();
   };
 
   // Handle File Upload
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const newFiles = Array.from(event.target.files).map((file) => ({
+      const newFiles = Array.from(event.target.files).map(file => ({
         file,
         title: file.name, // Default title as file name
       }));
@@ -19,7 +22,9 @@ const FancyFileUpload: React.FC<{ documents: any[], setDocuments: any }> = ({ do
 
   // Handle File Removal
   const removeFile = (index: number) => {
-    setDocuments((prevFiles: any) => prevFiles.filter((_: any, i: number) => i !== index));
+    setDocuments((prevFiles: any) =>
+      prevFiles.filter((_: any, i: number) => i !== index)
+    );
   };
 
   // Handle Title Update
@@ -32,29 +37,33 @@ const FancyFileUpload: React.FC<{ documents: any[], setDocuments: any }> = ({ do
   };
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className='max-w-lg mx-auto py-2'>
       {/* Clickable Upload Zone */}
       <div
-        className="border-dashed border-2 border-gray-400 rounded-lg p-6 flex flex-col items-center justify-center text-gray-600 cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+        className='border-dashed border-2 border-gray-400 rounded-lg p-6 flex flex-col items-center justify-center text-gray-600 cursor-pointer bg-gray-50 hover:bg-gray-100 transition'
         onClick={handleZoneClick}
       >
         <input
-          type="file"
-          id="fileInput"
-          className="hidden"
-          accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+          type='file'
+          id='fileInput'
+          className='hidden'
+          accept='.jpg,.jpeg,.png,.pdf,.doc,.docx'
           multiple
           onChange={handleFileChange}
         />
-        <p className="text-sm">Click to upload files</p>
+        <p className='text-sm'>Click to upload files</p>
       </div>
+      <span className='text-xs mt-1 text-black'>
+        JPG, PNG or PDF, file size no more than 3MB
+      </span>
 
       {/* Uploaded Files List - ONLY SHOW IF FILES EXIST */}
       {documents.length > 0 && (
-        <div className="mt-4 space-y-3">
+        <div className='mt-4 space-y-3'>
           {documents.map((fileObj, index) => {
             // Extract file extension
-            const fileExtension = fileObj?.file?.name.split('.').pop()?.toUpperCase() || "FILE";
+            const fileExtension =
+              fileObj?.file?.name.split('.').pop()?.toUpperCase() || 'FILE';
 
             return (
               <div

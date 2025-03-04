@@ -1,18 +1,18 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
-import Button from "@/components/button";
-import Modal from "@/components/modal";
-import FloatingLabelInput from "@/components/floating-input";
-import { useFormik } from "formik";
-import * as Yup from "yup";
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import Button from '@/components/button';
+import Modal from '@/components/modal';
+import FloatingLabelInput from '@/components/floating-input';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import {
   nigerianPhoneNumberSchema,
   notifyError,
   notifySuccess,
-} from "@/util/utils";
-import Loader from "@/components/loader";
-import { addUser } from "@/services/settings";
-import { getRoles } from "@/services/settings";
-import useClickEvent from "@/stores/useClickEvent";
+} from '@/util/utils';
+import Loader from '@/components/loader';
+import { addUser } from '@/services/settings';
+import { getRoles } from '@/services/settings';
+import useClickEvent from '@/stores/useClickEvent';
 
 interface AddUserProps {
   isModalOpen: boolean;
@@ -44,26 +44,26 @@ const AddUser: React.FC<AddUserProps> = ({
 }) => {
   const formik = useFormik({
     initialValues: {
-      firstname: "",
-      lastname: "",
-      email: "",
-      password: "",
-      phone: "",
+      firstname: '',
+      lastname: '',
+      email: '',
+      password: '',
+      phone: '',
     },
     validationSchema: Yup.object().shape({
-      firstname: Yup.string().required("First name is required!"),
-      lastname: Yup.string().required("Last name is required!"),
+      firstname: Yup.string().required('First name is required!'),
+      lastname: Yup.string().required('Last name is required!'),
       email: Yup.string()
-        .email("Invalid email address")
-        .required("Email address is required!"),
+        .email('Invalid email address')
+        .required('Email address is required!'),
 
       password: isUpdateUser
         ? Yup.string().notRequired()
         : Yup.string()
-            .required("Password is required!")
+            .required('Password is required!')
             .matches(
               /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/,
-              "Password must have at least: 1 upper case, 1 digit, 1 special character and minimum eight characters"
+              'Password must have at least: 1 upper case, 1 digit, 1 special character and minimum eight characters'
             ),
 
       phone: nigerianPhoneNumberSchema,
@@ -106,7 +106,7 @@ const AddUser: React.FC<AddUserProps> = ({
   const [state, setState] = useState<StateProps>({
     isLoading: false,
     roles: [],
-    selectedRole: "",
+    selectedRole: '',
   });
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -124,7 +124,7 @@ const AddUser: React.FC<AddUserProps> = ({
       phone,
     };
     if (state.selectedRole) {
-      payload["role"] = state.selectedRole;
+      payload['role'] = state.selectedRole;
     }
 
     let updateStatus;
@@ -135,14 +135,14 @@ const AddUser: React.FC<AddUserProps> = ({
       id = selectedItem?.id;
     } else {
       updateStatus = false;
-      id = "";
+      id = '';
     }
     try {
       setState({ ...state, isLoading: true });
       await addUser(payload, id, updateStatus);
       // @ts-ignore
       notifySuccess(
-        `User ${isUpdateUser ? "updated" : "created"} successfully`
+        `User ${isUpdateUser ? 'updated' : 'created'} successfully`
       );
       closeModal();
     } catch (error: any) {
@@ -159,78 +159,76 @@ const AddUser: React.FC<AddUserProps> = ({
     setState({
       ...state,
       isLoading: false,
-      selectedRole: "",
+      selectedRole: '',
     });
     formik.setValues({
-      firstname: "",
-      lastname: "",
-      email: "",
-      password: "",
-      phone: "",
+      firstname: '',
+      lastname: '',
+      email: '',
+      password: '',
+      phone: '',
     });
   };
 
   return (
     <Modal isOpen={isModalOpen} onClose={closeModal}>
-      <div className="mt-5">
+      <div className='mt-5'>
         <form onSubmit={formik.handleSubmit}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className='grid grid-cols-2 gap-3'>
             <FloatingLabelInput
-              label="First name"
-              id="firstname"
-              type="text"
-              htmlFor="firstname"
+              label='First name'
+              id='firstname'
+              type='text'
+              htmlFor='firstname'
               formik={formik}
-              {...formik.getFieldProps("firstname")}
+              {...formik.getFieldProps('firstname')}
             />
             <FloatingLabelInput
-              label="Last name"
-              id="lastname"
-              type="text"
-              htmlFor="lastname"
+              label='Last name'
+              id='lastname'
+              type='text'
+              htmlFor='lastname'
               formik={formik}
-              {...formik.getFieldProps("lastname")}
+              {...formik.getFieldProps('lastname')}
             />
           </div>
 
           <FloatingLabelInput
-            label="Phone Number"
-            id="phone"
-            type="text"
-            htmlFor="phone"
+            label='Phone Number'
+            id='phone'
+            type='number'
+            htmlFor='phone'
             formik={formik}
             maxLength={11}
-            {...formik.getFieldProps("phone")}
+            {...formik.getFieldProps('phone')}
             numberOnly
           />
 
           <FloatingLabelInput
-            label="Email Address"
-            id="email"
-            type="email"
-            htmlFor="email"
+            label='Email Address'
+            id='email'
+            type='email'
+            htmlFor='email'
             formik={formik}
-            {...formik.getFieldProps("email")}
+            {...formik.getFieldProps('email')}
           />
 
           {!isUpdateUser && (
             <FloatingLabelInput
-              label="Password"
-              id="password"
-              type="password"
-              htmlFor="password"
+              label='Password'
+              id='password'
+              type='password'
+              htmlFor='password'
               formik={formik}
-              {...formik.getFieldProps("password")}
+              {...formik.getFieldProps('password')}
             />
           )}
 
           <select
-            className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+            className='h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
             onChange={handleChange}
           >
-            <option value="Select Role">
-              {isUpdateUser ? selectedItem.role : "--Select Role--"}
-            </option>
+            <option value='Select Role'>--Select Role--</option>
 
             {state.roles?.map((option: any) => (
               <option key={option.id} value={option.id}>
@@ -239,9 +237,9 @@ const AddUser: React.FC<AddUserProps> = ({
             ))}
           </select>
           <Button
-            className="openSansLight text-white mt-2 text-xs p-2 rounded"
-            text={state.isLoading ? <Loader /> : "Submit"}
-            ariaLabel="Submit"
+            className='openSansLight text-white mt-2 text-xs p-2 rounded'
+            text={state.isLoading ? <Loader /> : 'Submit'}
+            ariaLabel='Submit'
             disabled={!formik.isValid || state.isLoading}
             primary
           />

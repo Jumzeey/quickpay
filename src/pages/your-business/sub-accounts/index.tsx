@@ -125,7 +125,7 @@ const SubaccountHistory = () => {
       contactEmail: Yup.string()
         .email('Invalid email format')
         .required('Contact email is required!'),
-      percentage: Yup.string().required('Percentage is required!'),
+      percentage: Yup.number().required('Percentage split is required!'),
       siteName: Yup.string().required('Site name is required!'),
       websiteUrl: Yup.string()
         .url('Invalid URL format')
@@ -579,9 +579,9 @@ const SubaccountHistory = () => {
               {...formik.getFieldProps('merchant_name')}
             />
             <FloatingLabelInput
-              label='Percentage'
+              label='Percentage Split'
               id='percentage'
-              type='text'
+              type='number'
               htmlFor='percentage'
               formik={formik}
               maxLength={10}

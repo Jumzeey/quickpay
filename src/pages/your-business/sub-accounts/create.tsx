@@ -56,7 +56,7 @@ const SubAccountForm: React.FC = () => {
       contactEmail: Yup.string()
         .email('Invalid email format')
         .required('Contact email is required!'),
-      percentage: Yup.string().required('Percentage split is required!'),
+      percentage: Yup.number().required('Percentage split is required!'),
       siteName: Yup.string().required('Site name is required!'),
       websiteUrl: Yup.string()
         .url('Invalid URL format')

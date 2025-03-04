@@ -56,7 +56,7 @@ const SubAccountForm: React.FC = () => {
       contactEmail: Yup.string()
         .email('Invalid email format')
         .required('Contact email is required!'),
-      percentage: Yup.string().required('Percentage is required!'),
+      percentage: Yup.string().required('Percentage split is required!'),
       siteName: Yup.string().required('Site name is required!'),
       websiteUrl: Yup.string()
         .url('Invalid URL format')
@@ -193,9 +193,9 @@ const SubAccountForm: React.FC = () => {
                 {...formik.getFieldProps('merchant_name')}
               />
               <FloatingLabelInput
-                label='Percentage'
+                label='Percentage split'
                 id='percentage'
-                type='text'
+                type='number'
                 htmlFor='percentage'
                 formik={formik}
                 maxLength={10}

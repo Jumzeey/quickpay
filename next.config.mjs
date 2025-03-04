@@ -5,7 +5,8 @@ const nextConfig = {
   images: {
     domains: [
       'avatars.dicebear.com',
-      "rampadmindevbucket.s3.amazonaws.com"
+      'rampadmindevbucket.s3.amazonaws.com',
+      'rampadminproductionbucket.s3.amazonaws.com',
     ],
   },
 };

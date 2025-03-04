@@ -1,7 +1,7 @@
-import { create } from "zustand";
-import { getWalletHistory } from "@/services/transaction";
-import moment from "moment";
-import { notifyError } from "@/util/utils";
+import { create } from 'zustand';
+import { getWalletHistory } from '@/services/transaction';
+import moment from 'moment';
+import { notifyError } from '@/util/utils';
 
 const initialState = {
   wallet_history: [],
@@ -40,7 +40,9 @@ const useTransaction = create((set, get) => ({
       }));
       return { wallet_history };
     } catch (error) {
-      notifyError(error.message);
+      if (!error.message.includes('No transaction record found')) {
+        notifyError(error.message);
+      }
     } finally {
       set(state => ({
         ...state,

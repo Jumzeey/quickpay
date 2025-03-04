@@ -19,6 +19,7 @@ type FloatingLabelInputProps = {
   maxLength?: number | undefined;
   tooltip?: string | undefined;
   numberOnly?: boolean;
+  max?: string; 
   hasLink?: boolean;
   showError?: boolean;
   onFocus?: (e: FocusEvent<HTMLInputElement, Element>) => void;
@@ -31,6 +32,7 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
   type,
   htmlFor,
   value,
+  max,
   onChange,
   onBlur,
   onFocus,
@@ -96,6 +98,7 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
         } ${name === "amount" ? "pl-10" : hasLink ? "pl-[66px]" : "px-3"}`}
         readOnly={readOnly}
         maxLength={maxLength}
+        max={max}
       />
 
       {type === "password" && (

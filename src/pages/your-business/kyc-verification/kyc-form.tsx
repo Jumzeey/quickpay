@@ -33,6 +33,7 @@ interface FormValues {
   cac_documents: string;
   document_beneficiary_file: string;
   document_file: string;
+  
 }
 
 const KYCPage: React.FC = () => {
@@ -170,6 +171,7 @@ const KYCPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+  const maxDate = new Date().toISOString().split("T")[0];
 
   return (
     <Layout pageTitle="KYC Verification" icon="kyc">
@@ -252,6 +254,7 @@ const KYCPage: React.FC = () => {
                       type="date"
                       htmlFor="dob"
                       formik={formik}
+                      max={new Date().toISOString().split("T")[0]}
                       {...formik.getFieldProps("dob")}
                     />
                   </div>
@@ -275,7 +278,7 @@ const KYCPage: React.FC = () => {
               {formik.values.business_type === "registered" ? (
                 <div>
                   <FloatingLabelInput
-                    label="BVN (of one of the director's)"
+                    label="BVN (of one of the directors)"
                     id="director_bvn"
                     type="text"
                     htmlFor="director_bvn"
@@ -312,7 +315,7 @@ const KYCPage: React.FC = () => {
                     onFileUpload={onFileUpload}
                     buttonText="Select File"
                     name="document_file"
-                    text="Document Upload(of the same director)"
+                    text="Document Upload (of the same director)"
                     folderName="kyc"
                   />
                   <select
@@ -322,7 +325,7 @@ const KYCPage: React.FC = () => {
                     value={formik.values.document_beneficiary_type}
                   >
                     <option value="">
-                      Select Document Type(Ultimate Beneficial Owner)
+                      Select Document Type (Ultimate Beneficial Owner)
                     </option>
                     <option value="Driver License">Driver License</option>
                     <option value="International Passport">
@@ -337,7 +340,7 @@ const KYCPage: React.FC = () => {
                     onFileUpload={onFileUpload}
                     buttonText="Select File"
                     name="document_beneficiary_file"
-                    text="Document Upload(Ultimate Beneficial Owner)"
+                    text="Document Upload (Ultimate Beneficial Owner)"
                     folderName="kyc"
                   />
                   <FloatingLabelInput
@@ -352,7 +355,7 @@ const KYCPage: React.FC = () => {
                     onFileUpload={onFileUpload}
                     buttonText="Select File"
                     name="proof_of_address"
-                    text="Proof Of Business Address(e.g Utility Bill)"
+                    text="Proof Of Business Address (e.g Utility Bill)"
                     folderName="kyc"
                   />
                   <UploadComponent

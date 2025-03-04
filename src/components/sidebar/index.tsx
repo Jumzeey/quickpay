@@ -98,7 +98,7 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
         ></div>
       )}
       <aside
-        className={`lg:flex flex-col fixed h-screen overflow-y-scroll bg-[#fff] min-h-screen overflow-x-hidden pl-3 pt-2 w-[250px] ease-in-out duration-500 top-0 z-10 shadow-lg ${
+        className={`lg:flex flex-col fixed h-screen bg-[#fff] min-h-screen overflow-x-hidden pl-3 pt-2 w-[250px] ease-in-out duration-500 top-0 z-10 shadow-lg ${
           showSidebar ? "flex" : "hidden"
         }`}
         ref={bgRef}
@@ -118,7 +118,7 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
               </Link>
             </li>
 
-            <li className="mt-10">
+            <li className="mt-10 mr-2">
               <div>
                 {state.activeSidebar !== sidebarLinks && (
                   <>

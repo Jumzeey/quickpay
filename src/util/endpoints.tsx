@@ -80,6 +80,9 @@ export const apiEndpoints = {
   mids: {
     GET_MIDS: "/merchant/mids",
   },
+  categories: {
+    GET_CATEGORIES: "/merchant/category",
+  },
   utilities: {
     UPLOAD_FILE: "/utilities/upload",
   },

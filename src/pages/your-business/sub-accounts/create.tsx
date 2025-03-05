@@ -30,8 +30,8 @@ const SubAccountForm: React.FC = () => {
   >([]);
 
   useEffect(() => {
-  if (categories.length === 0) fetchCategories();
-}, [fetchCategories, categories]);
+    if (categories.length === 0) fetchCategories();
+  }, [fetchCategories, categories]);
 
   const formik = useFormik({
     initialValues: {
@@ -222,42 +222,46 @@ const SubAccountForm: React.FC = () => {
             <div>
               <label className='font-semibold'>Category</label>
               <Select
-  options={categories.map((category) => ({
-    value: category,
-    label: category,
-  }))}
-  isSearchable
-  placeholder={getCategoriesLoading ? "Loading categories..." : "Search or select category"}
-  isDisabled={getCategoriesLoading}
-  value={
-    categories.find((opt) => opt === formik.values.category)
-      ? {
-          value: formik.values.category,
-          label: formik.values.category,
-        }
-      : null
-  }
-  onChange={(selectedOption) =>
-    formik.setFieldValue("category", selectedOption?.value)
-  }
-  styles={{
-    control: (provided, state) => ({
-      ...provided,
-      height: "60px",
-      padding: "0.5rem",
-      width: "100%",
-      borderRadius: "0.5rem",
-      borderWidth: "1px",
-      borderColor: state.isFocused ? "#6750A4" : "#CAC4D0",
-      outline: "none",
-      fontSize: "0.875rem",
-      marginBottom: "1.25rem",
-      "&:hover": {
-        borderColor: "#6750A4",
-      },
-    }),
-  }}
-/>
+                options={categories.map((category: any) => ({
+                  value: category,
+                  label: category,
+                }))}
+                isSearchable
+                placeholder={
+                  getCategoriesLoading
+                    ? 'Loading categories...'
+                    : 'Search or select category'
+                }
+                isDisabled={getCategoriesLoading}
+                value={
+                  categories.find((opt: any) => opt === formik.values.category)
+                    ? {
+                        value: formik.values.category,
+                        label: formik.values.category,
+                      }
+                    : null
+                }
+                onChange={selectedOption =>
+                  formik.setFieldValue('category', selectedOption?.value)
+                }
+                styles={{
+                  control: (provided, state) => ({
+                    ...provided,
+                    height: '60px',
+                    padding: '0.5rem',
+                    width: '100%',
+                    borderRadius: '0.5rem',
+                    borderWidth: '1px',
+                    borderColor: state.isFocused ? '#6750A4' : '#CAC4D0',
+                    outline: 'none',
+                    fontSize: '0.875rem',
+                    marginBottom: '1.25rem',
+                    '&:hover': {
+                      borderColor: '#6750A4',
+                    },
+                  }),
+                }}
+              />
             </div>
 
             <div>

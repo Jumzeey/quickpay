@@ -168,4 +168,15 @@ export async function getMids(params?: object) {
   }
 }
 
+export async function getCategories(params?:object) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.categories.GET_CATEGORIES}`,
+      {params}
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
 

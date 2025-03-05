@@ -20,22 +20,18 @@ import Image from 'next/image';
 import FancyFileUpload from '@/components/FancyFileUpload';
 import { uploadFile } from '@/services/kyc';
 
-export const API_URL =
-  'https://api.sheety.co/3e4167ce45e60748b1aedfad4e047b74/mccListing2024October/cardAcceptorBusiness';
-
 const SubAccountForm: React.FC = () => {
   const router = useRouter();
   const { postSubAccountAmount } = useSubAccount();
   const [isLoading, setIsLoading] = useState(false);
-  const { categories, fetchCategories } = useCategories();
+  const { categories, fetchCategories, getCategoriesLoading } = useCategories();
   const [documents, setDocuments] = useState<
     { title: string; file: File | null }[]
   >([]);
 
-  // Fetch categories from API
   useEffect(() => {
-    fetchCategories();
-  }, []);
+  if (categories.length === 0) fetchCategories();
+}, [fetchCategories, categories]);
 
   const formik = useFormik({
     initialValues: {
@@ -226,41 +222,42 @@ const SubAccountForm: React.FC = () => {
             <div>
               <label className='font-semibold'>Category</label>
               <Select
-                options={categories.map((category: any) => ({
-                  value: category,
-                  label: category,
-                }))}
-                isSearchable
-                placeholder='Search or select category'
-                value={
-                  categories.find((opt: string) => opt === formik.values.category)
-                    ? {
-                        value: formik.values.category,
-                        label: formik.values.category,
-                      }
-                    : null
-                }
-                onChange={selectedOption =>
-                  formik.setFieldValue('category', selectedOption?.value)
-                }
-                styles={{
-                  control: (provided, state) => ({
-                    ...provided,
-                    height: '60px',
-                    padding: '0.5rem',
-                    width: '100%',
-                    borderRadius: '0.5rem',
-                    borderWidth: '1px',
-                    borderColor: state.isFocused ? '#6750A4' : '#CAC4D0',
-                    outline: 'none',
-                    fontSize: '0.875rem',
-                    marginBottom: '1.25rem',
-                    '&:hover': {
-                      borderColor: '#6750A4',
-                    },
-                  }),
-                }}
-              />
+  options={categories.map((category) => ({
+    value: category,
+    label: category,
+  }))}
+  isSearchable
+  placeholder={getCategoriesLoading ? "Loading categories..." : "Search or select category"}
+  isDisabled={getCategoriesLoading}
+  value={
+    categories.find((opt) => opt === formik.values.category)
+      ? {
+          value: formik.values.category,
+          label: formik.values.category,
+        }
+      : null
+  }
+  onChange={(selectedOption) =>
+    formik.setFieldValue("category", selectedOption?.value)
+  }
+  styles={{
+    control: (provided, state) => ({
+      ...provided,
+      height: "60px",
+      padding: "0.5rem",
+      width: "100%",
+      borderRadius: "0.5rem",
+      borderWidth: "1px",
+      borderColor: state.isFocused ? "#6750A4" : "#CAC4D0",
+      outline: "none",
+      fontSize: "0.875rem",
+      marginBottom: "1.25rem",
+      "&:hover": {
+        borderColor: "#6750A4",
+      },
+    }),
+  }}
+/>
             </div>
 
             <div>

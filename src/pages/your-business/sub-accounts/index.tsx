@@ -43,7 +43,6 @@ import Link from 'next/link';
 import Pagination from '@/components/pagination';
 import debounce from '@/util/debounce';
 import { Spinner } from '@/components/Spinner';
-import { API_URL } from './create';
 import Select from 'react-select';
 import FancyFileUpload from '@/components/FancyFileUpload';
 import { uploadFile } from '@/services/kyc';
@@ -94,15 +93,14 @@ const SubaccountHistory = () => {
   } = useSubaccount();
 
   const { showFilter, toggleFilter } = useFilter();
-  const { categories, fetchCategories } = useCategories();
+  const { categories, fetchCategories, getCategoriesLoading } = useCategories();
   const [documents, setDocuments] = useState<
     { title: string; file: File | null }[]
   >([]);
 
-
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (categories.length === 0) fetchCategories();
+  }, [fetchCategories, categories]);
 
   const formik = useFormik({
     initialValues: {
@@ -644,9 +642,14 @@ const SubaccountHistory = () => {
                 label: category,
               }))}
               isSearchable
-              placeholder='Search or select category'
+              placeholder={
+                getCategoriesLoading
+                  ? 'Loading categories...'
+                  : 'Search or select category'
+              }
+              isDisabled={getCategoriesLoading}
               value={
-                categories.find((opt: string) => opt === formik.values.category)
+                categories.find((opt: any) => opt === formik.values.category)
                   ? {
                       value: formik.values.category,
                       label: formik.values.category,

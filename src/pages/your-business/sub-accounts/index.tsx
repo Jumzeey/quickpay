@@ -47,6 +47,7 @@ import Select from 'react-select';
 import FancyFileUpload from '@/components/FancyFileUpload';
 import { uploadFile } from '@/services/kyc';
 import useCategories from '@/stores/useCategories';
+import useScreenWidth from '@/hooks/useScreenWidth';
 
 interface SubaccountsProps {
   subaccountsHistory: any[];
@@ -73,6 +74,7 @@ const columns = [
 
 const SubaccountHistory = () => {
   const router = useRouter();
+  const screenWidth = useScreenWidth();
   const { selectedItem, handleClick } = useClickEvent();
   const [searchInput, setSearchInput] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,6 +115,7 @@ const SubaccountHistory = () => {
       description: '',
       siteName: '',
       websiteUrl: '',
+      callback_url: '',
       riskRating: '',
       category: '',
       documents: [],
@@ -132,6 +135,12 @@ const SubaccountHistory = () => {
       category: Yup.string().required('Category is required!'),
       documents: Yup.array().of(Yup.mixed()).notRequired(),
       description: Yup.string().notRequired(),
+      callback_url: Yup.string()
+        .notRequired()
+        .matches(
+          /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
+          'Enter a valid callback URL!'
+        ),
     }),
     validateOnMount: true,
     onSubmit: async (values, { resetForm }) => {
@@ -213,8 +222,11 @@ const SubaccountHistory = () => {
         website_url: formik.values.websiteUrl,
         risk_rating: formik.values.riskRating,
         documents: uploadedDocuments.filter(Boolean),
-        message: formik.values.description,
+        callback_url: formik.values.callback_url,
       };
+      if (formik.values.callback_url) {
+        payload['callback_url'] = `https://${formik.values.callback_url}`;
+      }
 
       const response = await updateSubAccountAmount(payload);
       notifySuccess(response.message);
@@ -622,6 +634,24 @@ const SubaccountHistory = () => {
           <p>
             If provided, this email address will get transaction notification
           </p>
+
+          <div className='relative'>
+            <FloatingLabelInput
+              label={
+                screenWidth < 700
+                  ? 'Callback URL'
+                  : 'Callback URL (e.g yourbusiness.com)'
+              }
+              id='callback_url'
+              type='text'
+              htmlFor='callback_url'
+              formik={formik}
+              {...formik.getFieldProps('callback_url')}
+              hasLink
+            />
+            <span className='absolute text-sm top-5 left-3'>https://</span>
+          </div>
+
           <div>
             <label className='font-semibold'>Risk Rating</label>
             <select

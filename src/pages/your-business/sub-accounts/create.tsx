@@ -19,9 +19,11 @@ import Card from '@/components/Card';
 import Image from 'next/image';
 import FancyFileUpload from '@/components/FancyFileUpload';
 import { uploadFile } from '@/services/kyc';
+import useScreenWidth from '@/hooks/useScreenWidth';
 
 const SubAccountForm: React.FC = () => {
   const router = useRouter();
+  const screenWidth = useScreenWidth();
   const { postSubAccountAmount } = useSubAccount();
   const [isLoading, setIsLoading] = useState(false);
   const { categories, fetchCategories, getCategoriesLoading } = useCategories();
@@ -42,6 +44,7 @@ const SubAccountForm: React.FC = () => {
       description: '',
       siteName: '',
       websiteUrl: '',
+      callback_url: '',
       riskRating: '',
       category: '',
       documents: [],
@@ -61,6 +64,12 @@ const SubAccountForm: React.FC = () => {
       category: Yup.string().required('Category is required!'),
       documents: Yup.array().of(Yup.mixed()).notRequired(),
       description: Yup.string().notRequired(),
+      callback_url: Yup.string()
+        .notRequired()
+        .matches(
+          /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
+          'Enter a valid callback URL!'
+        ),
     }),
     validateOnMount: true,
     onSubmit: async () => {
@@ -103,7 +112,11 @@ const SubAccountForm: React.FC = () => {
         category: formik.values.category,
         documents: uploadedDocuments.filter(Boolean),
         message: formik.values.description,
+        callback_url: formik.values.callback_url,
       };
+      if (formik.values.callback_url) {
+        payload['callback_url'] = `https://${formik.values.callback_url}`;
+      }
 
       console.log('Sending Payload:', payload);
 
@@ -206,6 +219,24 @@ const SubAccountForm: React.FC = () => {
               formik={formik}
               {...formik.getFieldProps('contactEmail')}
             />
+
+            <div className='relative'>
+              <FloatingLabelInput
+                label={
+                  screenWidth < 700
+                    ? 'Callback URL'
+                    : 'Callback URL (e.g yourbusiness.com)'
+                }
+                id='callback_url'
+                type='text'
+                htmlFor='callback_url'
+                formik={formik}
+                {...formik.getFieldProps('callback_url')}
+                hasLink
+              />
+              <span className='absolute text-sm top-5 left-3'>https://</span>
+            </div>
+
             <div>
               <label className='font-semibold'>Risk Rating</label>
               <select

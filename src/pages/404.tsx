@@ -22,6 +22,7 @@ const Page404 = () => {
               />
             </div>
             <div className='text-center mt-20'>
+            
               <h1 className='font-bold text-xl md:text-6xl'>
                 404 - Page Not Found
               </h1>

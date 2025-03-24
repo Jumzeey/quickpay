@@ -6,7 +6,7 @@ export default function Document() {
     <Html lang="en">
       <Head />
       <script src={`https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`} async/>
-      <link rel="icon" href="/favicon.ico" />
+      <link rel="icon" href="/favicon.svg" />
       <meta
         property="og:title"
         content="Manage your business, create virtual accounts and payment links"

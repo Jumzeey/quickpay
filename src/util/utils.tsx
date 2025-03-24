@@ -118,9 +118,14 @@ export const formattedDate = (dateString: string): string | null => {
   }
 };
 
-export const formatBalance = (number: number): string => {
-  return `$${Math.round(number).toLocaleString()}`;
+export const formatBalance = (number: number | undefined | null): string => {
+  if (typeof number !== 'number' || isNaN(number)) {
+    return '$0.00'; // Default value when input is invalid
+  }
+
+  return `$${number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 };
+
 
 // Define the list of Nigerian phone number prefixes (without the leading zero)
 const nigerianPhonePrefixes = [

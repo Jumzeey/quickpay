@@ -257,96 +257,96 @@ const PaymentLinks = () => {
                 return (
                   <tr
                     key={index}
-                    className="border-b last:border-none border-grey-200"
+                    className='border-b last:border-none border-grey-200'
                   >
-                    <td className="text-sm px-5 py-6 capitalize">
+                    <td className='text-sm px-5 py-6 capitalize'>
                       {item.title}
                     </td>
-                    <td className="text-sm px-5 py-6">
-                      &#8358;&nbsp;{numberWithCommas(item.amount)}
+                    <td className='text-sm px-5 py-6'>
+                      &#36;&nbsp;{numberWithCommas(item.amount)}
                     </td>
-                    <td className="text-xs px-5 py-6">
+                    <td className='text-xs px-5 py-6'>
                       <div
                         className={`text-center rounded-lg py-1 px-3 ${
                           item.status == 1
-                            ? "text-success bg-[#E9F7EF]"
-                            : "text-danger bg-[#e0440326]"
+                            ? 'text-success bg-[#E9F7EF]'
+                            : 'text-danger bg-[#e0440326]'
                         }`}
                       >
-                        {item.status === 1 ? "Active" : "Inactive"}
+                        {item.status === 1 ? 'Active' : 'Inactive'}
                       </div>
                     </td>
-                    <td className="flex items-center gap-1 text-sm px-5 py-6 text-primary">
-                      <Link href={paymentLink} target="_blank">
+                    <td className='flex items-center gap-1 text-sm px-5 py-6 text-primary'>
+                      <Link href={paymentLink} target='_blank'>
                         Payment Link
                       </Link>
                       <Icon
-                        name="copy"
-                        size="15"
-                        className="cursor-pointer"
+                        name='copy'
+                        size='15'
+                        className='cursor-pointer'
                         onClick={() => copyToClipboard(paymentLink)}
                       />
                     </td>
-                    <td className="text-sm px-5 py-6">{item.created_at}</td>
+                    <td className='text-sm px-5 py-6'>{item.created_at}</td>
                     <td
-                      className="text-sm px-5 py-6"
+                      className='text-sm px-5 py-6'
                       onClick={() => handleDropdownToggle(index, item)}
                     >
                       <Image
-                        src="/images/dashboard/collections/more.svg"
-                        className="cursor-pointer"
-                        alt="More Icon"
+                        src='/images/dashboard/collections/more.svg'
+                        className='cursor-pointer'
+                        alt='More Icon'
                         width={4}
                         height={16}
                       />
 
-                      <div className="flex justify-end relative">
+                      <div className='flex justify-end relative'>
                         <Dropdown
                           onOpen={state.dropdownIndex === index}
                           onClose={closeDropdown}
                         >
-                          <ul className="list-none p-0">
+                          <ul className='list-none p-0'>
                             <li
-                              className="flex items-center gap-2 pb-5 hover:text-primary"
+                              className='flex items-center gap-2 pb-5 hover:text-primary'
                               onClick={() => handleModalClick(item, true)}
                             >
                               <IconWrapper
                                 src={`/images/dashboard/collections/${
                                   item.status === 1
-                                    ? "disable.svg"
-                                    : "enable.svg"
+                                    ? 'disable.svg'
+                                    : 'enable.svg'
                                 }`}
                                 width={14}
                                 height={14}
-                                alt="Status icon"
+                                alt='Status icon'
                               />
                               <span>
-                                {item.status === 1 ? "Disable" : "Enable"}
+                                {item.status === 1 ? 'Disable' : 'Enable'}
                               </span>
                             </li>
                             <li>
                               <Link
-                                href="/collections/payment-links/transactions"
-                                className="flex items-center gap-2 pb-5 hover:text-primary"
+                                href='/collections/payment-links/transactions'
+                                className='flex items-center gap-2 pb-5 hover:text-primary'
                               >
                                 <IconWrapper
-                                  src="/images/dashboard/collections/transaction.svg"
+                                  src='/images/dashboard/collections/transaction.svg'
                                   width={14}
                                   height={14}
-                                  alt="Transaction icon"
+                                  alt='Transaction icon'
                                 />
                                 <span>Transactions</span>
                               </Link>
                             </li>
                             <li
-                              className="flex items-center gap-2 hover:text-primary"
+                              className='flex items-center gap-2 hover:text-primary'
                               onClick={openModal}
                             >
                               <IconWrapper
-                                src="/images/dashboard/collections/edit.svg"
+                                src='/images/dashboard/collections/edit.svg'
                                 width={14}
                                 height={14}
-                                alt="Edit icon"
+                                alt='Edit icon'
                               />
                               <span>Edit</span>
                             </li>

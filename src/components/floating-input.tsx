@@ -117,7 +117,7 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
         />
       )}
       {name === "amount" && (
-        <Icon name="naira" className="absolute top-6 left-5" />
+        <Icon name="dollar" className="absolute top-6 left-5" />
       )}
       <label
         htmlFor={htmlFor}

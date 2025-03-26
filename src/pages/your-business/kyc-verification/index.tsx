@@ -43,7 +43,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
   const beneficiaryDocument = getField("Beneficiary Document");
   const beneficiaryId = getField("Beneficiary ID");
   const proofOfBusinessAddress = getField("Proof of Business Address");
-  const idFile = getField("Document Type");
+  const idFile = getField('ID File');
   const proofOfAddress = getField("Proof of Address");
   const { imageUrl } = env;
 
@@ -61,76 +61,76 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
   }, [getKyc]);
 
   return (
-    <Layout pageTitle="Business KYC Verification" icon="kyc">
-      <WebPageTitle title="Business KYC | Ramp Merchant Portal" />
-      <div className="p-4">
+    <Layout pageTitle='Business KYC Verification' icon='kyc'>
+      <WebPageTitle title='Business KYC | Ramp Merchant Portal' />
+      <div className='p-4'>
         {getKycLoading ? (
           <Fragment>
             <CardSkeleton />
           </Fragment>
         ) : userKyc && userKyc.fields.length !== 0 ? (
           <Card>
-            <div className="flex flex-col sm:flex-row justify-center items-center sm:justify-between p-5">
+            <div className='flex flex-col sm:flex-row justify-center items-center sm:justify-between p-5'>
               <h6
                 className={`text-center font-bold py-3 px-3 ${
-                  userKyc.status === "Approved"
-                    ? "sarepayPrimary"
-                    : "text-danger"
+                  userKyc.status === 'Approved'
+                    ? 'sarepayPrimary'
+                    : 'text-danger'
                 }`}
               >
                 KYC Status: {userKyc.status}
               </h6>
-              <Link href="/your-business/kyc-verification/kyc-form">
+              <Link href='/your-business/kyc-verification/kyc-form'>
                 <Button
-                  text="Submit New Document"
-                  ariaLabel="Submit New Document"
+                  text='Submit New Document'
+                  ariaLabel='Submit New Document'
                   disabled={
-                    !(userKyc.status === "Approved" && isStarterBusiness()) &&
-                    !(userKyc.status === "Rejected")
+                    !(userKyc.status === 'Approved' && isStarterBusiness()) &&
+                    !(userKyc.status === 'Rejected')
                   }
                   primary
                   medium
                 />
               </Link>
             </div>
-            <div className="p-4 bg-[#F5F8FA]">
-              <div className="flex flex-col sm:grid sm:grid-cols-5 gap-4">
-                <div className="flex flex-col space-y-1 sm:space-y-0">
-                  <h3 className="text-[#6E6893] font-semibold text-sm"> </h3>
+            <div className='p-4 bg-[#F5F8FA]'>
+              <div className='flex flex-col sm:grid sm:grid-cols-5 gap-4'>
+                <div className='flex flex-col space-y-1 sm:space-y-0'>
+                  <h3 className='text-[#6E6893] font-semibold text-sm'> </h3>
                   <Image
-                    src="/images/dashboard/your-business/kyc-dropdown.svg"
+                    src='/images/dashboard/your-business/kyc-dropdown.svg'
                     onClick={toggleShow}
                     width={20}
                     height={20}
-                    alt="KYC Dropdown"
+                    alt='KYC Dropdown'
                   />
                 </div>
-                <div className="flex flex-col space-y-1 sm:space-y-0">
-                  <h3 className="text-[#6E6893] font-bold text-sm">
+                <div className='flex flex-col space-y-1 sm:space-y-0'>
+                  <h3 className='text-[#6E6893] font-bold text-sm'>
                     BUSINESS TYPE
                   </h3>
                   <p> {capitalizeFirstLetter(userKyc.fields[0].value)}</p>
                 </div>
-                <div className="flex flex-col space-y-1 sm:space-y-0">
-                  <h3 className="text-[#6E6893] font-bold text-sm">STATUS</h3>
+                <div className='flex flex-col space-y-1 sm:space-y-0'>
+                  <h3 className='text-[#6E6893] font-bold text-sm'>STATUS</h3>
                   <p
                     className={`font-bold ${
-                      userKyc.status === "Approved"
-                        ? "sarepayPrimary"
-                        : "text-danger"
+                      userKyc.status === 'Approved'
+                        ? 'sarepayPrimary'
+                        : 'text-danger'
                     }`}
                   >
                     {userKyc.status}
                   </p>
                 </div>
-                <div className="flex flex-col space-y-1 sm:space-y-0">
-                  <h3 className="text-[#6E6893] font-bold text-sm">
+                <div className='flex flex-col space-y-1 sm:space-y-0'>
+                  <h3 className='text-[#6E6893] font-bold text-sm'>
                     COMPLIANCE COMMENT
                   </h3>
-                  <p>{userKyc.comment || "N/A"}</p>
+                  <p>{userKyc.comment || 'N/A'}</p>
                 </div>
-                <div className="flex flex-col space-y-1 sm:space-y-0">
-                  <h3 className="text-[#6E6893] font-bold text-sm">
+                <div className='flex flex-col space-y-1 sm:space-y-0'>
+                  <h3 className='text-[#6E6893] font-bold text-sm'>
                     SUBMITTED DATE
                   </h3>
                   <p>{formatDate(userKyc.created_at)}</p>
@@ -142,303 +142,303 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
               <div>
                 {isStarterBusiness() ? (
                   <div>
-                    <div className="p-4 bg-[#D9D5EC]">
-                      <div className="flex flex-col sm:grid sm:grid-cols-5 gap-4">
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                    <div className='p-4 bg-[#D9D5EC]'>
+                      <div className='flex flex-col sm:grid sm:grid-cols-5 gap-4'>
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             ID Number
                           </h3>
-                          <p>{getField("ID number")}</p>
+                          <p>{getField('ID Number')}</p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Document Type
                           </h3>
-                          <p>{getField("Document Type")}</p>
+                          <p>{getField('ID Type')}</p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Document
                           </h3>
                           <p>
-                            {idFile !== "N/A" ? (
+                            {idFile !== 'N/A' ? (
                               <Link
                                 href={`${imageUrl}/${idFile}`}
                                 passHref
                                 legacyBehavior
                               >
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="sarepayPrimary underline font-bold text-sm"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='sarepayPrimary underline font-bold text-sm'
                                 >
                                   View Document
                                 </a>
                               </Link>
                             ) : (
-                              "N/A"
+                              'N/A'
                             )}
                           </p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             BVN
                           </h3>
-                          <p>{getField("BVN")}</p>
+                          <p>{getField('BVN')}</p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             NIN
                           </h3>
-                          <p>{getField("NIN")}</p>
+                          <p>{getField('NIN')}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:grid sm:grid-cols-5 gap-4">
-                      <div className="flex flex-col space-y-1 sm:space-y-0">
-                        <h3 className="text-[#6E6893] font-semibold text-sm">
+                    <div className='flex flex-col sm:grid sm:grid-cols-5 gap-4'>
+                      <div className='flex flex-col space-y-1 sm:space-y-0'>
+                        <h3 className='text-[#6E6893] font-semibold text-sm'>
                           Date Of Birth
                         </h3>
-                        <p>{getField("Date of Birth")}</p>
+                        <p>{getField('Date Of Birth')}</p>
                       </div>
-                      <div className="flex flex-col space-y-1 sm:space-y-0">
-                        <h3 className="text-[#6E6893] font-semibold text-sm">
+                      <div className='flex flex-col space-y-1 sm:space-y-0'>
+                        <h3 className='text-[#6E6893] font-semibold text-sm'>
                           Proof of Address
                         </h3>
                         <p>
-                          {proofOfAddress !== "N/A" ? (
+                          {proofOfAddress !== 'N/A' ? (
                             <Link
                               href={`${imageUrl}/${proofOfAddress}`}
                               passHref
                               legacyBehavior
                             >
                               <a
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="sarepayPrimary underline font-bold text-sm"
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='sarepayPrimary underline font-bold text-sm'
                               >
                                 View Document
                               </a>
                             </Link>
                           ) : (
-                            "N/A"
+                            'N/A'
                           )}
                         </p>
                       </div>
-                      <div className="flex flex-col space-y-1 sm:space-y-0">
-                        <h3 className="text-[#6E6893] font-semibold text-sm">
+                      <div className='flex flex-col space-y-1 sm:space-y-0'>
+                        <h3 className='text-[#6E6893] font-semibold text-sm'>
                           Note
                         </h3>
-                        <p>{getField("Note")}</p>
+                        <p>{getField('Note')}</p>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <div className="p-4 bg-[#D9D5EC]">
-                      <div className="flex flex-col sm:grid sm:grid-cols-5 gap-4">
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                    <div className='p-4 bg-[#D9D5EC]'>
+                      <div className='flex flex-col sm:grid sm:grid-cols-5 gap-4'>
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Directors BVN
                           </h3>
                           <p>
-                            <p>{getField("Directors BVN")}</p>
+                            <p>{getField('Directors BVN')}</p>
                           </p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Directors NIN
                           </h3>
-                          <p>{getField("Directors NIN")}</p>
+                          <p>{getField('Directors NIN')}</p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Directors ID
                           </h3>
-                          <p>{getField("Directors ID")}</p>
+                          <p>{getField('Directors ID')}</p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Directors Document
                           </h3>
                           <p>
-                            {directorsDocument !== "N/A" ? (
+                            {directorsDocument !== 'N/A' ? (
                               <Link
                                 href={`${imageUrl}/${directorsDocument}`}
                                 passHref
                                 legacyBehavior
                               >
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="sarepayPrimary underline font-bold text-sm"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='sarepayPrimary underline font-bold text-sm'
                                 >
                                   View Document
                                 </a>
                               </Link>
                             ) : (
-                              "N/A"
+                              'N/A'
                             )}
                           </p>
                         </div>
 
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Beneficiary ID
                           </h3>
                           <p>
-                            {beneficiaryId !== "N/A" ? (
+                            {beneficiaryId !== 'N/A' ? (
                               <Link
                                 href={`${imageUrl}/${beneficiaryId}`}
                                 passHref
                                 legacyBehavior
                               >
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="sarepayPrimary underline font-bold text-sm"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='sarepayPrimary underline font-bold text-sm'
                                 >
                                   View Document
                                 </a>
                               </Link>
                             ) : (
-                              "N/A"
+                              'N/A'
                             )}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-[#D9D5EC]">
-                      <div className="flex flex-col sm:grid sm:grid-cols-5 gap-4">
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                    <div className='p-4 bg-[#D9D5EC]'>
+                      <div className='flex flex-col sm:grid sm:grid-cols-5 gap-4'>
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Beneficiary Document
                           </h3>
                           <p>
-                            {beneficiaryDocument !== "N/A" ? (
+                            {beneficiaryDocument !== 'N/A' ? (
                               <Link
                                 href={`${imageUrl}/${beneficiaryDocument}`}
                                 passHref
                                 legacyBehavior
                               >
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="sarepayPrimary underline font-bold text-sm"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='sarepayPrimary underline font-bold text-sm'
                                 >
                                   View Document
                                 </a>
                               </Link>
                             ) : (
-                              "N/A"
+                              'N/A'
                             )}
                           </p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Tax Identification Number
                           </h3>
-                          <p>{getField("Tax Identification Number")}</p>
+                          <p>{getField('Tax Identification Number')}</p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Proof Of Business Address
                           </h3>
                           <p>
-                            {proofOfBusinessAddress !== "N/A" ? (
+                            {proofOfBusinessAddress !== 'N/A' ? (
                               <Link
                                 href={`${imageUrl}/${proofOfBusinessAddress}`}
                                 passHref
                                 legacyBehavior
                               >
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="sarepayPrimary underline font-bold text-sm"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='sarepayPrimary underline font-bold text-sm'
                                 >
                                   View Document
                                 </a>
                               </Link>
                             ) : (
-                              "N/A"
+                              'N/A'
                             )}
                           </p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             CAC Registration Certificate
                           </h3>
                           <p>
-                            {cacDocument !== "N/A" ? (
+                            {cacDocument !== 'N/A' ? (
                               <Link
                                 href={`${imageUrl}/${cacDocument}`}
                                 passHref
                                 legacyBehavior
                               >
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="sarepayPrimary underline font-bold text-sm"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='sarepayPrimary underline font-bold text-sm'
                                 >
                                   View Document
                                 </a>
                               </Link>
                             ) : (
-                              "N/A"
+                              'N/A'
                             )}
                           </p>
                         </div>
 
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             MEMART or its equivalent
                           </h3>
                           <p>
-                            {statusOfCompany !== "N/A" ? (
+                            {statusOfCompany !== 'N/A' ? (
                               <Link
                                 href={`${imageUrl}/${statusOfCompany}`}
                                 passHref
                                 legacyBehavior
                               >
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="sarepayPrimary underline font-bold text-sm"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='sarepayPrimary underline font-bold text-sm'
                                 >
                                   View Document
                                 </a>
                               </Link>
                             ) : (
-                              "N/A"
+                              'N/A'
                             )}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-[#D9D5EC]">
-                      <div className="flex flex-col sm:grid sm:grid-cols-5 gap-4">
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                    <div className='p-4 bg-[#D9D5EC]'>
+                      <div className='flex flex-col sm:grid sm:grid-cols-5 gap-4'>
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Business Description
                           </h3>
                           <p>
                             {userKyc.fields.find(
                               (field: Field) =>
-                                field.key.trim() === "Business Description"
-                            )?.value || "N/A"}
+                                field.key.trim() === 'Business Description'
+                            )?.value || 'N/A'}
                           </p>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
-                          <h3 className="text-[#6E6893] font-semibold text-sm">
+                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                          <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Note
                           </h3>
                           <p>
                             {userKyc.fields.find(
-                              (field: Field) => field.key.trim() === "Note"
-                            )?.value || "N/A"}
+                              (field: Field) => field.key.trim() === 'Note'
+                            )?.value || 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -450,14 +450,14 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
           </Card>
         ) : (
           <EmptyState
-            title="No Business KYC found"
+            title='No Business KYC found'
             subTitle="We couldn't find any KYC"
-            image="/images/dashboard/your-business/kyc-emptystate.svg"
+            image='/images/dashboard/your-business/kyc-emptystate.svg'
           >
             <Button
-              text="Submit KYC"
-              ariaLabel="Add KYC button"
-              className="!w-[191px] !h-[48px]"
+              text='Submit KYC'
+              ariaLabel='Add KYC button'
+              className='!w-[191px] !h-[48px]'
               onClick={() =>
                 router.push(`/your-business/kyc-verification/kyc-form`)
               }

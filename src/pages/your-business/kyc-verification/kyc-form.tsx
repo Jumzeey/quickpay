@@ -1,17 +1,17 @@
-import Button from "@/components/button";
-import { useRouter } from "next/router";
-import * as Yup from "yup";
-import { notifyError, notifySuccess } from "@/util/utils";
-import { useFormik } from "formik";
-import { useEffect, useState } from "react";
-import FloatingLabelInput from "@/components/floating-input";
-import Loader from "@/components/loader";
-import WebPageTitle from "@/components/WebPageTitle";
-import useKyc from "@/stores/useKyc";
-import Layout from "@/components/layout";
-import Image from "next/image";
-import UploadComponent from "@/components/upload-component";
-import Card from "@/components/Card";
+import Button from '@/components/button';
+import { useRouter } from 'next/router';
+import * as Yup from 'yup';
+import { notifyError, notifySuccess } from '@/util/utils';
+import { useFormik } from 'formik';
+import { useEffect, useState } from 'react';
+import FloatingLabelInput from '@/components/floating-input';
+import Loader from '@/components/loader';
+import WebPageTitle from '@/components/WebPageTitle';
+import useKyc from '@/stores/useKyc';
+import Layout from '@/components/layout';
+import Image from 'next/image';
+import UploadComponent from '@/components/upload-component';
+import Card from '@/components/Card';
 
 interface FormValues {
   business_type: string;
@@ -24,16 +24,15 @@ interface FormValues {
   bvn: string;
   nin: string;
   business_description: string;
-  director_nin: string;
+  // director_nin: string;
   company_business_status: string;
-  director_bvn: string;
+  // director_bvn: string;
   document_beneficiary_type: string;
   director_tin: string;
   document_type: string;
   cac_documents: string;
   document_beneficiary_file: string;
   document_file: string;
-  
 }
 
 const KYCPage: React.FC = () => {
@@ -42,78 +41,78 @@ const KYCPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const starterSchema = Yup.object().shape({
-    business_type: Yup.string().required("Business Type is required!"),
-    id_number: Yup.string().required("Identification Number is required!"),
-    id_type: Yup.string().required("ID Type is required!"),
-    dob: Yup.string().required("Date Of Birth is required!"),
-    id_file: Yup.string().required("ID File is required!"),
-    proof_of_address: Yup.string().required("Proof Of Address is required!"),
+    business_type: Yup.string().required('Business Type is required!'),
+    id_number: Yup.string().required('Identification Number is required!'),
+    id_type: Yup.string().required('ID Type is required!'),
+    dob: Yup.string().required('Date Of Birth is required!'),
+    id_file: Yup.string().required('ID File is required!'),
+    proof_of_address: Yup.string().required('Proof Of Address is required!'),
     nin: Yup.string()
-      .required("NIN is required!")
-      .matches(/^\d{11}$/, "NIN must be exactly 11 digits!"),
+      .required('NIN is required!')
+      .matches(/^\d{11}$/, 'NIN must be exactly 11 digits!'),
   });
 
   const registeredSchema = Yup.object().shape({
-    business_type: Yup.string().required("Business Type is required!"),
-    proof_of_address: Yup.string().required("Proof Of Address is required!"),
+    business_type: Yup.string().required('Business Type is required!'),
+    proof_of_address: Yup.string().required('Proof Of Address is required!'),
     business_description: Yup.string().required(
-      "Business Description is required!"
+      'Business Description is required!'
     ),
-    director_nin: Yup.string()
-      .required("Director NIN is required!")
-      .matches(/^\d{11}$/, "Director NIN must be exactly 11 digits!"),
+    // director_nin: Yup.string()
+    //   .required('Director NIN is required!')
+    //   .matches(/^\d{11}$/, 'Director NIN must be exactly 11 digits!'),
     company_business_status: Yup.string().required(
-      "Company Business Status is required!"
+      'Company Business Status is required!'
     ),
-    director_bvn: Yup.string()
-      .required("Director BVN is required!")
-      .matches(/^\d{11}$/, "Director BVN must be exactly 11 digits!"),
+    // director_bvn: Yup.string()
+    //   .required('Director BVN is required!')
+    //   .matches(/^\d{11}$/, 'Director BVN must be exactly 11 digits!'),
     document_beneficiary_type: Yup.string().required(
-      "Document Beneficiary Type is required!"
+      'Document Beneficiary Type is required!'
     ),
     director_tin: Yup.string()
-      .required("Director TIN is required!")
+      .required('Director TIN is required!')
       .matches(
         /^\d{8}-\d{4}$/,
-        "Director TIN must be exactly 8 digits, a hyphen, followed by 4 digits (e.g., 20000049-0001)"
+        'Director TIN must be exactly 8 digits, a hyphen, followed by 4 digits (e.g., 20000049-0001)'
       ),
-    document_type: Yup.string().required("Document Type is required!"),
+    document_type: Yup.string().required('Document Type is required!'),
     cac_documents: Yup.string().required(
-      "CAC Registration Certificate are required!"
+      'CAC Registration Certificate are required!'
     ),
     document_beneficiary_file: Yup.string().required(
-      "Document Beneficiary File is required!"
+      'Document Beneficiary File is required!'
     ),
-    document_file: Yup.string().required("Document File is required!"),
+    document_file: Yup.string().required('Document File is required!'),
   });
 
   const validationSchema = Yup.lazy(values => {
-    return values.business_type === "starter"
+    return values.business_type === 'starter'
       ? starterSchema
       : registeredSchema;
   });
 
   const formik = useFormik<FormValues>({
     initialValues: {
-      business_type: "",
-      id_number: "",
-      id_type: "",
-      dob: "",
-      id_file: "",
-      proof_of_address: "",
-      note: "",
-      bvn: "",
-      nin: "",
-      business_description: "",
-      director_nin: "",
-      company_business_status: "",
-      director_bvn: "",
-      document_beneficiary_type: "",
-      director_tin: "",
-      document_type: "",
-      cac_documents: "",
-      document_beneficiary_file: "",
-      document_file: "",
+      business_type: 'registered',
+      id_number: '',
+      id_type: '',
+      dob: '',
+      id_file: '',
+      proof_of_address: '',
+      note: '',
+      bvn: '',
+      nin: '',
+      business_description: '',
+      // director_nin: '',
+      company_business_status: '',
+      // director_bvn: '',
+      document_beneficiary_type: '',
+      director_tin: '',
+      document_type: '',
+      cac_documents: '',
+      document_beneficiary_file: '',
+      document_file: '',
     },
     validationSchema,
     validateOnMount: true,
@@ -129,7 +128,7 @@ const KYCPage: React.FC = () => {
   const handleSubmit = async (values: any) => {
     setIsLoading(true);
     let payload;
-    if (values.business_type === "starter") {
+    if (values.business_type === 'starter') {
       payload = {
         business_type: values.business_type,
         id_number: values.id_number,
@@ -145,9 +144,9 @@ const KYCPage: React.FC = () => {
       payload = {
         business_type: values.business_type,
         business_description: values.business_description,
-        director_nin: values.director_nin,
+        // director_nin: values.director_nin,
         company_business_status: values.company_business_status,
-        director_bvn: values.director_bvn,
+        // director_bvn: values.director_bvn,
         document_beneficiary_type: values.document_beneficiary_type,
         director_tin: values.director_tin,
         document_type: values.document_type,
@@ -163,7 +162,7 @@ const KYCPage: React.FC = () => {
       notifySuccess(response.message);
       setIsLoading(false);
       router.push({
-        pathname: "/your-business/kyc-verification",
+        pathname: '/your-business/kyc-verification',
       });
     } catch (error: any) {
       notifyError(error.message);
@@ -171,229 +170,229 @@ const KYCPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-  const maxDate = new Date().toISOString().split("T")[0];
+  const maxDate = new Date().toISOString().split('T')[0];
 
   return (
-    <Layout pageTitle="KYC Verification" icon="kyc">
-      <WebPageTitle title="Submit KYC Document | Ramp Merchant Portal" />
-      <div className="pt-5">
+    <Layout pageTitle='KYC Verification' icon='kyc'>
+      <WebPageTitle title='Submit KYC Document | Merchant Portal' />
+      <div className='pt-5'>
         <Image
-          src="/images/arrow-back.svg"
-          alt="Back Arrow"
-          className="cursor-pointer"
+          src='/images/arrow-back.svg'
+          alt='Back Arrow'
+          className='cursor-pointer'
           onClick={() => router.back()}
           width={36}
           height={36}
           priority
         />
-        <div className="flex justify-center">
+        <div className='flex justify-center'>
           <Card extraPadding>
-            <form onSubmit={formik.handleSubmit} className="mt-10 p-4">
-              <div>
-                <label className="font-semibold">Select Business Type</label>
+            <form onSubmit={formik.handleSubmit} className='mt-10 p-4'>
+              {/* <div>
+                <label className='font-semibold'>Select Business Type</label>
                 <select
-                  className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+                  className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
                   onChange={formik.handleChange}
-                  name="business_type"
+                  name='business_type'
                   value={formik.values.business_type}
                 >
-                  <option value="">Business Type</option>
-                  <option value="starter">Starter</option>
-                  <option value="registered">Registered</option>
+                  <option value=''>Business Type</option>
+                  <option value='starter'>Starter</option>
+                  <option value='registered'>Registered</option>
                 </select>
-              </div>
-              {formik.values.business_type === "starter" ? (
+              </div> */}
+              {formik.values.business_type === 'starter' ? (
                 <div>
-                  <div className="flex">
+                  <div className='flex'>
                     <select
-                      className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5 mr-2"
+                      className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5 mr-2'
                       onChange={formik.handleChange}
-                      name="id_type"
+                      name='id_type'
                       value={formik.values.id_type}
                     >
-                      <option value="">Select ID Type</option>
-                      <option value="Driver License">Driver License</option>
-                      <option value="International Passport">
+                      <option value=''>Select ID Type</option>
+                      <option value='Driver License'>Driver License</option>
+                      <option value='International Passport'>
                         International Passport
                       </option>
-                      <option value="Permanent Voters Card">
+                      <option value='Permanent Voters Card'>
                         Permanent Voters Card
                       </option>
-                      <option value="National ID">National ID</option>
+                      <option value='National ID'>National ID</option>
                     </select>
                     <FloatingLabelInput
-                      label="Identification Number"
-                      id="id_number"
-                      type="text"
-                      htmlFor="id_number"
+                      label='Identification Number'
+                      id='id_number'
+                      type='text'
+                      htmlFor='id_number'
                       formik={formik}
-                      {...formik.getFieldProps("id_number")}
+                      {...formik.getFieldProps('id_number')}
                       numberOnly
                     />
                   </div>
                   <UploadComponent
                     onFileUpload={onFileUpload}
-                    buttonText="Select File"
-                    name="id_file"
-                    text="Upload ID FILE"
-                    folderName="kyc"
+                    buttonText='Select File'
+                    name='id_file'
+                    text='Upload ID FILE'
+                    folderName='kyc'
                   />
-                  <div className="flex">
+                  <div className='flex'>
                     <FloatingLabelInput
-                      label="NIN"
-                      id="nin"
-                      type="text"
-                      htmlFor="nin"
+                      label='NIN'
+                      id='nin'
+                      type='text'
+                      htmlFor='nin'
                       formik={formik}
-                      {...formik.getFieldProps("nin")}
+                      {...formik.getFieldProps('nin')}
                       numberOnly
                     />
                     <FloatingLabelInput
-                      label="DOB"
-                      id="dob"
-                      type="date"
-                      htmlFor="dob"
+                      label='DOB'
+                      id='dob'
+                      type='date'
+                      htmlFor='dob'
                       formik={formik}
-                      max={new Date().toISOString().split("T")[0]}
-                      {...formik.getFieldProps("dob")}
+                      max={new Date().toISOString().split('T')[0]}
+                      {...formik.getFieldProps('dob')}
                     />
                   </div>
                   <UploadComponent
                     onFileUpload={onFileUpload}
-                    buttonText="Select File"
-                    name="proof_of_address"
-                    text="Proof of Address (e.g Utility Bill)"
-                    folderName="kyc"
+                    buttonText='Select File'
+                    name='proof_of_address'
+                    text='Proof of Address (e.g Utility Bill)'
+                    folderName='kyc'
                   />
                   <FloatingLabelInput
-                    label="Note"
-                    id="note"
-                    type="text"
-                    htmlFor="note"
+                    label='Note'
+                    id='note'
+                    type='text'
+                    htmlFor='note'
                     formik={formik}
-                    {...formik.getFieldProps("note")}
+                    {...formik.getFieldProps('note')}
                   />
                 </div>
               ) : null}
-              {formik.values.business_type === "registered" ? (
+              {formik.values.business_type === 'registered' ? (
                 <div>
-                  <FloatingLabelInput
-                    label="BVN (of one of the directors)"
-                    id="director_bvn"
-                    type="text"
-                    htmlFor="director_bvn"
+                  {/* <FloatingLabelInput
+                    label='BVN (of one of the directors)'
+                    id='director_bvn'
+                    type='text'
+                    htmlFor='director_bvn'
                     formik={formik}
-                    {...formik.getFieldProps("director_bvn")}
+                    {...formik.getFieldProps('director_bvn')}
                     numberOnly
                   />
                   <FloatingLabelInput
-                    label="NIN (of the same director)"
-                    id="director_nin"
-                    type="text"
-                    htmlFor="director_nin"
+                    label='NIN (of the same director)'
+                    id='director_nin'
+                    type='text'
+                    htmlFor='director_nin'
                     formik={formik}
-                    {...formik.getFieldProps("director_nin")}
+                    {...formik.getFieldProps('director_nin')}
                     numberOnly
-                  />
+                  /> */}
                   <select
-                    className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5 mr-2"
+                    className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5 mr-2'
                     onChange={formik.handleChange}
-                    name="document_type"
+                    name='document_type'
                     value={formik.values.document_type}
                   >
-                    <option value="">Select Document Type</option>
-                    <option value="Driver License">Driver License</option>
-                    <option value="International Passport">
+                    <option value=''>Select Document Type</option>
+                    <option value='Driver License'>Driver License</option>
+                    <option value='International Passport'>
                       International Passport
                     </option>
-                    <option value="Permanent Voters Card">
+                    <option value='Permanent Voters Card'>
                       Permanent Voters Card
                     </option>
-                    <option value="National ID">National ID</option>
+                    <option value='National ID'>National ID</option>
                   </select>
                   <UploadComponent
                     onFileUpload={onFileUpload}
-                    buttonText="Select File"
-                    name="document_file"
-                    text="Document Upload (of the same director)"
-                    folderName="kyc"
+                    buttonText='Select File'
+                    name='document_file'
+                    text='Document Upload'
+                    folderName='kyc'
                   />
                   <select
-                    className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5 mr-2"
+                    className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5 mr-2'
                     onChange={formik.handleChange}
-                    name="document_beneficiary_type"
+                    name='document_beneficiary_type'
                     value={formik.values.document_beneficiary_type}
                   >
-                    <option value="">
+                    <option value=''>
                       Select Document Type (Ultimate Beneficial Owner)
                     </option>
-                    <option value="Driver License">Driver License</option>
-                    <option value="International Passport">
+                    <option value='Driver License'>Driver License</option>
+                    <option value='International Passport'>
                       International Passport
                     </option>
-                    <option value="Permanent Voters Card">
+                    <option value='Permanent Voters Card'>
                       Permanent Voters Card
                     </option>
-                    <option value="National ID">National ID</option>
+                    <option value='National ID'>National ID</option>
                   </select>
                   <UploadComponent
                     onFileUpload={onFileUpload}
-                    buttonText="Select File"
-                    name="document_beneficiary_file"
-                    text="Document Upload (Ultimate Beneficial Owner)"
-                    folderName="kyc"
+                    buttonText='Select File'
+                    name='document_beneficiary_file'
+                    text='Document Upload (Ultimate Beneficial Owner)'
+                    folderName='kyc'
                   />
                   <FloatingLabelInput
-                    label="Tax Identification Number"
-                    id="director_tin"
-                    type="text"
-                    htmlFor="director_tin"
+                    label='Tax Identification Number'
+                    id='director_tin'
+                    type='text'
+                    htmlFor='director_tin'
                     formik={formik}
-                    {...formik.getFieldProps("director_tin")}
+                    {...formik.getFieldProps('director_tin')}
                   />
                   <UploadComponent
                     onFileUpload={onFileUpload}
-                    buttonText="Select File"
-                    name="proof_of_address"
-                    text="Proof Of Business Address (e.g Utility Bill)"
-                    folderName="kyc"
+                    buttonText='Select File'
+                    name='proof_of_address'
+                    text='Proof Of Business Address (e.g Utility Bill)'
+                    folderName='kyc'
                   />
                   <UploadComponent
                     onFileUpload={onFileUpload}
-                    buttonText="Select File"
-                    name="cac_documents"
-                    text="CAC Registration Certificate"
-                    folderName="kyc"
+                    buttonText='Select File'
+                    name='cac_documents'
+                    text='CAC Registration Certificate'
+                    folderName='kyc'
                   />
                   <UploadComponent
                     onFileUpload={onFileUpload}
-                    buttonText="Select File"
-                    name="company_business_status"
-                    text="MEMART or its equivalent"
-                    folderName="kyc"
+                    buttonText='Select File'
+                    name='company_business_status'
+                    text='MEMART or its equivalent'
+                    folderName='kyc'
                   />
                   <FloatingLabelInput
-                    label="Business Description"
-                    id="business_description"
-                    type="text"
-                    htmlFor="business_description"
+                    label='Business Description'
+                    id='business_description'
+                    type='text'
+                    htmlFor='business_description'
                     formik={formik}
-                    {...formik.getFieldProps("business_description")}
+                    {...formik.getFieldProps('business_description')}
                   />
                   <FloatingLabelInput
-                    label="Note"
-                    id="note"
-                    type="text"
-                    htmlFor="note"
+                    label='Note'
+                    id='note'
+                    type='text'
+                    htmlFor='note'
                     formik={formik}
-                    {...formik.getFieldProps("note")}
+                    {...formik.getFieldProps('note')}
                   />
                 </div>
               ) : null}
-              <div className="flex justify-center mt-12">
+              <div className='flex justify-center mt-12'>
                 <Button
-                  text={isLoading ? <Loader /> : "Submit"}
-                  ariaLabel="Submit Button"
+                  text={isLoading ? <Loader /> : 'Submit'}
+                  ariaLabel='Submit Button'
                   disabled={!formik.isValid || isLoading}
                   primary
                 />

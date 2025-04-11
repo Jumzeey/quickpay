@@ -180,7 +180,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
                             )}
                           </p>
                         </div>
-                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                        {/* <div className='flex flex-col space-y-1 sm:space-y-0'>
                           <h3 className='text-[#6E6893] font-semibold text-sm'>
                             BVN
                           </h3>
@@ -191,7 +191,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
                             NIN
                           </h3>
                           <p>{getField('NIN')}</p>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
@@ -238,7 +238,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
                   <div>
                     <div className='p-4 bg-[#D9D5EC]'>
                       <div className='flex flex-col sm:grid sm:grid-cols-5 gap-4'>
-                        <div className='flex flex-col space-y-1 sm:space-y-0'>
+                        {/* <div className='flex flex-col space-y-1 sm:space-y-0'>
                           <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Directors BVN
                           </h3>
@@ -251,7 +251,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
                             Directors NIN
                           </h3>
                           <p>{getField('Directors NIN')}</p>
-                        </div>
+                        </div> */}
                         <div className='flex flex-col space-y-1 sm:space-y-0'>
                           <h3 className='text-[#6E6893] font-semibold text-sm'>
                             Directors ID

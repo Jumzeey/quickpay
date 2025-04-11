@@ -139,60 +139,61 @@ const Dashboard = () => {
   const labels = state?.transactions?.map((label: any) => label.month);
 
   return (
-    <Layout pageTitle="Dashboard" icon="dashboard">
-      <WebPageTitle title="Dashboard | Ramp Merchant Portal" />
+    <Layout pageTitle='Dashboard' icon='dashboard'>
+      <WebPageTitle title='Dashboard | Ramp Merchant Portal' />
       <div>
         <div>
-          <div className="flex xl:justify-between xl:grid xl:grid-cols-4 items-center gap-44 mb-2">
-            <div className="flex items-center gap-3">
-              <span className="col-span-2 text-2xl text-primary font-semibold">
+          <div className='flex xl:justify-between xl:grid xl:grid-cols-4 items-center gap-44 mb-2'>
+            <div className='flex items-center gap-3'>
+              <span className='text-2xl text-primary font-semibold'>
                 Balances
               </span>
-              <div>
+              <div className='relative flex items-center justify-center shrink-0'>
                 <Image
                   src={
                     isVisible
-                      ? "/images/eye-close-dark.svg"
-                      : "/images/eye-on-dark.svg"
+                      ? '/images/eye-close-dark.svg'
+                      : '/images/eye-on-dark.svg'
                   }
                   onClick={handleToggle}
-                  className="cursor-pointer"
-                  alt="Eye icons"
+                  className='cursor-pointer w-7 h-7' // Fixed width and height
+                  alt='Eye icon'
                   width={28}
                   height={28}
                   priority
                 />
               </div>
             </div>
-            <div className="relative">
+            <div className='relative'>
               <Icon
-                name="refresh"
-                className={`md:absolute md:-top-2 cursor-pointer transition-transform duration-500 ease-in-out`}
+                name='refresh'
+                className='md:absolute md:-top-2 cursor-pointer transition-transform duration-500 ease-in-out'
                 style={{ transform: `rotate(${rotation}deg)` }}
-                onClick={e => handleRefresh(e)}
+                onClick={handleRefresh}
               />
             </div>
           </div>
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+          <div className='grid md:grid-cols-2 xl:grid-cols-3 gap-4'>
             {state.isLoading ? (
-              <Card className="flex flex-col justify-between h-[200px] !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-                <div className="flex justify-end">
+              <Card className='flex flex-col justify-between h-[200px] !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl'>
+                <div className='flex justify-end'>
                   <Skeleton width={30} height={20} />
                 </div>
-                <div className="">
-                  <div className="flex justify-between">
-                    <span className="block w-[130px] rounded-lg pb-1">
-                      <Skeleton className="h-2.5" />
+                <div className=''>
+                  <div className='flex justify-between'>
+                    <span className='block w-[130px] rounded-lg pb-1'>
+                      <Skeleton className='h-2.5' />
                     </span>
                   </div>
 
-                  <span className="block w-[100px] rounded-lg pb-1">
-                    <Skeleton className="h-2.5" />
+                  <span className='block w-[100px] rounded-lg pb-1'>
+                    <Skeleton className='h-2.5' />
                   </span>
                 </div>
-                <div className="flex items-center justify-between flex-wrap">
-                  <span className="block w-[120px] rounded-lg pb-1">
-                    <Skeleton className="h-2.5" />
+                <div className='flex items-center justify-between flex-wrap'>
+                  <span className='block w-[120px] rounded-lg pb-1'>
+                    <Skeleton className='h-2.5' />
                   </span>
                   {/*<span className="block w-[100px] rounded-lg pb-1">
                     <Skeleton className="h-2.5" />
@@ -200,28 +201,28 @@ const Dashboard = () => {
                 </div>
               </Card>
             ) : (
-              <Card className="h-[200px] text-white flex flex-col justify-between !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-                <div className="flex justify-end">
-                  <Icon name="wallet" />
+              <Card className='h-[200px] text-white flex flex-col justify-between !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl'>
+                <div className='flex justify-end'>
+                  <Icon name='wallet' />
                 </div>
 
                 <div>
-                  <div className="flex justify-between">
-                    <span className="text-lg">Available</span>
+                  <div className='flex justify-between'>
+                    <span className='text-lg'>Available</span>
                   </div>
 
                   <div>
-                    <h1 className="font-medium mt-2 text-xl">
-                      {isVisible ? state.available_balance : "********"}
+                    <h1 className='font-medium mt-2 text-xl'>
+                      {isVisible ? state.available_balance : '********'}
                     </h1>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between flex-wrap">
-                  <p className="text-xs">
+                <div className='flex items-center justify-between flex-wrap'>
+                  <p className='text-xs'>
                     Ledger:&nbsp;
-                    <span className="font-semibold text-xs">
-                      {isVisible ? state.ledger_balance : "********"}
+                    <span className='font-semibold text-xs'>
+                      {isVisible ? state.ledger_balance : '********'}
                     </span>
                   </p>
                   {/* <p className="text-xs">
@@ -237,27 +238,27 @@ const Dashboard = () => {
             {dashboardAnalytics.map((item: any, index: number) => (
               <Card
                 key={index}
-                className="flex flex-col justify-between h-[200px] text-black transition-all duration-300 transform hover:scale-105 hover:shadow-xl bg-white"
+                className='flex flex-col justify-between h-[200px] text-black transition-all duration-300 transform hover:scale-105 hover:shadow-xl bg-white'
               >
                 {state.isLoading ? (
                   <Fragment>
-                    <div className="flex justify-end">
+                    <div className='flex justify-end'>
                       <Skeleton width={30} height={20} />
                     </div>
-                    <div className="">
-                      <div className="flex justify-between">
-                        <span className="block w-[130px] rounded-lg pb-1">
-                          <Skeleton className="h-2.5" />
+                    <div className=''>
+                      <div className='flex justify-between'>
+                        <span className='block w-[130px] rounded-lg pb-1'>
+                          <Skeleton className='h-2.5' />
                         </span>
                       </div>
 
-                      <span className="block w-[100px] rounded-lg pb-1">
-                        <Skeleton className="h-2.5" />
+                      <span className='block w-[100px] rounded-lg pb-1'>
+                        <Skeleton className='h-2.5' />
                       </span>
                     </div>
-                    <div className="flex items-center justify-between flex-wrap">
-                      <span className="block w-[120px] rounded-lg pb-1">
-                        <Skeleton className="h-2.5" />
+                    <div className='flex items-center justify-between flex-wrap'>
+                      <span className='block w-[120px] rounded-lg pb-1'>
+                        <Skeleton className='h-2.5' />
                       </span>
                       {/*<span className="block w-[100px] rounded-lg pb-1">
                     <Skeleton className="h-2.5" />
@@ -266,38 +267,38 @@ const Dashboard = () => {
                   </Fragment>
                 ) : (
                   <Fragment>
-                    <div className="flex justify-end">
+                    <div className='flex justify-end'>
                       <Icon
                         name={
-                          item.name.includes("Rolling Reserve Balance")
-                            ? "outgoing"
-                            : "incoming"
+                          item.name.includes('Rolling Reserve Balance')
+                            ? 'outgoing'
+                            : 'incoming'
                         }
                       />
                     </div>
-                    <div className="mb-2">
-                      <div className="flex justify-between">
-                        <span className="text-lg">{item.name}</span>
+                    <div className='mb-2'>
+                      <div className='flex justify-between'>
+                        <span className='text-lg'>{item.name}</span>
                       </div>
 
                       <div>
-                        <h1 className="font-medium mt-2 text-xl">
+                        <h1 className='font-medium mt-2 text-xl'>
                           {isVisible
-                            ? item.name.includes("Rolling Reserve Balance")
+                            ? item.name.includes('Rolling Reserve Balance')
                               ? state.rolling_reserve
                               : state.total_collections
-                            : "********"}
+                            : '********'}
                         </h1>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between flex-wrap">
-                      {item.name.includes("Rolling Reserve Balance") && (
-                        <p className="text-xs">
+                    <div className='flex items-center justify-between flex-wrap'>
+                      {item.name.includes('Rolling Reserve Balance') && (
+                        <p className='text-xs'>
                           Ledger:&nbsp;
-                          <span className="font-semibold text-xs">
+                          <span className='font-semibold text-xs'>
                             {isVisible
                               ? state.rolling_reserve_ledger
-                              : "********"}
+                              : '********'}
                           </span>
                         </p>
                       )}
@@ -309,8 +310,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="hidden mt-6 md:grid md:grid-cols-1 xl:grid-cols-5 gap-4 w-full">
-          <div className="xl:col-span-3">
+        <div className='hidden mt-6 md:grid md:grid-cols-1 xl:grid-cols-5 gap-4 w-full'>
+          <div className='xl:col-span-3'>
             <LineChart
               labels={labels}
               chartData={state.transactions}
@@ -320,7 +321,7 @@ const Dashboard = () => {
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div className='md:col-span-2'>
             <BarChart
               settlementBalance={state.settlement_balance}
               settlements={state.settlements}

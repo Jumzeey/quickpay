@@ -24,9 +24,9 @@ interface FormValues {
   bvn: string;
   nin: string;
   business_description: string;
-  // director_nin: string;
+  director_nin: string;
   company_business_status: string;
-  // director_bvn: string;
+  director_bvn: string;
   document_beneficiary_type: string;
   director_tin: string;
   document_type: string;
@@ -104,9 +104,9 @@ const KYCPage: React.FC = () => {
       bvn: '',
       nin: '',
       business_description: '',
-      // director_nin: '',
+      director_nin: '12345678901',
       company_business_status: '',
-      // director_bvn: '',
+      director_bvn: '12345678901',
       document_beneficiary_type: '',
       director_tin: '',
       document_type: '',
@@ -144,9 +144,9 @@ const KYCPage: React.FC = () => {
       payload = {
         business_type: values.business_type,
         business_description: values.business_description,
-        // director_nin: values.director_nin,
+        director_nin: values.director_nin,
         company_business_status: values.company_business_status,
-        // director_bvn: values.director_bvn,
+        director_bvn: values.director_bvn,
         document_beneficiary_type: values.document_beneficiary_type,
         director_tin: values.director_tin,
         document_type: values.document_type,

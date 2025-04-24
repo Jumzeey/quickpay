@@ -214,73 +214,73 @@ const RegisterPage: React.FC = () => {
   }, [formik.values.password]);
   return (
     <>
-      <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
-        <WebPageTitle title="Join Us | Ramp Merchant Portal" />
+      <div className='w-full min-h-screen flex justify-center text-white bg-ramp'>
+        <WebPageTitle title='Join Us | Ramp Merchant Portal' />
         {/* <Sidebar /> */}
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
-          <div className="flex w-full justify-between">
-            <div className="flex cursor-pointer" onClick={navigateBack}>
+        <div className='w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg'>
+          <div className='flex w-full justify-between'>
+            <div className='flex cursor-pointer' onClick={navigateBack}>
               <Image
-                src="/images/arrow-back.svg"
+                src='/images/arrow-back.svg'
                 width={15}
                 height={5}
                 onClick={() => router.back()}
-                alt="Back Icon"
+                alt='Back Icon'
               />
-              <span className="ml-1 font-light">Back</span>
+              <span className='ml-1 font-light'>Back</span>
             </div>
-            <Link href="/onboarding/sign-in">
-              <h6 className="font-light text-sm">
+            <Link href='/onboarding/sign-in'>
+              <h6 className='font-light text-sm'>
                 Already have an account?
-                <span className="font-medium ml-1 text-white underline-animation">
+                <span className='font-medium ml-1 text-white underline-animation'>
                   Sign In
                 </span>
               </h6>
             </Link>
           </div>
           <motion.div
-            className="mt-10"
+            className='mt-10'
             variants={MultiStepAnimation}
-            initial="hidden"
-            animate="visible"
+            initial='hidden'
+            animate='visible'
           >
             <form onSubmit={formik.handleSubmit}>
-              <h1 className="text-2xl font-semibold">
+              <h1 className='text-2xl font-semibold'>
                 Create {capitalizedBusiness} a Business Account!
               </h1>
               {/* <p className="font-light mt-1 mb-5">
                 For the purpose of industry regulation, your details are
                 required.
               </p> */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-10">
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-5 mt-10'>
                 <FloatingLabelInput
-                  label="First Name"
-                  id="firstname"
-                  type="text"
-                  htmlFor="firstname"
+                  label='First Name'
+                  id='firstname'
+                  type='text'
+                  htmlFor='firstname'
                   formik={formik}
-                  {...formik.getFieldProps("firstname")}
+                  {...formik.getFieldProps('firstname')}
                 />
                 <FloatingLabelInput
-                  label="Last Name"
-                  id="lastname"
-                  type="text"
-                  htmlFor="lastname"
+                  label='Last Name'
+                  id='lastname'
+                  type='text'
+                  htmlFor='lastname'
                   formik={formik}
-                  {...formik.getFieldProps("lastname")}
+                  {...formik.getFieldProps('lastname')}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
                 <FloatingLabelInput
-                  label="Business Name"
-                  id="business_name"
-                  type="text"
-                  htmlFor="business_name"
+                  label='Business Name'
+                  id='business_name'
+                  type='text'
+                  htmlFor='business_name'
                   formik={formik}
-                  {...formik.getFieldProps("business_name")}
+                  {...formik.getFieldProps('business_name')}
                 />
-                <div className="flex">
+                <div className='flex'>
                   {/* <div className="border-[1px] border-[#dcdcdc] rounded-md h-[60px] flex justify-center items-center px-[0.8rem] mr-2">
                     <Image
                       src="/images/nigeria.svg"
@@ -293,12 +293,12 @@ const RegisterPage: React.FC = () => {
                     </span>
                   </div> */}
                   <FloatingLabelInput
-                    label="Phone Number"
-                    id="phone"
-                    type="text"
-                    htmlFor="phone"
+                    label='Phone Number'
+                    id='phone'
+                    type='text'
+                    htmlFor='phone'
                     formik={formik}
-                    {...formik.getFieldProps("phone")}
+                    {...formik.getFieldProps('phone')}
                     maxLength={11}
                     numberOnly
                   />
@@ -315,31 +315,31 @@ const RegisterPage: React.FC = () => {
                 numberOnly
               /> */}
               <FloatingLabelInput
-                label="Email Address"
-                id="email"
-                type="email"
-                htmlFor="email"
+                label='Email Address'
+                id='email'
+                type='email'
+                htmlFor='email'
                 formik={formik}
-                {...formik.getFieldProps("email")}
+                {...formik.getFieldProps('email')}
               />
               <FloatingLabelInput
-                label="Password"
-                id="password"
-                type="password"
-                htmlFor="password"
+                label='Password'
+                id='password'
+                type='password'
+                htmlFor='password'
                 formik={formik}
-                {...formik.getFieldProps("password")}
+                {...formik.getFieldProps('password')}
                 showError={false}
                 onFocus={() => setIsPasswordFocused(true)}
                 onBlur={() => setIsPasswordFocused(false)}
               />
               {isPasswordFocused && (
-                <ul className="mb-4 font-bold text-[12px] list-disc list-inside">
+                <ul className='mb-4 font-bold text-[12px] list-disc list-inside'>
                   <li
                     className={
                       passwordRequirements.hasSymbol
-                        ? "text-[green] text-[10px]"
-                        : "text-[10px] text-[red]"
+                        ? 'text-[green] text-[10px]'
+                        : 'text-[10px] text-[red]'
                     }
                   >
                     Password must contain at least one symbol.
@@ -347,8 +347,8 @@ const RegisterPage: React.FC = () => {
                   <li
                     className={
                       passwordRequirements.hasNumber
-                        ? "text-[green] text-[10px]"
-                        : "text-[10px] text-[red]"
+                        ? 'text-[green] text-[10px]'
+                        : 'text-[10px] text-[red]'
                     }
                   >
                     Password must contain at least one number.
@@ -356,8 +356,8 @@ const RegisterPage: React.FC = () => {
                   <li
                     className={
                       passwordRequirements.hasMinLength
-                        ? "text-[green] text-[10px]"
-                        : "text-[10px] text-[red]"
+                        ? 'text-[green] text-[10px]'
+                        : 'text-[10px] text-[red]'
                     }
                   >
                     Password must be at least 8 characters long.
@@ -365,8 +365,8 @@ const RegisterPage: React.FC = () => {
                   <li
                     className={
                       passwordRequirements.hasLowercase
-                        ? "text-[green] text-[10px]"
-                        : "text-[10px] text-[red]"
+                        ? 'text-[green] text-[10px]'
+                        : 'text-[10px] text-[red]'
                     }
                   >
                     Password must contain at least one lowercase letter.
@@ -374,8 +374,8 @@ const RegisterPage: React.FC = () => {
                   <li
                     className={
                       passwordRequirements.hasUppercase
-                        ? "text-[green] text-[10px]"
-                        : "text-[10px] text-[red]"
+                        ? 'text-[green] text-[10px]'
+                        : 'text-[10px] text-[red]'
                     }
                   >
                     Password must contain at least one uppercase letter.
@@ -384,24 +384,24 @@ const RegisterPage: React.FC = () => {
               )}
 
               <FloatingLabelInput
-                label="Password Confirmation"
-                id="password_confirmation"
-                type="password"
-                htmlFor="password_confirmation"
+                label='Password Confirmation'
+                id='password_confirmation'
+                type='password'
+                htmlFor='password_confirmation'
                 formik={formik}
-                {...formik.getFieldProps("password_confirmation")}
+                {...formik.getFieldProps('password_confirmation')}
               />
-              <div className="flex items-center">
+              <div className='flex items-center'>
                 <input
-                  id="agree_to_terms"
-                  type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  id='agree_to_terms'
+                  type='checkbox'
+                  className='h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'
                   checked={formik.values.agree_to_terms}
                   onChange={formik.handleChange}
                 />
                 <label
-                  htmlFor="agree_to_terms"
-                  className="ml-2 block text-sm text-gray-900"
+                  htmlFor='agree_to_terms'
+                  className='ml-2 block text-sm text-gray-900'
                 >
                   I consent to the collection and processing of my personal data
                   in line with data regulations as described in the Ramp Privacy
@@ -418,29 +418,29 @@ const RegisterPage: React.FC = () => {
                 </label>
               </div>
               {formik.touched.agree_to_terms && formik.errors.agree_to_terms ? (
-                <div className="text-danger inline-block text-xs font-medium pt-1">
+                <div className='text-danger inline-block text-xs font-medium pt-1'>
                   {formik.errors.agree_to_terms}
                 </div>
               ) : null}
-              <div className="flex justify-center mt-5">
+              <div className='flex justify-center mt-5'>
                 <Button
-                  className="w-full"
-                  text={isLoading ? <Loader /> : "Sign Up"}
-                  ariaLabel="Sign Up Button"
+                  className='w-full'
+                  text={isLoading ? <Loader /> : 'Sign Up'}
+                  ariaLabel='Sign Up Button'
                   disabled={isLoading}
                   primary
                 />
               </div>
 
-              <div className="flex justify-center mt-5">
+              <div className='flex justify-center mt-5'>
                 <Image
-                  src={"/images/lock.svg"}
-                  alt={"locked"}
+                  src={'/images/lock.svg'}
+                  alt={'locked'}
                   width={10}
                   height={24}
                   priority
                 />
-                <span className="ml-3 infoGrey text-xs">
+                <span className='ml-3 infoGrey text-xs'>
                   Your Info is safely secured
                 </span>
               </div>
@@ -449,27 +449,27 @@ const RegisterPage: React.FC = () => {
         </div>
       </div>
       <Modal isOpen={successModal}>
-        <div className="w-full flex justify-center">
+        <div className='w-full flex justify-center'>
           <Image
-            src="/images/circle-check-full.svg"
-            alt="check-image"
+            src='/images/circle-check-full.svg'
+            alt='check-image'
             width={100}
             height={100}
             priority
           />
         </div>
-        <h6 className="text-center font-bold mt-5 text-2xl">Success</h6>
-        <p className=" mt-5 text-center">
+        <h6 className='text-center font-bold mt-5 text-2xl'>Success</h6>
+        <p className=' mt-5 text-center'>
           A Verification Link Has Been Sent To Your Email. <br />
-          <span className="sarepayPrimary">{register?.email}</span>
+          <span className='sarepayPrimary'>{register?.email}</span>
         </p>
-        <div className="mt-5">
+        <div className='mt-5'>
           <Button
-            ariaLabel="Log In"
-            text="Log In"
+            ariaLabel='Log In'
+            text='Log In'
             primary
             onClick={() => {
-              router.push("/onboarding/sign-in");
+              router.push('/onboarding/sign-in');
             }}
           />
         </div>

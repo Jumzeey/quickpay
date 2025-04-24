@@ -1,6 +1,6 @@
-import api from "@/util/api";
-import { apiEndpoints } from "@/util/endpoints";
-import { notifyError } from "@/util/utils";
+import api from '@/util/api';
+import { apiEndpoints } from '@/util/endpoints';
+import { notifyError } from '@/util/utils';
 
 export interface PaymentLinkPayload {
   title: string;
@@ -147,5 +147,39 @@ export async function createPaymentMandate(payload: any) {
     return response;
   } catch (error) {
     throw error;
+  }
+}
+
+export async function requestRefund(payload: any) {
+  try {
+    const response = await api.post(
+      apiEndpoints.collections.REQUEST_REFUND,
+      payload
+    );
+    return response;
+  } catch (error: any) {
+    notifyError(error.message);
+  }
+}
+
+export async function getRefunds(params?: object) {
+  try {
+    const response = await api.get(`${apiEndpoints.collections.GET_REFUNDS}`, {
+      params,
+    });
+    return response.data;
+  } catch (error: any) {
+    notifyError(error.message);
+  }
+}
+
+export async function getSingleRefund(id: string) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.collections.GET_SINGLE_REFUNDS}/${id}`
+    );
+    return response.data;
+  } catch (error: any) {
+    notifyError(error.message);
   }
 }

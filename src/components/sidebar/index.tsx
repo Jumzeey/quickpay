@@ -2,7 +2,7 @@ import React, { useLayoutEffect, useRef, Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ActiveLink from "../activeLink";
-import { sidebarLinks } from "@/constants";
+import { disputes, sidebarLinks } from "@/constants";
 import Icon from "../icon";
 import { useRouter } from "next/router";
 import {
@@ -48,6 +48,13 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
           ...state,
           activeSidebar: eCommerce,
           subLinksTitle: "E-Commerce",
+        });
+        break;
+      case router.pathname.includes("/disputes"):
+        setState({
+          ...state,
+          activeSidebar: disputes,
+          subLinksTitle: "Disputes",
         });
         break;
 

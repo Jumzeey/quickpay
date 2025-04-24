@@ -2,12 +2,14 @@ import React, { SetStateAction, Dispatch, ReactElement, Fragment } from "react";
 import CollectionDetailsWrapper from "./CoillectionDetailsWrapper";
 import SettlementDetailsWrapper from "./SettlementDetailsWrapper";
 import PaymentMandateWrapper from "./PaymentMandateWrapper";
+import RefundDetailsWrapper from "./RefundDetailsWrapper";
 
 interface SettlementCollectionsProps {
   selectedItem: any;
   state: any;
   setState: Dispatch<SetStateAction<any>>;
   selectedModule: string;
+  fromCollections?: boolean;
 }
 
 interface DetailsMapperProps {
@@ -19,6 +21,7 @@ const TransactionDetails: React.FC<SettlementCollectionsProps> = ({
   state,
   setState,
   selectedModule,
+  fromCollections,
 }) => {
   const detailsMapper: DetailsMapperProps = {
     collections: (
@@ -41,6 +44,14 @@ const TransactionDetails: React.FC<SettlementCollectionsProps> = ({
         setState={setState}
       />
     ),
+    refunds: (
+      <RefundDetailsWrapper
+        state={state}
+        selectedItem={selectedItem}
+        setState={setState}
+        fromCollections={fromCollections}
+      />
+    )
   };
 
   const selectedDetailWrapper = detailsMapper[selectedModule];

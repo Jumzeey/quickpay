@@ -20,6 +20,11 @@ export const sidebarLinks = [
   //   title: "Disbursements",
   // },
   {
+    href: "/disputes/refunds",
+    icon: "payment-mandate",
+    title: "Disputes",
+  },
+  {
     href: "/collections",
     icon: "collections",
     title: "Pay Ins",
@@ -114,6 +119,19 @@ export const product = [
     title: "Product Categories",
   },
 ];
+
+export const disputes = [
+  {
+    href: "/disputes/refunds",
+    icon: "payment-mandate",
+    title: "Refunds",
+  },
+  {
+    href: "/disputes/chargebacks",
+    icon: "disbursement",
+    title: "Chargebacks",
+  }
+]
 
 export const disbursement = [
   {

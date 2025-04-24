@@ -1,24 +1,28 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 
 interface TableProps {
   columns: any[];
   children: ReactNode;
   className?: string;
+  height?: boolean;
 }
 
 const Table: React.FC<TableProps> = ({
   columns,
   children,
   className,
+  height = false,
 }) => {
-
   return (
-    <div className="overflow-x-scroll h-screen">
+    <div className={`overflow-x-scroll ${!height ? 'h-screen' : ''}`}>
       <table className={`table w-full whitespace-nowrap ${className}`}>
         <thead>
-          <tr className="text-white sarepayGrey text-sm uppercase">
+          <tr className='text-white sarepayGrey text-sm uppercase'>
             {columns.map((column: any, index: number) => (
-              <th key={index} className="text-left font-semibold p-4 bg-[#f5f8fa] first:rounded-s-lg last:rounded-e-lg">
+              <th
+                key={index}
+                className='text-left font-semibold p-4 bg-[#f5f8fa] first:rounded-s-lg last:rounded-e-lg'
+              >
                 {column}
               </th>
             ))}

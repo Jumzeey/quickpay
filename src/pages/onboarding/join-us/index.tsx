@@ -1,26 +1,27 @@
-import Sidebar from "@/components/onboarding/sidebar";
-import Button from "@/components/button";
-import Image from "next/image";
-import useAuthentication from "@/stores/useAuthentication";
-import { useRouter } from "next/router";
-import Link from "next/link";
-import * as Yup from "yup";
+import Sidebar from '@/components/onboarding/sidebar';
+import Button from '@/components/button';
+import Image from 'next/image';
+import useAuthentication from '@/stores/useAuthentication';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import * as Yup from 'yup';
 import {
   capitalizeFirstLetter,
   // nigerianPhoneNumberSchema,
   notifyError,
-} from "@/util/utils";
-import { useFormik } from "formik";
-import { useEffect, useState } from "react";
-import FloatingLabelInput from "@/components/floating-input";
-import Loader from "@/components/loader";
-import Modal from "@/components/modal";
-import { useParams } from "next/navigation";
-import WebPageTitle from "@/components/WebPageTitle";
-import { MultiStepAnimation } from "@/animations";
-import { motion } from "framer-motion";
-import env from "@/config/env";
-import useLoadRecaptcha from "@/util/useLoadRecaptcha";
+} from '@/util/utils';
+import { useFormik } from 'formik';
+import { useEffect, useState } from 'react';
+import FloatingLabelInput from '@/components/floating-input';
+import Loader from '@/components/loader';
+import Modal from '@/components/modal';
+import { useParams } from 'next/navigation';
+import WebPageTitle from '@/components/WebPageTitle';
+import { MultiStepAnimation } from '@/animations';
+import { motion } from 'framer-motion';
+import env from '@/config/env';
+import useLoadRecaptcha from '@/util/useLoadRecaptcha';
+import FloatingLabelPhoneInput from '@/components/FloatingPhoneInput';
 
 declare global {
   interface Window {
@@ -59,17 +60,17 @@ const RegisterPage: React.FC = () => {
     hasUppercase: false,
   });
   const [register, setRegister] = useState<RegisterType>({
-    firstname: "",
-    lastname: "",
-    email: "",
-    phone: "",
+    firstname: '',
+    lastname: '',
+    email: '',
+    phone: '',
     // bvn: "",
-    cac_document: "",
-    nin: "",
-    registration_number: "",
-    password: "",
-    password_confirmation: "",
-    business_name: "",
+    cac_document: '',
+    nin: '',
+    registration_number: '',
+    password: '',
+    password_confirmation: '',
+    business_name: '',
     business_type: params?.business as string,
     agree_to_terms: false,
   });
@@ -80,64 +81,64 @@ const RegisterPage: React.FC = () => {
   const { publicUrl } = env;
 
   const capitalizedBusiness =
-    typeof params?.business === "string"
+    typeof params?.business === 'string'
       ? capitalizeFirstLetter(params?.business)
       : Array.isArray(params?.business) && params?.business.length > 0
       ? capitalizeFirstLetter(params?.business[0])
-      : "";
+      : '';
 
   const passwordValidation = Yup.string()
-    .required("Password is required!")
+    .required('Password is required!')
     .matches(
       /[!@#$%^&*(),.?":{}|<>=-]/,
-      "Password must contain at least one symbol ."
+      'Password must contain at least one symbol .'
     )
-    .matches(/\d/, "Password must contain at least one number.")
-    .min(8, "Password must be at least 8 characters long")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter");
+    .matches(/\d/, 'Password must contain at least one number.')
+    .min(8, 'Password must be at least 8 characters long')
+    .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .matches(/[A-Z]/, 'Password must contain at least one uppercase letter');
 
   const formik = useFormik({
     initialValues: {
-      firstname: "",
-      lastname: "",
-      email: "",
-      phone: "",
+      firstname: '',
+      lastname: '',
+      email: '',
+      phone: '',
       // bvn: "",
-      cac_document: "",
-      nin: "",
-      registration_number: "",
-      password: "",
-      password_confirmation: "",
-      business_name: "",
+      cac_document: '',
+      nin: '',
+      registration_number: '',
+      password: '',
+      password_confirmation: '',
+      business_name: '',
       agree_to_terms: false,
       business_type: params?.business,
     },
     validationSchema: Yup.object().shape({
-      firstname: Yup.string().required("First Name is required!"),
-      lastname: Yup.string().required("Last Name is required!"),
-      phone: Yup.string().required("Phone number is required!"),
+      firstname: Yup.string().required('First Name is required!'),
+      lastname: Yup.string().required('Last Name is required!'),
+      phone: Yup.string().required('Phone number is required!'),
       // bvn: Yup.string()
       //   .required("BVN is required!")
       //   .matches(/^\d{11}$/, "BVN must be exactly 11 digits"),
-      nin: Yup.string().matches(/^\d{11}$/, "NIN must be exactly 11 digits"),
+      nin: Yup.string().matches(/^\d{11}$/, 'NIN must be exactly 11 digits'),
       cac_document: Yup.string(),
       registration_number: Yup.string(),
       email: Yup.string()
-        .email("Enter a valid email")
+        .email('Enter a valid email')
         .matches(
           /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-          "Email must have a valid provider"
+          'Email must have a valid provider'
         )
-        .required("Email address is required!"),
+        .required('Email address is required!'),
       password: passwordValidation,
       password_confirmation: Yup.string()
-        .oneOf([Yup.ref("password")], "Passwords must match")
-        .required("Confirm Password is required"),
-      business_name: Yup.string().required("Business Name is required!"),
+        .oneOf([Yup.ref('password')], 'Passwords must match')
+        .required('Confirm Password is required'),
+      business_name: Yup.string().required('Business Name is required!'),
       agree_to_terms: Yup.boolean()
-        .oneOf([true], "You must agree to the terms before proceeding")
-        .required("You must agree to the terms"),
+        .oneOf([true], 'You must agree to the terms before proceeding')
+        .required('You must agree to the terms'),
     }),
     validateOnMount: true,
     onSubmit: async values => {
@@ -149,17 +150,17 @@ const RegisterPage: React.FC = () => {
 
   const recaptchaToken = async (): Promise<string | null> => {
     if (!window.grecaptcha) {
-      console.error("reCAPTCHA is not loaded yet.");
+      console.error('reCAPTCHA is not loaded yet.');
       return null;
     }
 
     try {
       const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
       return await window.grecaptcha.execute(recaptchaSiteKey, {
-        action: "submit",
+        action: 'submit',
       });
     } catch (error) {
-      console.error("reCAPTCHA execution failed:", error);
+      console.error('reCAPTCHA execution failed:', error);
       return null;
     }
   };
@@ -170,7 +171,7 @@ const RegisterPage: React.FC = () => {
     try {
       const token = await recaptchaToken();
       if (!token) {
-        notifyError("Failed to verify reCAPTCHA. Please try again.");
+        notifyError('Failed to verify reCAPTCHA. Please try again.');
         setIsLoading(false);
         return;
       }
@@ -184,7 +185,7 @@ const RegisterPage: React.FC = () => {
         password_confirmation: values.password_confirmation,
         business_name: values.business_name,
         agree_to_terms: values.agree_to_terms,
-        business_type: "starter",
+        business_type: 'starter',
         recaptchaToken: token,
       };
 
@@ -280,8 +281,9 @@ const RegisterPage: React.FC = () => {
                   formik={formik}
                   {...formik.getFieldProps('business_name')}
                 />
-                <div className='flex'>
-                  {/* <div className="border-[1px] border-[#dcdcdc] rounded-md h-[60px] flex justify-center items-center px-[0.8rem] mr-2">
+                <FloatingLabelPhoneInput formik={formik} label='Phone Number' />
+                {/* <div className='flex'>
+                  <div className="border-[1px] border-[#dcdcdc] rounded-md h-[60px] flex justify-center items-center px-[0.8rem] mr-2 bg-white">
                     <Image
                       src="/images/nigeria.svg"
                       width={14}
@@ -291,7 +293,7 @@ const RegisterPage: React.FC = () => {
                     <span className="text-[#49454F] ml-1 text-[12px]">
                       +234
                     </span>
-                  </div> */}
+                  </div>
                   <FloatingLabelInput
                     label='Phone Number'
                     id='phone'
@@ -302,7 +304,7 @@ const RegisterPage: React.FC = () => {
                     maxLength={11}
                     numberOnly
                   />
-                </div>
+                </div> */}
               </div>
               {/* <FloatingLabelInput
                 label="BVN"

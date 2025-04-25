@@ -45,6 +45,7 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
     sender_name,
     sender,
     failure_reason,
+    metadata,
   } = selectedItem || {};
 
   const { fetchRefund, refund, getRefundLoading } = useCollectionHistory();
@@ -62,11 +63,22 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
   const [isRefundLoading, setIsRefundLoading] = useState(false);
   const [showRefundDetails, setShowRefundDetails] = useState(false);
   const { selectedItem: selectedRefund, handleClick } = useClickEvent();
+  const [parsedMetadata, setParsedMetadata] = useState<any>({});
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
   const openRefundModal = () => setRefundModal(true);
   const closeRefundModal = () => setRefundModal(false);
+
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(failure_reason);
+      setParsedMetadata(parsed);
+    } catch (e) {
+      console.error('Invalid JSON:', e);
+      setParsedMetadata(null);
+    }
+  }, [failure_reason]);
 
   const handleRepushNotification = async () => {
     setIsLoading(true);
@@ -155,7 +167,7 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
                     key3='Transaction Time'
                     value3={created_at}
                     key4='Reason for Failure'
-                    value4={failure_reason}
+                    // value4={failure_reason}
                   />
                 </div>
 
@@ -255,7 +267,7 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
 
           <Modal isOpen={isModalOpen} onClose={closeModal}>
             <div>
-              <pre>{JSON.stringify(selectedItem.metadata, null, 2)}</pre>
+              <pre>{JSON.stringify(parsedMetadata, null, 2)}</pre>
             </div>
           </Modal>
 

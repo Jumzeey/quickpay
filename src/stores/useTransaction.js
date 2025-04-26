@@ -4,7 +4,7 @@ import moment from 'moment';
 import { notifyError } from '@/util/utils';
 
 const initialState = {
-  wallet_history: [],
+  wallet: [],
   pagination: {
     count: 0,
     total: 0,
@@ -23,12 +23,12 @@ const useTransaction = create((set, get) => ({
     }));
     try {
       let params = searchParams;
-      const wallet_history = await getWalletHistory(params);
-      const total = wallet_history.length;
+      const { wallet } = await getWalletHistory(params);
+      const total = wallet.length;
 
       set(state => ({
         ...state,
-        wallet_history,
+        wallet,
         pagination: {
           ...state.pagination,
           count: 20,
@@ -38,7 +38,7 @@ const useTransaction = create((set, get) => ({
           last_page: total ? Math.ceil(total / state.pagination.per_page) : 1,
         },
       }));
-      return { wallet_history };
+      return { wallet };
     } catch (error) {
       if (!error.message.includes('No transaction record found')) {
         notifyError(error.message);

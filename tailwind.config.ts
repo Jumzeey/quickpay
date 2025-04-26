@@ -1,3 +1,4 @@
+import { warning } from "framer-motion";
 import type { Config } from "tailwindcss";
 const { fontFamily } = require("tailwindcss/defaultTheme");
 
@@ -31,6 +32,7 @@ const config: Config = {
       "grey-400": "#3d3939",
       "grey-500": "#9499a1",
       danger: "#EB5757",
+      warning: "#F2C94C",
       disabled: "#eeeeee",
       success: "#27AE60",
     },

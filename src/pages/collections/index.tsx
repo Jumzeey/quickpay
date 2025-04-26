@@ -125,8 +125,8 @@ const CollectionHistory = () => {
   ]);
 
   return (
-    <Layout pageTitle="Pay Ins History" icon="collection-history">
-      <WebPageTitle title="Pay Ins History | Ramp Merchant Portal" />
+    <Layout pageTitle="Pay In History" icon="collection-history">
+      <WebPageTitle title="Pay In History | Ramp Merchant Portal" />
       {state.showCollections ? (
         <TransactionDetails
           selectedItem={selectedItem}

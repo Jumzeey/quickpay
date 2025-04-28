@@ -32,7 +32,8 @@ interface AddUserPayload {
   lastname: string;
   email: string;
   password: string;
-  phone: string;
+  password_confirmation?: string;
+  // phone: string;
   role?: string;
 }
 
@@ -48,7 +49,8 @@ const AddUser: React.FC<AddUserProps> = ({
       lastname: '',
       email: '',
       password: '',
-      phone: '',
+      password_confirmation: '',
+      // phone: '',
     },
     validationSchema: Yup.object().shape({
       firstname: Yup.string().required('First name is required!'),
@@ -66,7 +68,13 @@ const AddUser: React.FC<AddUserProps> = ({
               'Password must have at least: 1 upper case, 1 digit, 1 special character and minimum eight characters'
             ),
 
-      phone: nigerianPhoneNumberSchema,
+      password_confirmation: isUpdateUser
+        ? Yup.string().notRequired()
+        : Yup.string()
+            .oneOf([Yup.ref('password')], 'Passwords must match')
+            .required('Confirm Password is required'),
+
+      // phone: nigerianPhoneNumberSchema,
     }),
 
     validateOnMount: true,
@@ -89,7 +97,8 @@ const AddUser: React.FC<AddUserProps> = ({
         lastname: selectedItem.lastname,
         email: selectedItem.email,
         password: selectedItem.password,
-        phone: selectedItem.phone,
+        password_confirmation: selectedItem.password_confirmation,
+        // phone: selectedItem.phone,
       });
     } else {
       resetState();
@@ -115,13 +124,12 @@ const AddUser: React.FC<AddUserProps> = ({
   };
 
   const createAndUpdateUser = async () => {
-    const { firstname, lastname, email, password, phone } = formik.values;
+    const { firstname, lastname, email, password } = formik.values;
     const payload: AddUserPayload = {
       firstname,
       lastname,
       email,
       password,
-      phone,
     };
     if (state.selectedRole) {
       payload['role'] = state.selectedRole;
@@ -166,7 +174,8 @@ const AddUser: React.FC<AddUserProps> = ({
       lastname: '',
       email: '',
       password: '',
-      phone: '',
+      password_confirmation: '',
+      // phone: '',
     });
   };
 
@@ -193,7 +202,7 @@ const AddUser: React.FC<AddUserProps> = ({
             />
           </div>
 
-          <FloatingLabelInput
+          {/* <FloatingLabelInput
             label='Phone Number'
             id='phone'
             type='number'
@@ -202,7 +211,7 @@ const AddUser: React.FC<AddUserProps> = ({
             maxLength={11}
             {...formik.getFieldProps('phone')}
             numberOnly
-          />
+          /> */}
 
           <FloatingLabelInput
             label='Email Address'
@@ -214,14 +223,25 @@ const AddUser: React.FC<AddUserProps> = ({
           />
 
           {!isUpdateUser && (
-            <FloatingLabelInput
-              label='Password'
-              id='password'
-              type='password'
-              htmlFor='password'
-              formik={formik}
-              {...formik.getFieldProps('password')}
-            />
+            <>
+              <FloatingLabelInput
+                label='Password'
+                id='password'
+                type='password'
+                htmlFor='password'
+                formik={formik}
+                {...formik.getFieldProps('password')}
+              />
+
+              <FloatingLabelInput
+                label='Password Confirmation'
+                id='password_confirmation'
+                type='password'
+                htmlFor='password_confirmation'
+                formik={formik}
+                {...formik.getFieldProps('password_confirmation')}
+              />
+            </>
           )}
 
           <select

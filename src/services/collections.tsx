@@ -180,6 +180,10 @@ export async function getSingleRefund(id: string) {
     );
     return response.data;
   } catch (error: any) {
-    notifyError(error.message);
+    if (error.response.status === 404) {
+      return null;
+    } else {
+      notifyError(error.message);
+    }
   }
 }

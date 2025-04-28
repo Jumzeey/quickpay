@@ -103,6 +103,7 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
       notifyError(error.message);
     } finally {
       setIsRefundLoading(false);
+      fetchRefund(id);
       closeRefundModal();
     }
   };
@@ -187,16 +188,17 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
                     primary
                     medium
                   />
-                  {status === 'Successful' && (
-                    <Button
-                      text={isRefundLoading ? <Loader /> : 'Request Refund'}
-                      ariaLabel='Request Refund button'
-                      onClick={openRefundModal}
-                      disabled={isRefundLoading}
-                      primary
-                      medium
-                    />
-                  )}
+                  {status === 'Successful' &&
+                    (!refund || refund.length === 0) && (
+                      <Button
+                        text={isRefundLoading ? <Loader /> : 'Request Refund'}
+                        ariaLabel='Request Refund button'
+                        onClick={openRefundModal}
+                        disabled={isRefundLoading}
+                        primary
+                        medium
+                      />
+                    )}
                 </div>
               </>
             </div>

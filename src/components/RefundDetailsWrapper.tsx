@@ -107,7 +107,9 @@ const RefundDetailsWrapper: React.FC<RefundProps> = ({
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
         <div>
-          <pre>{JSON.stringify(parsedMetadata, null, 2)}</pre>
+          <pre className='text-wrap'>
+            {JSON.stringify(parsedMetadata, null, 2)}
+          </pre>
         </div>
       </Modal>
     </div>

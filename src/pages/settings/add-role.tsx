@@ -63,7 +63,7 @@ const AddRole = () => {
     permissions: [],
   });
 
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetchPermissions();
@@ -89,6 +89,18 @@ const AddRole = () => {
         return [...prevSelectedIds, id];
       }
     });
+  };
+
+  const handleSelectAll = () => {
+    const allIds: number[] = [];
+    state.permissions.forEach(item => {
+      Object.keys(item).forEach(key => {
+        item[key].forEach((permission: any) => {
+          allIds.push(permission.id);
+        });
+      });
+    });
+    setSelectedIds(allIds);
   };
 
   return (
@@ -131,6 +143,15 @@ const AddRole = () => {
                 </h2>
 
                 <div className="p-5">
+                  <div className="flex justify-center mb-4 w-1/5">
+                    <Button
+                      text="Select All"
+                      ariaLabel="Select all permissions"
+                      onClick={handleSelectAll}
+                      primary
+                      type="button"
+                    />
+                  </div>
                   {state.permissions.map((item, index) => {
                     return (
                       <div key={index} className="grid md:grid-cols-3 gap-10">
@@ -151,6 +172,7 @@ const AddRole = () => {
                                       type="checkbox"
                                       name="checkbox"
                                       value="value"
+                                      checked={selectedIds.includes(item2.id)}
                                       onChange={() =>
                                         handleCheckboxChange(item2.id)
                                       }

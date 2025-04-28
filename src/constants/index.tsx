@@ -39,11 +39,11 @@ export const sidebarLinks = [
     icon: "history",
     title: "Settlement History",
   },
-  {
-    href: "/mids",
-    icon: "mids",
-    title: "MIDS",
-  },
+  // {
+  //   href: "/mids",
+  //   icon: "mids",
+  //   title: "MIDS",
+  // },
   {
     href: "/activity-log",
     icon: "activity-log",

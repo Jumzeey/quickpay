@@ -52,7 +52,7 @@ const WalletHistory = () => {
     's/n',
     'reference',
     'amount',
-    'transaction type',
+    'payment type',
     'balance type',
     'previous balance',
     'current balance',
@@ -167,7 +167,7 @@ const WalletHistory = () => {
                         {formatBalance(item.running_balance)}
                       </td> */}
                       <td className='text-sm px-5 py-6'>
-                        {item.transaction_type}
+                        {item.payment_type}
                       </td>
                       <td className='text-sm px-5 py-6'>{item.balance_type}</td>
 

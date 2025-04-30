@@ -98,6 +98,12 @@ const WalletHistory = () => {
 
   const currentPageHistory = wallet.slice(startIndex, endIndex);
 
+  const formatAmount = (amountStr: string): string => {
+  const numberPart = parseFloat(amountStr.replace('$', '').trim());
+  if (isNaN(numberPart)) return '$0.00';
+  return `$${numberPart.toFixed(2)}`;
+};
+
   return (
     <Layout pageTitle='Balance History' icon='wallet-history'>
       <WebPageTitle title='Balance History | Ramp Merchant Portal' />
@@ -147,7 +153,7 @@ const WalletHistory = () => {
                       <td className='text-sm px-5 py-6'>
                         {item.transaction_reference}
                       </td>
-                      <td className='text-sm px-5 py-6'>{item.amount}</td>
+                      <td className='text-sm px-5 py-6'>{formatAmount(item.amount)}</td>
                       {/* <td className="text-sm px-5 py-6">{item.balance_type}</td> */}
 
                       {/* <td className="text-sm px-5 py-6">
@@ -172,11 +178,11 @@ const WalletHistory = () => {
                       <td className='text-sm px-5 py-6'>{item.balance_type}</td>
 
                       <td className='text-sm px-5 py-6'>
-                        {item.balance_before_amount}
+                        {formatAmount(item.balance_before_amount)}
                       </td>
 
                       <td className='text-sm px-5 py-6'>
-                        {item.balance_after_amount}
+                        {formatAmount(item.balance_after_amount)}
                       </td>
 
                       <td className='text-sm px-5 py-6'>{item.date}</td>

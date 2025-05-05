@@ -69,7 +69,6 @@ const CollectionHistory = () => {
     "ref",
     "amount",
     "charge",
-    "session id",
     "payment method",
     "date",
     "status",
@@ -226,7 +225,7 @@ const CollectionHistory = () => {
                       <td className="text-sm px-5 py-6">
                         {item.processing_fee}
                       </td>
-                      <td className="text-sm px-5 py-6">{item.session_id}</td>
+                    {/*<td className="text-sm px-5 py-6">{item.session_id}</td> */}
                       <td className="text-sm px-5 py-6">{item.channel}</td>
                       <td className="text-sm px-5 py-6">{item.created_at} </td>
                       <td className="text-xs px-5 py-6">

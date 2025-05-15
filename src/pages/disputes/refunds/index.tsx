@@ -201,7 +201,7 @@ const Refunds = () => {
                         {refund.reference || 'N/A'}
                       </td>
                       <td className='text-sm px-5 py-6'>
-                        {formatCurrency(refund.amount)}
+                        {formatCurrency(refund.amount, refund.currency)}
                       </td>
                       <td className='text-sm px-5 py-6'>
                         {dateFormat(refund.date)}

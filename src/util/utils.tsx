@@ -198,8 +198,6 @@ export const nigerianPhoneNumberSchema = Yup.string()
     'Please enter a valid Nigerian phone number.'
   );
 
-// utils/formatters.ts
-
 export function formatCurrency(
   amount: number,
   currency: string = 'USD'

@@ -66,9 +66,9 @@ const RefundDetailsWrapper: React.FC<RefundProps> = ({
             <div className='flex flex-col md:flex-row justify-around gap-5 md:gap-20'>
               <CollectionDetails
                 key1='Amount'
-                value1={formatCurrency(amount)}
+                value1={formatCurrency(amount, currency)}
                 key2='Currency'
-                value2='USD'
+                value2={currency}
                 key3='Reference'
                 value3={reference || 'N/A'}
               />

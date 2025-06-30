@@ -211,16 +211,17 @@ const WalletHistory = () => {
     <Layout pageTitle='Balance History' icon='wallet-history'>
       <WebPageTitle title='Balance History | Ramp Merchant Portal' />
 
-      <div className="flex flex-col md:flex-row justify-between">
+      <div className="flex flex-col md:flex-row justify-between mb-8">
         <div>
           <PageHeader
+            className="!mb-0"
             title="Balance History"
             description="Track all your transactions effortlessly with a clear and secure history of your wallet activities."
           />
         </div>
 
         <div className="relative flex gap-4 justify-end mt-4 md:mt-0">
-          <CurrencySwitcher />
+          <CurrencySwitcher className="items-center" />
 
           <ActionButton
             ariaLabel='Filter by date button'

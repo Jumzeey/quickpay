@@ -46,8 +46,6 @@ const ActivityLog = () => {
     });
   }, [currentPage]);
 
-  console.log({ logs, pagination })
-
   const columns = [
     "No.",
     "action taken",

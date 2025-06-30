@@ -138,8 +138,6 @@ const ConversionHistory = () => {
     }));
   };
 
-  console.log({conversions})
-
   return (
     <Layout pageTitle="Conversions" icon="collection-history">
       <WebPageTitle title="Conversions | Ramp Merchant Portal" />

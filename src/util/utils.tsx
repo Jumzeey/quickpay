@@ -1,7 +1,25 @@
-import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 import moment from 'moment';
+import { toast } from 'sonner';
 import * as Yup from 'yup';
+
+export const capitalizeFirstLetterOfEachWord = (sentence: string) => {
+  if (!sentence) {
+    return sentence;
+  }
+
+  return sentence
+    .split(' ')
+    .map(word => {
+      if (word.length === 0) {
+        return word;
+      }
+      const firstLetter = word[0].toUpperCase();
+      const restOfString = word.slice(1).toLowerCase();
+      return `${firstLetter}${restOfString}`;
+    })
+    .join(' ');
+}
 
 export const capitalizeFirstLetter = (sentence: string) => {
   if (!sentence) {
@@ -41,6 +59,19 @@ export const copyToClipboard = async (text: string) => {
     notifySuccess('Copied!');
   } catch (error) {
     console.error('Unable to copy text to clipboard:', error);
+  }
+};
+
+export const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'Successful':
+      return '#2BD325';
+    case 'Pending':
+      return '#B5A818';
+    case 'Failed':
+      return '#FD2727';
+    default:
+      return 'inherit';
   }
 };
 
@@ -87,6 +118,24 @@ export const formatDateTime = (dateTimeString: any) => {
   return moment(dateTimeString).format('MMMM Do, YYYY, h:mm:ss A');
 };
 
+export const formatDateTime2 = (date: string): string[] => {
+  const dateObj = new Date(date);
+  const options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  };
+  const formattedDate = dateObj.toLocaleDateString('en-US', options);
+  const formattedTime = dateObj.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  });
+
+  return [formattedDate, formattedTime];
+};
+
 export const formattedDate = (dateString: string): string | null => {
   try {
     const [year, month, day] = dateString.split('-').map(Number);
@@ -118,12 +167,13 @@ export const formattedDate = (dateString: string): string | null => {
   }
 };
 
-export const formatBalance = (number: number | undefined | null): string => {
-  if (typeof number !== 'number' || isNaN(number)) {
-    return '$0.00'; // Default value when input is invalid
+export const formatBalance = (number: number | undefined | null, currency?: string): string => {
+  const currencySymbol = currency === "NGN" ? "₦" : "$";
+  if (!number || isNaN(number) || number === undefined || number === null) {
+    return `${currencySymbol}0.00`; // Default value when input is undefined or null
   }
 
-  return `$${number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  return `${currencySymbol}${number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 };
 
 // Define the list of Nigerian phone number prefixes (without the leading zero)
@@ -225,3 +275,35 @@ export function dateFormat(dateString: string): string {
 
   return `${day} ${month}, ${year} ${time}`;
 }
+
+export const formatAmount = (amountStr: string): string => {
+  if (!amountStr || typeof amountStr !== 'string' || amountStr.length < 2) return amountStr;
+
+  const currencySymbol = amountStr.charAt(0);
+  let rest = amountStr.slice(1).trim();
+  let isNegative = false;
+
+  // Check for a negative sign in the amount
+  if (rest.startsWith('-')) {
+    isNegative = true;
+    rest = rest.slice(1).trim();
+  }
+
+  const numberPart = parseFloat(
+    rest
+      .replace(/,/g, '')
+      .replace(/[^0-9.]/g, '')
+      .trim()
+  );
+
+  if (isNaN(numberPart)) return `${currencySymbol}0.00`;
+
+  // Format the number with commas
+  const formattedNumberPart = numberPart
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return isNegative 
+    ? `-${currencySymbol}${formattedNumberPart}`
+    : `${currencySymbol}${formattedNumberPart}`;
+};

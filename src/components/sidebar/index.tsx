@@ -1,19 +1,9 @@
-import React, { useLayoutEffect, useRef, Fragment } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import ActiveLink from "../activeLink";
-import { disputes, sidebarLinks } from "@/constants";
-import Icon from "../icon";
-import { useRouter } from "next/router";
-import {
-  yourBusiness,
-  disbursement,
-  collections,
-  eCommerce,
-  product,
-} from "@/constants";
-import { useState } from "react";
+import { sidebarLinks } from "@/constants";
 import { handleLogOut } from "@/util/utils";
+import { useRouter } from "next/router";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import ActiveLink from "../activeLink";
+import Icon from "../icon";
 
 interface ComponentProps {
   showSidebar: boolean;
@@ -34,62 +24,67 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
   const bgRef = useRef<HTMLDivElement>(null);
 
   const renderSidebarMenu = () => {
-    switch (true) {
-      case router.pathname.includes("/your-business"):
-        setState({
-          ...state,
-          activeSidebar: yourBusiness,
-          subLinksTitle: "Business Information",
-        });
-        break;
+    return setState({
+      ...state,
+      activeSidebar: sidebarLinks,
+      subLinksTitle: "",
+    });
+    // switch (true) {
+    //   case router.pathname.includes("/your-business"):
+    //     setState({
+    //       ...state,
+    //       activeSidebar: yourBusiness,
+    //       subLinksTitle: "Business Information",
+    //     });
+    //     break;
 
-      case router.pathname.includes("/e-commerce"):
-        setState({
-          ...state,
-          activeSidebar: eCommerce,
-          subLinksTitle: "E-Commerce",
-        });
-        break;
-      case router.pathname.includes("/disputes"):
-        setState({
-          ...state,
-          activeSidebar: disputes,
-          subLinksTitle: "Disputes",
-        });
-        break;
+    //   case router.pathname.includes("/e-commerce"):
+    //     setState({
+    //       ...state,
+    //       activeSidebar: eCommerce,
+    //       subLinksTitle: "E-Commerce",
+    //     });
+    //     break;
+    //   case router.pathname.includes("/disputes"):
+    //     setState({
+    //       ...state,
+    //       activeSidebar: disputes,
+    //       subLinksTitle: "Disputes",
+    //     });
+    //     break;
 
-      case router.pathname.includes("/e-commerce/product"):
-        setState({
-          ...state,
-          activeSidebar: product,
-          subLinksTitle: "Product",
-        });
-        break;
+    //   case router.pathname.includes("/e-commerce/product"):
+    //     setState({
+    //       ...state,
+    //       activeSidebar: product,
+    //       subLinksTitle: "Product",
+    //     });
+    //     break;
 
-      case router.pathname.includes("/disbursements"):
-        setState({
-          ...state,
-          activeSidebar: disbursement,
-          subLinksTitle: "Disbursement History",
-        });
-        break;
+    //   // case router.pathname.includes("/payouts"):
+    //   //   setState({
+    //   //     ...state,
+    //   //     activeSidebar: payout,
+    //   //     subLinksTitle: "Pay out History",
+    //   //   });
+    //   //   break;
 
-      case router.pathname.includes("/collections"):
-        setState({
-          ...state,
-          activeSidebar: collections,
-          subLinksTitle: "Pay Ins",
-        });
-        break;
+    //   case router.pathname.includes("/collections"):
+    //     setState({
+    //       ...state,
+    //       activeSidebar: collections,
+    //       subLinksTitle: "Pay Ins",
+    //     });
+    //     break;
 
-      default:
-        setState({
-          ...state,
-          activeSidebar: sidebarLinks,
-          subLinksTitle: "",
-        });
-        break;
-    }
+    //   default:
+    //     setState({
+    //       ...state,
+    //       activeSidebar: sidebarLinks,
+    //       subLinksTitle: "",
+    //     });
+    //     break;
+    // }
   };
 
   useLayoutEffect(() => {
@@ -98,36 +93,34 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
 
   return (
     <Fragment>
-      {!showSidebar && (
+      {/* {!showSidebar && (
         <div
           className="absolute left-0 top-0 z-9 h-screen w-screen md:h-0 md:w-0"
           onClick={() => setShowSidebar(false)}
         ></div>
-      )}
+      )} */}
       <aside
-        className={`lg:flex flex-col fixed h-screen bg-[#fff] min-h-screen overflow-x-hidden pl-3 pt-2 w-[250px] ease-in-out duration-500 top-0 z-10 shadow-lg ${
-          showSidebar ? "flex" : "hidden"
-        }`}
+        className={`fixed top-16 lg:flex flex-col h-full bg-white dark:bg-[#121212] border-r border-[#C4C4C452] min-h-full overflow-x-hidden w-[235px] ease-in-out duration-500 shadow-lg ${showSidebar ? "flex" : "hidden"
+          }`}
         ref={bgRef}
       >
-        {
-          <ul className="flex flex-col list-none px-0">
-            <li className="mb-3.5 font-semibold">
+        <ul className="list-none p-0 space-y-5 pt-6 pl-4">
+          {/* <li className="mb-3.5 font-semibold">
               <Link href="/dashboard">
                 <Image
                   src="/images/ramp-logo.svg"
                   alt="RampLogo"
-                  className="mt-3"
+                  // className="mt-3"
                   width={130}
                   height={29}
                   priority
                 />
               </Link>
-            </li>
+            </li> */}
 
-            <li className="mt-10 mr-2">
-              <div>
-                {state.activeSidebar !== sidebarLinks && (
+          {/* <li className="mt-10 mr-2">
+              <div> */}
+          {/* {state.activeSidebar !== sidebarLinks && (
                   <>
                     <div
                       className="flex items-center gap-3 pt-5 pb-10 cursor-pointer"
@@ -141,29 +134,28 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
                       {state.subLinksTitle}
                     </p>
                   </>
-                )}
-                <ul>
-                  {state.activeSidebar.map((item, idx) => {
-                    const { href, icon, title } = item;
-                    return (
-                      <li key={idx} className="mb-7 font-medium">
-                        <ActiveLink href={href} icon={icon} title={title} />
-                      </li>
-                    );
-                  })}
-                  <div className="pr-0.5 md:hidden" onClick={handleLogOut}>
-                    <li className="flex gap-3 mb-7 font-medium px-2.5 py-2.5">
-                      <Icon name="logout" color="#a4b0c3" />
-                      <span className="mt-0.5 font-semi-bold text-sm text-[#a4b0c3]">
-                        Log Out
-                      </span>
-                    </li>
-                  </div>
-                </ul>
-              </div>
+                )} */}
+          {/* <ul className="space-y-6"> */}
+          {state.activeSidebar.map((item, idx) => {
+            const { href, icon, title } = item;
+            return (
+              <li key={idx} className="font-medium">
+                <ActiveLink href={href} icon={icon} title={title} />
+              </li>
+            );
+          })}
+          <div className="pr-0.5 md:hidden" onClick={handleLogOut}>
+            <li className="flex gap-3 mb-7 font-medium px-2.5 py-2.5">
+              <Icon name="logout" color="#a4b0c3" />
+              <span className="mt-0.5 font-semi-bold text-sm text-[#a4b0c3]">
+                Log Out
+              </span>
             </li>
-          </ul>
-        }
+          </div>
+          {/* </ul> */}
+          {/* </div>
+            </li> */}
+        </ul>
       </aside>
     </Fragment>
   );

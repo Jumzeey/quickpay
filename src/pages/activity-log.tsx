@@ -1,13 +1,13 @@
-import { Fragment, useEffect, useState } from "react";
-import Layout from "@/components/layout";
-import WebPageTitle from "@/components/WebPageTitle";
-import Card from "@/components/Card";
-import Table from "@/components/table";
-import Pagination from "@/components/pagination";
 import EmptyState from "@/components/EmptyState";
+import Layout from "@/components/layout";
+import PageHeader from "@/components/PageHeader";
+import Pagination from "@/components/pagination";
+import Table from "@/components/table";
 import TableSkeleton from "@/components/TableSkeleton";
-import { formatDate, formatDateTime } from "@/util/utils";
+import WebPageTitle from "@/components/WebPageTitle";
 import useSetting from "@/stores/useSetting";
+import { formatDateTime2 } from "@/util/utils";
+import { Fragment, useEffect, useState } from "react";
 interface UserLog {
   action: string;
   ip_address: string;
@@ -46,58 +46,61 @@ const ActivityLog = () => {
     });
   }, [currentPage]);
 
+  console.log({ logs, pagination })
+
   const columns = [
-    "s/n",
-    "name",
+    "No.",
     "action taken",
-    "ip_address",
-    "created_at",
-    "user_agent",
+    "user",
+    "IP address",
+    "time stamp",
+    "user agent",
   ];
   return (
     <Layout pageTitle="Audit Trail" icon="activity-log">
       <WebPageTitle title="Audit Trail | Ramp Merchant Portal" />
-      <div>
-        <h2 className="text-xl font-semibold">Manage User Log</h2>
-        <p className="text-sm pt-3 pb-5">
-          Manage user logs within your company
-        </p>
-      </div>
-      <div>
+      <PageHeader
+        title="User Activities"
+        description="Keep track of all user interactions in one place, making it easy to review and analyze activity."
+      />
+      <>
         {getUserLogLoading ? (
           <Fragment>
-            <TableSkeleton />
+            <TableSkeleton  />
           </Fragment>
         ) : logs.length !== 0 ? (
-          <Fragment>
-            <Card className="mt-10">
-              <Table columns={columns} className="mt-7">
-                {logs.map((item: any, index: number) => (
+          <>
+            <Table columns={columns} className="mt-7">
+              {logs.map((item: any, index: number) => {
+                const [date, time] = formatDateTime2(item.created_at);
+
+                return (
                   <tr
                     key={index}
-                    className="border-b last:border-none border-grey-200"
+                    className="[&>td]:border-b last:border-none [&>td]:border-[#C4C4C452] [&>td]:font-medium [&>td]:text-sm [&>td]:px-3 [&>td]:py-6"
                   >
-                    <td className="text-sm px-5 py-6">{index + 1}</td>
-                    <td className="text-sm px-5 py-6">{item.name || "N/A"}</td>
-                    <td className="text-sm px-5 py-6">
-                      {item.action || "N/A"}
+                    <td className="border-l border-[#C4C4C452] !pl-4">{index + 1}</td>
+                    <td>{item.action || "N/A"}</td>
+                    <td className="truncate">{item.name || "N/A"}</td>
+                    <td>{item.ip_address}</td>
+                    <td>{date} <span className="text-[#7F7F7F] text-xs">{`(${time})`}</span></td>
+                    <td
+                      title={item.user_agent}
+                      className="truncate text-[#7F7F7F] w-[350px] max-w-[350px] border-r border-[#C4C4C452]"
+                    >
+                      {item.user_agent}
                     </td>
-                    <td className="text-sm px-5 py-6">{item.ip_address}</td>
-                    <td className="text-sm px-5 py-6">
-                      {formatDateTime(item.created_at)}
-                    </td>
-                    <td className="text-sm px-5 py-6">{item.user_agent}</td>
                   </tr>
-                ))}
-              </Table>
-              <Pagination
-                lastPage={lastPage}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </Card>
-          </Fragment>
+                )
+              })}
+            </Table>
+            <Pagination
+              lastPage={lastPage}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
         ) : (
           <EmptyState
             title="No Activity Log Found"
@@ -105,7 +108,7 @@ const ActivityLog = () => {
             image="/images/activity-log.svg"
           />
         )}
-      </div>
+      </>
     </Layout>
   );
 };

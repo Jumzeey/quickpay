@@ -1,7 +1,7 @@
-import React, { useState, ReactNode } from "react";
+import React, { ReactNode, useState } from "react";
 import Navbar from "../dashboard/navbar";
-import Sidebar from "../sidebar";
 import NoSSR from "../noSSR";
+import Sidebar from "../sidebar";
 
 interface DashboardLayoutProps {
   pageTitle: string;
@@ -24,9 +24,12 @@ const Layout: React.FC<DashboardLayoutProps> = ({
           showSidebar={showSidebar}
           setShowSidebar={setShowSidebar}
         />
-        <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
-        <div className="lg:ml-[250px] h-screen overflow-y-scroll pt-24 pb-10 px-5 md:px-7 bg-[#F2F3F5]">
-          {children}
+
+        <div className="flex">
+          <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+          <div className="overflow-y-scroll w-full pt-8 pb-10 mt-16 ml-[235px] px-5 md:px-7 bg-white dark:bg-[#121212] min-h-screen">
+            {children}
+          </div>
         </div>
       </div>
     </NoSSR>

@@ -1,18 +1,26 @@
-import React, { useState, ChangeEvent, Fragment, useEffect } from "react";
 import Button from "@/components/button";
+import FormInput from "@/components/FormInput";
+import FormSelect from "@/components/FormSelect";
 import Modal from "@/components/modal";
-import FloatingLabelInput from "@/components/floating-input";
+import TabButton from "@/components/TabButton";
+import { useFormValidation } from "@/hooks/useFormValidation";
 import { createVirtualAccount } from "@/services/collections";
 import { getSubaccountHistory } from "@/services/sub-account";
-import { useFormik } from "formik";
-import * as Yup from "yup";
 import {
   nigerianPhoneNumberSchema,
   notifyError,
   notifySuccess,
   removeCommasFromValue,
 } from "@/util/utils";
+import Image from "next/image";
+import React, { ChangeEvent, Fragment, useEffect, useMemo, useState } from "react";
+import * as Yup from "yup";
 import Loader from "../loader";
+
+export const VIRTUAL_ACCOUNT_TYPES: { id: number; name: string; }[] = [
+  { id: 1, name: 'Onetime' },
+  { id: 2, name: 'Permanent' },
+];
 
 const CorporateAccountTypes = [
   {
@@ -68,13 +76,40 @@ interface StateProps {
   selectedCorporateAccountType: string;
   selectedChannel: string;
   isLoading: boolean;
+  currentStep: number;
 }
+
+type FormValues = {
+  firstName: string;
+  lastName: string;
+  otherName: string;
+  phoneNumber: string;
+  businessName: string;
+  rcNumber: string;
+  bvn: string;
+  dob: string;
+  nin: string;
+  amount: string;
+};
 
 const RequestVirtualAccount: React.FC<AddAccountProps> = ({
   isModalOpen,
   closeModal,
   fetchVirtualAccounts,
 }) => {
+  const initialValues: FormValues = {
+    firstName: "",
+    lastName: "",
+    otherName: "",
+    phoneNumber: "",
+    businessName: "",
+    rcNumber: "",
+    bvn: "",
+    dob: "",
+    nin: "",
+    amount: "",
+  };
+
   const [state, setState] = useState<StateProps>({
     banks: [],
     accountType: "",
@@ -85,104 +120,108 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
     selectedCorporateAccountType: "",
     selectedChannel: "",
     isLoading: false,
+    currentStep: 0,
   });
 
-  const notRequiredValidation = (accountType: string, errorMessage: string) => {
-    if (state.accountType === accountType) {
-      return Yup.string().notRequired();
+  // Dynamic validation schema based on state
+  const validationSchema = useMemo(() => {
+    const notRequiredValidation = (accountType: string, errorMessage: string) => {
+      if (state.accountType === accountType) {
+        return Yup.string().notRequired();
+      } else {
+        return Yup.string().required(errorMessage);
+      }
+    };
+
+    const requiredValidation = (accountType: string, errorMessage: string) => {
+      if (state.accountType === accountType) {
+        return Yup.string().required(errorMessage);
+      } else {
+        return Yup.string().notRequired();
+      }
+    };
+
+    if (state.virtualType !== "Onetime") {
+      return Yup.object().shape({
+        firstName: requiredValidation("Personal", "First name is required!"),
+        lastName: requiredValidation("Personal", "Last name is required!"),
+        otherName: requiredValidation("Personal", "Other name is required!"),
+        phoneNumber: nigerianPhoneNumberSchema,
+        businessName: notRequiredValidation("Personal", "Business name is required!"),
+        rcNumber: notRequiredValidation("Personal", "RC Number is required!"),
+        bvn: Yup.string()
+          .required("Bvn is required!")
+          .min(11, "BVN should contain 11 digits"),
+        nin: Yup.string()
+          .required("Nin is required!")
+          .min(11, "Nin should contain 11 digits"),
+        dob: state.accountType === "Personal"
+          ? Yup.string().required("Date of birth is required!")
+          : Yup.string().notRequired(),
+        amount: state.virtualType === "Onetime"
+          ? Yup.string().required("Amount is required!")
+          : Yup.string().notRequired(),
+      });
     } else {
-      return Yup.string().required(errorMessage);
+      return Yup.object().shape({
+        amount: Yup.string().required("Amount is required!"),
+      });
     }
-  };
+  }, [state.virtualType, state.accountType]);
 
-  const requiredValidation = (accountType: string, errorMessage: string) => {
-    if (state.accountType === accountType) {
-      return Yup.string().required(errorMessage);
-    } else {
-      return Yup.string().notRequired();
-    }
-  };
-
-  const formik = useFormik({
-    initialValues: {
-      firstName: "",
-      lastName: "",
-      otherName: "",
-      phoneNumber: "",
-      businessName: "",
-      rcNumber: "",
-      bvn: "",
-      dob: "",
-      nin: "",
-      amount: "",
-    },
-    validationSchema:
-      state.virtualType !== "Onetime"
-        ? Yup.object().shape({
-            firstName: requiredValidation(
-              "Personal",
-              "First name is required!"
-            ),
-            lastName: requiredValidation("Personal", "Last name is required!"),
-            otherName: requiredValidation(
-              "Personal",
-              "Other name is required!"
-            ),
-            phoneNumber: nigerianPhoneNumberSchema,
-            businessName: notRequiredValidation(
-              "Personal",
-              "Business name is required!"
-            ),
-            rcNumber: notRequiredValidation(
-              "Personal",
-              "RC Number is required!"
-            ),
-            bvn: Yup.string()
-              .required("Bvn is required!")
-              .min(11, "BVN should contain 11 digits"),
-            nin: Yup.string()
-              .required("Nin is required!")
-              .min(11, "Nin should contain 11 digits"),
-            dob:
-              state.accountType === "Personal"
-                ? Yup.string().required("Date of birth is required!")
-                : Yup.string().notRequired(),
-            amount:
-              state.virtualType === "Onetime"
-                ? Yup.string().required("Amount is required!")
-                : Yup.string().notRequired(),
-          })
-        : Yup.object().shape({
-            amount: Yup.string().required("Amount is required!"),
-          }),
-
-    validateOnMount: true,
-
-    onSubmit: async () => {
-      requestVirtualAccount();
-    },
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, touchedFields },
+    reset,
+    setValue,
+    watch
+  } = useFormValidation<FormValues>(validationSchema as Yup.ObjectSchema<any>, {
+    defaultValues: initialValues,
+    mode: 'onChange'
   });
+
+  const handleOptionClick = (option: typeof VIRTUAL_ACCOUNT_TYPES[0]) => {
+    setState((prev) => ({
+      ...prev,
+      virtualType: option.name,
+      currentStep: 1,
+      isLoading: false,
+      accountType: option.name === "Permanent" ? "Personal" : "",
+    }));
+    reset(initialValues);
+  };
 
   const resetState = () => {
-    setState({
-      ...state,
-      isLoading: false,
-      virtualType: "",
-      accountType: "",
-      businessType: "",
-    });
-    formik.setValues({
-      firstName: "",
-      lastName: "",
-      otherName: "",
-      phoneNumber: "",
-      businessName: "",
-      rcNumber: "",
-      dob: "",
-      amount: "",
-      bvn: "",
-      nin: "",
-    });
+    if (state.currentStep === 1) {
+      setState(prev => ({
+        ...prev,
+        currentStep: 0,
+        accountType: "",
+        virtualType: "",
+        businessType: "",
+        selectedSubAccount: "",
+        selectedCorporateAccountType: "",
+        selectedChannel: "",
+        isLoading: false,
+      }));
+      reset(initialValues);
+    } else {
+      closeModal();
+      setState({
+        banks: [],
+        accountType: "",
+        virtualType: "",
+        businessType: "",
+        subAccounts: [],
+        selectedSubAccount: "",
+        selectedCorporateAccountType: "",
+        selectedChannel: "",
+        isLoading: false,
+        currentStep: 0,
+      });
+      reset(initialValues);
+    }
   };
 
   useEffect(() => {
@@ -192,16 +231,20 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
   }, [state.businessType]);
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const { value } = e.target;
-    setState({ ...state, [e.target.name]: value });
+    const { value, name } = e.target;
+    setState(prev => ({ ...prev, [name]: value }));
   };
 
   const fetchSubAccounts = async () => {
-    const response = await getSubaccountHistory();
-    setState({ ...state, subAccounts: response.subaccounts });
+    try {
+      const response = await getSubaccountHistory();
+      setState(prev => ({ ...prev, subAccounts: response.subaccounts }));
+    } catch (error) {
+      console.error("Failed to fetch sub-accounts:", error);
+    }
   };
 
-  const requestVirtualAccount = async () => {
+  const requestVirtualAccount = async (formValues: FormValues) => {
     const {
       firstName,
       lastName,
@@ -213,7 +256,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       amount,
       businessName,
       rcNumber,
-    } = formik.values;
+    } = formValues;
 
     const commonPayload = {
       type: state.accountType,
@@ -222,11 +265,10 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       nin,
       phone_number: phoneNumber,
       business_type: state.businessType,
-      subaccount_id: state.selectedSubAccount
-        ? state.selectedSubAccount
-        : undefined,
+      subaccount_id: state.selectedSubAccount || undefined,
       channel: state.selectedChannel,
     };
+
     const personalAccountPayload = {
       ...commonPayload,
       first_name: firstName,
@@ -243,7 +285,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
     };
 
     try {
-      setState({ ...state, isLoading: true });
+      setState(prev => ({ ...prev, isLoading: true }));
       let payloadDecider = {};
 
       if (state.virtualType === "Onetime") {
@@ -264,346 +306,366 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
     } catch (error: any) {
       notifyError(error.message);
     } finally {
-      closeModal();
       resetState();
       await fetchVirtualAccounts();
     }
   };
 
+  // Helper function to get form field props
+  const getFieldProps = (fieldName: keyof FormValues) => {
+    return {
+      error: errors[fieldName]?.message,
+      touched: touchedFields[fieldName],
+      ...register(fieldName)
+    };
+  };
+
   return (
-    <Modal isOpen={isModalOpen} onClose={closeModal}>
+    <Modal
+      title={state.currentStep === 0 ? "Select Virtual Account Type" : "Request Virtual Account"}
+      isOpen={isModalOpen}
+      onClose={resetState}
+    >
       <div className="mt-5">
-        <form onSubmit={formik.handleSubmit}>
-          <label className="text-sm">Virtual account type</label>
-          <select
-            className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-            onChange={handleChange}
-            name="virtualType"
-            value={state.virtualType}
-          >
-            <option value="Virtual account type">
-              --Virtual account type--
-            </option>
-
-            <option value="Onetime">Onetime</option>
-            <option value="Permanent">Permanent</option>
-          </select>
-
-          {state.virtualType && (
-            <Fragment>
-              {state.virtualType === "Onetime" ? (
-                <Fragment>
-                  <FloatingLabelInput
-                    label="Amount"
-                    id="amount"
-                    type="text"
-                    htmlFor="amount"
-                    formik={formik}
-                    {...formik.getFieldProps("amount")}
+        {state.currentStep === 0 && (
+          <ul className="space-y-2">
+            {VIRTUAL_ACCOUNT_TYPES.map((option) => (
+              <li key={option.id}>
+                <button
+                  type="button"
+                  className={`w-full flex items-center justify-between font-semibold text-sm text-black dark:text-white py-5 ${option.id !== VIRTUAL_ACCOUNT_TYPES.length ? "border-b border-[#C4C4C452]" : ""
+                    }`}
+                  onClick={() => handleOptionClick(option)}
+                >
+                  {option.name}
+                  <Image
+                    src="/images/arrow-right.svg"
+                    alt="Arrow Image"
+                    width={6}
+                    height={8}
+                    priority
                   />
-                  <select
-                    className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                    onChange={handleChange}
-                    name="selectedChannel"
-                    value={state.selectedChannel}
-                  >
-                    <option value="Channel">--Select channel--</option>
-                    <option value="Globus">Globus</option>
-                    <option value="Wema">Wema</option>
-                  </select>
-                </Fragment>
-              ) : (
-                <Fragment>
-                  <label className="text-sm">Select Type</label>
-                  <select
-                    className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                    onChange={handleChange}
-                    name="accountType"
-                    value={state.accountType}
-                  >
-                    <option value="Account Type">--Select type--</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Corporate">Corporate</option>
-                  </select>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
 
-                  {state.accountType && (
+        {state.currentStep === 1 && (
+          <form onSubmit={handleSubmit(requestVirtualAccount)}>
+            {state.virtualType && (
+              <Fragment>
+                {state.virtualType === "Onetime" ? (
+                  <div className="space-y-6">
+                    <FormInput
+                      label="Amount"
+                      id="amount"
+                      type="text"
+                      htmlFor="amount"
+                      numberOnly
+                      {...getFieldProps("amount")}
+                    />
+
+                    <FormSelect
+                      onChange={handleChange}
+                      name="selectedChannel"
+                      id="selectedChannel"
+                      htmlFor="selectedChannel"
+                      value={state.selectedChannel}
+                      label="Select channel"
+                      options={[
+                        { value: "Globus", label: "Globus" },
+                        { value: "Wema", label: "Wema" },
+                      ]}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <TabButton
+                      tabs={[
+                        {
+                          title: "Personal Account",
+                          value: "Personal",
+                          isActive: state.accountType === "Personal"
+                        },
+                        {
+                          title: "Corporate Account",
+                          value: "Corporate",
+                          isActive: state.accountType === "Corporate"
+                        },
+                      ]}
+                      onTabClick={(value) => {
+                        // handleChange({
+                        //   target: { name: "accountType", value },
+                        // } as ChangeEvent<HTMLSelectElement>);
+                        setState(prev => ({
+                          ...prev,
+                          accountType: value
+                        }));
+                      }}
+                    />
+
                     <Fragment>
-                      {state.accountType === "Personal" ? (
-                        <Fragment>
-                          <div className="grid grid-cols-2 gap-4">
-                            <FloatingLabelInput
-                              label="First name"
-                              id="firstName"
-                              type="text"
-                              htmlFor="firstName"
-                              formik={formik}
-                              maxLength={10}
-                              {...formik.getFieldProps("firstName")}
-                            />
+                      {state.accountType && (
+                        <div className="mt-6">
+                          {state.accountType === "Personal" ? (
+                            <div className="space-y-6">
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                  label="First name"
+                                  id="firstName"
+                                  type="text"
+                                  htmlFor="firstName"
+                                  maxLength={50}
+                                  {...getFieldProps("firstName")}
+                                />
 
-                            <FloatingLabelInput
-                              label="Last name"
-                              id="lastName"
-                              type="text"
-                              htmlFor="lastName"
-                              formik={formik}
-                              {...formik.getFieldProps("lastName")}
-                            />
-                          </div>
+                                <FormInput
+                                  label="Last name"
+                                  id="lastName"
+                                  type="text"
+                                  htmlFor="lastName"
+                                  maxLength={50}
+                                  {...getFieldProps("lastName")}
+                                />
+                              </div>
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <FloatingLabelInput
-                              label="Other name"
-                              id="otherName"
-                              type="text"
-                              htmlFor="otherName"
-                              formik={formik}
-                              {...formik.getFieldProps("otherName")}
-                            />
-                            <FloatingLabelInput
-                              label="Phone number"
-                              id="phoneNumber"
-                              type="text"
-                              htmlFor="phoneNumber"
-                              formik={formik}
-                              maxLength={11}
-                              {...formik.getFieldProps("phoneNumber")}
-                              numberOnly
-                            />
-                          </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                  label="Other name"
+                                  id="otherName"
+                                  type="text"
+                                  htmlFor="otherName"
+                                  maxLength={50}
+                                  {...getFieldProps("otherName")}
+                                />
+                                <FormInput
+                                  label="Phone number"
+                                  id="phoneNumber"
+                                  type="text"
+                                  htmlFor="phoneNumber"
+                                  maxLength={11}
+                                  numberOnly
+                                  {...getFieldProps("phoneNumber")}
+                                />
+                              </div>
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <FloatingLabelInput
-                              label="NIN"
-                              id="nin"
-                              type="text"
-                              htmlFor="nin"
-                              formik={formik}
-                              maxLength={11}
-                              {...formik.getFieldProps("nin")}
-                              numberOnly
-                            />
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                  label="NIN"
+                                  id="nin"
+                                  type="text"
+                                  htmlFor="nin"
+                                  maxLength={11}
+                                  numberOnly
+                                  {...getFieldProps("nin")}
+                                />
 
-                            <FloatingLabelInput
-                              label="BVN"
-                              id="bvn"
-                              type="text"
-                              htmlFor="bvn"
-                              formik={formik}
-                              maxLength={11}
-                              {...formik.getFieldProps("bvn")}
-                              numberOnly
-                            />
-                          </div>
+                                <FormInput
+                                  label="BVN"
+                                  id="bvn"
+                                  type="text"
+                                  htmlFor="bvn"
+                                  maxLength={11}
+                                  numberOnly
+                                  {...getFieldProps("bvn")}
+                                />
+                              </div>
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <FloatingLabelInput
-                              label="Date of birth"
-                              id="dob"
-                              type="date"
-                              htmlFor="dob"
-                              formik={formik}
-                              {...formik.getFieldProps("dob")}
-                            />
-                            <select
-                              className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                              onChange={handleChange}
-                              name="businessType"
-                              value={state.businessType}
-                            >
-                              <option value="Virtual account type">
-                                --Business type--
-                              </option>
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                  label="Date of birth"
+                                  id="dob"
+                                  type="date"
+                                  htmlFor="dob"
+                                  {...getFieldProps("dob")}
+                                />
 
-                              <option value="main">Main</option>
-                              <option value="subaccount">Sub-account</option>
-                            </select>
-                          </div>
+                                <FormSelect
+                                  onChange={handleChange}
+                                  name="businessType"
+                                  id="businessType"
+                                  htmlFor="businessType"
+                                  value={state.businessType}
+                                  label="Select business type"
+                                  options={[
+                                    { label: "Main", value: "main" },
+                                    { label: "Sub-account", value: "subaccount" }
+                                  ]}
+                                />
+                              </div>
 
-                          <select
-                            className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                            onChange={handleChange}
-                            name="selectedChannel"
-                            value={state.selectedChannel}
-                          >
-                            <option value="Corporate account type">
-                              --Select channel--
-                            </option>
-
-                            {Channels.map(({ key, value }, index) => (
-                              <option value={key} key={index}>
-                                {value}
-                              </option>
-                            ))}
-                          </select>
-
-                          <div className="grid gris-cols-2 gap-4">
-                            {state.businessType === "subaccount" && (
-                              <select
-                                className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
+                              <FormSelect
                                 onChange={handleChange}
-                                name="selectedSubAccount"
-                                value={state.selectedSubAccount}
-                              >
-                                <option value="Virtual account type">
-                                  --Select sub-account--
-                                </option>
+                                name="selectedChannel"
+                                id="selectedChannel"
+                                htmlFor="selectedChannel"
+                                value={state.selectedChannel}
+                                label="Select channel"
+                                options={Channels.map(
+                                  ({ key, value }) => ({
+                                    value: key,
+                                    label: value,
+                                  })
+                                )}
+                              />
 
-                                {state?.subAccounts?.map((option: any) => (
-                                  <option key={option.id} value={option.id}>
-                                    {option.merchant_name}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                        </Fragment>
-                      ) : (
-                        <Fragment>
-                          <div className="grid grid-cols-2 gap-4">
-                            <FloatingLabelInput
-                              label="Business name"
-                              id="businessName"
-                              type="text"
-                              htmlFor="businessName"
-                              formik={formik}
-                              {...formik.getFieldProps("businessName")}
-                            />
-                            <FloatingLabelInput
-                              label="RC Number"
-                              id="rcNumber"
-                              type="text"
-                              htmlFor="rcNumber"
-                              formik={formik}
-                              {...formik.getFieldProps("rcNumber")}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FloatingLabelInput
-                              label="Phone number"
-                              id="phoneNumber"
-                              type="text"
-                              htmlFor="phoneNumber"
-                              formik={formik}
-                              maxLength={11}
-                              {...formik.getFieldProps("phoneNumber")}
-                              numberOnly
-                            />
-
-                            <FloatingLabelInput
-                              label="BVN"
-                              id="bvn"
-                              type="text"
-                              htmlFor="bvn"
-                              formik={formik}
-                              maxLength={11}
-                              {...formik.getFieldProps("bvn")}
-                              numberOnly
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FloatingLabelInput
-                              label="NIN"
-                              id="nin"
-                              type="text"
-                              htmlFor="nin"
-                              formik={formik}
-                              maxLength={11}
-                              {...formik.getFieldProps("nin")}
-                              numberOnly
-                            />
-                            <select
-                              className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                              onChange={handleChange}
-                              name="businessType"
-                              value={state.businessType}
-                            >
-                              <option value="Virtual account type">
-                                --Business type--
-                              </option>
-
-                              <option value="main">Main</option>
-                              <option value="subaccount">Sub-account</option>
-                            </select>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <select
-                              className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                              onChange={handleChange}
-                              name="selectedCorporateAccountType"
-                              value={state.selectedCorporateAccountType}
-                            >
-                              <option value="Corporate account type">
-                                --Select corporate account type--
-                              </option>
-
-                              {CorporateAccountTypes.map(
-                                ({ key, value }, index) => (
-                                  <option value={key} key={index}>
-                                    {value}
-                                  </option>
-                                )
+                              {state.businessType === "subaccount" && (
+                                <FormSelect
+                                  onChange={handleChange}
+                                  name="selectedSubAccount"
+                                  id="selectedSubAccount"
+                                  htmlFor="selectedSubAccount"
+                                  value={state.selectedSubAccount}
+                                  label="Select sub-account"
+                                  options={
+                                    state?.subAccounts?.map((option: any) => ({
+                                      value: option.id,
+                                      label: option.merchant_name,
+                                    })) || []
+                                  }
+                                />
                               )}
-                            </select>
+                            </div>
+                          ) : (
+                            <div className="space-y-6">
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                  label="Business name"
+                                  id="businessName"
+                                  type="text"
+                                  htmlFor="businessName"
+                                  {...getFieldProps("businessName")}
+                                />
+                                <FormInput
+                                  label="RC Number"
+                                  id="rcNumber"
+                                  type="text"
+                                  htmlFor="rcNumber"
+                                  {...getFieldProps("rcNumber")}
+                                />
+                              </div>
 
-                            <select
-                              className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                              onChange={handleChange}
-                              name="selectedChannel"
-                              value={state.selectedChannel}
-                            >
-                              <option value="Corporate account type">
-                                --Select channel--
-                              </option>
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                  label="Phone number"
+                                  id="phoneNumber"
+                                  type="text"
+                                  htmlFor="phoneNumber"
+                                  maxLength={11}
+                                  numberOnly
+                                  {...getFieldProps("phoneNumber")}
+                                />
 
-                              {Channels.map(({ key, value }, index) => (
-                                <option value={value} key={index}>
-                                  {key}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                                <FormInput
+                                  label="BVN"
+                                  id="bvn"
+                                  type="text"
+                                  htmlFor="bvn"
+                                  maxLength={11}
+                                  numberOnly
+                                  {...getFieldProps("bvn")}
+                                />
+                              </div>
 
-                          {state.businessType === "subaccount" && (
-                            <select
-                              className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                              onChange={handleChange}
-                              name="selectedSubAccount"
-                              value={state.selectedSubAccount}
-                            >
-                              <option value="Virtual account type">
-                                --Select sub-account--
-                              </option>
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormInput
+                                  label="NIN"
+                                  id="nin"
+                                  type="text"
+                                  htmlFor="nin"
+                                  maxLength={11}
+                                  numberOnly
+                                  {...getFieldProps("nin")}
+                                />
 
-                              {state?.subAccounts?.map((option: any) => (
-                                <option key={option.id} value={option.id}>
-                                  {option.merchant_name}
-                                </option>
-                              ))}
-                            </select>
+                                <FormSelect
+                                  onChange={handleChange}
+                                  name="businessType"
+                                  id="businessType"
+                                  htmlFor="businessType"
+                                  value={state.businessType}
+                                  label="Select business type"
+                                  options={[
+                                    { label: "Main", value: "main" },
+                                    { label: "Sub-account", value: "subaccount" }
+                                  ]}
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormSelect
+                                  onChange={handleChange}
+                                  name="selectedCorporateAccountType"
+                                  id="selectedCorporateAccountType"
+                                  htmlFor="selectedCorporateAccountType"
+                                  value={state.selectedCorporateAccountType}
+                                  label="Select corporate account type"
+                                  options={CorporateAccountTypes.map(
+                                    ({ key, value }) => ({
+                                      value: key,
+                                      label: value,
+                                    })
+                                  )}
+                                />
+
+                                <FormSelect
+                                  onChange={handleChange}
+                                  name="selectedChannel"
+                                  id="selectedChannel"
+                                  htmlFor="selectedChannel"
+                                  value={state.selectedChannel}
+                                  label="Select channel"
+                                  options={Channels.map(
+                                    ({ key, value }) => ({
+                                      value: key,
+                                      label: value,
+                                    })
+                                  )}
+                                />
+                              </div>
+
+                              {state.businessType === "subaccount" && (
+                                <FormSelect
+                                  onChange={handleChange}
+                                  name="selectedSubAccount"
+                                  id="selectedSubAccount"
+                                  htmlFor="selectedSubAccount"
+                                  value={state.selectedSubAccount}
+                                  label="Select sub-account"
+                                  options={
+                                    state?.subAccounts?.map((option: any) => ({
+                                      value: option.id,
+                                      label: option.merchant_name,
+                                    })) || []
+                                  }
+                                />
+                              )}
+                            </div>
                           )}
-                        </Fragment>
+                        </div>
                       )}
                     </Fragment>
-                  )}
-                </Fragment>
-              )}
-            </Fragment>
-          )}
+                  </>
+                )}
+              </Fragment>
+            )}
 
-          <Button
-            className="text-white mt-2 text-xs p-2 rounded"
-            text={state.isLoading ? <Loader /> : "Submit"}
-            ariaLabel="Submit"
-            disabled={!formik.isValid || state.isLoading}
-            primary
-          />
-        </form>
+            <div className="w-40">
+              <Button
+                className="text-white mt-8 text-xs p-2 rounded"
+                text={state.isLoading ? <Loader /> : "Request Account"}
+                ariaLabel="Submit"
+                disabled={state.isLoading}
+                // disabled={!isValid || state.isLoading}
+                primary
+                type="submit"
+              />
+            </div>
+          </form>
+        )}
       </div>
-    </Modal>
+    </Modal >
   );
 };
 

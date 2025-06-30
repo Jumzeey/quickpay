@@ -22,7 +22,7 @@ export async function performNameCheck(payload: NameCheckProps) {
     const response = await api.post(
       apiEndpoints.bank.NAME_CHECK, payload
     );
-    return response.data.account_name;
+    return response.data;
   } catch (error) {
     throw error;
   }

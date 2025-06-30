@@ -1,12 +1,11 @@
-import { create } from 'zustand';
 import {
   getCollectionHistory,
   getPaymentMandates,
-  getVirtualAccounts,
-  getSingleRefund,
   getRefunds,
+  getSingleRefund,
+  getVirtualAccounts,
 } from '@/services/collections';
-import moment from 'moment';
+import { create } from 'zustand';
 
 const initialState = {
   getCollectionHistoryLoading: false,

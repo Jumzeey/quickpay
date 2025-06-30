@@ -1,21 +1,24 @@
-import React, { ChangeEvent, useState, useEffect, Fragment } from "react";
-import Layout from "@/components/layout";
-import LineChart from "@/components/charts/LineChart";
 import BarChart from "@/components/charts/BarChart";
-import Image from "next/image";
-import Card from "@/components/Card";
-import { dashboardAnalytics } from "@/util/constants";
-import { handleDashboardData } from "@/services/transaction";
+import LineChart from "@/components/charts/LineChart";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
 import Icon from "@/components/icon";
-import useClickEvent from "@/stores/useClickEvent";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import Layout from "@/components/layout";
+import Switch from "@/components/Switch";
+import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
-import { populateCharts } from "@/services/transaction";
-import { formatBalance } from "@/util/utils";
+import { useEffectFetch } from "@/hooks/useEffectFetch";
+import { handleDashboardData, populateCharts } from "@/services/transaction";
+import useAuthentication from "@/stores/useAuthentication";
+import useCurrency from "@/stores/useCurrency";
+import { capitalizeFirstLetter, copyToClipboard, formatBalance } from "@/util/utils";
+import Link from "next/link";
+import React, { ChangeEvent, useEffect, useState } from "react";
+import "react-loading-skeleton/dist/skeleton.css";
 
-interface stateProps {
+type DashboardProps = {};
+type StateProps = {
   isLoading: boolean;
+  wallet_id: string | null;
   refreshChart: boolean;
   available_balance: string;
   ledger_balance: string;
@@ -29,31 +32,21 @@ interface stateProps {
   settlements: any[];
 }
 
-// const options = [
-//   { value: "ngn", label: "NGN" },
-//   { value: "usd", label: "USD" },
-//   { value: "cad", label: "CAD" },
-// ];
-
-const secondOptions = [
-  { value: "7", label: "Last 7 Days" },
-  { value: "30", label: "Last One Month" },
-  { value: "366", label: "Last One Year" },
-];
-
 const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState<string>("");
-
-  const { isVisible, handleToggle } = useClickEvent();
-
+  const { firstname } = useAuthentication().user || {};
+  const [showBalance, setShowBalance] = useState(true);
   const [rotation, setRotation] = useState(0);
-  const handleRefresh = (e: React.MouseEvent<HTMLSpanElement> | undefined) => {
-    e?.stopPropagation();
-    setRotation(rotation + 360);
-    fetchDashboardData();
-  };
-  const [state, setState] = useState<stateProps>({
+  const { selectedCurrency, getCurrencyFlag } = useCurrency();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const [state, setState] = useState<StateProps>({
     isLoading: true,
+    wallet_id: null,
     refreshChart: false,
     available_balance: "",
     ledger_balance: "",
@@ -67,268 +60,287 @@ const Dashboard = () => {
     settlements: [],
   });
 
-  const handleChange = async (event: ChangeEvent<HTMLSelectElement>) => {
+  const handleToggle = () => setShowBalance(!showBalance);
+
+  const { loading: isDashboardLoading } = useEffectFetch(
+    async () => {
+      return await handleDashboardData(selectedCurrency);
+    },
+    [selectedCurrency, mounted], 
+    {
+      enabled: !!(mounted && selectedCurrency), 
+      onSuccess: (response) => {
+        const { balances, transactions, settlements, merchantBalance } = response;
+        const { settlement_balance, total_collections, total_disbursements } = merchantBalance || {};
+
+        const main_account_balance = merchantBalance?.accounts?.find(
+          (account: any) => account.account_type === "main"
+        ) || {};
+        const rolling_reserve_account_balance = merchantBalance?.accounts?.find(
+          (account: any) => account.account_type === "reserve"
+        ) || {};
+
+        if (main_account_balance?.id) {
+          const accountInfo = {
+            main_account_id: main_account_balance.id,
+            ...(rolling_reserve_account_balance?.id && {
+              rolling_reserve_account_id: rolling_reserve_account_balance.id
+            })
+          };
+
+          const { setAccounts } = useCurrency.getState();
+          setAccounts(selectedCurrency, accountInfo);
+        }
+
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          wallet_id: main_account_balance?.account_number || null,
+          available_balance: formatBalance(main_account_balance.available_balance, selectedCurrency),
+          ledger_balance: formatBalance(main_account_balance.actual_balance, selectedCurrency),
+          locked_balance: formatBalance(main_account_balance.locked_balance, selectedCurrency),
+          settlement_balance: formatBalance(settlement_balance, selectedCurrency),
+          transactions,
+          settlements,
+          rolling_reserve: formatBalance(rolling_reserve_account_balance?.available_balance, selectedCurrency),
+          rolling_reserve_ledger: formatBalance(rolling_reserve_account_balance?.actual_balance, selectedCurrency),
+          total_collections: formatBalance(total_collections, selectedCurrency),
+          total_disbursements: formatBalance(total_disbursements, selectedCurrency)
+        }));
+      },
+      onError: (error) => {
+        console.error('❌ Failed to fetch dashboard data:', error);
+      }
+    }
+  );
+
+  const { loading: isChartLoading } = useEffectFetch(
+    async () => {
+      return await populateCharts(selectedOption, selectedCurrency);
+    },
+    [selectedOption, selectedCurrency, mounted],
+    {
+      enabled: !!(selectedOption && mounted && selectedCurrency),
+      onSuccess: (response) => {
+       setState(prev => ({
+          ...prev,
+          transactions: response,
+          refreshChart: false
+        }));
+      },
+      onError: (error) => {
+        console.error('❌ Failed to fetch chart data:', error);
+        setState(prev => ({ ...prev, refreshChart: false }));
+      }
+    }
+  );
+
+  const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const { value } = event.target;
     setSelectedOption(value);
-
-    try {
-      setState(prevState => ({
-        ...prevState,
-        refreshChart: true,
-      }));
-      const response = await populateCharts(value);
-      setState(prevState => ({
-        ...prevState,
-        transactions: response,
-      }));
-    } catch (error) {
-    } finally {
-      setState(prevState => ({
-        ...prevState,
-        refreshChart: false,
-      }));
-    }
+    setState(prev => ({ ...prev, refreshChart: true }));
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    const response = await handleDashboardData();
-    setState(prevState => ({
-      ...prevState,
-      isLoading: false,
-    }));
-    const { balances, transactions, settlements } = response;
-
-    const {
-      main_account_balance,
-      rolling_reserve_account_balance,
-      totalPayIn,
-      // locked_balance,
-      // settlement_balance,
-      // total_disbursements,
-      // total_collections,
-    } = balances?.data?.balances || {};
-    setState(prevState => ({
-      ...prevState,
-      available_balance: formatBalance(main_account_balance?.available_balance),
-      ledger_balance: formatBalance(main_account_balance?.ledger_balance),
-      locked_balance: formatBalance(main_account_balance?.locked_balance),
-      settlement_balance: formatBalance(
-        main_account_balance?.available_balance
-      ),
-      transactions,
-      settlements,
-      rolling_reserve: formatBalance(
-        rolling_reserve_account_balance?.available_balance
-      ),
-      rolling_reserve_ledger: formatBalance(
-        rolling_reserve_account_balance?.ledger_balance
-      ),
-      total_collections: formatBalance(totalPayIn),
-    }));
+  const handleRefresh = (e: React.MouseEvent<HTMLSpanElement> | undefined) => {
+    e?.stopPropagation();
+    setRotation(rotation + 360);
   };
+
+  const secondOptions = [
+    { value: "7", label: "Last 7 Days" },
+    { value: "30", label: "Last One Month" },
+    { value: "366", label: "Last One Year" },
+  ];
 
   const lineChartProps = {
     secondOptions,
     selectedOption,
     handleChange,
   };
-  const labels = state?.transactions?.map((label: any) => label.month);
+  const labels = state?.transactions?.map((label: any) => label?.month);
+
+  if (!mounted) {
+    return (
+      <Layout pageTitle='Dashboard' icon='dashboard'>
+        <WebPageTitle title='Dashboard | Ramp Merchant Portal' />
+        <TableSkeleton />
+      </Layout>
+    );
+  }
 
   return (
     <Layout pageTitle='Dashboard' icon='dashboard'>
       <WebPageTitle title='Dashboard | Ramp Merchant Portal' />
-      <div>
-        <div>
-          <div className='flex xl:justify-between xl:grid xl:grid-cols-4 items-center gap-44 mb-2'>
-            <div className='flex items-center gap-3'>
-              <span className='text-2xl text-primary font-semibold'>
-                Balances
-              </span>
-              <div className='relative flex items-center justify-center shrink-0'>
-                <Image
-                  src={
-                    isVisible
-                      ? '/images/eye-close-dark.svg'
-                      : '/images/eye-on-dark.svg'
-                  }
-                  onClick={handleToggle}
-                  className='cursor-pointer w-7 h-7' // Fixed width and height
-                  alt='Eye icon'
-                  width={28}
-                  height={28}
-                  priority
-                />
-              </div>
-            </div>
-            <div className='relative'>
-              <Icon
-                name='refresh'
-                className='md:absolute md:-top-2 cursor-pointer transition-transform duration-500 ease-in-out'
-                style={{ transform: `rotate(${rotation}deg)` }}
-                onClick={handleRefresh}
-              />
-            </div>
-          </div>
 
-          <div className='grid md:grid-cols-2 xl:grid-cols-3 gap-4'>
-            {state.isLoading ? (
-              <Card className='flex flex-col justify-between h-[200px] !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl'>
-                <div className='flex justify-end'>
-                  <Skeleton width={30} height={20} />
-                </div>
-                <div className=''>
-                  <div className='flex justify-between'>
-                    <span className='block w-[130px] rounded-lg pb-1'>
-                      <Skeleton className='h-2.5' />
-                    </span>
-                  </div>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="font-bold text-sm text-[#7F7F7F] dark:text-[#EFF7FE90]">
+            Good Morning, <span className="text-black dark:text-white tracking-wider">{capitalizeFirstLetter(firstname)}</span>
+          </p>
 
-                  <span className='block w-[100px] rounded-lg pb-1'>
-                    <Skeleton className='h-2.5' />
-                  </span>
-                </div>
-                <div className='flex items-center justify-between flex-wrap'>
-                  <span className='block w-[120px] rounded-lg pb-1'>
-                    <Skeleton className='h-2.5' />
-                  </span>
-                  {/*<span className="block w-[100px] rounded-lg pb-1">
-                    <Skeleton className="h-2.5" />
-                  </span>*/}
-                </div>
-              </Card>
-            ) : (
-              <Card className='h-[200px] text-white flex flex-col justify-between !bg-primary transition-all duration-300 transform hover:scale-105 hover:shadow-xl'>
-                <div className='flex justify-end'>
-                  <Icon name='wallet' />
-                </div>
+          <div className="flex items-center gap-1.5">
+            <Icon name="edit2" className="inline-block" />
 
-                <div>
-                  <div className='flex justify-between'>
-                    <span className='text-lg'>Available</span>
-                  </div>
-
-                  <div>
-                    <h1 className='font-medium mt-2 text-xl'>
-                      {isVisible ? state.available_balance : '********'}
-                    </h1>
-                  </div>
-                </div>
-
-                <div className='flex items-center justify-between flex-wrap'>
-                  <p className='text-xs'>
-                    Ledger:&nbsp;
-                    <span className='font-semibold text-xs'>
-                      {isVisible ? state.ledger_balance : '********'}
-                    </span>
-                  </p>
-                  {/* <p className="text-xs">
-                    Locked:&nbsp;
-                    <span className="font-semibold text-xs">
-                      {isVisible ? state.locked_balance : "********"}
-                    </span>
-                  </p> */}
-                </div>
-              </Card>
-            )}
-
-            {dashboardAnalytics.map((item: any, index: number) => (
-              <Card
-                key={index}
-                className='flex flex-col justify-between h-[200px] text-black transition-all duration-300 transform hover:scale-105 hover:shadow-xl bg-white'
-              >
-                {state.isLoading ? (
-                  <Fragment>
-                    <div className='flex justify-end'>
-                      <Skeleton width={30} height={20} />
-                    </div>
-                    <div className=''>
-                      <div className='flex justify-between'>
-                        <span className='block w-[130px] rounded-lg pb-1'>
-                          <Skeleton className='h-2.5' />
-                        </span>
-                      </div>
-
-                      <span className='block w-[100px] rounded-lg pb-1'>
-                        <Skeleton className='h-2.5' />
-                      </span>
-                    </div>
-                    <div className='flex items-center justify-between flex-wrap'>
-                      <span className='block w-[120px] rounded-lg pb-1'>
-                        <Skeleton className='h-2.5' />
-                      </span>
-                      {/*<span className="block w-[100px] rounded-lg pb-1">
-                    <Skeleton className="h-2.5" />
-                  </span>*/}
-                    </div>
-                  </Fragment>
-                ) : (
-                  <Fragment>
-                    <div className='flex justify-end'>
-                      <Icon
-                        name={
-                          item.name.includes('Rolling Reserve Balance')
-                            ? 'outgoing'
-                            : 'incoming'
-                        }
-                      />
-                    </div>
-                    <div className='mb-2'>
-                      <div className='flex justify-between'>
-                        <span className='text-lg'>{item.name}</span>
-                      </div>
-
-                      <div>
-                        <h1 className='font-medium mt-2 text-xl'>
-                          {isVisible
-                            ? item.name.includes('Rolling Reserve Balance')
-                              ? state.rolling_reserve
-                              : state.total_collections
-                            : '********'}
-                        </h1>
-                      </div>
-                    </div>
-                    <div className='flex items-center justify-between flex-wrap'>
-                      {item.name.includes('Rolling Reserve Balance') && (
-                        <p className='text-xs'>
-                          Ledger:&nbsp;
-                          <span className='font-semibold text-xs'>
-                            {isVisible
-                              ? state.rolling_reserve_ledger
-                              : '********'}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  </Fragment>
-                )}
-              </Card>
-            ))}
+            <Link href="/settings" className="text-left text-xs font-semibold text-[#005BB0]">
+              Manage account
+            </Link>
           </div>
         </div>
 
-        <div className='hidden mt-6 md:grid md:grid-cols-1 xl:grid-cols-5 gap-4 w-full'>
-          <div className='xl:col-span-3'>
-            <LineChart
-              labels={labels}
-              chartData={state.transactions}
-              lineChartProps={lineChartProps}
-              isLoading={state.isLoading}
-              isChartRefresh={state.refreshChart}
-            />
+        <CurrencySwitcher />
+      </div>
+
+      <div className="grid grid-cols-4 gap-4 mt-8">
+        <div className="col-span-2 relative h-56">
+          <div className="flex flex-col justify-between relative bg-[#090727] text-white h-full rounded-[10px] px-8 py-7 z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold">Toggle Balance</span>
+                <Switch id="balance" enabled={showBalance} onChange={handleToggle} />
+              </div>
+
+              <span>
+                {getCurrencyFlag()}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-[#7F7F7F]">
+                  Wallet ID:
+                </p>
+                <p className="flex items-center gap-4 text-lg font-bold text-[#EFF7FE] mt-0.5">
+                  <span>{state.wallet_id}</span>
+
+                  {state?.wallet_id ? (
+                    <Icon
+                      name="copy2"
+                      className="inline-block size-4 cursor-pointer"
+                      onClick={() => copyToClipboard(state.wallet_id || "")}
+                    />
+                  ) : null}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#7F7F7F]">
+                  Available Balance:
+                </p>
+                <p className="flex items-center gap-4 text-lg font-bold text-[#EFF7FE] mt-0.5">
+                  {showBalance ? (
+                    <span>
+                      <span className="text-[#7F7F7F] mr-0.5">
+                        {state.available_balance.charAt(0)}
+                      </span>
+                      {state.available_balance.slice(1)}
+
+                    </span>
+                  ) : (
+                    <span className="text-[#7F7F7F]">******</span>
+                  )}
+
+                  <Icon
+                    name="refresh2"
+                    className="inline-block size-4 cursor-pointer transition-transform duration-500 ease-in-out"
+                    style={{ transform: `rotate(${rotation}deg)` }}
+                    onClick={handleRefresh}
+                  />
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#7F7F7F]">
+                  Ledger Balance:
+                </p>
+                <p className="text-lg font-bold text-[#EFF7FE] mt-0.5">
+                  {showBalance ? (
+                    <>
+                      <span className="text-[#7F7F7F] mr-0.5">
+                        {state.ledger_balance.charAt(0)}
+                      </span>
+                      {state.ledger_balance.slice(1)}
+                    </>
+                  ) : (
+                    <span className="text-[#7F7F7F]">******</span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#7F7F7F]">
+                  Locked Balance:
+                </p>
+                <p className="text-lg font-bold text-[#EFF7FE] mt-0.5">
+                  {showBalance ? (
+                    <>
+                      <span className="text-[#7F7F7F] mr-0.5">
+                        {state.locked_balance.charAt(0)}
+                      </span>
+                      {state.locked_balance.slice(1)}
+                    </>
+                  ) : (
+                    <span className="text-[#7F7F7F]">******</span>
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className='md:col-span-2'>
-            <BarChart
-              settlementBalance={state.settlement_balance}
-              settlements={state.settlements}
-              isLoading={state.isLoading}
-              showBalance={isVisible}
-            />
+          <div className="absolute w-[-webkit-fill-available] bg-[#005BB0] h-56 mx-10 top-2.5 rounded-[10px]">&nbsp;</div>
+        </div>
+
+        <div className="rounded-[10px] border border-[#C4C4C452] pl-6 pb-6 h-56 flex flex-col justify-end gap-8">
+          <div className="bg-[#FD27271A] text-[#FD2727] size-12 rounded-[10px] flex items-center justify-center">
+            <Icon name="arrow2" />
           </div>
+
+          <div>
+            <p className="break-keep w-28 text-sm text-[#7F7F7F] dark:text-[#EFF7FE] font-semibold">
+              Total Disbursements:
+            </p>
+            <p className="text-lg font-bold text-[#090727] dark:text-[#EFF7FE90] mt-2">
+              <span className="text-[#7F7F7F] mr-1">
+                {state.total_disbursements.charAt(0)}
+              </span>
+              {state.total_disbursements.slice(1)}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-[10px] border border-[#C4C4C452] pl-6 pb-6 h-56 flex flex-col justify-end gap-8">
+          <div className="bg-[#2BD3251A] text-[#2BD325] size-12 rounded-[10px] flex items-center justify-center">
+            <Icon name="arrow2" className="rotate-180" />
+          </div>
+
+          <div>
+            <p className="break-keep w-28 text-sm text-[#7F7F7F] dark:text-[#EFF7FE] font-semibold">
+              Total Collections:
+            </p>
+            <p className="text-lg font-bold text-[#090727] dark:text-[#EFF7FE90] mt-2">
+              <span className="text-[#7F7F7F] mr-1">
+                {state.total_collections.charAt(0)}
+              </span>
+              {state.total_collections.slice(1)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden mt-6 md:grid md:grid-cols-1 xl:grid-cols-5 gap-4 w-full p-6">
+        <div className="xl:col-span-3 border border-[#C4C4C452] rounded-2xl overflow-hidden">
+          <LineChart
+            labels={labels}
+            chartData={state.transactions}
+            lineChartProps={lineChartProps}
+            isLoading={isDashboardLoading || isChartLoading}
+            isChartRefresh={state.refreshChart}
+          />
+        </div>
+
+        <div className="md:col-span-2 border border-[#C4C4C452] rounded-2xl overflow-hidden">
+          <BarChart
+            settlementBalance={state.settlement_balance}
+            settlements={state.settlements}
+            isLoading={isDashboardLoading}
+            showBalance={showBalance}
+          />
         </div>
       </div>
     </Layout>

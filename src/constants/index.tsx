@@ -1,33 +1,29 @@
 export const sidebarLinks = [
   {
     href: "/dashboard",
-    icon: "dashboard",
+    icon: "dashboard2",
     title: "Dashboard",
   },
   {
-    href: "/wallet-history",
-    icon: "wallet-history",
+    href: "/balance-history",
+    icon: "walletHistory2",
     title: "Balance History",
   },
   {
     href: "/your-business/kyc-verification",
-    icon: "business",
-    title: "Business Information",
+    icon: "business2",
+    title: "Your Business",
   },
+  // TODO: ask if i should remove this
   // {
-  //   href: "/disbursements",
-  //   icon: "disbursement",
-  //   title: "Disbursements",
+  //   href: "/disputes/refunds",
+  //   icon: "payment-mandate",
+  //   title: "Disputes",
   // },
   {
-    href: "/disputes/refunds",
-    icon: "payment-mandate",
-    title: "Disputes",
-  },
-  {
-    href: "/collections",
-    icon: "collections",
-    title: "Pay Ins",
+    href: "/payouts",
+    icon: "payout2",
+    title: "Disbursements",
   },
   // {
   //   href: "/e-commerce/online-store",
@@ -35,9 +31,19 @@ export const sidebarLinks = [
   //   title: "E-commerce",
   // },
   {
-    href: "/settlement-history",
-    icon: "history",
-    title: "Settlement History",
+    href: "/settlements",
+    icon: "settlement",
+    title: "Settlements",
+  },
+  // {
+  //   href: "/conversions",
+  //   icon: "conversions",
+  //   title: "Conversions",
+  // },
+  {
+    href: "/collections",
+    icon: "collections",
+    title: "Collections",
   },
   // {
   //   href: "/mids",
@@ -46,13 +52,13 @@ export const sidebarLinks = [
   // },
   {
     href: "/activity-log",
-    icon: "activity-log",
-    title: "Audit Trail",
+    icon: "activityLog",
+    title: "Activity Log",
   },
   {
     href: "/settings",
-    icon: "settings",
-    title: "Business Settings",
+    icon: "settings2",
+    title: "Settings",
   },
 ];
 
@@ -128,22 +134,22 @@ export const disputes = [
   },
   {
     href: "/disputes/chargebacks",
-    icon: "disbursement",
+    icon: "payout",
     title: "Chargebacks",
   }
 ]
 
-export const disbursement = [
+export const payout = [
   {
-    href: "/disbursements",
-    icon: "disbursement-history",
-    title: "Disbursement History",
+    href: "/payouts",
+    icon: "payout-history",
+    title: "Pay Out History",
   },
-  {
-    href: "/disbursements/disburse",
-    icon: "disbursement",
-    title: "Disbursements",
-  },
+  // {
+  //   href: "/payouts/disburse",
+  //   icon: "payout",
+  //   title: "Pay Outs",
+  // },
 ];
 
 export const collections = [

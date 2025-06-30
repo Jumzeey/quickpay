@@ -1,3 +1,4 @@
+import Icon from '@/components/icon';
 import React from 'react';
 
 interface PaginationProps {
@@ -17,24 +18,25 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   };
 
   return (
-    <div className="flex justify-end items-center gap-2 mt-4">
-      <div className='sarepayPrimary font-bold ml-2'>
-       <span className='mr-2'> {currentPage} - {lastPage}</span>
-        OF {totalPages} Pages
-      </div>
+    <div className="flex items-center gap-4 mt-6 text-[#7F7F7F] text-sm">
       <button
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`p-1 text-[#164988] ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}  transition-colors duration-150`}
+        className={`flex items-center justify-center size-8 bg-[#D9D9D91A] border border-[#C4C4C452] rounded ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} transition-colors duration-150`}
       >
-        &lt;
+        <Icon name="arrowLeft" className="text-black size-5" />
       </button>
+
+      <div className="font-semibold tracking-wider">
+        Page {currentPage} of {totalPages}
+      </div>
+
       <button
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`p-1 text-[#164988] ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} transition-colors duration-150`}
+        className={`flex items-center justify-center size-8 bg-[#D9D9D91A] border border-[#C4C4C452] rounded ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} transition-colors duration-150`}
       >
-        &gt;
+        <Icon name="arrowLeft" className="text-black size-5 -rotate-180" />
       </button>
     </div>
   );

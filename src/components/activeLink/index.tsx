@@ -17,15 +17,15 @@ const ActiveLink = ({ router, href, icon, title }: ActiveLinkProps) => {
     <div className="flex items-center justify-between pr-0.5">
       <Link
         href={href}
-        className={`flex items-center gap-3 px-2.5 py-2.5 ${
+        className={`flex items-center gap-3 px-2.5 py-2.5 w-full ${
           isActive
-            ? "bg-primary text-white w-full rounded-lg"
-            : "text-[#042468] w-full hover:bg-[#8db6ec] hover:bg-opacity-10 hover:rounded-lg "
+            ? "text-[#005BB0] dark:text-white"
+            : "text-[#090727] dark:text-[#EFF7FE] hover:text-[#8db6ec]"
         }`}
       >
         <Icon
           name={icon}
-          color={isActive ? "#164988" : "#a4b0c3"}
+          color={isActive ? "#005BB0" : "#090727"}
           className="flex items-center"
         />
         <span className="mt-0.5 font-semi-bold text-sm">{title}</span>

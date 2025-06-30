@@ -1,53 +1,50 @@
-import React, {
-  useState,
-  useEffect,
-  Fragment,
-  ChangeEvent,
-  useCallback,
-} from 'react';
-import Layout from '@/components/layout';
-import Table from '@/components/table';
-import Image from 'next/image';
-import IconWrapper from '@/components/IconWrapper';
+import Button from '@/components/button';
 import Card from '@/components/Card';
+import Dropdown from '@/components/Dropdown';
+import EmptyState from '@/components/EmptyState';
+import FancyFileUpload from '@/components/FancyFileUpload';
+import Filter from '@/components/Filter';
+import FloatingLabelInput from '@/components/floating-input';
+import IconWrapper from '@/components/IconWrapper';
+import Layout from '@/components/layout';
+import Loader from '@/components/loader';
+import Modal from '@/components/modal';
+import Pagination from '@/components/pagination';
+import Table from '@/components/table';
+import TableSkeleton from '@/components/TableSkeleton';
+import WebPageTitle from '@/components/WebPageTitle';
+import useScreenWidth from '@/hooks/useScreenWidth';
+import { uploadFile } from '@/services/kyc';
 import {
   changeModeToLive,
-  deactivateSubAccount,
-  getSubaccountHistory,
+  deactivateSubAccount
 } from '@/services/sub-account';
-import EmptyState from '@/components/EmptyState';
-import Button from '@/components/button';
-import Dropdown from '@/components/Dropdown';
-import Filter from '@/components/Filter';
+import useCategories from '@/stores/useCategories';
 import useClickEvent from '@/stores/useClickEvent';
 import useFilter from '@/stores/useFilter';
-import TableSkeleton from '@/components/TableSkeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
-import { getBankDetails } from '@/services/user';
-import WebPageTitle from '@/components/WebPageTitle';
 import useSubaccount from '@/stores/useSubAccount';
-import { useRouter } from 'next/router';
-import { getBanks, performNameCheck } from '@/services/bank';
-import FloatingLabelInput from '@/components/floating-input';
-import Modal from '@/components/modal';
-import Loader from '@/components/loader';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import debounce from '@/util/debounce';
 import {
   copyToClipboard,
   notifyError,
   notifySuccess,
   truncateText,
 } from '@/util/utils';
+import { useFormik } from 'formik';
+import Image from 'next/image';
 import Link from 'next/link';
-import Pagination from '@/components/pagination';
-import debounce from '@/util/debounce';
-import { Spinner } from '@/components/Spinner';
+import { useRouter } from 'next/router';
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useState
+} from 'react';
+import 'react-loading-skeleton/dist/skeleton.css';
 import Select from 'react-select';
-import FancyFileUpload from '@/components/FancyFileUpload';
-import { uploadFile } from '@/services/kyc';
-import useCategories from '@/stores/useCategories';
-import useScreenWidth from '@/hooks/useScreenWidth';
+import * as Yup from 'yup';
+
+import { usePaginatedEffect } from "@/hooks/useEffectFetch";
 
 interface SubaccountsProps {
   subaccountsHistory: any[];
@@ -302,12 +299,19 @@ const SubaccountHistory = () => {
   const totalPages = pagination?.last_page;
   const lastPage = pagination?.last_page;
 
-  useEffect(() => {
-    fetchSubaccountHistory({
+  // Replace problematic useEffect with optimized hook
+  usePaginatedEffect(
+    fetchSubaccountHistory,
+    {
       page: currentPage,
-      ...(searchInput ? { search: searchInput } : {}),
-    });
-  }, [searchInput, currentPage]);
+      search: searchInput
+    },
+    {
+      onError: (error) => {
+        console.error("Failed to fetch subaccount history:", error);
+      }
+    }
+  );
 
   // useEffect(() => {
   //   if (accountNumber.length === 10) {
@@ -409,11 +413,10 @@ const SubaccountHistory = () => {
                       </td>
                       <td className='text-xs px-5 py-6'>
                         <div
-                          className={`text-center rounded-lg py-1 px-3 ${
-                            item.mode === 'Live'
+                          className={`text-center rounded-lg py-1 px-3 ${item.mode === 'Live'
                               ? 'text-[green] bg-[#E9F7EF]'
                               : 'text-danger bg-[#e0440326]'
-                          }`}
+                            }`}
                         >
                           {item.mode}
                         </div>
@@ -612,8 +615,8 @@ const SubaccountHistory = () => {
                 formik.values.mode === undefined
                   ? ''
                   : formik.values.mode
-                  ? 'true'
-                  : 'false'
+                    ? 'true'
+                    : 'false'
               }
             >
               {formik.values.mode === undefined && (
@@ -681,9 +684,9 @@ const SubaccountHistory = () => {
               value={
                 categories.find((opt: any) => opt === formik.values.category)
                   ? {
-                      value: formik.values.category,
-                      label: formik.values.category,
-                    }
+                    value: formik.values.category,
+                    label: formik.values.category,
+                  }
                   : null
               }
               onChange={selectedOption =>

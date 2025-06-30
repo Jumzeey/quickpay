@@ -1,8 +1,8 @@
-import { warning } from "framer-motion";
 import type { Config } from "tailwindcss";
 const { fontFamily } = require("tailwindcss/defaultTheme");
 
 const config: Config = {
+  darkMode: 'selector',
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -20,7 +20,7 @@ const config: Config = {
       },
     },
     colors: {
-      primary: "#042468",
+      primary: "#005BB0",
       available: "#6147db",
       income: "#12B593",
       expenses: "#FF5555",

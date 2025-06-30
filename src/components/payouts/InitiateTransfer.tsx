@@ -2,6 +2,7 @@ import Button from "@/components/button";
 import { walletCurrencies } from "@/components/CurrencySwitcher";
 import FormInput from "@/components/FormInput";
 import FormSelect from "@/components/FormSelect";
+import FormSelectSearch from "@/components/FormSelectSearch";
 import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import { useEffectFetch } from "@/hooks/useEffectFetch";
@@ -155,8 +156,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         },
         mode: 'onChange'
     });
-
-    console.log(getValues('currency'), watch('currency'))
 
     const accountNumber = watch("accountNumber");
     const selectedBank = watch("bank");
@@ -339,7 +338,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                             name={field.name}
                             disabled
                         />
-                        {console.log({ field })}
                     </>
                 )}
             />
@@ -348,13 +346,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 name="bank"
                 control={control}
                 render={({ field }) => (
-                    <FormSelect
+                    <FormSelectSearch
                         id="bank"
                         htmlFor="bank"
                         label="Select Bank"
                         isLoading={banksLoading}
                         loadingText="Loading banks..."
-                        placeholder={banksLoading ? "Loading banks..." : "Choose a bank"}
+                        placeholder={banksLoading ? "Loading banks..." : "Search banks..."}
                         options={bankOptions}
                         error={errors.bank?.message}
                         touched={!!errors.bank}

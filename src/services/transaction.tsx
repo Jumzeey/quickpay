@@ -38,8 +38,6 @@ export async function populateCharts(days: string, currency?: CurrencyOption) {
 }
 
 export const handleDashboardData = async (currency: CurrencyOption = 'NGN') => {
-  console.log("Fetching dashboard data...", currency);
-
   const results = await Promise.allSettled([
     getWalletBalances(),
     populateCharts("7", currency),

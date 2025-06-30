@@ -24,6 +24,7 @@ const Filter: React.FC<FilterProps> = ({ filterCallback}) => {
 
   return (
     <div className="">
+      {/* @ts-ignore */}
       <DateRangePicker
         onChange={handleDateChange}
         moveRangeOnFirstSelection={false}

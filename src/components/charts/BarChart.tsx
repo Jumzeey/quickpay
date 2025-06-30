@@ -73,7 +73,7 @@ const BarChart: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl h-[480px] shadow-md">
+    <div className="bg-white p-5 rounded-xl h-[480px]">
       {isLoading ? (
         <>
           <Skeleton className="h-2.5" width={200} />

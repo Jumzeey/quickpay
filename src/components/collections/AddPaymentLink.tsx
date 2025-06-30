@@ -1,23 +1,21 @@
-import { ChangeEvent } from "react";
-import Card from "@/components/Card";
-import FloatingLabelInput from "@/components/floating-input";
 import Button from "@/components/button";
-import { useRouter } from "next/router";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { addPaymentLink } from "@/services/collections";
-import { useState, useEffect } from "react";
+import FormInput from "@/components/FormInput";
+import FormSelect from "@/components/FormSelect";
+import useScreenWidth from "@/hooks/useScreenWidth";
+import { addPaymentLink, PaymentLinkPayload } from "@/services/collections";
+import { getSubaccountHistory } from "@/services/sub-account";
 import useClickEvent from "@/stores/useClickEvent";
 import {
   notifyError,
   notifySuccess,
+  numberWithCommas,
   removeCommasFromValue,
 } from "@/util/utils";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import * as Yup from "yup";
 import Loader from "../loader";
-import { getSubaccountHistory } from "@/services/sub-account";
-import { PaymentLinkPayload } from "@/services/collections";
-import useScreenWidth from "@/hooks/useScreenWidth";
-import { numberWithCommas } from "@/util/utils";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 interface AddPaymentLinkProps {
   createLink?: boolean;
@@ -30,6 +28,13 @@ interface PaymentLinkState {
   selectedSubAccount: string;
   subAccounts: any[];
 }
+
+type FormValues = {
+  title: string;
+  amount: string;
+  description: string;
+  redirectUrl: string;
+};
 
 const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
   createLink,
@@ -47,49 +52,50 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
     subAccounts: [],
   });
 
-  const formik = useFormik({
-    initialValues: {
+  const validationSchema = Yup.object().shape({
+    title: Yup.string().required("Payment link name is required!"),
+    amount: Yup.string().required("Amount is required!"),
+    description: Yup.string().required("Description is required!"),
+    redirectUrl: Yup.string()
+      .notRequired()
+      .matches(
+        /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
+        "Enter a valid redirect URL!"
+      ),
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, touchedFields },
+    reset,
+    setValue,
+    watch
+  } = useFormValidation<FormValues>(validationSchema, {
+    defaultValues: {
       title: "",
       amount: "",
       description: "",
       redirectUrl: "",
     },
-    validationSchema: Yup.object().shape({
-      title: Yup.string().required("Payment link name is required!"),
-      amount: Yup.string().required("Amount is required!"),
-      description: Yup.string().required("Description is required!"),
-      redirectUrl: Yup.string()
-        .notRequired()
-        .matches(
-          /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
-          "Enter a valid redirect URL!"
-        ),
-    }),
-
-    validateOnMount: true,
-
-    onSubmit: async () => {
-      createAndUpdatePaymentLink();
-    },
   });
 
+  // Initialize form values when editing existing payment link
   useEffect(() => {
-    if (!createLink) {
-      formik.setValues({
-        title: selectedItem.title,
-        amount: numberWithCommas(selectedItem.amount)!,
-        description: selectedItem.meta.description,
-        redirectUrl: selectedItem.meta?.redirect_url?.replace("https://", ""),
-      });
+    if (!createLink && selectedItem) {
+      setValue("title", selectedItem.title || "");
+      setValue("amount", numberWithCommas(selectedItem.amount) || "");
+      setValue("description", selectedItem.meta?.description || "");
+      setValue("redirectUrl", selectedItem.meta?.redirect_url?.replace("https://", "") || "");
     }
-  }, []);
+  }, [createLink, selectedItem, setValue]);
 
-  const createAndUpdatePaymentLink = async () => {
+  const createAndUpdatePaymentLink = async (formValues: FormValues) => {
     setIsLoading(true);
     let updateStatus;
     let id;
 
-    const { title, amount, description, redirectUrl } = formik.values;
+    const { title, amount, description, redirectUrl } = formValues;
 
     const payload: PaymentLinkPayload = {
       title,
@@ -111,6 +117,7 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
       updateStatus = true;
       id = selectedItem.id;
     }
+
     try {
       const response = await addPaymentLink(payload, updateStatus, id);
       // @ts-ignore
@@ -134,114 +141,119 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
     }
   }, [state.accountType]);
 
-  const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const { value } = e.target;
-    setState({ ...state, [e.target.name]: value });
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setState(prev => ({ ...prev, [name]: value }));
   };
 
   const fetchSubAccounts = async () => {
-    const response = await getSubaccountHistory();
-    setState({ ...state, subAccounts: response.subaccounts });
+    try {
+      const response = await getSubaccountHistory();
+      setState(prev => ({ ...prev, subAccounts: response.subaccounts }));
+    } catch (error) {
+      console.error("Failed to fetch sub-accounts:", error);
+    }
   };
 
-  const buttonText = createLink ? "Create payment link" : "Update Payment Link";
+  const accountTypeOptions = [
+    { value: "", label: "Select account type" },
+    { value: "main", label: "Main" },
+    { value: "subaccount", label: "Sub-account" },
+  ];
+
+  const subAccountOptions = [
+    { value: "", label: "Select sub-account" },
+    ...(state?.subAccounts?.map((option: any) => ({
+      value: option.id,
+      label: option.merchant_name,
+    })) || [])
+  ];
 
   return (
-    <div className="flex justify-center">
-      <Card
-        className={`mt-5 md:w-[648px] border-[#e2dfdf] ${
-          !createLink ? "p-8" : "py-20 md:px-24"
-        }`}
-      >
-        <form onSubmit={formik.handleSubmit}>
-          <FloatingLabelInput
-            label="Payment link name"
-            id="paymentLinkName"
+    <>
+      <form onSubmit={handleSubmit(createAndUpdatePaymentLink)} className="space-y-6 mt-6 w-full">
+        <FormInput
+          label="Payment link name"
+          id="title"
+          type="text"
+          htmlFor="title"
+          error={errors.title?.message}
+          touched={touchedFields.title}
+          {...register("title")}
+        />
+
+        <FormInput
+          label="Amount"
+          id="amount"
+          type="text"
+          htmlFor="amount"
+          numberOnly
+          error={errors.amount?.message}
+          touched={touchedFields.amount}
+          {...register("amount")}
+        />
+
+        <div className="description">
+          <FormInput
+            label="Description"
+            id="description"
             type="text"
-            htmlFor="paymentLinkName"
-            formik={formik}
-            {...formik.getFieldProps("title")}
+            htmlFor="description"
+            error={errors.description?.message}
+            touched={touchedFields.description}
+            {...register("description")}
           />
+        </div>
 
-          <FloatingLabelInput
-            label="Amount"
-            id="amount"
-            type="text"
-            htmlFor="amount"
-            formik={formik}
-            {...formik.getFieldProps("amount")}
+        <div className="relative">
+          <FormInput
+            label={
+              screenWidth < 700
+                ? "Redirect URL"
+                : "Redirect URL (e.g yourbusiness.com)"
+            }
+            id="redirectUrl"
+            type="url"
+            htmlFor="redirectUrl"
+            error={errors.redirectUrl?.message}
+            touched={touchedFields.redirectUrl}
+            {...register("redirectUrl")}
           />
+        </div>
 
-          <div className="description">
-            <FloatingLabelInput
-              label="Description"
-              id="description"
-              type="text"
-              htmlFor="description"
-              formik={formik}
-              {...formik.getFieldProps("description")}
-            />
-          </div>
+        <FormSelect
+          onChange={handleSelectChange}
+          name="accountType"
+          id="accountType"
+          htmlFor="accountType"
+          value={state?.accountType}
+          label="Account Type"
+          options={accountTypeOptions}
+        />
 
-          <div className="relative">
-            <FloatingLabelInput
-              label={
-                screenWidth < 700
-                  ? "Redirect URL"
-                  : "Redirect URL (e.g yourbusiness.com)"
-              }
-              id="redirectUrl"
-              type="text"
-              htmlFor="redirectUrl"
-              tooltip="Where to redirect your users after payment"
-              formik={formik}
-              {...formik.getFieldProps("redirectUrl")}
-              hasLink
-            />
-            <span className="absolute text-sm top-5 left-3">https://</span>
-          </div>
+        {state?.accountType === "subaccount" && (
+          <FormSelect
+            onChange={handleSelectChange}
+            name="selectedSubAccount"
+            id="selectedSubAccount"
+            htmlFor="selectedSubAccount"
+            value={state.selectedSubAccount}
+            label="Sub-account"
+            options={subAccountOptions}
+          />
+        )}
 
-          <select
-            className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-            onChange={handleChange}
-            name="accountType"
-            value={state?.accountType}
-          >
-            <option value="">--Select account type--</option>
-
-            <option value="main">Main</option>
-            <option value="subaccount">Sub-account</option>
-          </select>
-
-          {state?.accountType === "subaccount" && (
-            <select
-              className="h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-              onChange={handleChange}
-              name="selectedSubAccount"
-              value={state.selectedSubAccount}
-            >
-              <option value="">--Select sub-account--</option>
-
-              {state?.subAccounts?.map((option: any) => (
-                <option key={option.id} value={option.id}>
-                  {option.merchant_name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <div className="flex justify-center mt-5">
-            <Button
-              text={isLoading ? <Loader /> : buttonText}
-              className="w-[400px]"
-              ariaLabel="Create payment link"
-              disabled={!formik.isValid || isLoading || !state?.accountType}
-              primary
-            />
-          </div>
-        </form>
-      </Card>
-    </div>
+        <div className="flex justify-center mt-5 w-36">
+          <Button
+            text={isLoading ? <Loader /> : createLink ? "Save Link" : "Update Link"}
+            ariaLabel="Create payment link"
+            disabled={!isValid || isLoading || !state?.accountType}
+            primary
+            type="submit"
+          />
+        </div>
+      </form>
+    </>
   );
 };
 

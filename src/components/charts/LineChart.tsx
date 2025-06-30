@@ -39,7 +39,7 @@ const LineChart = ({
     labels,
     datasets: [
       {
-        label: "Disbursement",
+        label: "Pay Out",
         data: chartData?.map((data: any) => data.disbursements),
         fill: false,
         borderColor: "#cc3a40",
@@ -101,7 +101,7 @@ const LineChart = ({
         <>
           <div className="flex justify-between items-center">
             <span className="text-base font-medium text-grey-400">
-              Disbursements and Pay Ins
+              Pay Outs and Pay Ins
             </span>
             <Select
               options={secondOptions}

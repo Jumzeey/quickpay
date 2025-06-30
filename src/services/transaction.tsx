@@ -1,3 +1,4 @@
+import { CurrencyOption } from "@/stores/useCurrency";
 import api from "@/util/api";
 import { apiEndpoints } from "@/util/endpoints";
 import { notifyError } from "@/util/utils";
@@ -12,21 +13,38 @@ export async function getWalletBalances() {
   try {
     const response = await api.get(apiEndpoints.transaction.GET_BALANCE);
     return response;
-  } catch (error) {}
+  } catch (error) { }
 }
 
-export async function populateCharts(days: string) {
+export async function getMerchantBalance(currency: CurrencyOption) {
   try {
-    const response = await api.get(`${apiEndpoints.transaction.GET_TRANSACTIONS}?days=${days}`);
-    return response.data.transactions;
-  } catch (error) {}
+    const response = await api.get(
+      `${apiEndpoints.transaction.GET_MERCHANT_BALANCE}`, {
+      params: { currency }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
 
-export const handleDashboardData = async () => {
+export async function populateCharts(days: string, currency?: CurrencyOption) {
+  try {
+    const response = await api.get(`${apiEndpoints.transaction.GET_TRANSACTIONS}?days=${days}`, {
+      params: { currency }
+    });
+    return response.data.transactions;
+  } catch (error) { }
+}
+
+export const handleDashboardData = async (currency: CurrencyOption = 'NGN') => {
+  console.log("Fetching dashboard data...", currency);
+
   const results = await Promise.allSettled([
     getWalletBalances(),
-    populateCharts("7"),
-    populateSettlementCharts(),
+    populateCharts("7", currency),
+    populateSettlementCharts(currency),
+    getMerchantBalance(currency),
   ]);
 
   const balances = results[0].status === "fulfilled" ? results[0].value : null;
@@ -47,10 +65,14 @@ export const handleDashboardData = async () => {
     notifyError(results[2].reason);
   }
 
+  const merchantBalance =
+    results[3].status === "fulfilled" ? results[3].value : null;
+
   return {
     balances,
     transactions,
     settlements,
+    merchantBalance,
   };
 };
 
@@ -117,13 +139,15 @@ export async function getSettlementTransactions(
   }
 }
 
-export async function populateSettlementCharts() {
+export async function populateSettlementCharts(currency: CurrencyOption) {
   try {
     const response = await api.get(
-      apiEndpoints.transaction.POPULATE_SETTLEMENT_CHARTS
+      apiEndpoints.transaction.POPULATE_SETTLEMENT_CHARTS, {
+      params: { currency }
+    }
     );
     return response.data.settlements;
-  } catch (error) {}
+  } catch (error) { }
 }
 
 export async function EnableOrDisableAccount(id: number, targetStatus: string) {

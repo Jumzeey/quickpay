@@ -106,7 +106,8 @@ const AddSettlementAccount: React.FC<AddAccountProps> = ({
     };
     try {
       setState({ ...state, isLoading: true });
-      const accountName = await performNameCheck(payload);
+      const response = await performNameCheck(payload);
+      const accountName = response.account_name;
       formik.setFieldValue("accountName", accountName);
     } catch (error: any) {
       notifyError(error.message);

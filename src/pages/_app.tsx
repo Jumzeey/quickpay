@@ -1,13 +1,13 @@
 "use client";
-import "@/styles/globals.css";
-import type { AppProps } from "next/app";
-import { Toaster } from "sonner";
 import SharedState from "@/context/sharedState";
-import { Plus_Jakarta_Sans } from "next/font/google";
-import { useState, useEffect, useRef, MutableRefObject } from "react";
-import { handleLogOut } from "@/util/utils";
-import { getToken } from "@/util/utils";
+import { ThemeProvider } from "@/context/ThemeContext";
 import useAuthentication from "@/stores/useAuthentication";
+import "@/styles/globals.css";
+import { getToken, handleLogOut } from "@/util/utils";
+import type { AppProps } from "next/app";
+import { Plus_Jakarta_Sans } from "next/font/google";
+import { useEffect, useRef, useState } from "react";
+import { Toaster } from "sonner";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -81,15 +81,17 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <SharedState>
-      <main className={`${plusJakartaSans.variable} font-sans`}>
-        <Toaster position="top-center" richColors />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1"
-        />
-        <Component {...pageProps} />
-      </main>
-    </SharedState>
+    <ThemeProvider>
+      <SharedState>
+        <main className={`${plusJakartaSans.variable} font-sans`}>
+          <Toaster position="top-center" richColors />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+          />
+          <Component {...pageProps} />
+        </main>
+      </SharedState>
+    </ThemeProvider>
   );
 }

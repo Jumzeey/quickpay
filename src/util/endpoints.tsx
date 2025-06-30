@@ -15,6 +15,7 @@ export const apiEndpoints = {
   },
   transaction: {
     GET_BALANCE: '/merchant/client/get-balance',
+    GET_MERCHANT_BALANCE: '/merchant/dashboard/balance',
     GET_TRANSACTIONS: '/merchant/dashboard/transactions',
     GET_SETTLEMENT_ACCOUNTS: '/merchant/settlements/accounts',
     ADD_SETTLEMENT_ACCOUNT: '/merchant/settlements/accounts/store',
@@ -24,6 +25,23 @@ export const apiEndpoints = {
     GET_WALLET_HISTORY: '/merchant/client/get-wallet-logs',
   },
   collections: {
+    GET_COLLECTION_HISTORY: '/merchant/collections-history',
+    GET_PAYMENT_LINKS: '/merchant/payment-links',
+    CREATE_PAYMENT_LINK: '/merchant/payment-links/store',
+    UPDATE_PAYMENT_LINK: '/merchant/payment-links/update',
+    GET_VIRTUAL_ACCOUNTS: '/merchant/virtual-accounts',
+    REQUEST_VIRTUAL_ACCOUNT: '/merchant/virtual-accounts/store',
+    REPUSH_NOTIFICATION: '/merchant/collections-history',
+    GET_PAYMENT_MANDATES: '/merchant/mandates',
+    CREATE_PAYMENT_MANDATE: '/merchant/mandates/store',
+    REFRESH_STATUS: '/merchant/mandates',
+    REQUEST_REFUND: '/merchant/refunds/initiate',
+    GET_SINGLE_REFUNDS: '/merchant/refunds',
+    GET_REFUNDS: '/merchant/refunds',
+  },
+  conversions: {
+    GET_CONVERSION_HISTORY: '/conversions/history',
+    GET_CONVERSION_EXPORT: '/conversions/export',
     GET_COLLECTION_HISTORY: '/merchant/collections-history',
     GET_PAYMENT_LINKS: '/merchant/payment-links',
     CREATE_PAYMENT_LINK: '/merchant/payment-links/store',
@@ -54,10 +72,10 @@ export const apiEndpoints = {
     CREATE_KYC: '/merchant/kyc/requests/store',
     GET_KYC: '/merchant/kyc/request',
   },
-  disbursements: {
-    GET_DISBURSEMENT_HISTORY: '/merchant/disbursements',
-    ADD_DISBURSEMENT: '/merchant/disbursements/interbank',
-    VERIFY_DISBURSEMENT_OTP: '/merchant/disbursements/interbank/complete',
+  payouts: {
+    GET_PAYOUT_HISTORY: '/merchant/disbursements',
+    ADD_PAYOUT: '/merchant/disbursements/interbank',
+    VERIFY_PAYOUT_OTP: '/merchant/disbursements/interbank/complete',
   },
   webhooks: {
     GET_WEBHOOK: '/merchant/webhook',

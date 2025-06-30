@@ -1,27 +1,28 @@
-import React, { useState, useEffect, Fragment, useCallback } from "react";
-import Layout from "@/components/layout";
-import Table from "@/components/table";
-import Image from "next/image";
-import IconWrapper from "@/components/IconWrapper";
-import Card from "@/components/Card";
-import EmptyState from "@/components/EmptyState";
+import ActionButton from "@/components/action-button";
 import Button from "@/components/button";
+import Card from "@/components/Card";
 import Dropdown from "@/components/Dropdown";
+import EmptyState from "@/components/EmptyState";
 import Filter from "@/components/Filter";
-import useFilter from "@/stores/useFilter";
-import TableSkeleton from "@/components/TableSkeleton";
-import { getBankDetails } from "@/services/user";
-import WebPageTitle from "@/components/WebPageTitle";
-import useDisbursement from "@/stores/useDisbursement";
-import { useRouter } from "next/router";
+import IconWrapper from "@/components/IconWrapper";
+import Layout from "@/components/layout";
 import Pagination from "@/components/pagination";
-import "react-loading-skeleton/dist/skeleton.css";
-import { getDisbursementHistory } from "@/services/disbursement";
-import { downloadFile, notifyError, formatDate } from "@/util/utils";
-import Link from "next/link";
+import Table from "@/components/table";
+import TableSkeleton from "@/components/TableSkeleton";
+import WebPageTitle from "@/components/WebPageTitle";
+import { getPayoutHistory } from "@/services/payout";
+import { getBankDetails } from "@/services/user";
+import useFilter from "@/stores/useFilter";
+import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
+import { downloadFile, formatDate, notifyError } from "@/util/utils";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import React, { Fragment, useCallback, useEffect, useState } from "react";
+import "react-loading-skeleton/dist/skeleton.css";
 
-interface Disbursement {
+interface Payout {
   reference: string;
   amount: number;
   processing_fee: number;
@@ -31,12 +32,12 @@ interface Disbursement {
   status: string;
   id: string;
 }
-interface DisbursementsProps {
-  disbursementsHistory: {
-    disbursements: Disbursement[];
+interface PayoutsProps {
+  payoutsHistory: {
+    payouts: Payout[];
   };
   isLoading: boolean;
-  showDisbursements: boolean;
+  showPayouts: boolean;
   showFilterStatus: boolean;
 }
 
@@ -49,19 +50,19 @@ const OnlineStore = () => {
     endDate: null,
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [state, setState] = useState<DisbursementsProps>({
-    disbursementsHistory: { disbursements: [] },
+  const [state, setState] = useState<PayoutsProps>({
+    payoutsHistory: { payouts: [] },
     isLoading: true,
-    showDisbursements: false,
+    showPayouts: false,
     showFilterStatus: false,
   });
 
   const {
-    fetchDisbursementHistory,
-    disbursements,
+    fetchPayoutHistory,
+    payouts,
     pagination,
-    getDisbursementHistoryLoading,
-  } = useDisbursement();
+    payoutHistoryLoading,
+  } = usePayout();
 
   const { showFilter, toggleFilter } = useFilter();
 
@@ -112,8 +113,10 @@ const OnlineStore = () => {
 
   const handleExport = async () => {
     try {
-      const response = await getDisbursementHistory({ export: true });
-      downloadFile(response.export_link);
+      const response = await getPayoutHistory({ export: true });
+      if (response.export_link) {
+        downloadFile(response.export_link);
+      }
     } catch (error: any) {
       notifyError(error.message);
     }
@@ -124,15 +127,15 @@ const OnlineStore = () => {
   }, []);
 
   useEffect(() => {
-    fetchDisbursementHistory({
+    fetchPayoutHistory({
       page: currentPage,
       ...(searchInput ? { search: searchInput } : {}),
-      ...(statusFilter ? { status: statusFilter } : {}),
+      ...(statusFilter ? { status: statusFilter as "pending" | "successful" | "failed" | "processing" } : {}),
       ...(filter.startDate
         ? {
-            start_date: formatDate(filter.startDate),
-            end_date: formatDate(filter.endDate),
-          }
+          start_date: formatDate(filter.startDate),
+          end_date: formatDate(filter.endDate),
+        }
         : {}),
     });
   }, [
@@ -153,11 +156,11 @@ const OnlineStore = () => {
         </p>
       </div>
       <div>
-        {getDisbursementHistoryLoading ? (
+        {payoutHistoryLoading ? (
           <Fragment>
             <TableSkeleton />
           </Fragment>
-        ) : disbursements?.length !== 0 ? (
+        ) : payouts?.length !== 0 ? (
           <Fragment>
             <Card className="mt-10">
               <div className="flex flex-col md:flex-row justify-between pb-5 gap-4">
@@ -241,7 +244,7 @@ const OnlineStore = () => {
               </div>
 
               <Table columns={columns} className="mt-7">
-                {disbursements?.map((item: any, index: number) => (
+                {payouts?.map((item: any, index: number) => (
                   <tr
                     key={index}
                     className="border-b last:border-none border-grey-200"
@@ -260,18 +263,18 @@ const OnlineStore = () => {
                     <td className="text-sm px-5 py-6">{item.created_at}</td>
                     <td className="text-sm px-5 py-6">
                       <div
-                        className={`text-center rounded-lg py-3 px-3 ${
-                          item.status === "Successful"
-                            ? "text-[green] bg-[#E9F7EF]"
-                            : "text-danger bg-[#e0440326]"
-                        }`}
+                        className={`text-center rounded-lg py-3 px-3 ${item.status === "Successful"
+                          ? "text-[green] bg-[#E9F7EF]"
+                          : "text-danger bg-[#e0440326]"
+                          }`}
                       >
                         {item.status}
                       </div>
                     </td>
                     <td
                       className="text-sm px-5 py-6"
-                      onClick={() => router.push(`disbursements/${item.id}`)}
+                      // TODO: this page does not exist yet
+                      onClick={() => router.push(`payouts/${item.id}`)}
                     >
                       <IconWrapper
                         src="/images/eye-on-dark.svg"
@@ -294,16 +297,14 @@ const OnlineStore = () => {
           </Fragment>
         ) : (
           <EmptyState
-            title="No Disbursement Found"
-            subTitle="We couldn't find any Disbursement for this account"
+            title="No Payout Found"
+            subTitle="We couldn't find any Payout for this account"
             image="/images/dashboard/disbursement/disbursement-empty-state.svg"
           >
-            <Button
-              text="Initiate Transfer"
-              ariaLabel="Initiate Transfer button"
-              className="!w-[191px] !h-[48px]"
-              onClick={() => router.push(`/disbursements/disburse`)}
-              primary
+            <ActionButton
+              text="Initiate Payout"
+              ariaLabel="Initiate Payout button"
+              onClick={() => router.push(`/payouts?action=initiate_transfer`)}
             />
           </EmptyState>
         )}

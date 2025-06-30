@@ -1,4 +1,5 @@
 import Button from "@/components/button";
+import { walletCurrencies } from "@/components/CurrencySwitcher";
 import FormInput from "@/components/FormInput";
 import FormSelect from "@/components/FormSelect";
 import Loader from "@/components/loader";
@@ -79,6 +80,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
         if (state.selectedOptionName === "Same Currency Transfer") {
             return Yup.object().shape({
+                // currency: Yup.string().required("Please select a currency"),
                 bank: Yup.string().required("Please select a bank"),
                 ref_id: Yup.string().required("Please validate your account details"),
                 accountNumber: Yup.string()
@@ -135,11 +137,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         handleSubmit,
         formState: { errors, isValid },
         reset,
+        getValues,
         setValue,
         watch
     } = useFormValidation<TransferFormValues & { otp: string }>(validationSchema, {
         defaultValues: {
             amount: "",
+            currency: "NGN",
             bank: "",
             ref_id: "",
             accountNumber: "",
@@ -151,6 +155,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         },
         mode: 'onChange'
     });
+
+    console.log(getValues('currency'), watch('currency'))
 
     const accountNumber = watch("accountNumber");
     const selectedBank = watch("bank");
@@ -208,12 +214,12 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
             const payload = {
                 amount: removeCommasFromValue(values.amount),
-                // transferType: state.selectedOptionName,
                 ...(state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 2 && {
                     targetAccountName: values.targetAccountName,
                     targetAccountNumber: values.targetAccountNumber,
                 }),
                 ...(state.selectedOptionName === "Same Currency Transfer" && {
+                    currency: "NGN",
                     bank_code: values.bank,
                     account_number: values.accountNumber,
                     account_name: values.accountName,
@@ -241,12 +247,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     const closeModalAndReset = () => {
         reset({
             amount: "",
+            currency: "NGN",
             bank: "",
             accountNumber: "",
             accountName: "",
             walletId: "",
             targetAccountName: "",
             targetAccountNumber: "",
+            otp: "",
         });
 
         if (state.currentStep === 0 || state.currentStep === 3) {
@@ -313,9 +321,33 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     const renderSameCurrencyForm = () => (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
             <Controller
+                name="currency"
+                control={control}
+                render={({ field }) => (
+                    <>
+                        <FormSelect
+                            id="currency"
+                            htmlFor="currency"
+                            label="Select Currency"
+                            placeholder="Select Currency"
+                            options={walletCurrencies}
+                            // error={errors.currency?.message}
+                            // touched={!!errors.currency}
+                            value={field.value || "NGN"}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            disabled
+                        />
+                        {console.log({ field })}
+                    </>
+                )}
+            />
+
+            <Controller
                 name="bank"
                 control={control}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                     <FormSelect
                         id="bank"
                         htmlFor="bank"
@@ -324,8 +356,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         loadingText="Loading banks..."
                         placeholder={banksLoading ? "Loading banks..." : "Choose a bank"}
                         options={bankOptions}
-                        error={fieldState.error?.message}
-                        touched={fieldState.isTouched}
+                        error={errors.bank?.message}
+                        touched={!!errors.bank}
                         disabled={banksLoading}
                         value={field.value}
                         onChange={field.onChange}
@@ -338,7 +370,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <Controller
                 name="accountNumber"
                 control={control}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                     <FormInput
                         label="Account Number"
                         id="accountNumber"
@@ -347,8 +379,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         isLoading={state.isLoading}
                         loadingText="Loading details..."
                         maxLength={10}
-                        error={fieldState.error?.message}
-                        touched={fieldState.isTouched}
+                        error={errors.accountNumber?.message}
+                        touched={!!errors.accountNumber}
                         value={field.value}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
@@ -360,14 +392,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <Controller
                 name="accountName"
                 control={control}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                     <FormInput
                         label="Account Name"
                         id="accountName"
                         type="text"
                         htmlFor="accountName"
-                        error={fieldState.error?.message}
-                        touched={fieldState.isTouched}
+                        error={errors.accountName?.message}
+                        touched={!!errors.accountName}
                         readOnly
                         disabled
                         value={field.value}
@@ -381,14 +413,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <Controller
                 name="amount"
                 control={control}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                     <FormInput
                         label="Amount"
                         id="amount"
                         type="text"
                         htmlFor="amount"
-                        error={fieldState.error?.message}
-                        touched={fieldState.isTouched}
+                        error={errors.amount?.message}
+                        touched={!!errors.amount}
                         numberOnly
                         value={field.value}
                         onChange={field.onChange}
@@ -416,15 +448,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <Controller
                 name="walletId"
                 control={control}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                     <FormInput
                         label="Ramp Wallet ID"
                         id="walletId"
                         type="text"
                         htmlFor="walletId"
                         maxLength={10}
-                        error={fieldState.error?.message}
-                        touched={fieldState.isTouched}
+                        error={errors.walletId?.message}
                         value={field.value}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
@@ -436,14 +467,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <Controller
                 name="accountName"
                 control={control}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                     <FormInput
                         label="Account Name"
                         id="accountName"
                         type="text"
                         htmlFor="accountName"
-                        error={fieldState.error?.message}
-                        touched={fieldState.isTouched}
+                        error={errors.accountName?.message}
                         readOnly
                         value={field.value}
                         onChange={field.onChange}
@@ -456,14 +486,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <Controller
                 name="amount"
                 control={control}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                     <FormInput
                         label="Amount"
                         id="amount"
                         type="text"
                         htmlFor="amount"
-                        error={fieldState.error?.message}
-                        touched={fieldState.isTouched}
+                        error={errors.amount?.message}
                         numberOnly
                         value={field.value}
                         onChange={field.onChange}
@@ -491,14 +520,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     <Controller
                         name="amount"
                         control={control}
-                        render={({ field, fieldState }) => (
+                        render={({ field }) => (
                             <FormInput
                                 label="Amount"
                                 id="amount"
                                 type="text"
                                 htmlFor="amount"
-                                error={fieldState.error?.message}
-                                touched={fieldState.isTouched}
+                                error={errors.amount?.message}
                                 numberOnly
                                 value={field.value}
                                 onChange={field.onChange}
@@ -526,14 +554,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     <Controller
                         name="amount"
                         control={control}
-                        render={({ field, fieldState }) => (
+                        render={({ field }) => (
                             <FormInput
                                 label="Amount"
                                 id="amount"
                                 type="text"
                                 htmlFor="amount"
-                                error={fieldState.error?.message}
-                                touched={fieldState.isTouched}
+                                error={errors.amount?.message}
                                 numberOnly
                                 readOnly
                                 value={field.value}
@@ -547,14 +574,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     <Controller
                         name="targetAccountName"
                         control={control}
-                        render={({ field, fieldState }) => (
+                        render={({ field }) => (
                             <FormInput
                                 label="Target Account Name"
                                 id="targetAccountName"
                                 type="text"
                                 htmlFor="targetAccountName"
-                                error={fieldState.error?.message}
-                                touched={fieldState.isTouched}
+                                error={errors.targetAccountName?.message}
                                 value={field.value}
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
@@ -566,15 +592,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     <Controller
                         name="targetAccountNumber"
                         control={control}
-                        render={({ field, fieldState }) => (
+                        render={({ field }) => (
                             <FormInput
                                 label="Target Account Number"
                                 id="targetAccountNumber"
                                 type="text"
                                 htmlFor="targetAccountNumber"
                                 maxLength={10}
-                                error={fieldState.error?.message}
-                                touched={fieldState.isTouched}
+                                error={errors.targetAccountNumber?.message}
                                 value={field.value}
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
@@ -609,7 +634,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 <Controller
                     name="otp"
                     control={control}
-                    render={({ field, fieldState }) => (
+                    render={({ field }) => (
                         <div className="space-y-2 flex items-center justify-center">
                             <PinInput
                                 length={6}
@@ -619,7 +644,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                                 inputMode="number"
                                 style={{ padding: '10px' }}
                                 inputStyle={{
-                                    borderColor: fieldState.error ? 'red' : '#e2e8f0',
+                                    borderColor: errors.otp?.message ? 'red' : '#e2e8f0',
                                     borderRadius: '8px',
                                     margin: '0 4px',
                                 }}
@@ -627,8 +652,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                                 onComplete={(value) => field.onChange(value)}
                                 autoSelect={true}
                             />
-                            {fieldState.error && (
-                                <p className="text-red-500 text-xs">{fieldState.error.message}</p>
+                            {errors.otp?.message && (
+                                <p className="text-red-500 text-xs">{errors.otp?.message}</p>
                             )}
                         </div>
                     )}

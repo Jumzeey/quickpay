@@ -10,6 +10,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@hookform/resolvers": "^5.1.1",
     "@openreplay/tracker": "^14.0.3",
     "@popperjs/core": "^2.11.8",

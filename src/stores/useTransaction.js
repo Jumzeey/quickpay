@@ -29,13 +29,10 @@ const useTransaction = create((set, get) => ({
 
       // Get currency store methods
       const currencyStore = useCurrency.getState();
-      console.log({currencyStore, currency})
       let accountId = currencyStore.getAccountId(currency);
 
       // If no account ID exists for this currency, fetch it first
       if (!accountId) {
-        console.log(`No account found for ${currency}, fetching account info...`);
-
         const balanceResponse = await getMerchantBalance(currency);
         const accounts = balanceResponse?.accounts || [];
 
@@ -52,8 +49,6 @@ const useTransaction = create((set, get) => ({
           // Save accounts to currency store
           currencyStore.setAccounts(currency, accountInfo);
           accountId = mainAccount.id;
-
-          console.log(`Account info saved for ${currency}:`, accountInfo);
         } else {
           throw new Error(`No main account found for currency: ${currency}`);
         }
@@ -65,8 +60,6 @@ const useTransaction = create((set, get) => ({
         // currency,
         account_id: accountId,
       };
-
-      console.log('Fetching wallet history with params:', params);
 
       const { wallet } = await getWalletHistory(params);
       const total = wallet.length;

@@ -1,6 +1,7 @@
 import { Bank } from "@/types/payout";
 
 export interface TransferFormValues {
+    currency?: string;
     bank: string;
     accountNumber: string;
     accountName: string;

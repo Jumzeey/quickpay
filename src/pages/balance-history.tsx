@@ -14,10 +14,11 @@ import useCurrency from '@/stores/useCurrency';
 import useFilter from '@/stores/useFilter';
 import useTransaction from '@/stores/useTransaction';
 import {
-  formatAmount,
+  capitalizeFirstLetterOfEachWord,
   formatDate,
   formatDateTime2,
-  notifyError
+  notifyError,
+  replaceCurrencySymbol
 } from '@/util/utils';
 import { Fragment, useEffect, useState } from 'react';
 
@@ -26,6 +27,12 @@ interface HistoryProps {
   isLoading: boolean;
   showFilterStatus: boolean;
 }
+
+const actionMap: Record<string, string> = {
+  'deposit': 'Credit',
+  'withdrawal': 'Debit',
+}
+
 const WalletHistory = () => {
   const { selectedCurrency } = useCurrency();
   const { fetchWalletHistory, wallet, pagination, getWalletHistoryLoading } =
@@ -55,11 +62,12 @@ const WalletHistory = () => {
     setCurrentPage(page);
   };
 
-  const handleFilterChange = (newFilter: any) => {
+  const handleFilterChange = async (newFilter: any) => {
     setFilter(newFilter);
     setCurrentPage(1);
     if (mounted) {
-      refetchWalletHistory();
+      // await refetchWalletHistory();
+      await _getHistory(newFilter);
     }
   };
 
@@ -71,7 +79,7 @@ const WalletHistory = () => {
   {
     key: 'amount',
     title: 'Amount',
-    render: (value: any, row: any) => formatAmount(row?.amount) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.amount) || 'N/A',
   },
   {
     key: 'date',
@@ -91,39 +99,39 @@ const WalletHistory = () => {
     },
   },
   {
-    key: 'balance_type',
-    title: 'Balance Type',
-    render: (value: any, row: any) => row?.balance_type || 'N/A',
+    key: 'transaction_type',
+    title: 'Action',
+    render: (value: any, row: any) => actionMap[row?.transaction_type] || capitalizeFirstLetterOfEachWord(row?.transaction_type?.replaceAll('_', ' ')) || 'N/A',
   },
   {
     key: 'balance_before_amount',
     title: 'Previous Balance',
-    render: (value: any, row: any) => formatAmount(row?.balance_before_amount) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_before_amount) || 'N/A',
   },
   {
     key: 'balance_after_amount',
     title: 'Current Balance',
-    render: (value: any, row: any) => formatAmount(row?.balance_after_amount) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_after_amount) || 'N/A',
   },
   {
     key: 'previous_ledger_balance',
     title: 'Previous Ledger Balance',
-    render: (value: any, row: any) => formatAmount(row?.previous_ledger_balance) || 'N/A'
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.ledger_balance_before_amount) || 'N/A'
   },
   {
     key: 'current_ledger_balance',
     title: 'Current Ledger Balance',
-    render: (value: any, row: any) => formatAmount(row?.current_ledger_balance) || 'N/A'
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.ledger_balance_after_amount) || 'N/A'
   },
   {
     key: 'previous_locked_balance',
     title: 'Previous Locked Balance',
-    render: (value: any, row: any) => formatAmount(row?.previous_locked_balance) || 'N/A'
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.locked_balance_before) || 'N/A'
   },
   {
     key: 'current_locked_balance',
     title: 'Current Locked Balance',
-    render: (value: any, row: any) => formatAmount(row?.current_locked_balance) || 'N/A'
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.locked_balance_after) || 'N/A'
   },
   {
     key: 'timestamp',
@@ -169,15 +177,15 @@ const WalletHistory = () => {
     }
   );
 
-  const _getHistory = async () => {
+  const _getHistory = async (newFilter?: any) => {
     try {
       // Call the store method directly
       await fetchWalletHistory({
         currency: selectedCurrency,
         page: currentPage,
-        ...(filter.startDate ? {
-          start_date: formatDate(filter.startDate),
-          end_date: formatDate(filter.endDate),
+        ...(newFilter?.startDate ? {
+          start_date: formatDate(newFilter.startDate),
+          end_date: formatDate(newFilter.endDate),
         } : {})
       });
     } catch (error) {
@@ -193,6 +201,27 @@ const WalletHistory = () => {
 
     handleCurrencyChange();
   }, [selectedCurrency, mounted]);
+
+  const handleExport = async () => {
+    try {
+      // const result = await exportPayoutHistory({
+      //   ...(searchInput ? { search: searchInput } : {}),
+      //   ...(statusFilter ? { status: statusFilter as "pending" | "successful" | "failed" | "processing" } : {}),
+      //   ...(filter.startDate
+      //     ? {
+      //       start_date: formatDate(filter.startDate),
+      //       end_date: formatDate(filter.endDate),
+      //     }
+      //     : {}),
+      // });
+
+      // if (result.success && result.export_link) {
+      //   downloadFile(result.export_link);
+      // }
+    } catch (error: any) {
+      notifyError(error.message);
+    }
+  };
 
   const startIndex = (currentPage - 1) * pagination.per_page;
   const endIndex = startIndex + pagination.per_page;
@@ -235,6 +264,14 @@ const WalletHistory = () => {
               <Filter filterCallback={handleFilterChange} />
             </Dropdown>
           </div>
+
+          {/* TODO: handle export and add filter */}
+          {/* <ActionButton
+            ariaLabel='Export button'
+            text='Export'
+            onClick={handleExport}
+            className="!h-12"
+          /> */}
         </div>
       </div>
 

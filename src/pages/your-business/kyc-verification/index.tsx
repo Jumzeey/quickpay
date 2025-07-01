@@ -368,7 +368,7 @@ const Business: React.FC<BusinessProps> = ({ title }) => {
                         </div>
                         <div className='flex flex-col space-y-1 sm:space-y-0'>
                           <h3 className='text-[#6E6893] font-semibold text-sm'>
-                            CAC Registration Certificate
+                            Company Registration Certificate
                           </h3>
                           <p>
                             {cacDocument !== 'N/A' ? (

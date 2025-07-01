@@ -276,6 +276,24 @@ export function dateFormat(dateString: string): string {
   return `${day} ${month}, ${year} ${time}`;
 }
 
+export const replaceCurrencySymbol = (amount: string): string => {
+  if (!amount) return amount;
+
+  const currencySymbols: Record<string, string> = {
+    'NGN': '₦',
+    'USD': '$',
+  };
+
+  // Replace any currency at the start of the string with right symbol
+  for (const [symbol, code] of Object.entries(currencySymbols)) {
+    if (amount.startsWith(symbol)) {
+      return amount.replace(symbol, code);
+    }
+  }
+
+  return amount;
+}
+
 export const formatAmount = (amountStr: string): string => {
   if (!amountStr || typeof amountStr !== 'string' || amountStr.length < 2) return amountStr;
 
@@ -303,7 +321,7 @@ export const formatAmount = (amountStr: string): string => {
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-  return isNegative 
+  return isNegative
     ? `-${currencySymbol}${formattedNumberPart}`
     : `${currencySymbol}${formattedNumberPart}`;
 };

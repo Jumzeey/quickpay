@@ -1,7 +1,10 @@
 import ActionButton from "@/components/action-button";
 import Button from "@/components/button";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
+import Filter from "@/components/Filter";
 import Icon from "@/components/icon";
 import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
@@ -53,7 +56,6 @@ const PayoutHistory = () => {
     setMounted(true);
   }, []);
 
-
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
@@ -72,6 +74,7 @@ const PayoutHistory = () => {
   });
 
   const {
+    fetchPayoutHistory: getPayoutHistory,
     payouts,
     pagination,
     payoutHistoryLoading,
@@ -90,8 +93,8 @@ const PayoutHistory = () => {
       page: currentPage,
       search: searchInput,
       status: statusFilter,
-      startDate: filter.startDate,
-      endDate: filter.endDate,
+      start_date: filter.startDate,
+      end_date: filter.endDate,
       currency: selectedCurrency,
     },
     {
@@ -105,6 +108,24 @@ const PayoutHistory = () => {
       cacheTime: state.isInitiateTransferModalOpen ? 0 : 3000,
     }
   );
+
+  const _getHistory = async (newFilter?: any) => {
+    try {
+      // Call the store method directly
+      await getPayoutHistory({
+        page: currentPage,
+        search: searchInput,
+        status: statusFilter as any,
+        ...(newFilter.startDate ? {
+          start_date: formatDate(newFilter.startDate),
+          end_date: formatDate(newFilter.endDate),
+        } : {}),
+        currency: selectedCurrency,
+      });
+    } catch (error) {
+      console.error('Error fetching payout history:', error);
+    }
+  }
 
   const columns = [{
     key: 'amount',
@@ -150,6 +171,9 @@ const PayoutHistory = () => {
   }, {
     key: 'recipient_account_number',
     title: 'Account Number',
+  }, {
+    key: 'session_id',
+    title: 'Provider Reference',
   }, {
     key: 'balance_before',
     title: 'Balance Before',
@@ -202,7 +226,7 @@ const PayoutHistory = () => {
     // Invalidate the cache first
     await invalidatePayoutHistory();
     // Then trigger a refetch
-    await fetchPayoutHistory();
+    await _getHistory();
   };
 
   const handleExport = async () => {
@@ -238,6 +262,22 @@ const PayoutHistory = () => {
     fetchBankDetails();
   }, []);
 
+  useEffect(() => {
+    const handleCurrencyChange = async () => {
+      if (!mounted) return;
+      await _getHistory();
+    };
+
+    handleCurrencyChange();
+  }, [selectedCurrency, mounted]);
+
+  const handleFilterChange = async (newFilter: any) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+    if (mounted) {
+      await _getHistory(newFilter);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -248,24 +288,46 @@ const PayoutHistory = () => {
     );
   }
 
-
   return (
     <Layout pageTitle="Pay Outs" icon="disbursement">
       <WebPageTitle title="Payouts | Ramp Merchant Portal" />
-      <div className="flex flex-col md:flex-row justify-between">
+      <div className="flex flex-col md:flex-row justify-between mb-8">
         <div>
           <PageHeader
+            className="!mb-0"
             title="Payouts"
             description="Manage and track all payouts seamlessly, ensuring smooth and transparent transactions."
           />
         </div>
 
-        <div className="relative flex justify-end mt-4 md:mt-0">
+        <div className="relative flex gap-4 justify-end mt-4 md:mt-0">
           <ActionButton
             text="Initiate Payout"
             ariaLabel="Initiate Payout button"
-            className="!h-10 bg-[#EFF7FE] text-primary font-semibold"
+            className="!h-10"
             onClick={() => toggleModal('isInitiateTransferModalOpen')}
+          />
+
+          <CurrencySwitcher contentClassName="!h-10" className="!h-10" />
+
+          <ActionButton
+            ariaLabel='Filter by date button'
+            text='Filter By Date'
+            onClick={toggleFilter}
+            className="!h-12"
+          />
+
+          <div className='relative flex justify-end mt-4 md:mt-0'>
+            <Dropdown onOpen={showFilter} onClose={toggleFilter}>
+              <Filter filterCallback={handleFilterChange} />
+            </Dropdown>
+          </div>
+
+          <ActionButton
+            ariaLabel='Export button'
+            text='Export'
+            onClick={handleExport}
+            className="!h-10"
           />
         </div>
       </div>

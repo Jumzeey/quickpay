@@ -1,27 +1,28 @@
-import Sidebar from '@/components/onboarding/sidebar';
+import { MultiStepAnimation } from '@/animations';
 import Button from '@/components/button';
-import Image from 'next/image';
+import FloatingLabelInput from '@/components/floating-input';
+import FloatingLabelPhoneInput from '@/components/FloatingPhoneInput';
+import FormSelectSearch from '@/components/FormSelectSearch';
+import Loader from '@/components/loader';
+import Modal from '@/components/modal';
+import WebPageTitle from '@/components/WebPageTitle';
+import env from '@/config/env';
 import useAuthentication from '@/stores/useAuthentication';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import * as Yup from 'yup';
+import useLoadRecaptcha from '@/util/useLoadRecaptcha';
 import {
   capitalizeFirstLetter,
   // nigerianPhoneNumberSchema,
   notifyError,
 } from '@/util/utils';
+import { getData, getName } from 'country-list';
 import { useFormik } from 'formik';
-import { useEffect, useState } from 'react';
-import FloatingLabelInput from '@/components/floating-input';
-import Loader from '@/components/loader';
-import Modal from '@/components/modal';
-import { useParams } from 'next/navigation';
-import WebPageTitle from '@/components/WebPageTitle';
-import { MultiStepAnimation } from '@/animations';
 import { motion } from 'framer-motion';
-import env from '@/config/env';
-import useLoadRecaptcha from '@/util/useLoadRecaptcha';
-import FloatingLabelPhoneInput from '@/components/FloatingPhoneInput';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useRouter } from 'next/router';
+import { useEffect, useMemo, useState } from 'react';
+import * as Yup from 'yup';
 
 declare global {
   interface Window {
@@ -34,6 +35,7 @@ type RegisterType = {
   lastname: string;
   email: string;
   phone: string;
+  country: string;
   // bvn: string;
   cac_document: string;
   nin: string;
@@ -64,6 +66,7 @@ const RegisterPage: React.FC = () => {
     lastname: '',
     email: '',
     phone: '',
+    country: 'Nigeria',
     // bvn: "",
     cac_document: '',
     nin: '',
@@ -80,12 +83,19 @@ const RegisterPage: React.FC = () => {
   };
   const { publicUrl } = env;
 
+  const countries = useMemo(() =>
+    getData().map(country => ({
+      value: country.code,
+      label: country.name
+    })), []
+  );
+
   const capitalizedBusiness =
     typeof params?.business === 'string'
       ? capitalizeFirstLetter(params?.business)
       : Array.isArray(params?.business) && params?.business.length > 0
-      ? capitalizeFirstLetter(params?.business[0])
-      : '';
+        ? capitalizeFirstLetter(params?.business[0])
+        : '';
 
   const passwordValidation = Yup.string()
     .required('Password is required!')
@@ -104,6 +114,7 @@ const RegisterPage: React.FC = () => {
       lastname: '',
       email: '',
       phone: '',
+      country: 'Nigeria',
       // bvn: "",
       cac_document: '',
       nin: '',
@@ -118,6 +129,7 @@ const RegisterPage: React.FC = () => {
       firstname: Yup.string().required('First Name is required!'),
       lastname: Yup.string().required('Last Name is required!'),
       phone: Yup.string().required('Phone number is required!'),
+      country: Yup.string().required('Country is required!'),
       // bvn: Yup.string()
       //   .required("BVN is required!")
       //   .matches(/^\d{11}$/, "BVN must be exactly 11 digits"),
@@ -181,6 +193,7 @@ const RegisterPage: React.FC = () => {
         lastname: values.lastname,
         email: values.email,
         phone: values.phone,
+        country: getName(values.country) || values.country,
         password: values.password,
         password_confirmation: values.password_confirmation,
         business_name: values.business_name,
@@ -324,6 +337,23 @@ const RegisterPage: React.FC = () => {
                 formik={formik}
                 {...formik.getFieldProps('email')}
               />
+
+              <div className="pb-6 text-black">
+                <FormSelectSearch
+                  label=""
+                  id="country"
+                  htmlFor="country"
+                  options={countries}
+                  value={formik.values.country}
+                  onChange={(value) => formik.setFieldValue('country', value)}
+                  // onBlur={formik.handleBlur}
+                  name="country"
+                  placeholder="Search countries"
+                  error={formik.errors.country}
+                  touched={!!formik.touched.country}
+                />
+              </div>
+
               <FloatingLabelInput
                 label='Password'
                 id='password'

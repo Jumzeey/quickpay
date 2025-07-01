@@ -3,6 +3,7 @@ import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
 type CurrencySwitcherProps = {
     currencies?: { value: CurrencyOption; label: string }[];
     className?: string;
+    contentClassName?: string;
 }
 
 export const walletCurrencies = [
@@ -12,7 +13,7 @@ export const walletCurrencies = [
     // { value: "EUR" as CurrencyOption, label: "€ EUR" },
 ];
 
-const CurrencySwitcher = ({ currencies, className = "" }: CurrencySwitcherProps) => {
+const CurrencySwitcher = ({ currencies, contentClassName = "", className = "" }: CurrencySwitcherProps) => {
     const { selectedCurrency, setCurrency } = useCurrency();
 
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -23,7 +24,7 @@ const CurrencySwitcher = ({ currencies, className = "" }: CurrencySwitcherProps)
     return (
         <div className={`grid grid-cols-1 text-[#005BB0] ${className}`}>
             <select
-                className="col-start-1 row-start-1 w-28 h-12 appearance-none rounded bg-[#005BB01A] py-2 px-4 tracking-wider text-xs text-[#005BB0] font-bold outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
+                className={`col-start-1 row-start-1 w-28 h-12 appearance-none rounded bg-[#005BB01A] py-2 px-4 tracking-wider text-xs text-[#005BB0] font-bold outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 ${contentClassName}`}
                 aria-label="Select currency"
                 onChange={handleChange}
                 value={selectedCurrency}

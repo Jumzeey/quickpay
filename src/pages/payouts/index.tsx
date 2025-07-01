@@ -1,7 +1,10 @@
 import ActionButton from "@/components/action-button";
 import Button from "@/components/button";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
+import Filter from "@/components/Filter";
 import Icon from "@/components/icon";
 import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
@@ -52,7 +55,6 @@ const PayoutHistory = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
-
 
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -107,16 +109,16 @@ const PayoutHistory = () => {
     }
   );
 
-  const _getHistory = async () => {
+  const _getHistory = async (newFilter?: any) => {
     try {
       // Call the store method directly
       await getPayoutHistory({
         page: currentPage,
         search: searchInput,
         status: statusFilter as any,
-        ...(filter.startDate ? {
-          start_date: formatDate(filter.startDate),
-          end_date: formatDate(filter.endDate),
+        ...(newFilter.startDate ? {
+          start_date: formatDate(newFilter.startDate),
+          end_date: formatDate(newFilter.endDate),
         } : {}),
         currency: selectedCurrency,
       });
@@ -169,6 +171,9 @@ const PayoutHistory = () => {
   }, {
     key: 'recipient_account_number',
     title: 'Account Number',
+  }, {
+    key: 'session_id',
+    title: 'Provider Reference',
   }, {
     key: 'balance_before',
     title: 'Balance Before',
@@ -257,6 +262,22 @@ const PayoutHistory = () => {
     fetchBankDetails();
   }, []);
 
+  useEffect(() => {
+    const handleCurrencyChange = async () => {
+      if (!mounted) return;
+      await _getHistory();
+    };
+
+    handleCurrencyChange();
+  }, [selectedCurrency, mounted]);
+
+  const handleFilterChange = async (newFilter: any) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+    if (mounted) {
+      await _getHistory(newFilter);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -270,7 +291,7 @@ const PayoutHistory = () => {
   return (
     <Layout pageTitle="Pay Outs" icon="disbursement">
       <WebPageTitle title="Payouts | Ramp Merchant Portal" />
-      <div className="flex flex-col md:flex-row justify-between">
+      <div className="flex flex-col md:flex-row justify-between mb-8">
         <div>
           <PageHeader
             className="!mb-0"
@@ -286,6 +307,21 @@ const PayoutHistory = () => {
             className="!h-10"
             onClick={() => toggleModal('isInitiateTransferModalOpen')}
           />
+
+          <CurrencySwitcher contentClassName="!h-10" className="!h-10" />
+
+          <ActionButton
+            ariaLabel='Filter by date button'
+            text='Filter By Date'
+            onClick={toggleFilter}
+            className="!h-12"
+          />
+
+          <div className='relative flex justify-end mt-4 md:mt-0'>
+            <Dropdown onOpen={showFilter} onClose={toggleFilter}>
+              <Filter filterCallback={handleFilterChange} />
+            </Dropdown>
+          </div>
 
           <ActionButton
             ariaLabel='Export button'

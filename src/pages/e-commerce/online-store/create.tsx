@@ -1,17 +1,18 @@
 import Button from "@/components/button";
-import { useRouter } from "next/router";
-import * as Yup from "yup";
-import { notifyError, notifySuccess } from "@/util/utils";
-import { useFormik } from "formik";
-import { useEffect, useState } from "react";
+import Card from "@/components/Card";
 import FloatingLabelInput from "@/components/floating-input";
+import Layout from "@/components/layout";
 import Loader from "@/components/loader";
+import UploadComponent from "@/components/upload-component";
 import WebPageTitle from "@/components/WebPageTitle";
 import useKyc from "@/stores/useKyc";
-import Layout from "@/components/layout";
+import { documentTypes } from "@/util/constants";
+import { notifyError, notifySuccess } from "@/util/utils";
+import { useFormik } from "formik";
 import Image from "next/image";
-import UploadComponent from "@/components/upload-component";
-import Card from "@/components/Card";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import * as Yup from "yup";
 
 interface FormValues {
   business_type: string;
@@ -49,7 +50,7 @@ const KYCPage: React.FC = () => {
     proof_of_address: Yup.string().required("Proof Of Address is required!"),
     nin: Yup.string()
       .required("NIN is required!")
-      .matches(/^\d{11}$/, "NIN must be exactly 11 digits!"),
+      // .matches(/^\d{11}$/, "NIN must be exactly 11 digits!"),
   });
 
   const registeredSchema = Yup.object().shape({
@@ -59,8 +60,8 @@ const KYCPage: React.FC = () => {
       "Business Description is required!"
     ),
     director_nin: Yup.string()
-      .required("Director NIN is required!")
-      .matches(/^\d{11}$/, "Director NIN must be exactly 11 digits!"),
+      .required("Director NIN is required!"),
+      // .matches(/^\d{11}$/, "Director NIN must be exactly 11 digits!"),
     company_business_status: Yup.string().required(
       "Company Business Status is required!"
     ),
@@ -71,14 +72,10 @@ const KYCPage: React.FC = () => {
       "Document Beneficiary Type is required!"
     ),
     director_tin: Yup.string()
-      .required("Director TIN is required!")
-      .matches(
-        /^\d{8}-\d{4}$/,
-        "Director TIN must be exactly 8 digits, a hyphen, followed by 4 digits (e.g., 20000049-0001)"
-      ),
+      .required("Director TIN is required!"),
     document_type: Yup.string().required("Document Type is required!"),
     cac_documents: Yup.string().required(
-      "CAC Registration Certificate are required!"
+      "Company Registration Certificate are required!"
     ),
     document_beneficiary_file: Yup.string().required(
       "Document Beneficiary File is required!"
@@ -205,14 +202,11 @@ const KYCPage: React.FC = () => {
                     value={formik.values.id_type}
                   >
                     <option value="">Select Shipping Status</option>
-                    <option value="Driver License">Driver License</option>
-                    <option value="International Passport">
-                      International Passport
-                    </option>
-                    <option value="Permanent Voters Card">
-                      Permanent Voters Card
-                    </option>
-                    <option value="National ID">National ID</option>
+                    {documentTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <select
@@ -222,14 +216,11 @@ const KYCPage: React.FC = () => {
                   value={formik.values.id_type}
                 >
                   <option value="">Select Product Type</option>
-                  <option value="Driver License">Driver License</option>
-                  <option value="International Passport">
-                    International Passport
-                  </option>
-                  <option value="Permanent Voters Card">
-                    Permanent Voters Card
-                  </option>
-                  <option value="National ID">National ID</option>
+                  {documentTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
                 </select>
                 <UploadComponent
                   onFileUpload={onFileUpload}

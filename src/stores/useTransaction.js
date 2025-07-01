@@ -57,7 +57,6 @@ const useTransaction = create((set, get) => ({
       // Fetch wallet history with account_id
       const params = {
         ...otherParams,
-        // currency,
         account_id: accountId,
       };
 

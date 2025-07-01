@@ -30,3 +30,11 @@ export const paymentLinksAnalytics = [
     icon: "/images/dashboard/collections/paused-payment-links.svg",
   },
 ];
+
+
+export const documentTypes = [
+  { value: "Driver License", label: "Driver License" },
+  { value: "International Passport", label: "International Passport" },
+  // { value: "Permanent Voters Card", label: "Permanent Voters Card" },
+  { value: "National ID", label: "National ID" },
+];

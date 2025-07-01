@@ -21,7 +21,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as Yup from 'yup';
 
 declare global {
@@ -66,7 +66,7 @@ const RegisterPage: React.FC = () => {
     lastname: '',
     email: '',
     phone: '',
-    country: 'NG',
+    country: 'Nigeria',
     // bvn: "",
     cac_document: '',
     nin: '',
@@ -83,10 +83,12 @@ const RegisterPage: React.FC = () => {
   };
   const { publicUrl } = env;
 
-  const countries = getData().map(country => ({
-    value: country.code,
-    label: country.name
-  }));
+  const countries = useMemo(() =>
+    getData().map(country => ({
+      value: country.code,
+      label: country.name
+    })), []
+  );
 
   const capitalizedBusiness =
     typeof params?.business === 'string'
@@ -112,7 +114,7 @@ const RegisterPage: React.FC = () => {
       lastname: '',
       email: '',
       phone: '',
-      country: 'NG',
+      country: 'Nigeria',
       // bvn: "",
       cac_document: '',
       nin: '',
@@ -191,7 +193,7 @@ const RegisterPage: React.FC = () => {
         lastname: values.lastname,
         email: values.email,
         phone: values.phone,
-        country: getName(values.country),
+        country: getName(values.country) || values.country,
         password: values.password,
         password_confirmation: values.password_confirmation,
         business_name: values.business_name,

@@ -167,8 +167,6 @@ const KYCPage: React.FC = () => {
     }
   };
   const maxDate = new Date().toISOString().split('T')[0];
-  
-  console.log({formik})
 
   return (
     <Layout pageTitle='KYC Verification' icon='kyc'>

@@ -72,6 +72,7 @@ const PayoutHistory = () => {
   });
 
   const {
+    fetchPayoutHistory: getPayoutHistory,
     payouts,
     pagination,
     payoutHistoryLoading,
@@ -90,8 +91,8 @@ const PayoutHistory = () => {
       page: currentPage,
       search: searchInput,
       status: statusFilter,
-      startDate: filter.startDate,
-      endDate: filter.endDate,
+      start_date: filter.startDate,
+      end_date: filter.endDate,
       currency: selectedCurrency,
     },
     {
@@ -105,6 +106,24 @@ const PayoutHistory = () => {
       cacheTime: state.isInitiateTransferModalOpen ? 0 : 3000,
     }
   );
+
+  const _getHistory = async () => {
+    try {
+      // Call the store method directly
+      await getPayoutHistory({
+        page: currentPage,
+        search: searchInput,
+        status: statusFilter as any,
+        ...(filter.startDate ? {
+          start_date: formatDate(filter.startDate),
+          end_date: formatDate(filter.endDate),
+        } : {}),
+        currency: selectedCurrency,
+      });
+    } catch (error) {
+      console.error('Error fetching payout history:', error);
+    }
+  }
 
   const columns = [{
     key: 'amount',
@@ -202,7 +221,7 @@ const PayoutHistory = () => {
     // Invalidate the cache first
     await invalidatePayoutHistory();
     // Then trigger a refetch
-    await fetchPayoutHistory();
+    await _getHistory();
   };
 
   const handleExport = async () => {
@@ -248,24 +267,31 @@ const PayoutHistory = () => {
     );
   }
 
-
   return (
     <Layout pageTitle="Pay Outs" icon="disbursement">
       <WebPageTitle title="Payouts | Ramp Merchant Portal" />
       <div className="flex flex-col md:flex-row justify-between">
         <div>
           <PageHeader
+            className="!mb-0"
             title="Payouts"
             description="Manage and track all payouts seamlessly, ensuring smooth and transparent transactions."
           />
         </div>
 
-        <div className="relative flex justify-end mt-4 md:mt-0">
+        <div className="relative flex gap-4 justify-end mt-4 md:mt-0">
           <ActionButton
             text="Initiate Payout"
             ariaLabel="Initiate Payout button"
-            className="!h-10 bg-[#EFF7FE] text-primary font-semibold"
+            className="!h-10"
             onClick={() => toggleModal('isInitiateTransferModalOpen')}
+          />
+
+          <ActionButton
+            ariaLabel='Export button'
+            text='Export'
+            onClick={handleExport}
+            className="!h-10"
           />
         </div>
       </div>

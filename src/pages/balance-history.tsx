@@ -106,12 +106,12 @@ const WalletHistory = () => {
   {
     key: 'balance_before_amount',
     title: 'Previous Balance',
-    render: (value: any, row: any) => replaceCurrencySymbol(row?.available_balance_after) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_before_amount) || 'N/A',
   },
   {
     key: 'balance_after_amount',
     title: 'Current Balance',
-    render: (value: any, row: any) => replaceCurrencySymbol(row?.available_balance_before) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_after_amount) || 'N/A',
   },
   {
     key: 'previous_ledger_balance',
@@ -265,12 +265,13 @@ const WalletHistory = () => {
             </Dropdown>
           </div>
 
-          <ActionButton
+          {/* TODO: handle export and add filter */}
+          {/* <ActionButton
             ariaLabel='Export button'
             text='Export'
             onClick={handleExport}
             className="!h-12"
-          />
+          /> */}
         </div>
       </div>
 

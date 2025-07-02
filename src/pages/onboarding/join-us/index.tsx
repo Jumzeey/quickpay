@@ -348,7 +348,7 @@ const RegisterPage: React.FC = () => {
                   onChange={(value) => formik.setFieldValue('country', value)}
                   // onBlur={formik.handleBlur}
                   name="country"
-                  placeholder="Search countries"
+                  placeholder="Country"
                   error={formik.errors.country}
                   touched={!!formik.touched.country}
                 />

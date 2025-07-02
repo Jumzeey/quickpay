@@ -104,14 +104,14 @@ const WalletHistory = () => {
     render: (value: any, row: any) => actionMap[row?.transaction_type] || capitalizeFirstLetterOfEachWord(row?.transaction_type?.replaceAll('_', ' ')) || 'N/A',
   },
   {
-    key: 'balance_before_amount',
+    key: 'available_balance_before',
     title: 'Previous Balance',
-    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_before_amount) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.available_balance_before) || 'N/A',
   },
   {
-    key: 'balance_after_amount',
+    key: 'available_balance_after',
     title: 'Current Balance',
-    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_after_amount) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.available_balance_after) || 'N/A',
   },
   {
     key: 'previous_ledger_balance',

@@ -314,14 +314,8 @@ const PayoutHistory = () => {
             ariaLabel='Filter by date button'
             text='Filter By Date'
             onClick={toggleFilter}
-            className="!h-12"
+            className="!h-10"
           />
-
-          <div className='relative flex justify-end mt-4 md:mt-0'>
-            <Dropdown onOpen={showFilter} onClose={toggleFilter}>
-              <Filter filterCallback={handleFilterChange} />
-            </Dropdown>
-          </div>
 
           <ActionButton
             ariaLabel='Export button'
@@ -329,6 +323,12 @@ const PayoutHistory = () => {
             onClick={handleExport}
             className="!h-10"
           />
+
+          <div className='relative flex justify-end mt-4 md:mt-0'>
+            <Dropdown onOpen={showFilter} onClose={toggleFilter}>
+              <Filter filterCallback={handleFilterChange} />
+            </Dropdown>
+          </div>
         </div>
       </div>
 

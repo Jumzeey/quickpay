@@ -1,62 +1,60 @@
-import React, { useState } from 'react';
-import FloatingLabelInput from '@/components/floating-input';
-import Image from 'next/image';
-import Sidebar from '@/components/onboarding/sidebar';
-import Button from '@/components/button';
-import Link from 'next/link';
-import useAuthentication from '@/stores/useAuthentication';
-import { useRouter } from 'next/router';
-import { notifyError, notifySuccess } from '@/util/utils';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import Loader from '@/components/loader';
-import WebPageTitle from '@/components/WebPageTitle';
-import { motion } from 'framer-motion';
-import { MultiStepAnimation } from '@/animations';
+import { MultiStepAnimation } from "@/animations";
+import { AuthFooter } from "@/components/AuthFooter";
+import Button from "@/components/button";
+import FormInput from "@/components/FormInput";
+import Loader from "@/components/loader";
+import NoSSR from "@/components/noSSR";
+import WebPageTitle from "@/components/WebPageTitle";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import useAuthentication from "@/stores/useAuthentication";
+import { notifyError, notifySuccess } from "@/util/utils";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import React, { useState } from "react";
+import { Controller } from "react-hook-form";
+import * as Yup from "yup";
+
+interface FormValues {
+  email: string;
+}
+
+const validationSchema = Yup.object().shape({
+  email: Yup.string()
+    .email("Enter a valid email")
+    .matches(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      "Email must have a valid provider"
+    )
+    .required("Email address is required!"),
+});
 
 const ForgotPassword: React.FC = () => {
   const router = useRouter();
-  const navigateBack = () => {
-    router.back();
-  };
-
   const { forgotPassword } = useAuthentication();
   const [isLoading, setIsLoading] = useState(false);
 
-  const formik = useFormik({
-    initialValues: {
-      email: '',
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useFormValidation<FormValues>(validationSchema, {
+    defaultValues: {
+      email: "",
     },
-    validationSchema: Yup.object().shape({
-      email: Yup.string()
-        .email('Enter a valid email')
-        .matches(
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-          'Email must have a valid provider'
-        )
-        .required('Email address is required!'),
-    }),
-
-    validateOnMount: true,
-
-    onSubmit: async values => {
-      handleSubmit(values);
-    },
+    mode: "onChange",
   });
 
-  const handleSubmit = async (values: any) => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
-    const payload = {
-      email: values.email,
-    };
     try {
-      const response = await forgotPassword(payload);
+      const response = await forgotPassword({ email: values.email });
       notifySuccess(response.message);
-      setIsLoading(false);
-      localStorage.setItem('user-email', values.email);
+      localStorage.setItem("user-email", values.email);
       router.push({
-        pathname: '/onboarding/otp',
-        query: { source: 'forgot-password' },
+        pathname: "/onboarding/otp",
+        query: { source: "forgot-password" },
       });
     } catch (error: any) {
       notifyError(error.message);
@@ -66,74 +64,87 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className='w-full min-h-screen flex justify-center text-white bg-ramp'>
-      <WebPageTitle title='Forgot Password | Ramp Merchant Portal' />
-      {/* <Sidebar /> */}
-      <div className='w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg'>
-        <div className='flex w-full justify-between'>
-          <div className='flex cursor-pointer' onClick={navigateBack}>
-            <Image
-              src='/images/arrow-back.svg'
-              width={15}
-              height={5}
-              onClick={() => router.back()}
-              alt='Back Icon'
-            />
-            <span className='ml-1 font-light'>Back</span>
-          </div>
-          <Link href='/onboarding/sign-in'>
-            <h6 className='font-light text-sm'>
-              Already have an account?
-              <span className='font-medium ml-1 text-white underline-animation'>
-                Sign In
-              </span>
-            </h6>
-          </Link>
-        </div>
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
+      <WebPageTitle title="Forgot Password | Ramp Merchant Portal" />
+      <NoSSR>
         <motion.div
-          className='mt-52'
+          className="flex flex-col items-center justify-center"
           variants={MultiStepAnimation}
-          initial='hidden'
-          animate='visible'
+          initial="hidden"
+          animate="visible"
         >
-          <div>
-            <h1 className='font-semibold text-2xl'>
-              Relax, we have you covered.
-            </h1>
-            <p className='font-light mt-1 mb-5 text-sm'>
-              Provide your email address to reset your password.
-            </p>
-            <form onSubmit={formik.handleSubmit} className='mt-10'>
-              <FloatingLabelInput
-                label='Email'
-                id='email'
-                type='email'
-                htmlFor='email'
-                formik={formik}
-                {...formik.getFieldProps('email')}
-              />
-              <div className='flex justify-center'>
-                <Button
-                  text={isLoading ? <Loader /> : 'Send Password Reset Email'}
-                  ariaLabel='Reset Password Button'
-                  disabled={isLoading}
-                  primary
-                />
+          <div className="w-full max-w-md">
+            {/* Card Container */}
+            <div className="bg-white border border-[#C4C4C466] rounded-lg overflow-hidden">
+              {/* Logo Section */}
+              <div className="px-8 pt-8 pb-4 bg-auth-header">
+                <div className="flex items-center">
+                  <Image
+                    src="/images/ramp-logo.svg"
+                    alt="Ramp"
+                    width={80}
+                    height={40}
+                    priority
+                    className="h-10 w-auto"
+                  />
+                </div>
               </div>
-              <div className='mt-10'>
-                <p className='text-center text-sm'>
-                  Remember account password?&nbsp;
-                  <Link href='/onboarding/sign-in'>
-                    <span className='text-white text-sm font-medium underline-animation'>
-                      Sign In
-                    </span>
+
+              {/* Forgot Password Form */}
+              <div className="px-8 pb-8 mt-12">
+                <h2 className="text-lg font-extrabold text-[#184078] mb-2">
+                  Request Password Reset
+                </h2>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-8">
+                  <Controller
+                    name="email"
+                    control={control}
+                    render={({ field }) => (
+                      <FormInput
+                        label="Email address"
+                        id="email"
+                        type="email"
+                        htmlFor="email"
+                        error={errors.email?.message}
+                        touched={!!errors.email}
+                        {...field}
+                      />
+                    )}
+                  />
+
+                  <div className="w-1/2 pt-5">
+                    <Button
+                      type="submit"
+                      className="w-full text-sm font-medium rounded"
+                      text={isLoading ? <Loader /> : "Send request email"}
+                      ariaLabel="Reset Password Button"
+                      disabled={isLoading}
+                      primary
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Sign In Section */}
+              <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
+                <p className="text-sm text-[#7F7F7F] font-semibold">
+                  Remember account password?
+                  <Link
+                    href="/onboarding/sign-in"
+                    className="text-primary hover:text-blue-700 ml-1"
+                  >
+                    Sign In
                   </Link>
                 </p>
               </div>
-            </form>
+            </div>
+
+            {/* Footer */}
+            <AuthFooter />
           </div>
         </motion.div>
-      </div>
+      </NoSSR>
     </div>
   );
 };

@@ -76,6 +76,7 @@ export const apiEndpoints = {
     GET_PAYOUT_HISTORY: '/merchant/disbursements',
     ADD_PAYOUT: '/merchant/disbursements/interbank',
     VERIFY_PAYOUT_OTP: '/merchant/disbursements/interbank/complete',
+    REQUERY_PAYOUT: '/merchant/disbursements/interbank/requery',
   },
   webhooks: {
     GET_WEBHOOK: '/merchant/webhook',

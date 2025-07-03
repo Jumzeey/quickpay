@@ -7,7 +7,7 @@ const requestCache = new Map<string, {
     data?: any;
 }>();
 
-const CACHE_DURATION = 5000; // 5 seconds to prevent rapid successive calls
+const CACHE_DURATION = 5000;
 
 interface UseStoreQueryOptions {
     enabled?: boolean;
@@ -33,99 +33,74 @@ export function useStoreQuery<T = any>(
         onError
     } = options;
 
-    const mountedRef = useRef(true);
+    const mountedRef = useRef(false);
     const lastParamsRef = useRef<string>('');
+    const isInitialQueryRef = useRef(true);
 
-    // Create a unique cache key based on action name and parameters
     const cacheKey = `${key}:${JSON.stringify(params)}`;
     const currentParamsKey = JSON.stringify(params);
-
-    // Check if parameters have changed
     const paramsChanged = currentParamsKey !== lastParamsRef.current;
 
-    const executeQuery = useCallback(async () => {
+    const executeQuery = useCallback(async (force = false) => {
         if (!enabled || !mountedRef.current) return;
-
+       
         const now = Date.now();
         const cached = requestCache.get(cacheKey);
 
-        // If there's an ongoing request for the same key, wait for it
         if (cached?.promise) {
-            try {
-                const result = await cached.promise;
-                if (mountedRef.current && onSuccess) {
-                    onSuccess(result);
-                }
-                return result;
-            } catch (error) {
-                if (mountedRef.current && onError) {
-                    onError(error);
-                }
-                throw error;
-            }
+            return cached.promise;
         }
 
-        // If we have recent data and params haven't changed, don't refetch
-        if (cached?.lastCall &&
-            (now - cached.lastCall) < cacheTime &&
-            !paramsChanged) {
+        const shouldRefetch = force || paramsChanged || !cached?.lastCall || (now - cached.lastCall) > cacheTime;
+
+        if (!shouldRefetch && cached?.data) {
+            if (onSuccess) onSuccess(cached.data);
             return cached.data;
         }
 
-        // Create new request
         const promise = storeAction(...params);
-
-        // Cache the promise to prevent duplicate requests
-        requestCache.set(cacheKey, {
-            promise,
-            lastCall: now
-        });
+        requestCache.set(cacheKey, { promise, lastCall: now, data: null });
 
         try {
             const result = await promise;
-
-            // Update cache with result
-            requestCache.set(cacheKey, {
-                promise: null,
-                lastCall: now,
-                data: result
-            });
-
-            if (mountedRef.current && onSuccess) {
-                onSuccess(result);
+            if (mountedRef.current) {
+                requestCache.set(cacheKey, { promise: null, lastCall: now, data: result });
+                if (onSuccess) onSuccess(result);
             }
-
             return result;
         } catch (error) {
-            // Clear the failed request from cache
-            requestCache.delete(cacheKey);
-
-            if (mountedRef.current && onError) {
-                onError(error);
+            if (mountedRef.current) {
+                requestCache.delete(cacheKey);
+                if (onError) onError(error);
             }
             throw error;
         }
-    }, [cacheKey, enabled, storeAction, params, cacheTime, paramsChanged, onSuccess, onError]);
+    }, [key, enabled, JSON.stringify(params), cacheTime, onSuccess, onError, storeAction]);
 
-    // Execute query when params change or on mount
     useEffect(() => {
-        if (paramsChanged || !requestCache.has(cacheKey)) {
-            lastParamsRef.current = currentParamsKey;
-            executeQuery().catch(() => {
-                // Error is already handled in executeQuery
-            });
-        }
-    }, [executeQuery, cacheKey, paramsChanged, currentParamsKey]);
-
-    // Cleanup on unmount
-    useEffect(() => {
+        mountedRef.current = true;
         return () => {
             mountedRef.current = false;
         };
     }, []);
 
+    useEffect(() => {
+        if (enabled) {
+            // Run if it's the first time the query is enabled, or if params have changed since last run.
+            if (isInitialQueryRef.current || paramsChanged) {
+                executeQuery().catch((error) => {
+                    console.error('Query execution failed:', error);
+                });
+                lastParamsRef.current = currentParamsKey;
+                isInitialQueryRef.current = false;
+            }
+        } else {
+            isInitialQueryRef.current = true;
+        }
+    }, [enabled, currentParamsKey, executeQuery]);
+
     return {
-        refetch: executeQuery,
+        refetch: () => executeQuery(true),
         invalidate: () => {
             requestCache.delete(cacheKey);
             lastParamsRef.current = '';
@@ -138,8 +113,8 @@ export function useStoreQuery<T = any>(
  * Integrates with your existing pattern while preventing redundant calls
  */
 export function usePaginatedStoreQuery<T = any>(
-    storeHook: any, // Your zustand store hook
-    actionName: string, // The action method name (e.g., 'fetchCollectionHistory')
+    storeHook: any,
+    actionName: string,
     params: {
         page?: number;
         search?: string;
@@ -163,10 +138,9 @@ export function usePaginatedStoreQuery<T = any>(
         ...otherParams
     } = params;
 
-    // Create parameters array for the action
     const actionParams = [{
         page,
-        ...(search ? { search } : {}),
+        ...(search && search.trim() ? { search: search.trim() } : {}),
         ...(status ? { status } : {}),
         ...(startDate ? {
             start_date: typeof startDate === 'string' ? startDate : startDate,
@@ -175,17 +149,35 @@ export function usePaginatedStoreQuery<T = any>(
         ...otherParams
     }];
 
-    const queryKey = `${actionName}:${JSON.stringify(actionParams)}`;
+    const queryKey = `${actionName}:${JSON.stringify({
+        page,
+        search: search.trim(),
+        status,
+        startDate,
+        endDate,
+        ...otherParams
+    })}`;
 
-    return useStoreQuery(
+
+    const queryResult = useStoreQuery(
         queryKey,
         action,
         actionParams,
         {
             ...options,
-            cacheTime: 3000 // Shorter cache for paginated data
+            cacheTime: 1000,
+            onSuccess: (data) => options.onSuccess?.(data),
+            onError: (error) => {
+                console.error('❌ Query failed for:', actionName, error);
+                options.onError?.(error);
+            }
         }
     );
+
+    return {
+        ...queryResult,
+        loading
+    };
 }
 
 /**
@@ -200,15 +192,10 @@ export function useFetch({ filter, fns }: { filter: string; fns: (filter: string
     useEffect(() => {
         const now = Date.now();
 
-        // Prevent calls if:
-        // 1. Filter hasn't changed
-        // 2. Filter is empty
-        // 3. We're already calling
-        // 4. Too soon since last call
         if (filter === prevFilterRef.current ||
             filter === '' ||
             isCallingRef.current ||
-            (now - lastCallRef.current) < 1000) {
+            (now - lastCallRef.current) < 500) {
             return;
         }
 

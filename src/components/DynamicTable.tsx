@@ -14,8 +14,8 @@ type BaseTableProps = {
   pageCount?: number;
   data: Record<string, any>[];
   columns: Column[];
-  primaryBtnContent?: React.ReactNode;
-  secondaryBtnContent?: React.ReactNode;
+  primaryBtnContent?: (row: any, rowIndex: number) =>React.ReactNode;
+  secondaryBtnContent?: (row: any, rowIndex: number) => React.ReactNode;
   copyId?: boolean;
   copyField?: string;
   maxColumns?: number;
@@ -209,8 +209,8 @@ const DynamicTable: React.FC<BaseTableProps> = ({
                         className='py-[18px] px-8 pl-0 text-center bg-white dark:bg-dark'
                       >
                         <div className='flex gap-4 items-center'>
-                          {primaryBtnContent}
-                          {secondaryBtnContent}
+                          {primaryBtnContent && primaryBtnContent(row, rowIndex)}
+                          {secondaryBtnContent && secondaryBtnContent(row, rowIndex)}
                         </div>
                       </td>
                     </motion.tr>

@@ -9,7 +9,6 @@ import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { getBanks, performNameCheck } from "@/services/bank";
 import usePayout from "@/stores/usePayout";
-import { Bank } from "@/types/payout";
 import { notifyError, notifySuccess, removeCommasFromValue } from "@/util/utils";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
@@ -18,6 +17,7 @@ import PinInput from "react-pin-input";
 import * as Yup from "yup";
 import { TRANSFER_OPTIONS } from "./constants";
 import { TransferFormValues, TransferState } from "./types";
+import { BankResponse } from "@/services/payout";
 
 interface InitiateTransferProps {
     isModalOpen: boolean;
@@ -43,7 +43,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
     const { data: banks, loading: banksLoading } = useEffectFetch(
         async () => {
-            const response: Bank[] = await getBanks();
+            const response: BankResponse[] = await getBanks();
             return response;
         },
         [],
@@ -64,7 +64,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         if (!banks || banks.length === 0) {
             return [];
         }
-        return (banks || []).map((bank: Bank) => ({
+        return (banks || []).map((bank: BankResponse) => ({
             value: bank.institutionCode,
             label: bank.institutionName,
         }));

@@ -11,38 +11,26 @@ import PageHeader from "@/components/PageHeader";
 import Pagination from "@/components/pagination";
 import InitiateTransfer from "@/components/payouts/InitiateTransfer";
 import RaiseDispute from "@/components/payouts/RaiseDispute";
-import RefundRequest from "@/components/payouts/RefundRequest";
+import RequestRefund from "@/components/payouts/RequestRefund";
 import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import { usePaginatedStoreQuery } from "@/hooks/useOptimizedFetch";
+import { Payout } from "@/services/payout";
 import { getBankDetails } from "@/services/user";
 import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
-import { capitalizeFirstLetter, copyToClipboard, downloadFile, formatAmount, formatDate, formatDateTime2, notifyError } from "@/util/utils";
+import { capitalizeFirstLetter, copyToClipboard, downloadFile, formatDate, formatDateTime2, notifyError, notifySuccess } from "@/util/utils";
 import Image from "next/image";
-import React, { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 
-interface Payout {
-  account_name: string;
-  account_number: string;
-  bank: string;
-  reference: string;
-  amount: number;
-  processing_fee: number;
-  balance_before: number;
-  current_balance: number;
-  created_at: string;
-  status: string;
-  id: string;
-}
 interface PayoutsProps {
   isLoading: boolean;
   showFilterStatus: boolean;
   isInitiateTransferModalOpen: boolean;
-  isRefundRequestModalOpen: boolean;
+  isRequestRefundModalOpen: boolean;
   isRaiseDisputeModalOpen: boolean;
   isMoreActionsOpen: boolean;
   [key: string]: boolean;
@@ -64,17 +52,20 @@ const PayoutHistory = () => {
     endDate: null,
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentLog, setCurrentLog] = useState<Payout | null>(null);
   const [state, setState] = useState<PayoutsProps>({
     isLoading: true,
     showFilterStatus: false,
     isInitiateTransferModalOpen: false,
-    isRefundRequestModalOpen: false,
+    isRequestRefundModalOpen: false,
     isRaiseDisputeModalOpen: false,
     isMoreActionsOpen: false,
   });
 
   const {
-    fetchPayoutHistory: getPayoutHistory,
+    requeryPayout,
+    requeryLoading,
+    // fetchPayoutHistory: getPayoutHistory,
     payouts,
     pagination,
     payoutHistoryLoading,
@@ -83,6 +74,13 @@ const PayoutHistory = () => {
 
   const { showFilter, toggleFilter } = useFilter();
 
+  const prevCurrencyRef = useRef(selectedCurrency);
+  const effectivePage = selectedCurrency !== prevCurrencyRef.current ? 1 : currentPage;
+
+  useEffect(() => {
+    prevCurrencyRef.current = selectedCurrency;
+  }, [selectedCurrency]);
+
   const {
     refetch: fetchPayoutHistory,
     invalidate: invalidatePayoutHistory
@@ -90,7 +88,7 @@ const PayoutHistory = () => {
     usePayout,
     'fetchPayoutHistory',
     {
-      page: currentPage,
+      page: effectivePage,
       search: searchInput,
       status: statusFilter,
       start_date: filter.startDate,
@@ -98,6 +96,7 @@ const PayoutHistory = () => {
       currency: selectedCurrency,
     },
     {
+      enabled: Boolean(mounted && selectedCurrency),
       onSuccess: (data) => {
         console.log('✅ Payout history fetched successfully');
       },
@@ -109,43 +108,23 @@ const PayoutHistory = () => {
     }
   );
 
-  const _getHistory = async (newFilter?: any) => {
-    try {
-      // Call the store method directly
-      await getPayoutHistory({
-        page: currentPage,
-        search: searchInput,
-        status: statusFilter as any,
-        ...(newFilter.startDate ? {
-          start_date: formatDate(newFilter.startDate),
-          end_date: formatDate(newFilter.endDate),
-        } : {}),
-        currency: selectedCurrency,
-      });
-    } catch (error) {
-      console.error('Error fetching payout history:', error);
-    }
-  }
-
   const columns = [{
     key: 'amount',
     title: 'Amount',
-    render: (value: any, row: any) => formatAmount(row?.amount) || 'N/A'
+    render: (value: any, row: any) => row?.amount || 'N/A'
   }, {
     key: 'recipient_account_name',
     title: 'Account Name',
     render: (value: any, row: any) => capitalizeFirstLetter(row?.recipient_account_name) || 'N/A',
   }, {
-    key: 'recipient_bank',
-    title: 'Bank',
-    render: (value: any, row: any) => capitalizeFirstLetter(row?.recipient_bank) || 'N/A',
+    key: 'recipient_account_number',
+    title: 'Account Number',
   }, {
     key: 'reference',
     title: 'Transaction Reference',
     render: (value: any, row: any) => (
       <p className="text-[#090727] text-sm font-medium w-3/5 flex items-center justify-between gap-5">
         <span>{row?.reference || 'N/A'}</span>
-
         {row?.reference && (
           <button onClick={() => copyToClipboard(row?.reference)}>
             <Icon name="copy3" className="size-3 text-[#7F7F7F]" />
@@ -169,8 +148,9 @@ const PayoutHistory = () => {
       )
     },
   }, {
-    key: 'recipient_account_number',
-    title: 'Account Number',
+    key: 'recipient_bank',
+    title: 'Bank',
+    render: (value: any, row: any) => capitalizeFirstLetter(row?.recipient_bank) || 'N/A',
   }, {
     key: 'session_id',
     title: 'Provider Reference',
@@ -181,11 +161,33 @@ const PayoutHistory = () => {
     key: 'current_balance',
     title: 'Balance After',
   }, {
+    key: 'net_amount',
+    title: 'Net Amount',
+  }, {
+    key: 'processing_fee',
+    title: 'Processing Fee',
+  }, {
+    key: 'channel',
+    title: 'Channel',
+  }, {
     key: 'status',
     title: 'Transaction Status',
+    render: (value: any, row: any) => {
+      if (row?.status === 'Failed' && row?.failure_reason) {
+        return (
+          <div className="text-[#FD2727] text-sm font-medium">
+            Failed: {row.failure_reason}
+          </div>
+        );
+      }
+      return row?.status || 'N/A';
+    },
+  }, {
+    key: 'session_id',
+    title: 'Provider Reference',
   }];
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = async (page: number) => {
     setCurrentPage(page);
   };
 
@@ -205,10 +207,11 @@ const PayoutHistory = () => {
     (value: string) => {
       const debouncedFn = debounce(() => {
         setSearchInput(value);
+        setCurrentPage(1);
       }, 300);
       debouncedFn();
     },
-    [setSearchInput]
+    []
   );
 
   const toggleModal = (name: string) => {
@@ -219,14 +222,12 @@ const PayoutHistory = () => {
   };
 
   const handleParamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(event.target.value)
     debouncedHandleParamsChange(event.target.value);
   };
 
   const handleRefreshPayoutHistory = async () => {
-    // Invalidate the cache first
     await invalidatePayoutHistory();
-    // Then trigger a refetch
-    await _getHistory();
   };
 
   const handleExport = async () => {
@@ -254,9 +255,61 @@ const PayoutHistory = () => {
     console.log('Approved');
   };
 
-  const handleAction = (action: string) => {
-    console.log(`${action} for transaction`);
+  const handleRequery = async (reference: string) => {
+    if (!reference) {
+      notifyError("Transaction reference is required for requery");
+      return;
+    }
+
+    try {
+      const response = await requeryPayout(reference);
+
+      if (response.success && response.data) {
+        const transactionData = response.data.Transaction.data;
+        notifySuccess(`Requery successful! Status: ${transactionData.status}`);
+
+        // Close the dropdown after successful requery
+        setState(prevState => ({
+          ...prevState,
+          isMoreActionsOpen: false,
+        }));
+
+        await invalidatePayoutHistory();
+        await fetchPayoutHistory();
+      }
+    } catch (error: any) {
+      notifyError(error.message || "Failed to requery transaction");
+    }
   };
+
+  const handleAction = (action: string) => {
+    console.log(`${action} for transaction:`);
+
+    // Close dropdown after action
+    setState(prevState => ({
+      ...prevState,
+      isMoreActionsOpen: false,
+    }));
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setState(prevState => ({
+          ...prevState,
+          isMoreActionsOpen: false,
+        }));
+      }
+    };
+
+    if (state.isMoreActionsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [state.isMoreActionsOpen]);
 
   useEffect(() => {
     fetchBankDetails();
@@ -264,8 +317,10 @@ const PayoutHistory = () => {
 
   useEffect(() => {
     const handleCurrencyChange = async () => {
-      if (!mounted) return;
-      await _getHistory();
+      if (!mounted || !selectedCurrency) return;
+
+      setCurrentPage(1);
+      await invalidatePayoutHistory();
     };
 
     handleCurrencyChange();
@@ -274,9 +329,6 @@ const PayoutHistory = () => {
   const handleFilterChange = async (newFilter: any) => {
     setFilter(newFilter);
     setCurrentPage(1);
-    if (mounted) {
-      await _getHistory(newFilter);
-    }
   };
 
   if (!mounted) {
@@ -334,17 +386,26 @@ const PayoutHistory = () => {
 
       <div>
         {payoutHistoryLoading ? (
-          <Fragment>
-            <TableSkeleton />
-          </Fragment>
+          <TableSkeleton />
         ) : payouts?.length !== 0 ? (
-          <Fragment>
+          <>
+            <div className="relative w-min my-7">
+              <input
+                type="text"
+                id="searchInput"
+                name="searchInput"
+                placeholder="Search Reference Number..."
+                onChange={handleParamsChange}
+                className="h-[60px] w-full md:w-[376px] outline-none bg-[#D9D9D90D] font-medium border border-[#C4C4C43D] text-[#7F7F7F] text-sm px-3 rounded-md"
+              />
+              <Icon name="search" className="absolute top-[35%] right-4 size-5 text-[#7F7F7F]" />
+            </div>
             <DynamicTable
               columns={columns}
               data={payouts}
               copyId
               copyField='Transaction Reference'
-              primaryBtnContent={
+              primaryBtnContent={(row: any) => (
                 <Button
                   text={
                     <>
@@ -363,11 +424,14 @@ const PayoutHistory = () => {
                   onClick={handleDownload}
                   primary
                 />
-              }
-              secondaryBtnContent={
+              )}
+              secondaryBtnContent={(row: any) => (
                 <div className="relative block border border-[#EFF7FE] rounded-lg">
                   <button
-                    onClick={() => toggleModal('isMoreActionsOpen')}
+                    onClick={() => {
+                      toggleModal('isMoreActionsOpen')
+                      setCurrentLog(row);
+                    }}
                     className="text-sm text-[#005BB0] font-medium w-[150px] h-12 bg-[#EFF7FE] flex items-center justify-center"
                   >
                     More actions
@@ -385,22 +449,27 @@ const PayoutHistory = () => {
                     className={`absolute left-0 top-full mt-1.5 w-60 bg-white border border-[#ececec] rounded-lg shadow-lg z-10 overflow-hidden animate-fadeIn ${state.isMoreActionsOpen ? 'block' : 'hidden'}`}
                   >
                     <div className="py-1">
-                      <button
-                        onClick={() => handleAction('requery')}
-                        className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
-                      >
-                        <Image
-                          src='/images/refresh-alt.svg'
-                          alt='requery transaction'
-                          width={16}
-                          height={16}
-                          className='ml-2'
-                        />
-                        <span className="text-[#090727]">Requery transaction</span>
-                      </button>
+                      {(row?.status?.toLowerCase() === 'pending') && (
+                        <button
+                          onClick={() => handleRequery(row?.reference)}
+                          disabled={requeryLoading}
+                          className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                          <Image
+                            src='/images/refresh-alt.svg'
+                            alt='requery transaction'
+                            width={16}
+                            height={16}
+                            className='ml-2'
+                          />
+                          <span className="text-[#090727]">
+                            {requeryLoading ? 'Requerying...' : 'Requery transaction'}
+                          </span>
+                        </button>
+                      )}
 
                       <button
-                        onClick={() => toggleModal('isRefundRequestModalOpen')}
+                        onClick={() => toggleModal('isRequestRefundModalOpen')}
                         className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
                       >
                         <Image
@@ -429,7 +498,7 @@ const PayoutHistory = () => {
                     </div>
                   </div>
                 </div>
-              }
+              )}
             />
             <Pagination
               currentPage={currentPage}
@@ -437,7 +506,7 @@ const PayoutHistory = () => {
               lastPage={lastPage || 1}
               onPageChange={handlePageChange}
             />
-          </Fragment>
+          </>
         ) : (
           <EmptyState
             title="No Payout Found"
@@ -458,17 +527,23 @@ const PayoutHistory = () => {
           fetchPayoutHistory={handleRefreshPayoutHistory}
         />
 
-        <RefundRequest
-          isModalOpen={state.isRefundRequestModalOpen}
-          closeModal={() => toggleModal('isRefundRequestModalOpen')}
-          fetchPayoutHistory={handleRefreshPayoutHistory}
-        />
+        {currentLog && (
+          <>
+            <RequestRefund
+              log={currentLog}
+              isModalOpen={state.isRequestRefundModalOpen}
+              closeModal={() => toggleModal('isRequestRefundModalOpen')}
+              fetchPayoutHistory={handleRefreshPayoutHistory}
+            />
 
-        <RaiseDispute
-          isModalOpen={state.isRaiseDisputeModalOpen}
-          closeModal={() => toggleModal('isRaiseDisputeModalOpen')}
-          fetchPayoutHistory={handleRefreshPayoutHistory}
-        />
+            <RaiseDispute
+              isModalOpen={state.isRaiseDisputeModalOpen}
+              closeModal={() => toggleModal('isRaiseDisputeModalOpen')}
+              fetchPayoutHistory={handleRefreshPayoutHistory}
+            />
+          </>
+        )}
+
       </div>
     </Layout>
   );

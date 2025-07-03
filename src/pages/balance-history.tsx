@@ -12,8 +12,9 @@ import Pagination from '@/components/pagination';
 import { usePaginatedStoreQuery } from '@/hooks/useOptimizedFetch';
 import useCurrency from '@/stores/useCurrency';
 import useFilter from '@/stores/useFilter';
-import useTransaction from '@/stores/useTransaction';
+import useWalletLogs from '@/stores/useWalletLogs';
 import {
+  capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
   formatDate,
   formatDateTime2,
@@ -36,7 +37,7 @@ const actionMap: Record<string, string> = {
 const WalletHistory = () => {
   const { selectedCurrency } = useCurrency();
   const { fetchWalletHistory, wallet, pagination, getWalletHistoryLoading } =
-    useTransaction();
+    useWalletLogs();
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = pagination?.last_page;
@@ -66,7 +67,6 @@ const WalletHistory = () => {
     setFilter(newFilter);
     setCurrentPage(1);
     if (mounted) {
-      // await refetchWalletHistory();
       await _getHistory(newFilter);
     }
   };
@@ -148,13 +148,21 @@ const WalletHistory = () => {
         </p>
       )
     },
+  }, {
+    key: 'description',
+    title: 'Description',
+    render: (value: any, row: any) => row?.description || 'N/A',
+  }, {
+    key: 'status',
+    title: 'Status',
+    render: (value: any, row: any) => capitalizeFirstLetter(row?.status) || 'N/A',
   }];
 
   const {
     refetch: refetchWalletHistory,
     invalidate: invalidateWalletHistory
   } = usePaginatedStoreQuery(
-    useTransaction,
+    useWalletLogs,
     'fetchWalletHistory',
     {
       currency: selectedCurrency,

@@ -1,11 +1,13 @@
 import Button from "@/components/button";
+import FormSelect from "@/components/FormSelect";
+import FormTextArea from "@/components/FormTextArea";
 import Loader from "@/components/loader";
 import Modal from "@/components/modal";
-import TextArea from "@/components/text-area";
+import { useFormValidation } from "@/hooks/useFormValidation";
 import { addShippingFee } from "@/services/e-commerce";
 import { notifyError, notifySuccess } from "@/util/utils";
-import { useFormik } from "formik";
 import React, { useState } from "react";
+import { Controller } from "react-hook-form";
 import * as Yup from "yup";
 
 interface RaiseDisputeProps {
@@ -19,10 +21,23 @@ interface StateProps {
     isSubmitting: boolean;
 }
 
-const initialFormValues = {
-    category: "",
-    description: "",
-};
+interface FormValues {
+    category: string;
+    description: string;
+}
+
+const validationSchema = Yup.object().shape({
+    category: Yup.string().required("Category is required!"),
+    description: Yup.string().required("Description is required!"),
+});
+
+// TODO: replace with actual data
+const disputeCategories = [
+    { value: "wrong_amount", label: "Wrong Amount" },
+    { value: "failed_transaction", label: "Failed Transaction" },
+    { value: "double_debit", label: "Double Debit" },
+    { value: "other", label: "Other" },
+];
 
 const RaiseDispute: React.FC<RaiseDisputeProps> = ({
     isModalOpen,
@@ -34,50 +49,44 @@ const RaiseDispute: React.FC<RaiseDisputeProps> = ({
         isSubmitting: false,
     });
 
-    const validationSchema = Yup.object().shape({
-        category: Yup.string().required("Category is required!"),
-        description: Yup.string().required("Description is required!"),
+    const {
+        control,
+        handleSubmit,
+        formState: { errors, isValid },
+        reset
+    } = useFormValidation<FormValues>(validationSchema, {
+        defaultValues: {
+            category: "",
+            description: "",
+        }
     });
 
     const closeModalAndReset = () => {
-        // formik.resetForm({ values: initialFormValues });
-        // setState(prev => ({
-        //     ...prev,
-        //     isLoading: false,
-        //     isSubmitting: false,
-        // }));
-        console.log("close modal");
+        reset();
+        setState(prev => ({
+            ...prev,
+            isLoading: false,
+            isSubmitting: false,
+        }));
         closeModal();
     };
 
-    const handleFormSubmit = async (values: typeof initialFormValues) => {
+    const onSubmit = async (values: FormValues) => {
         setState(prev => ({ ...prev, isSubmitting: true }));
 
-        const payload: any = {
-            category: values.category,
-            description: values.description,
-        };
-
         try {
-            // TODO: Replace addShippingFee with the actual transfer API call
-            const response = await addShippingFee(payload);
+            // TODO: Replace addShippingFee with the actual dispute API call
+            // @ts-ignore
+            const response = await addShippingFee(values);
             // @ts-ignore
             notifySuccess(response.message);
             closeModalAndReset();
+            await fetchPayoutHistory();
         } catch (error: any) {
             notifyError(error.message);
             setState(prev => ({ ...prev, isSubmitting: false }));
-        } finally {
-            fetchPayoutHistory();
         }
     };
-
-    const formik = useFormik({
-        initialValues: initialFormValues,
-        validationSchema: validationSchema,
-        validateOnMount: true,
-        onSubmit: handleFormSubmit,
-    });
 
     return (
         <Modal
@@ -86,38 +95,52 @@ const RaiseDispute: React.FC<RaiseDisputeProps> = ({
             title="Raise Dispute"
         >
             <div className="mt-5">
-                <form onSubmit={formik.handleSubmit}>
-                    <select
-                        className="h-[60px] px-2 w-full rounded-md border-[1px] border-[#dcdcdc] focus:border-[#6750A4] focus:outline-none text-sm mb-5"
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        value={formik.values.category}
-                    >
-                        <option value="">Select Category</option>
-                        {[].map((item: any, index) => (
-                            <option key={index} value={item.code}>
-                                {item.name}
-                            </option>
-                        ))}
-                    </select>
-
-                    <TextArea
-                        label="Description"
-                        rows={4}
-                        cols={50}
-                        id="description"
-                        formik={formik}
-                        {...formik.getFieldProps("description")}
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    <Controller
+                        name="category"
+                        control={control}
+                        render={({ field }) => (
+                            <FormSelect
+                                label="Category"
+                                id="category"
+                                htmlFor="category"
+                                options={disputeCategories}
+                                error={errors.category?.message}
+                                touched={!!errors.category}
+                                placeholder="Select dispute category"
+                                {...field}
+                            />
+                        )}
                     />
 
-                    <Button
-                        className="openSansLight text-white text-xs rounded mt-5"
-                        text={state.isSubmitting ? <Loader /> : "Send request"}
-                        ariaLabel="Send request"
-                        disabled={!formik.isValid || state.isSubmitting || state.isLoading}
-                        primary
-                        type="submit"
+                    <Controller
+                        name="description"
+                        control={control}
+                        render={({ field }) => (
+                            <FormTextArea
+                                label="Description"
+                                id="description"
+                                htmlFor="description"
+                                error={errors.description?.message}
+                                touched={!!errors.description}
+                                className="min-h-[120px]"
+                                placeholder="Provide details about your dispute"
+                                {...field}
+                            />
+                        )}
                     />
+
+
+                    <div className="w-1/3">
+                        <Button
+                            className="openSansLight text-white text-xs p-2 rounded w-full"
+                            text={state.isSubmitting ? <Loader /> : "Send request"}
+                            ariaLabel="Send request"
+                            disabled={state.isSubmitting || state.isLoading}
+                            primary
+                            type="submit"
+                        />
+                    </div>
                 </form>
             </div>
         </Modal>

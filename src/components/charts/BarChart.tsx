@@ -1,19 +1,18 @@
-import React from "react";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
   Title,
   Tooltip,
-  Legend,
 } from "chart.js";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import React from "react";
 import { Bar } from "react-chartjs-2";
-import Button from "../button";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import Link from "next/link";
-import { motion } from "framer-motion";
 
 ChartJS.register(
   CategoryScale,
@@ -93,31 +92,29 @@ const BarChart: React.FC<Props> = ({
         </>
       ) : (
         <>
-          <div className="flex justify-between">
-            <div>
-              <span className="text-grey-400 text-base font-medium">
-                Settlement Balance
-              </span>
-              <h1 className="font-semibold mt-2 text-xl text-grey-400">
+          {/* <div className="flex justify-between"> */}
+          <div className="w-full">
+            <p className="text-[#7F7F7F] text-base font-medium">
+              Settlement Balance
+              <span className="text-xs ml-1">(last 7 days):</span>
+            </p>
+
+            <div className="mt-2 w-full flex items-center justify-between">
+              <h1 className="font-semibold text-lg text-[#090727]">
                 {showBalance ? settlementBalance : "********"}
               </h1>
+
+              <Link href="/settlement-history">
+                <span className="underline text-primary text-[13px] font-medium">
+                  View all Settlements
+                </span>
+              </Link>
             </div>
-            <p className="text-xs">Showing balance for last 7 days</p>
           </div>
 
-          <div className="h-[300px]">
+          <div className="h-[370px]">
             <Bar options={chartOptions} data={chartData} />
           </div>
-
-          <Link href="/settlement-history">
-            <Button
-              text="See all settlements"
-              ariaLabel="Settlements button"
-              className="mx-auto my-[25px]"
-              medium
-              plain
-            />
-          </Link>
         </>
       )}
     </div>

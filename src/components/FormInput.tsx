@@ -106,7 +106,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                         name={name}
                         onChange={handleChange}
                         onKeyDown={handleNumberInput}
-                        className={`h-[60px] w-full rounded px-3 border ${hasError ? "border-danger" : "border-[#C4C4C43D]"} `}
+                        className={`h-[60px] w-full rounded px-3 border ${hasError ? "border-danger" : "border-[#C4C4C43D]"}`}
                         {...props}
                     />
 

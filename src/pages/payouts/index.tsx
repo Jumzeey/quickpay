@@ -152,12 +152,6 @@ const PayoutHistory = () => {
     title: 'Bank',
     render: (value: any, row: any) => capitalizeFirstLetter(row?.recipient_bank) || 'N/A',
   }, {
-    key: 'session_id',
-    title: 'Provider Reference',
-  }, {
-    key: 'session_id',
-    title: 'Provider Reference',
-  }, {
     key: 'balance_before',
     title: 'Balance Before',
   }, {

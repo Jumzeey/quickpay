@@ -23,23 +23,27 @@ export interface InterbankPayoutPayload {
 }
 
 export interface Payout {
-  id: string;
-  amount: number;
-  processing_fee?: number;
-  account_name: string;
-  account_number: string;
-  bank: string;
-  bank_code?: string;
+  id: number;
   reference: string;
+  customer_reference: string;
+  currency: string;
+  currency_symbol: string;
+  amount: string;
+  processing_fee: string;
+  session_id: null;
+  net_amount: string;
+  balance_before: string;
+  current_balance: string;
+  recipient_account_name: string;
+  recipient_account_number: string;
+  recipient_bank: string;
+  status: string;
   created_at: string;
-  updated_at?: string;
-  status: 'pending' | 'successful' | 'failed' | 'processing';
-  balance_before?: number;
-  current_balance?: number;
-  balance_after?: number;
-  narration?: string;
-  currency?: string;
-  transaction_type?: string;
+  value_date: string;
+  extra_fields: null;
+  channel: string;
+  provider_status: string;
+  failure_reason: string;
 }
 
 export interface PayoutHistoryResponse {
@@ -69,6 +73,39 @@ export interface BankResponse {
   institutionName: string;
   category: number;
   categoryCode: string;
+}
+
+export interface RequeryPayoutResponse {
+  // status: boolean;
+  // message: string;
+  // data: {
+  // };
+  Transaction: {
+    success: boolean;
+    data: {
+      reference: string;
+      amount: string;
+      charge: string;
+      status: string;
+      recipient_name: string;
+      recipient_bank_code: string;
+      recipient_account_number: string;
+      processor_reference: string;
+      merchant_reference: string;
+    };
+    message: string;
+  };
+}
+
+export async function requeryPayout(reference: string): Promise<RequeryPayoutResponse> {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.payouts.REQUERY_PAYOUT}/${reference}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
 
 export async function getPayoutHistory(params?: PayoutHistoryParams): Promise<PayoutHistoryResponse> {

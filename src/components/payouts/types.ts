@@ -1,4 +1,4 @@
-import { Bank } from "@/types/payout";
+import { BankResponse } from "@/services/payout";
 
 export interface TransferFormValues {
     currency?: string;
@@ -25,5 +25,5 @@ export interface TransferState {
     isSubmitting: boolean;
     // 0: options, 1: form, 2: cross-currency details (if applicable), 3: OTP verification
     currentStep: number; 
-    banks: Bank[];
+    banks: BankResponse[];
 }

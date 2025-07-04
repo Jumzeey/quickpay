@@ -1,0 +1,165 @@
+import { getMerchantBalance, getWalletHistory } from '@/services/transaction';
+import { notifyError } from '@/util/utils';
+import { create } from 'zustand';
+import useCurrency, { CurrencyOption } from './useCurrency';
+
+interface WalletTransaction {
+  customer_reference: string;
+  transaction_reference: string;
+  ledger_balance_before_amount: string;
+  ledger_balance_after_amount: string;
+  amount: string;
+  description: string;
+  balance_type: string;
+  transaction_type: string;
+  payment_type: string;
+  date: string;
+  status: string;
+  currency: string;
+  available_balance_before: string;
+  available_balance_after: string;
+  locked_balance_before: string;
+  locked_balance_after: string;
+}
+
+interface Pagination {
+  count: number;
+  total: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+}
+
+interface FetchWalletHistoryParams {
+  currency?: CurrencyOption;
+  page?: number;
+  start_date?: string;
+  end_date?: string;
+  account_id?: string;
+  [key: string]: any;
+}
+
+interface Account {
+  id: string;
+  account_type: 'main' | 'reserve';
+  currency: string;
+  available_balance: string;
+  actual_balance: string;
+  locked_balance: string;
+}
+
+interface MerchantBalanceResponse {
+  accounts: Account[];
+  [key: string]: any;
+}
+
+interface WalletHistoryResponse {
+  wallet: WalletTransaction[];
+  [key: string]: any;
+}
+
+interface WalletLogsState {
+  wallet: WalletTransaction[];
+  pagination: Pagination;
+  getWalletHistoryLoading: boolean;
+  fetchWalletHistory: (searchParams?: FetchWalletHistoryParams) => Promise<{ wallet: WalletTransaction[] }>;
+}
+
+const initialState: Omit<WalletLogsState, 'fetchWalletHistory'> = {
+  wallet: [],
+  pagination: {
+    count: 0,
+    total: 0,
+    per_page: 20,
+    current_page: 1,
+    last_page: 1,
+  },
+  getWalletHistoryLoading: false,
+};
+
+const useWalletLogs = create<WalletLogsState>((set, get) => ({
+  ...initialState,
+
+  fetchWalletHistory: async (searchParams?: FetchWalletHistoryParams): Promise<{ wallet: WalletTransaction[] }> => {
+    set(state => ({
+      ...state,
+      getWalletHistoryLoading: true,
+    }));
+
+    try {
+      let { currency = 'NGN', ...otherParams } = searchParams || {};
+
+      // Get currency store methods
+      const currencyStore = useCurrency.getState();
+      let accountId = currencyStore.getAccountId(currency as CurrencyOption);
+
+      // If no account ID exists for this currency, fetch it first
+      if (!accountId) {
+        console.log(`No account found for ${currency}, fetching account info...`);
+
+        const balanceResponse: MerchantBalanceResponse = await getMerchantBalance(currency);
+        const accounts = balanceResponse?.accounts || [];
+
+        // Find main and reserve accounts
+        const mainAccount = accounts.find((acc: Account) => acc.account_type === 'main');
+        const reserveAccount = accounts.find((acc: Account) => acc.account_type === 'reserve');
+
+        if (mainAccount) {
+          const accountInfo = {
+            main_account_id: mainAccount.id,
+            ...(reserveAccount && { rolling_reserve_account_id: reserveAccount.id })
+          };
+
+          // Save accounts to currency store
+          currencyStore.setAccounts(currency, accountInfo);
+          accountId = mainAccount.id;
+
+          console.log(`Account info saved for ${currency}:`, accountInfo);
+        } else {
+          throw new Error(`No main account found for currency: ${currency}`);
+        }
+      }
+
+      // Fetch wallet history with account_id
+      const params: FetchWalletHistoryParams = {
+        ...otherParams,
+        account_id: accountId,
+      };
+
+      console.log('Fetching wallet history with params:', params);
+
+      const response: WalletHistoryResponse = await getWalletHistory(params);
+      const { wallet } = response;
+      const total = wallet.length;
+
+      set(state => ({
+        ...state,
+        wallet,
+        pagination: {
+          ...state.pagination,
+          count: 20,
+          per_page: state.pagination.per_page,
+          total: total,
+          current_page: searchParams?.page || 1,
+          last_page: total ? Math.ceil(total / state.pagination.per_page) : 1,
+        },
+        getWalletHistoryLoading: false,
+      }));
+
+      return { wallet };
+    } catch (error: any) {
+      console.error('Error fetching wallet history:', error);
+      if (!error.message.includes('No transaction record found')) {
+        notifyError(error.message);
+      }
+      set(state => ({
+        ...state,
+        getWalletHistoryLoading: false,
+      }));
+      throw error;
+    }
+  },
+}));
+
+export default useWalletLogs;
+export type { FetchWalletHistoryParams, Pagination, WalletLogsState, WalletTransaction };

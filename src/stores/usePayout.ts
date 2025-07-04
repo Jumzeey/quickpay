@@ -3,6 +3,8 @@ import {
     getBankList,
     getPayoutHistory,
     InterbankPayoutPayload,
+    requeryPayout,
+    RequeryPayoutResponse,
     validateBankAccount,
     verifyPayoutOtp,
     viewPayout,
@@ -52,6 +54,8 @@ interface PayoutState {
     viewPayoutLoading: boolean;
     bankValidationLoading: boolean;
     banksLoading: boolean;
+    requeryLoading: boolean;
+    requeryData: RequeryPayoutResponse | null;
 
     // Data - no initial mock data, should come from API
     payouts: Payout[];
@@ -83,6 +87,7 @@ interface PayoutActions {
     validateBankAccount: (bankCode: string, accountNumber: string) => Promise<{ success: boolean; account_name?: string }>;
     fetchBanks: () => Promise<{ success: boolean; data?: Bank[] }>;
     exportPayoutHistory: (params?: PayoutHistoryParams) => Promise<{ success: boolean; export_link?: string }>;
+    requeryPayout: (reference: string) => Promise<{ success: boolean; data?: RequeryPayoutResponse }>;
 
     // Utility actions
     reset: () => void;
@@ -101,6 +106,8 @@ const initialState: PayoutState = {
     viewPayoutLoading: false,
     bankValidationLoading: false,
     banksLoading: false,
+    requeryLoading: false,
+    requeryData: null,
 
     // Data - no mock data, should come from API
     payouts: [],
@@ -170,7 +177,7 @@ const usePayout = create<PayoutStore>()(
                     const searchParams: PayoutHistoryParams = {
                         page: state.pagination.current_page,
                         per_page: state.pagination.per_page,
-                        currency: params.currency || 'NGN', 
+                        currency: params.currency || 'NGN',
                         ...params,
                     };
 
@@ -415,6 +422,47 @@ const usePayout = create<PayoutStore>()(
                         export_link: response.export_link,
                     };
                 } catch (error: any) {
+                    throw error;
+                }
+            },
+
+            requeryPayout: async (reference: string) => {
+                const state = get();
+
+                if (state.requeryLoading) {
+                    return { success: false };
+                }
+
+                set((state) => ({
+                    ...state,
+                    requeryLoading: true,
+                    error: null,
+                }));
+
+                try {
+                    const response = await requeryPayout(reference);
+                    console.log({ response });
+
+                    set((state) => ({
+                        ...state,
+                        requeryData: response,
+                        requeryLoading: false,
+                    }));
+
+                    if (response.Transaction.success) {
+                        await get().fetchPayoutHistory();
+                    }
+
+                    return {
+                        success: true,
+                        data: response,
+                    };
+                } catch (error: any) {
+                    set((state) => ({
+                        ...state,
+                        error: error.message || 'Failed to requery payout',
+                        requeryLoading: false,
+                    }));
                     throw error;
                 }
             },

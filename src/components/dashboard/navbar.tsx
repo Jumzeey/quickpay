@@ -103,7 +103,8 @@ const Navbar = ({
                   <Image
                     src={avatar ? avatar : "/images/dashboard/avatar2.svg"}
                     alt="Profile Picture"
-                    layout="fill"
+                    width={50}
+                    height={40}
                     className="absolute inset-0 w-full h-full object-cover"
                     sizes="(max-width: 640px) 50px"
                   />

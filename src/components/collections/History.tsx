@@ -14,7 +14,7 @@ import useClickEvent from "@/stores/useClickEvent";
 import useCollectionHistory from "@/stores/useCollectionHistory";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
-import { downloadFile, formatAmount, notifyError } from "@/util/utils";
+import { downloadFile, notifyError } from "@/util/utils";
 import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -68,11 +68,11 @@ const CollectionHistory = () => {
     }, {
         key: 'amount',
         title: 'Amount',
-        render: (value: any, row: any) => formatAmount(row?.amount) || 'N/A',
+        render: (value: any, row: any) => row?.amount || 'N/A',
     }, {
-        key: 'processing_fee',
-        title: 'Charge',
-        render: (value: any, row: any) => formatAmount(row?.processing_fee) || 'N/A',
+        key: 'channel',
+        title: 'Transaction Type',
+        render: (value: any, row: any) => row?.channel || 'N/A',
     }, {
         key: 'created_at',
         title: 'Date',
@@ -86,21 +86,26 @@ const CollectionHistory = () => {
         title: 'Session ID',
         render: (value: any, row: any) => row?.session_id || 'N/A',
     }, {
-        key: 'payment_method',
+        key: 'channel',
         title: 'Payment Method',
-        render: (value: any, row: any) => row?.payment_method || 'N/A',
+        render: (value: any, row: any) => row?.channel || 'N/A',
     }, {
         key: 'sender_name',
         title: 'Sender Name',
         render: (value: any, row: any) => row?.sender?.sender_name || 'N/A'
     }, {
-        key: 'balance_before',
-        title: 'Balance Before',
-        render: (value: any, row: any) => formatAmount(row?.balance_before) || 'N/A'
-    }, {
-        key: 'balance_after',
-        title: 'Balance After',
-        render: (value: any, row: any) => formatAmount(row?.balance_after) || 'N/A'
+        key: 'gateway_message',
+        title: 'Gateway Message',
+        render: (value: any, row: any) => {
+            if (row?.status === 'Successful') {
+                return 'Successful';
+            }
+            if (!row?.gateway_message) {
+                return 'N/A';
+            }
+
+            return row?.gateway_message?.message || `${row?.gateway_message?.code} - ${row?.gateway_message?.message}` || 'N/A';
+        }
     }];
 
     const toggleModal = (name: keyof Pick<CollectionsProps, 'showCollections' | 'showFilterStatus' | 'showFilterHistory' | 'viewTransactionMeta'>) => {
@@ -139,8 +144,6 @@ const CollectionHistory = () => {
 
     const totalPages = pagination?.last_page;
     const lastPage = pagination?.last_page;
-
-    console.log({ pagination })
 
     usePaginatedEffect(
         fetchCollectionHistory,
@@ -256,7 +259,7 @@ const CollectionHistory = () => {
                                 columns={columns}
                                 data={collections}
                                 copyId
-                                primaryBtnContent={
+                                primaryBtnContent={(row: any) => (
                                     <Button
                                         text="Repush Notification"
                                         ariaLabel="Download receipt button"
@@ -264,8 +267,8 @@ const CollectionHistory = () => {
                                         onClick={() => null}
                                         primary
                                     />
-                                }
-                                secondaryBtnContent={
+                                )}
+                                secondaryBtnContent={(row: any) => (
                                     <div className="relative block border border-[#EFF7FE] rounded-lg">
                                         <button
                                             onClick={() => toggleModal('viewTransactionMeta')}
@@ -274,7 +277,7 @@ const CollectionHistory = () => {
                                             View Transaction Meta
                                         </button>
                                     </div>
-                                }
+                                )}
                             />
                             <Pagination
                                 lastPage={lastPage}

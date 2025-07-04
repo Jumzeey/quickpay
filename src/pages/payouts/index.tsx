@@ -97,7 +97,7 @@ const PayoutHistory = () => {
     },
     {
       enabled: Boolean(mounted && selectedCurrency),
-      onSuccess: (data) => {
+      onSuccess: () => {
         console.log('✅ Payout history fetched successfully');
       },
       onError: (error) => {
@@ -107,6 +107,7 @@ const PayoutHistory = () => {
       cacheTime: state.isInitiateTransferModalOpen ? 0 : 3000,
     }
   );
+
 
   const columns = [{
     key: 'amount',
@@ -151,6 +152,9 @@ const PayoutHistory = () => {
     key: 'recipient_bank',
     title: 'Bank',
     render: (value: any, row: any) => capitalizeFirstLetter(row?.recipient_bank) || 'N/A',
+  }, {
+    key: 'session_id',
+    title: 'Provider Reference',
   }, {
     key: 'balance_before',
     title: 'Balance Before',
@@ -279,15 +283,6 @@ const PayoutHistory = () => {
     }
   };
 
-  const handleAction = (action: string) => {
-    console.log(`${action} for transaction:`);
-
-    // Close dropdown after action
-    setState(prevState => ({
-      ...prevState,
-      isMoreActionsOpen: false,
-    }));
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -402,7 +397,7 @@ const PayoutHistory = () => {
               data={payouts}
               copyId
               copyField='Transaction Reference'
-              primaryBtnContent={(row: any) => (
+              primaryBtnContent={() => (
                 <Button
                   text={
                     <>

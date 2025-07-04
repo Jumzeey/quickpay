@@ -84,7 +84,7 @@ export const yourBusiness = [
   //   title: "Settlement Accounts",
   // },
   // {
-  //   href: "/your-business/settlement-history",
+  //   href: "/your-business/settlements",
   //   icon: "history",
   //   title: "Settlement History",
   // },

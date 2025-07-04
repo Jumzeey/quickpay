@@ -1,72 +1,65 @@
-import Sidebar from "@/components/onboarding/sidebar";
 import Button from "@/components/button";
-import Image from "next/image";
-import useAuthentication from "@/stores/useAuthentication";
-import { useRouter } from "next/router";
-import Link from "next/link";
-import * as Yup from "yup";
-import { notifyError, notifySuccess } from "@/util/utils";
-import { useFormik } from "formik";
-import { useState } from "react";
-import FloatingLabelInput from "@/components/floating-input";
-import NoSSR from "@/components/noSSR";
+import FormInput from "@/components/FormInput";
 import Loader from "@/components/loader";
+import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import useAuthentication from "@/stores/useAuthentication";
+import { notifyError, notifySuccess } from "@/util/utils";
 import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { Controller } from "react-hook-form";
+import * as Yup from "yup";
 import { MultiStepAnimation } from "@/animations";
+import { AuthFooter } from "@/components/AuthFooter";
 
-const ResetPasswordPage: React.FC = () => {
+interface FormValues {
+  password: string;
+  password_confirmation: string;
+}
+
+const validationSchema = Yup.object().shape({
+  password: Yup.string()
+    .required("Password is required!")
+    .matches(
+      /[!@#$%^&*(),.?":{}|<>=-]/,
+      "Password must contain at least one symbol"
+    )
+    .matches(/\d/, "Password must contain at least one number")
+    .min(8, "Password must be at least 8 characters long")
+    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+    .matches(/[A-Z]/, "Password must contain at least one uppercase letter"),
+  password_confirmation: Yup.string()
+    .oneOf([Yup.ref("password")], "Passwords must match")
+    .required("Confirm Password is required"),
+});
+
+const ResetPassword: React.FC = () => {
   const router = useRouter();
-  const { newPassword } = useAuthentication();
+  const { resetPassword } = useAuthentication();
   const [isLoading, setIsLoading] = useState(false);
 
-  const passwordValidation = Yup.string()
-    .required("Password is required!")
-    .matches(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one symbol.")
-    .matches(/\d/, "Password must contain at least one number.")
-    .min(12, "Password must be at least 12 characters long")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-
-  const formik = useFormik({
-    initialValues: {
-      email: "",
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useFormValidation<FormValues>(validationSchema, {
+    defaultValues: {
       password: "",
       password_confirmation: "",
     },
-    validationSchema: Yup.object().shape({
-      email: Yup.string()
-        .email("Enter a valid email")
-        .matches(
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-          "Email must have a valid provider"
-        )
-        .required("Email address is required!"),
-      password: passwordValidation,
-      password_confirmation: Yup.string()
-        .oneOf([Yup.ref('password')], 'Passwords must match')
-        .required('Confirm Password is required'),
-    }),
-    validateOnMount: true,
-    onSubmit: async (values) => {
-      handleSubmit(values);
-    },
+    mode: "onChange",
   });
 
-  const handleSubmit = async (values: any) => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
-    const payload = {
-      email: values.email,
-      password: values.password,
-      password_confirmation: values.password_confirmation,
-    };
     try {
-      const response = await newPassword(payload);
+      const response = await resetPassword(values);
       notifySuccess(response.message);
-      setIsLoading(false);
-      router.push({
-        pathname: "/onboarding/sign-in",
-      });
+      router.push("/onboarding/sign-in");
     } catch (error: any) {
       notifyError(error.message);
     } finally {
@@ -75,86 +68,105 @@ const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="flex w-full min-h-screen justify-center text-white bg-ramp">
-      <WebPageTitle title="Login | Ramp Merchant Portal" />
-      {/* <Sidebar /> */}
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
+      <WebPageTitle title="Reset Password | Ramp Merchant Portal" />
       <NoSSR>
-        <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
-          <div className="flex w-full justify-end">
-            <h6 className="font-thin text-sm">
-              Already have an account?{" "}
-              <Link
-                href="/onboarding/sign-in"
-                className="font-medium text-white underline-animation"
-              >
-                Sign In
-              </Link>
-            </h6>
-          </div>
-          <motion.div
-            className="mt-48"
-            variants={MultiStepAnimation}
-            initial="hidden"
-            animate="visible"
-          >
-            <div>
-              <h1 className="font-bold text-2xl">Reset Password</h1>
-              <p className="font-light text-sm mt-2 mb-2">
-                Kindly provide your new password
-              </p>
-              <form onSubmit={formik.handleSubmit} className="mt-10">
-                <FloatingLabelInput
-                  label="Email Address"
-                  id="email"
-                  type="email"
-                  htmlFor="email"
-                  formik={formik}
-                  {...formik.getFieldProps("email")}
-                />
-                <FloatingLabelInput
-                  label="Password"
-                  id="password"
-                  type="password"
-                  htmlFor="password"
-                  formik={formik}
-                  {...formik.getFieldProps("password")}
-                />
-                <FloatingLabelInput
-                  label="Confirm Password"
-                  id="password_confirmation"
-                  type="password"
-                  htmlFor="password_confirmation"
-                  formik={formik}
-                  {...formik.getFieldProps("password_confirmation")}
-                />
-
-                <div className="flex justify-center mt-12">
-                  <Button
-                    text={isLoading ? <Loader /> : "Reset Password"}
-                    ariaLabel="Reset Password Button"
-                    disabled={isLoading}
-                    primary
+        <motion.div
+          className="flex flex-col items-center justify-center"
+          variants={MultiStepAnimation}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="w-full max-w-md">
+            {/* Card Container */}
+            <div className="bg-white border border-[#C4C4C466] rounded-lg overflow-hidden">
+              {/* Logo Section */}
+              <div className="px-8 pt-8 pb-4 bg-auth-header">
+                <div className="flex items-center">
+                  <Image
+                    src="/images/ramp-logo.svg"
+                    alt="Ramp"
+                    width={80}
+                    height={40}
+                    priority
+                    className="h-10 w-auto"
                   />
                 </div>
-              </form>
-              <div className="flex justify-center mt-5">
-                <Image
-                  src={"/images/lock.svg"}
-                  alt={"locked"}
-                  width={10}
-                  height={24}
-                  priority
-                />
-                <span className="ml-3 infoGrey text-xs">
-                  Your Info is safely secured
-                </span>
+              </div>
+
+              {/* Reset Password Form */}
+              <div className="px-8 pb-8 mt-12">
+                <h2 className="text-lg font-extrabold text-[#184078] mb-8">
+                  Create new password
+                </h2>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <Controller
+                    name="password"
+                    control={control}
+                    render={({ field }) => (
+                      <FormInput
+                        label="New Password"
+                        id="password"
+                        type="password"
+                        htmlFor="password"
+                        error={errors.password?.message}
+                        touched={!!errors.password}
+                        {...field}
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    name="password_confirmation"
+                    control={control}
+                    render={({ field }) => (
+                      <FormInput
+                        label="Confirm Password"
+                        id="password_confirmation"
+                        type="password"
+                        htmlFor="password_confirmation"
+                        error={errors.password_confirmation?.message}
+                        touched={!!errors.password_confirmation}
+                        {...field}
+                      />
+                    )}
+                  />
+
+                  <div className="w-1/2 pt-5">
+                    <Button
+                      type="submit"
+                      className="w-full text-sm font-medium rounded"
+                      text={isLoading ? <Loader /> : "Reset Password"}
+                      ariaLabel="Reset Password Button"
+                      disabled={!isValid || isLoading}
+                      primary
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Sign In Section */}
+              <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
+                <p className="text-sm text-[#7F7F7F] font-semibold">
+                  Remember your password?{" "}
+                  <Link
+                    href="/onboarding/sign-in"
+                    className="text-primary hover:text-blue-700"
+                  >
+                    Sign in
+                  </Link>
+                </p>
               </div>
             </div>
-          </motion.div>
-        </div>
+
+            {/* Footer */}
+            <AuthFooter />
+          </div>
+        </motion.div>
       </NoSSR>
     </div>
   );
 };
 
-export default ResetPasswordPage;
+export default ResetPassword;

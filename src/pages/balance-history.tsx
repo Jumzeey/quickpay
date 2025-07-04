@@ -12,8 +12,9 @@ import Pagination from '@/components/pagination';
 import { usePaginatedStoreQuery } from '@/hooks/useOptimizedFetch';
 import useCurrency from '@/stores/useCurrency';
 import useFilter from '@/stores/useFilter';
-import useTransaction from '@/stores/useTransaction';
+import useWalletLogs from '@/stores/useWalletLogs';
 import {
+  capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
   formatDate,
   formatDateTime2,
@@ -36,7 +37,7 @@ const actionMap: Record<string, string> = {
 const WalletHistory = () => {
   const { selectedCurrency } = useCurrency();
   const { fetchWalletHistory, wallet, pagination, getWalletHistoryLoading } =
-    useTransaction();
+    useWalletLogs();
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = pagination?.last_page;
@@ -66,7 +67,6 @@ const WalletHistory = () => {
     setFilter(newFilter);
     setCurrentPage(1);
     if (mounted) {
-      // await refetchWalletHistory();
       await _getHistory(newFilter);
     }
   };
@@ -104,14 +104,14 @@ const WalletHistory = () => {
     render: (value: any, row: any) => actionMap[row?.transaction_type] || capitalizeFirstLetterOfEachWord(row?.transaction_type?.replaceAll('_', ' ')) || 'N/A',
   },
   {
-    key: 'balance_before_amount',
+    key: 'available_balance_before',
     title: 'Previous Balance',
-    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_before_amount) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.available_balance_before) || 'N/A',
   },
   {
-    key: 'balance_after_amount',
+    key: 'available_balance_after',
     title: 'Current Balance',
-    render: (value: any, row: any) => replaceCurrencySymbol(row?.balance_after_amount) || 'N/A',
+    render: (value: any, row: any) => replaceCurrencySymbol(row?.available_balance_after) || 'N/A',
   },
   {
     key: 'previous_ledger_balance',
@@ -148,13 +148,21 @@ const WalletHistory = () => {
         </p>
       )
     },
+  }, {
+    key: 'description',
+    title: 'Description',
+    render: (value: any, row: any) => row?.description || 'N/A',
+  }, {
+    key: 'status',
+    title: 'Status',
+    render: (value: any, row: any) => capitalizeFirstLetter(row?.status) || 'N/A',
   }];
 
   const {
     refetch: refetchWalletHistory,
     invalidate: invalidateWalletHistory
   } = usePaginatedStoreQuery(
-    useTransaction,
+    useWalletLogs,
     'fetchWalletHistory',
     {
       currency: selectedCurrency,

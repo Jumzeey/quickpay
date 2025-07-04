@@ -1,3 +1,4 @@
+import ComingSoon from "@/components/coming-soon";
 import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
@@ -254,6 +255,10 @@ const ChargeBacks = () => {
             </div>
         ),
     }];
+
+    if (true) {
+        return <ComingSoon />
+    }
 
     return (
         <>

@@ -76,6 +76,56 @@ body,
   color: #4a4aff;
 }
 
+.bg-auth-header {
+  background-image: url("/images/mesh-gradient.png");
+  backdrop-filter: blur(40px);
+  background-color: #f6f4f433;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  /* position: absolute;
+  width: 406px;
+  height: 80px;
+  left: 517px;
+  top: 50px; */
+
+  /* background: linear-gradient(0deg, rgba(246, 244, 244, 0.2), rgba(246, 244, 244, 0.2)), url(/images/mesh-gradient.png); */
+  /* border-width: 1px 1px 0px 1px;
+  border-style: solid; */
+  /* border-color: rgba(196, 196, 196, 0.4); */
+  /* backdrop-filter: blur(2px); */
+  /* border-radius: 10px 10px 0px 0px; */
+}
+
+.bg-auth {
+  /* box-sizing: border-box; */
+  /* position: absolute; */
+  /* width: 100%;
+  height: 1024px; */
+  left: 0px;
+  top: 0px;
+
+  /* bg-gray-50 bg-opacity-10 bg-[url('/images/auth-background.png')] */
+  background-image: url("/images/auth-background.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  /* background-color: #18407846; */
+  /* background: linear-gradient(0deg, rgba(24, 64, 120, 0.4), rgba(24, 64, 120, 0.4)),
+    url(/images/auth-background.png); */
+  /* opacity: 0.1; */
+  border-bottom: 5px solid #184078;
+  /* 
+  position: absolute;
+  width: 1440px;
+  height: 1024px;
+  left: 0px;
+  top: 0px; */
+
+  /* background: url(mesh-gradient.png); */
+}
+
 .bg-sarepay {
   background-image: url("/images/background-pattern.svg");
   background-color: #042468;
@@ -284,4 +334,19 @@ body,
 .customPassword {
   margin: 0;
   padding: 0;
+}
+
+.react-tel-input input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  border-radius: 5px;
+  padding-left: 42px;
+}
+
+.react-tel-input .flag-dropdown {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0;
 }

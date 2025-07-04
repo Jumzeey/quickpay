@@ -1,10 +1,10 @@
-import React, { ChangeEvent } from "react";
-import { Chart as ChartJS, defaults } from "chart.js/auto";
+import { defaults } from "chart.js/auto";
+import { motion } from "framer-motion";
+import { ChangeEvent } from "react";
 import { Line } from "react-chartjs-2";
-import Select from "../select";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { motion } from "framer-motion";
+import Select from "../select";
 
 defaults.maintainAspectRatio = false;
 defaults.responsive = true;
@@ -100,8 +100,8 @@ const LineChart = ({
       ) : (
         <>
           <div className="flex justify-between items-center">
-            <span className="text-base font-medium text-grey-400">
-              Pay Outs and Pay Ins
+            <span className="text-base font-medium text-[#7F7F7F]">
+              Disbursement and Collections
             </span>
             <Select
               options={secondOptions}

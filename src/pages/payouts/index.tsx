@@ -155,6 +155,9 @@ const PayoutHistory = () => {
     key: 'session_id',
     title: 'Provider Reference',
   }, {
+    key: 'session_id',
+    title: 'Provider Reference',
+  }, {
     key: 'balance_before',
     title: 'Balance Before',
   }, {

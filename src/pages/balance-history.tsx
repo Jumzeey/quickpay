@@ -82,20 +82,19 @@ const WalletHistory = () => {
     render: (value: any, row: any) => replaceCurrencySymbol(row?.amount) || 'N/A',
   },
   {
-    key: 'date',
-    title: 'Date',
+    key: 'timestamp',
+    title: 'Time Stamp',
     render: (value: any, row: any) => {
       if (!row?.date) return 'N/A';
-      try {
-        const date = new Date(row.date);
-        return date.toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric'
-        });
-      } catch (error) {
-        return row.date || 'N/A';
-      }
+      const [date, time] = formatDateTime2(row.date);
+
+      return (
+        <p className="text-[#090727] text-sm font-medium">
+          {date}
+
+          <span className="ml-1 text-[#7F7F7F] text-xs">({time})</span>
+        </p>
+      )
     },
   },
   {
@@ -133,22 +132,24 @@ const WalletHistory = () => {
     title: 'Current Locked Balance',
     render: (value: any, row: any) => replaceCurrencySymbol(row?.locked_balance_after) || 'N/A'
   },
+  // {
+  //   key: 'date',
+  //   title: 'Date',
+  //   render: (value: any, row: any) => {
+  //     if (!row?.date) return 'N/A';
+  //     try {
+  //       const date = new Date(row.date);
+  //       return date.toLocaleDateString('en-US', {
+  //         month: 'long',
+  //         day: 'numeric',
+  //         year: 'numeric'
+  //       });
+  //     } catch (error) {
+  //       return row.date || 'N/A';
+  //     }
+  //   },
+  // },
   {
-    key: 'timestamp',
-    title: 'Time Stamp',
-    render: (value: any, row: any) => {
-      if (!row?.date) return 'N/A';
-      const [date, time] = formatDateTime2(row.date);
-
-      return (
-        <p className="text-[#090727] text-sm font-medium">
-          {date}
-
-          <span className="ml-1 text-[#7F7F7F] text-xs">({time})</span>
-        </p>
-      )
-    },
-  }, {
     key: 'description',
     title: 'Description',
     render: (value: any, row: any) => row?.description || 'N/A',

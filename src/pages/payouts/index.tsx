@@ -97,7 +97,7 @@ const PayoutHistory = () => {
     },
     {
       enabled: Boolean(mounted && selectedCurrency),
-      onSuccess: () => {
+      onSuccess: (data) => {
         console.log('✅ Payout history fetched successfully');
       },
       onError: (error) => {
@@ -108,7 +108,6 @@ const PayoutHistory = () => {
     }
   );
 
-
   const columns = [{
     key: 'amount',
     title: 'Amount',
@@ -117,9 +116,6 @@ const PayoutHistory = () => {
     key: 'recipient_account_name',
     title: 'Account Name',
     render: (value: any, row: any) => capitalizeFirstLetter(row?.recipient_account_name) || 'N/A',
-  }, {
-    key: 'recipient_account_number',
-    title: 'Account Number',
   }, {
     key: 'reference',
     title: 'Transaction Reference',
@@ -133,6 +129,10 @@ const PayoutHistory = () => {
         )}
       </p>
     ),
+  }, {
+    key: 'status',
+    title: 'Status',
+    render: (value: any, row: any) => row?.status || 'N/A'
   }, {
     key: 'created_at',
     title: 'Time Stamp',
@@ -153,8 +153,8 @@ const PayoutHistory = () => {
     title: 'Bank',
     render: (value: any, row: any) => capitalizeFirstLetter(row?.recipient_bank) || 'N/A',
   }, {
-    key: 'session_id',
-    title: 'Provider Reference',
+    key: 'recipient_account_number',
+    title: 'Account Number',
   }, {
     key: 'balance_before',
     title: 'Balance Before',
@@ -171,18 +171,9 @@ const PayoutHistory = () => {
     key: 'channel',
     title: 'Channel',
   }, {
-    key: 'status',
-    title: 'Transaction Status',
-    render: (value: any, row: any) => {
-      if (row?.status === 'Failed' && row?.failure_reason) {
-        return (
-          <div className="text-[#FD2727] text-sm font-medium">
-            Failed: {row.failure_reason}
-          </div>
-        );
-      }
-      return row?.status || 'N/A';
-    },
+    key: 'failure_reason',
+    title: 'Failure Reason',
+    render: (value: any, row: any) => row?.failure_reason || 'N/A',
   }, {
     key: 'session_id',
     title: 'Provider Reference',
@@ -283,6 +274,15 @@ const PayoutHistory = () => {
     }
   };
 
+  const handleAction = (action: string) => {
+    console.log(`${action} for transaction:`);
+
+    // Close dropdown after action
+    setState(prevState => ({
+      ...prevState,
+      isMoreActionsOpen: false,
+    }));
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -354,7 +354,7 @@ const PayoutHistory = () => {
 
           <CurrencySwitcher contentClassName="!h-10" className="!h-10" />
 
-          <ActionButton
+          {/* <ActionButton
             ariaLabel='Filter by date button'
             text='Filter By Date'
             onClick={toggleFilter}
@@ -366,7 +366,7 @@ const PayoutHistory = () => {
             text='Export'
             onClick={handleExport}
             className="!h-10"
-          />
+          /> */}
 
           <div className='relative flex justify-end mt-4 md:mt-0'>
             <Dropdown onOpen={showFilter} onClose={toggleFilter}>
@@ -381,23 +381,44 @@ const PayoutHistory = () => {
           <TableSkeleton />
         ) : payouts?.length !== 0 ? (
           <>
-            <div className="relative w-min my-7">
-              <input
-                type="text"
-                id="searchInput"
-                name="searchInput"
-                placeholder="Search Reference Number..."
-                onChange={handleParamsChange}
-                className="h-[60px] w-full md:w-[376px] outline-none bg-[#D9D9D90D] font-medium border border-[#C4C4C43D] text-[#7F7F7F] text-sm px-3 rounded-md"
-              />
-              <Icon name="search" className="absolute top-[35%] right-4 size-5 text-[#7F7F7F]" />
+            <div className="flex flex-col my-7 md:flex-row justify-between">
+              <div className="relative w-min">
+                <input
+                  type="text"
+                  id="searchInput"
+                  name="searchInput"
+                  placeholder="Search Reference Number..."
+                  onChange={handleParamsChange}
+                  className="h-[60px] w-full md:w-[376px] outline-none bg-[#D9D9D90D] font-medium border border-[#C4C4C43D] text-[#7F7F7F] text-sm px-3 rounded-md"
+                />
+                <Icon name="search" className="absolute top-[35%] right-4 size-5 text-[#7F7F7F]" />
+              </div>
+
+              <div className="flex items-center justify-between gap-4 mt-5 md:mt-0">
+                <button
+                  onClick={toggleFilter}
+                  aria-label="Filter by date"
+                  className="flex items-center justify-center gap-2 bg-[#D9D9D91A] border border-[#C4C4C452] rounded-md text-sm font-medium text-[#7F7F7F] py-2 min-w-[112px] px-5 h-full"
+                >
+                  Filter By Date
+                  <Icon name="filter" className="size-4 text-[#7F7F7F]" />
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="flex items-center justify-center gap-2 bg-[#D9D9D91A] border border-[#C4C4C452] rounded-md text-sm font-medium text-[#7F7F7F] py-2 min-w-[112px] h-full"
+                >
+                  Export
+                  <Icon name="export" className="size-4 text-[#7F7F7F]" />
+                </button>
+              </div>
             </div>
+
             <DynamicTable
               columns={columns}
               data={payouts}
               copyId
               copyField='Transaction Reference'
-              primaryBtnContent={() => (
+              primaryBtnContent={(row: any) => (
                 <Button
                   text={
                     <>

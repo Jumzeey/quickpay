@@ -156,6 +156,9 @@ const PayoutHistory = () => {
     key: 'recipient_account_number',
     title: 'Account Number',
   }, {
+    key: 'session_id',
+    title: 'Provider Reference',
+  }, {
     key: 'balance_before',
     title: 'Balance Before',
   }, {

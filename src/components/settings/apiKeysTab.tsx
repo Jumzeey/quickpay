@@ -1,6 +1,7 @@
 import ActionButton from "@/components/action-button";
 import Icon from "@/components/icon";
 import Table from "@/components/table";
+import { useEffectFetch } from "@/hooks/useEffectFetch";
 import {
   generateAccessKey,
   generateEncrytionKey,
@@ -9,7 +10,6 @@ import {
 import { capitalizeFirstLetterOfEachWord, copyToClipboard, notifyError, notifySuccess } from "@/util/utils";
 import { useState } from "react";
 import EmptyState from "../EmptyState";
-import { useEffectFetch } from "@/hooks/useEffectFetch";
 
 const columns = ["No.", "Key Type", "Key Value"];
 
@@ -30,18 +30,16 @@ const ApiKeysTab = () => {
     encryption_iv: "",
   });
 
-  // Use optimized fetch instead of useEffect
-  const { 
-    data, 
-    loading: isLoading, 
-    error, 
-    refetch 
+  const {
+    data,
+    loading: isLoading,
+    error,
+    refetch
   } = useEffectFetch<APICredentials>(
     getAPICredentials,
-    [], // No dependencies, fetch on mount
+    [],
     {
       onSuccess: (response) => {
-        console.log({ response });
         setApiCredentials(response);
       },
       onError: (error) => {
@@ -99,7 +97,7 @@ const ApiKeysTab = () => {
             disabled={keyLoading || isLoading}
             className="!h-10 !px-4 !font-medium"
           />
-          
+
           <ActionButton
             ariaLabel="Generate New Encryption Keys button"
             iconName={encryptionLoading ? "loading" : undefined}
@@ -170,36 +168,35 @@ const ApiKeysTab = () => {
               {Object.entries(apiCredentials).map(([key, value], index) => (
                 <tr
                   key={key}
-                  className={`${
-                  index !== Object.entries(apiCredentials).length - 1 
-                    ? "[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700" 
-                    : ""
-                  } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
+                  className={`${index !== Object.entries(apiCredentials).length - 1
+                      ? "[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700"
+                      : ""
+                    } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
                 >
                   <td className="text-sm px-5 py-6 text-gray-900 dark:text-gray-100">
-                  {index + 1}.
+                    {index + 1}.
                   </td>
                   <td className="text-sm px-5 py-6 font-medium text-gray-900 dark:text-gray-100">
-                  {capitalizeFirstLetterOfEachWord(key.replace("_", " "))}
+                    {capitalizeFirstLetterOfEachWord(key.replace("_", " "))}
                   </td>
                   <td className="text-sm px-5 py-6">
-                  <div className="flex items-center gap-3">
-                    <span 
-                    className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-3 py-1 max-w-md truncate text-gray-900 dark:text-gray-100"
-                    title={value || 'N/A'}
-                    >
-                    {value || "N/A"}
-                    </span>
-                    
-                    {value && (
-                    <Icon
-                      name="copy3"
-                      size="15"
-                      className="cursor-pointer text-[#7F7F7F] hover:text-[#164988] dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
-                      onClick={() => copyToClipboard(value)}
-                    />
-                    )}
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-3 py-1 max-w-md truncate text-gray-900 dark:text-gray-100"
+                        title={value || 'N/A'}
+                      >
+                        {value || "N/A"}
+                      </span>
+
+                      {value && (
+                        <Icon
+                          name="copy3"
+                          size="15"
+                          className="cursor-pointer text-[#7F7F7F] hover:text-[#164988] dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+                          onClick={() => copyToClipboard(value)}
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

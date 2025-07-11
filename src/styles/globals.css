@@ -228,21 +228,6 @@ body,
   height: 100vh;
 }
 
-.upload-container {
-  border: 2px dotted #ccc;
-  padding: 15px;
-  border-radius: 5px;
-}
-.uploadP {
-  color: #25213b66;
-}
-.uploadButton {
-  border: 1px solid #042468b2;
-  color: #042468b2;
-  padding: 0.5rem;
-  border-radius: 5px;
-}
-
 .class-0 {
   font-weight: 700;
 }

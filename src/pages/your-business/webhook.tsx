@@ -1,164 +1,150 @@
-import React, { useEffect, useState } from "react";
-import Card from "@/components/Card";
-import Layout from "@/components/layout";
-import { notifyError, notifySuccess } from "@/util/utils";
-import {
-  updateWebhookCredentials,
-  generateWebhookCredentials,
-} from "@/services/webhook";
-import Image from "next/image";
-import { copyToClipboard } from "@/util/utils";
 import Button from "@/components/button";
-import WebPageTitle from "@/components/WebPageTitle";
-import Loader from "@/components/loader";
 import CardSkeleton from "@/components/card-skeleton";
+import FormInput from "@/components/FormInput";
+import Loader from "@/components/loader";
+import Switch from "@/components/Switch";
+import { useAsyncFetch } from "@/hooks/useAsyncFetch";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import {
+  generateWebhookCredentials,
+  updateWebhookCredentials,
+} from "@/services/webhook";
+import { notifyError, notifySuccess } from "@/util/utils";
+import { useState } from "react";
+import { Controller } from "react-hook-form";
+import * as Yup from "yup";
 
-type UpdateWebhook = {
+interface FormValues {
   webhook_url: string;
   enable_webhook: boolean;
-};
+}
+
+const validationSchema = Yup.object().shape({
+  webhook_url: Yup.string()
+    .required("Webhook URL is required!")
+    .matches(
+      /^(?!https?:\/\/).*$/,
+      "Please enter URL without https:// - it will be added automatically"
+    ),
+  enable_webhook: Yup.boolean(),
+});
 
 const Webhook = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [webhookLoading, setWebhookLoading] = useState(false);
-  const [webhook, setWebhook] = useState<UpdateWebhook>({
-    webhook_url: "",
-    enable_webhook: false,
+ 
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid },
+  } = useFormValidation<FormValues>(validationSchema, {
+    defaultValues: {
+      webhook_url: "",
+      enable_webhook: false,
+    },
+    mode: "onChange",
   });
 
-  const removeHTTP = (url: string) => {
-    return url.replace(/^https?:\/\//, "");
-  };
-  const newUrl = removeHTTP(webhook?.webhook_url || "");
+  const { data, loading: webhookLoading } = useAsyncFetch({
+    key: 'webhook-credentials',
+    fn: async () => {
+      const response = await generateWebhookCredentials();
+      return response || {};
+    },
+    options: {
+      onSuccess: (data) => {
+        const cleanUrl = data.webhook_url?.replace(/^https?:\/\//, "");
+        reset({
+          webhook_url: cleanUrl || "",
+          enable_webhook: data.enable_webhook || false,
+        });
+      },
+      onError: (error) => notifyError(error.message),
+    }
+  });
 
-  const handleCheckboxChange = () => {
-    setWebhook(prevWebhook => ({
-      ...prevWebhook,
-      enable_webhook: !prevWebhook.enable_webhook,
-    }));
-  };
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    setWebhook(prevWebhook => ({
-      ...prevWebhook,
-      webhook_url: value,
-    }));
-  };
-
-  useEffect(() => {
-    const fetchWebhook = async () => {
-      setWebhookLoading(true);
-      try {
-        const response = await generateWebhookCredentials();
-        updateWebhook(response);
-        setWebhookLoading(false);
-      } catch (error: any) {
-        notifyError(error.message);
-        setWebhookLoading(false);
-      }
-    };
-    fetchWebhook();
-  }, []);
-
-  useEffect(() => {}, [webhook]);
-
-  const handleUpdateWebhook = async () => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
-    const webhookUrl = webhook.webhook_url?.trim();
-    const cleanWebhookUrl = webhookUrl.startsWith("https://")
-      ? webhookUrl.slice(8)
-      : webhookUrl;
-
-    const payload = {
-      webhook_url: `https://${cleanWebhookUrl}`,
-      enable_webhook: webhook.enable_webhook,
-    };
     try {
+      const webhookUrl = values.webhook_url?.trim();
+      const payload = {
+        webhook_url: `https://${webhookUrl}`,
+        enable_webhook: values.enable_webhook,
+      };
+
       const response = await updateWebhookCredentials(payload);
       notifySuccess("Webhook details updated");
-      updateWebhook(response);
-      setIsLoading(false);
+
+      // Update form with payload
+      const cleanUrl = payload.webhook_url?.replace(/^https?:\/\//, "");
+      reset({
+        webhook_url: cleanUrl || "",
+        enable_webhook: payload.enable_webhook,
+      });
     } catch (error: any) {
-      setIsLoading(false);
       notifyError("Enter a valid redirect URL!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateWebhook = (values: any) => {
-    setWebhook(prev => ({ ...prev, ...values }));
-  };
-
   return (
-    <Layout pageTitle="Webhook" icon="webhook">
-      <WebPageTitle title="Webhook | Ramp Merchant Portal" />
-      <div className="p-4 sm:p-6 lg:p-12 xl:p-36">
-        {webhookLoading ? (
-          <CardSkeleton />
-        ) : (
-          <Card>
-            <div className="mt-4 sm:mt-6">
-              <input
-                type="checkbox"
-                id="checkbox"
-                checked={webhook.enable_webhook}
-                onChange={handleCheckboxChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+    <div className="mt-10 w-full sm:w-[45%]">
+      {webhookLoading ? (
+        <CardSkeleton />
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <p className="text-[#7F7F7F] font-medium text-[13px]">
+            Setup your custom Webhook URL
+            </p>
+            
+          <Controller
+            name="webhook_url"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Webhook URL"
+                id="webhook_url"
+                type="text"
+                htmlFor="webhook_url"
+                error={errors.webhook_url?.message}
+                touched={!!errors.webhook_url}
+                labelLeftElement={(
+                  <div className="flex items-center">
+                    <Controller
+                      name="enable_webhook"
+                      control={control}
+                      render={({ field }) => (
+                        <Switch
+                          id="enable_webhook"
+                          enabled={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      )}
+                    />
+                    <label htmlFor="enable_webhook" className="ml-2 text-xs text-[#7F7F7F] font-medium">
+                      Enable Webhook
+                    </label>
+                  </div>
+                )}
+                {...field}
               />
-              <label
-                htmlFor="checkbox"
-                className="ml-2 text-gray-700 font-normal"
-              >
-                Enable Webhook
-              </label>
-            </div>
+            )}
+          />
 
-            <div className="flex flex-col sm:flex-row items-center rounded-lg mt-4 sm:mt-6">
-              <span className="bg-[#D3D3D3] sarepayPrimary font-semibold px-3 py-2 w-full sm:w-auto text-center">
-                URL
-              </span>
-              <div className="relative flex-1 bg-[#EEEEEE] text-gray-700 font-mono flex items-center">
-                <span className="absolute text-base left-3 text-gray-500 top-1/2 transform -translate-y-1/2">
-                  Https://
-                </span>
-                <input
-                  type="text"
-                  className="bg-[#EEEEEE] border-none webhookInput w-full pl-24 py-3 text-base h-full rounded-lg"
-                  value={newUrl || ""}
-                  onChange={handleChange}
-                  placeholder="Enter webhook URL"
-                  style={{ lineHeight: "1.5" }}
-                />
-                <span
-                  className="bg-[#D3D3D3] p-2 cursor-pointer ml-2 flex justify-center items-center rounded-lg"
-                  onClick={() => copyToClipboard(webhook?.webhook_url || "")}
-                  aria-label="Copy URL"
-                >
-                  <Image
-                    src="/images/dashboard/copy.svg"
-                    alt="Copy Icon"
-                    width={22}
-                    height={26}
-                  />
-                </span>
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-8 sm:mt-12">
-              <Button
-                text={isLoading ? <Loader /> : "Set Webhook"}
-                className="w-full sm:w-[30%]"
-                ariaLabel="Set Webhook"
-                onClick={handleUpdateWebhook}
-                disabled={isLoading}
-                small
-                primary
-              />
-            </div>
-          </Card>
-        )}
-      </div>
-    </Layout>
+          <div className="pt-4">
+            <Button
+              type="submit"
+              text={isLoading ? <Loader /> : "Save"}
+              className="w-full sm:w-[28%]"
+              ariaLabel="Set Webhook"
+              disabled={isLoading}
+              primary
+            />
+          </div>
+        </form>
+      )}
+    </div>
   );
 };
 

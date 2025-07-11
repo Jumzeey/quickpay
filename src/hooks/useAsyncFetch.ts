@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// Types
 interface UseFetchState<T> {
     data: T | null;
     loading: boolean;
@@ -10,10 +9,12 @@ interface UseFetchState<T> {
 interface UseFetchOptions {
     enabled?: boolean;
     refetchOnWindowFocus?: boolean;
-    staleTime?: number; // Time in ms after which data is considered stale
-    cacheTime?: number; // Time in ms to keep data in cache
+    staleTime?: number;
+    cacheTime?: number;
     retryCount?: number;
     retryDelay?: number;
+    onSuccess?: (data: any) => void;
+    onError?: (error: any) => void;
 }
 
 interface UseFetchParams<T> {
@@ -64,7 +65,9 @@ export function useAsyncFetch<T = any>({
         staleTime = 5 * 60 * 1000, // 5 minutes default
         cacheTime = 10 * 60 * 1000, // 10 minutes default
         retryCount = 3,
-        retryDelay = 1000
+        retryDelay = 1000,
+        onSuccess,
+        onError
     } = options;
 
     const [state, setState] = useState<UseFetchState<T>>({
@@ -90,7 +93,9 @@ export function useAsyncFetch<T = any>({
             // Check if there's already a pending request for this key
             const existingPromise = globalLoadingStates.get(cacheKey);
             if (existingPromise) {
-                return await existingPromise;
+                const result = await existingPromise;
+                onSuccess?.(result);
+                return result;
             }
 
             // Create new request promise
@@ -106,15 +111,15 @@ export function useAsyncFetch<T = any>({
                     timestamp: Date.now()
                 });
 
+                onSuccess?.(result);
                 retryCountRef.current = 0;
                 return result;
             } finally {
-                // Clean up the loading state
                 globalLoadingStates.delete(cacheKey);
             }
         } catch (error) {
-            // Clean up loading state on error
             globalLoadingStates.delete(cacheKey);
+            onError?.(error);
 
             if (retries > 0) {
                 await new Promise(resolve => setTimeout(resolve, retryDelay));

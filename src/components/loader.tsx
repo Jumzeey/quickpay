@@ -1,7 +1,7 @@
-import Image from "next/image";
+import Icon from "@/components/icon";
 
 const Loader = () => {
-  return <Image src="/images/loader.gif" width={30} height={20} alt="loader" />;
+  return <Icon name="loader" className="animate-spin text-white" />;
 };
 
 export default Loader;

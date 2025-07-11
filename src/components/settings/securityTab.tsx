@@ -133,7 +133,7 @@ const SecurityTab = () => {
               className="w-full"
               text={isLoading ? <Loader /> : "Update Password"}
               ariaLabel="Update Password Button"
-              disabled={isLoading || !isValid}
+              disabled={isLoading}
               primary
               type="submit"
             />

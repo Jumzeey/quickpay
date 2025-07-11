@@ -1,7 +1,8 @@
-import React, { ChangeEvent, useRef, useState } from "react";
-import Image from "next/image";
+import Icon from "@/components/icon";
 import { uploadFile } from "@/services/kyc";
 import { notifyError } from "@/util/utils";
+import Image from "next/image";
+import React, { ChangeEvent, useRef, useState } from "react";
 import { Spinner } from "./Spinner";
 
 interface UploadComponentProps {
@@ -11,6 +12,7 @@ interface UploadComponentProps {
   text: string;
   folderName?: string;
   setMandateFile?: (value: File) => void;
+  className?: string;
 }
 
 const UploadComponent: React.FC<UploadComponentProps> = ({
@@ -20,6 +22,7 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   text,
   folderName,
   setMandateFile,
+  className = "",
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -93,35 +96,27 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   };
 
   return (
-    <div className="upload-container mb-5">
-      <div className="flex w-full justify-center"></div>
-      <div className="flex w-full justify-between mt-5 p-2">
-        <div className="flex">
-          <Image
-            src="/images/dashboard/upload.svg"
-            alt="Upload SVG"
-            width={50}
-            height={50}
-            priority
-          />
-          <div className="ml-3">
-            <h6 className="uploadText text-sm">
-              {text}
-              <span className="text-red-600">*</span>
-            </h6>
-            <p className="text-xs uploadP mt-1">
-              JPG, PNG or PDF, file size no more than 3MB
-            </p>
+    <div className={className}>
+      <p className="text-black text-sm font-semibold mb-0.5">{text}</p>
+
+      <div className="rounded border border-[#C4C4C43D] bg-[#D9D9D90D] p-4 h-[90%] flex flex-col items-center justify-center">
+        <div className="w-full flex flex-col items-center justify-center text-center">
+          <div className="size-10 rounded bg-[#FDFDFD] flex items-center justify-center border border-[#C4C4C41A]">
+            <Icon
+              name="upload"
+              className="text-[#121212]"
+            />
           </div>
-        </div>
-        <div>
-          <button
-            onClick={handleButtonClick}
-            className="uploadButton text-xs"
-            type="button"
-          >
-            {buttonText.toUpperCase()}
-          </button>
+          <p className="text-sm font-medium text-[#7F7F7F] mt-3">
+            <button
+              onClick={handleButtonClick}
+              className="text-primary mr-1 cursor-pointer"
+              type="button"
+            >
+              Click to upload
+            </button>
+            JPG, PNG or PDF file (max. 3MB)
+          </p>
           <input
             type="file"
             ref={fileInputRef}
@@ -131,24 +126,22 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
             className="hidden"
           />
         </div>
-      </div>
-      {isUploading && (
-        <div className="mt-4 text-center text-blue-500">
-          <Spinner />
-        </div>
-      )}
-      {uploadedFileName && (
-        <div className="mt-4 text-center sarepayPrimary font-bold">
-          Uploaded file: {uploadedFileName}
-        </div>
-      )}
-      {previewUrl && (
-        <div className="mt-4">
-          <div className="relative">
+        {isUploading && (
+          <div className="mt-4 text-center text-blue-500">
+            <Spinner />
+          </div>
+        )}
+        {uploadedFileName && (
+          <p className="mt-4 text-xs text-center sarepayPrimary font-semibold">
+            Uploaded file: {uploadedFileName}
+          </p>
+        )}
+        {previewUrl && (
+          <div className="mt-4 relative border border-danger">
             <Image src={previewUrl} alt={"Preview"} width={100} height={100} />
             <button
               onClick={handleDelete}
-              className="absolute top-0 right-0 bg-red-500 rounded-full p-1"
+              className="absolute top-0 right-0 bg-red-500 rounded-full p-1 cursor-pointer"
             >
               <Image
                 src="/images/dashboard/collections/delete.svg"
@@ -158,8 +151,8 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
               />
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

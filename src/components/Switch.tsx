@@ -5,12 +5,12 @@ type SwitchProps = {
     containerClassName?: string;
     contentClassName?: string;
     enabled: boolean;
-    onChange: (event: ChangeEvent) => void;
+    onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const Switch: React.FC<SwitchProps> = ({ id, enabled, onChange, containerClassName, contentClassName }) => {
     return (
-        <label className="inline-flex items-center cursor-pointer">
+        <label className="relative inline-flex items-center cursor-pointer">
             <input
                 id={id}
                 type="checkbox"

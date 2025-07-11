@@ -3,6 +3,7 @@ import { ChangeEvent, forwardRef, InputHTMLAttributes, useState } from "react";
 
 type FormInputProps = {
     label: string;
+    labelLeftElement?: React.ReactNode;
     id: string;
     isLoading?: boolean;
     loadingText?: string;
@@ -16,6 +17,7 @@ type FormInputProps = {
 const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     ({
         label,
+        labelLeftElement,
         id,
         isLoading,
         loadingText,
@@ -95,6 +97,8 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                         {isLoading && (
                             <span className="text-xs font-medium">{loadingText || 'Loading...'}</span>
                         )}
+
+                        {labelLeftElement && labelLeftElement}
                     </div>
                 )}
 

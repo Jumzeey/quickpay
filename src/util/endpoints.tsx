@@ -113,4 +113,10 @@ export const apiEndpoints = {
     ADD_SHIPPING_FEE: '/merchant/ecommerce/shippings/store',
     GET_SHIPPING_ORDERS: '/merchant/ecommerce/orders',
   },
+  ipWhitelist: {
+    GET_IP_WHITELIST: '/merchant/ip-whitelist',
+    CREATE_IP_WHITELIST: '/merchant/ip-whitelist',
+    UPDATE_IP_WHITELIST: '/merchant/ip-whitelist',
+    DELETE_IP_WHITELIST: '/merchant/ip-whitelist',
+  },
 };

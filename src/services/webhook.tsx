@@ -1,14 +1,14 @@
 import api from "../util/api";
 import { apiEndpoints } from "../util/endpoints";
 
-interface UpdateWebhook {
+interface WEBHOOK_TYPE {
     webhook_url: string;
     enable_webhook: boolean;
 }
 
-export async function generateWebhookCredentials() {
+export async function generateWebhookCredentials(): Promise<WEBHOOK_TYPE> {
     try {
-        const response = await api.get(
+        const response = await api.get<WEBHOOK_TYPE>(
             apiEndpoints.webhooks.GET_WEBHOOK
         );
         return response.data;
@@ -17,10 +17,10 @@ export async function generateWebhookCredentials() {
     }
 }
 
-export async function updateWebhookCredentials(payload:UpdateWebhook) {
+export async function updateWebhookCredentials(payload: WEBHOOK_TYPE): Promise<WEBHOOK_TYPE> {
     try {
-        const response = await api.post(apiEndpoints.webhooks.UPDATE_WEBHOOK, payload);
-        return response;
+        const response = await api.post<WEBHOOK_TYPE>(apiEndpoints.webhooks.UPDATE_WEBHOOK, payload);
+        return response.data;
     } catch (error) {
         throw error;
     }

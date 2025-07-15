@@ -8,6 +8,7 @@ import Modal from "@/components/modal";
 import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { getBanks, performNameCheck } from "@/services/bank";
+import { BankResponse } from "@/services/payout";
 import usePayout from "@/stores/usePayout";
 import { notifyError, notifySuccess, removeCommasFromValue } from "@/util/utils";
 import Image from "next/image";
@@ -17,7 +18,6 @@ import PinInput from "react-pin-input";
 import * as Yup from "yup";
 import { TRANSFER_OPTIONS } from "./constants";
 import { TransferFormValues, TransferState } from "./types";
-import { BankResponse } from "@/services/payout";
 
 interface InitiateTransferProps {
     isModalOpen: boolean;
@@ -323,22 +323,20 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 name="currency"
                 control={control}
                 render={({ field }) => (
-                    <>
-                        <FormSelect
-                            id="currency"
-                            htmlFor="currency"
-                            label="Select Currency"
-                            placeholder="Select Currency"
-                            options={walletCurrencies}
-                            // error={errors.currency?.message}
-                            // touched={!!errors.currency}
-                            value={field.value || "NGN"}
-                            onChange={field.onChange}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            disabled
-                        />
-                    </>
+                    <FormSelect
+                        id="currency"
+                        htmlFor="currency"
+                        label="Select Currency"
+                        placeholder="Select Currency"
+                        options={walletCurrencies}
+                        // error={errors.currency?.message}
+                        // touched={!!errors.currency}
+                        value={field.value || "NGN"}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        disabled
+                    />
                 )}
             />
 

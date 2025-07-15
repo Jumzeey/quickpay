@@ -180,12 +180,11 @@ const PaymentLinks = () => {
             onClick={() => {
               console.log("Create Payment Link clicked");
               openModal("create")
-
             }}
           />
         </EmptyState>
       ) : (
-        <Fragment>
+        <>
           {state.currentStep === "payment-links" && (
             <>
               <ActionButton
@@ -372,57 +371,58 @@ const PaymentLinks = () => {
               <PaymentLinkTransactions />
             </div>
           )}
-
-          <Modal
-            title={isModalOpen === "edit" ? "Edit Payment Link" : "Create A Payment Link"}
-            isOpen={true}
-            onClose={closeModal}
-          >
-            <AddPaymentLink
-              createLink={isModalOpen === "create"}
-              fetchPaymentLinks={fetchPaymentLinks}
-              closeModal={closeModal}
-            />
-          </Modal>
-          <Modal
-            isOpen={sharedState.showModal} onClose={closeDisableModal}>
-            <div className="flex justify-center text-center">
-              <div className="flex flex-col items-center">
-                <Icon name="warning" />
-
-                <div className="mt-3">
-                  <p className="text-3xl font-semibold py-2">Head up!</p>
-                  <p className="">
-                    Are you sure you want to
-                    {sharedState?.selectedItem?.status === 1
-                      ? " disable "
-                      : " enable "}
-                    this payment link?
-                  </p>
-                </div>
-
-                <div className="flex justify-center items-center gap-3 mt-7">
-                  <Button
-                    text={state.isLoading ? <Loader /> : "Confirm"}
-                    ariaLabel="Confirm button"
-                    onClick={handleDisablePaymentLink}
-                    disabled={state.isLoading}
-                    primary
-                    small
-                  />
-                  <Button
-                    text="Cancel"
-                    ariaLabel="Cancel button"
-                    onClick={closeDisableModal}
-                    plain
-                    small
-                  />
-                </div>
-              </div>
-            </div>
-          </Modal>
-        </Fragment>
+        </>
       )}
+
+      <Modal
+        title={isModalOpen === "edit" ? "Edit Payment Link" : "Create A Payment Link"}
+        isOpen={isModalOpen === "create"}
+        onClose={closeModal}
+      >
+        <AddPaymentLink
+          createLink={isModalOpen === "create"}
+          fetchPaymentLinks={fetchPaymentLinks}
+          closeModal={closeModal}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={sharedState.showModal} onClose={closeDisableModal}>
+        <div className="flex justify-center text-center">
+          <div className="flex flex-col items-center">
+            <Icon name="warning" />
+
+            <div className="mt-3">
+              <p className="text-3xl font-semibold py-2">Head up!</p>
+              <p className="">
+                Are you sure you want to
+                {sharedState?.selectedItem?.status === 1
+                  ? " disable "
+                  : " enable "}
+                this payment link?
+              </p>
+            </div>
+
+            <div className="flex justify-center items-center gap-3 mt-7">
+              <Button
+                text={state.isLoading ? <Loader /> : "Confirm"}
+                ariaLabel="Confirm button"
+                onClick={handleDisablePaymentLink}
+                disabled={state.isLoading}
+                primary
+                small
+              />
+              <Button
+                text="Cancel"
+                ariaLabel="Cancel button"
+                onClick={closeDisableModal}
+                plain
+                small
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

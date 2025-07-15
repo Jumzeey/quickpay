@@ -14,7 +14,7 @@ import { getData } from "country-list";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import * as Yup from "yup";
 
@@ -67,10 +67,12 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const countries = getData().map(country => ({
-    value: country.code,
-    label: country.name
-  }));
+  const countries = useMemo(() =>
+    getData().map(country => ({
+      value: country.code,
+      label: country.name
+    })), []
+  );
 
   useLoadRecaptcha();
 

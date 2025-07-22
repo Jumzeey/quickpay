@@ -8,6 +8,8 @@ import type { AppProps } from "next/app";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { useEffect, useRef, useState } from "react";
 import { Toaster } from "sonner";
+import posthog from 'posthog-js'
+import { PostHogProvider } from 'posthog-js/react'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -80,17 +82,31 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, []);
 
+  useEffect(() => {
+    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
+      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://posthog.joinramp.co',
+      defaults: '2025-05-24',
+      debug: process.env.NODE_ENV === 'development' ? false : true,
+      // disable debug mode in development
+      loaded: (posthog) => {
+        if (process.env.NODE_ENV === 'development') posthog.debug(false)
+      }
+    })
+  }, [])
+
   return (
     <ThemeProvider>
       <SharedState>
-        <main className={`${plusJakartaSans.variable} font-sans`}>
-          <Toaster position="top-center" richColors />
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, maximum-scale=1"
-          />
-          <Component {...pageProps} />
-        </main>
+        <PostHogProvider client={posthog}>
+          <main className={`${plusJakartaSans.variable} font-sans`}>
+            <Toaster position="top-center" richColors />
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1, maximum-scale=1"
+            />
+            <Component {...pageProps} />
+          </main>
+        </PostHogProvider>
       </SharedState>
     </ThemeProvider>
   );

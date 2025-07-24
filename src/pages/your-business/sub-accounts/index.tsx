@@ -1,112 +1,112 @@
+import ActionButton from '@/components/action-button';
 import Button from '@/components/button';
-import Card from '@/components/Card';
 import Dropdown from '@/components/Dropdown';
+import DynamicTable from '@/components/DynamicTable';
 import EmptyState from '@/components/EmptyState';
 import FancyFileUpload from '@/components/FancyFileUpload';
 import Filter from '@/components/Filter';
-import FloatingLabelInput from '@/components/floating-input';
+import FormInput from '@/components/FormInput';
+import FormSelect from '@/components/FormSelect';
+import Icon from '@/components/icon';
 import IconWrapper from '@/components/IconWrapper';
-import Layout from '@/components/layout';
 import Loader from '@/components/loader';
 import Modal from '@/components/modal';
 import Pagination from '@/components/pagination';
-import Table from '@/components/table';
 import TableSkeleton from '@/components/TableSkeleton';
-import WebPageTitle from '@/components/WebPageTitle';
-import useScreenWidth from '@/hooks/useScreenWidth';
+import { usePaginatedEffect } from "@/hooks/useEffectFetch";
+import { useFormValidation } from '@/hooks/useFormValidation';
 import { uploadFile } from '@/services/kyc';
 import {
   changeModeToLive,
   deactivateSubAccount
 } from '@/services/sub-account';
 import useCategories from '@/stores/useCategories';
-import useClickEvent from '@/stores/useClickEvent';
 import useFilter from '@/stores/useFilter';
 import useSubaccount from '@/stores/useSubAccount';
-import debounce from '@/util/debounce';
 import {
   copyToClipboard,
   notifyError,
   notifySuccess,
-  truncateText,
+  truncateText
 } from '@/util/utils';
-import { useFormik } from 'formik';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, {
-  Fragment,
-  useCallback,
-  useEffect,
-  useState
-} from 'react';
+import React, { useEffect, useState } from 'react';
+import { Controller } from 'react-hook-form';
 import 'react-loading-skeleton/dist/skeleton.css';
 import Select from 'react-select';
 import * as Yup from 'yup';
 
-import { usePaginatedEffect } from "@/hooks/useEffectFetch";
+const validationSchema = Yup.object().shape({
+  merchant_name: Yup.string().required('Merchant name is required!'),
+  mode: Yup.string()
+    .oneOf(['test', 'live'], 'Mode must be either test or live')
+    .required('Mode is required!'),
+  contactEmail: Yup.string()
+    .email('Invalid email format')
+    .required('Contact email is required!'),
+  percentage: Yup.number().required('Percentage split is required!'),
+  siteName: Yup.string().required('Site name is required!'),
+  websiteUrl: Yup.string()
+    .url('Invalid URL format')
+    .required('Website URL is required!'),
+  riskRating: Yup.string().required('Risk rating is required!'),
+  category: Yup.string().required('Category is required!'),
+  documents: Yup.array().of(Yup.mixed()).notRequired(),
+  description: Yup.string().notRequired(),
+  callback_url: Yup.string()
+    .notRequired()
+    .matches(
+      /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
+      'Enter a valid callback URL!'
+    ),
+});
 
-interface SubaccountsProps {
-  subaccountsHistory: any[];
-  isLoading: boolean;
-  showSubaccounts: boolean;
-  dropdownIndex: null | number;
-  showFilter: boolean;
-  // selectedOption: string;
-  //   banks: [];
-  // accountNumber: string;
-  mode: string | undefined;
+interface ModalState {
+  isOpen: boolean;
+  isUpdateOpen: boolean;
+  activeId: number;
+  modalType: string;
+  isSubmitting: boolean;
+  isMoreActionsOpen: boolean;
 }
-
-const columns = [
-  's/n',
-  'merchant name',
-  'merchant key',
-  'notification email',
-  'mode',
-  'message',
-  'created at',
-  'action',
-];
 
 const SubaccountHistory = () => {
   const router = useRouter();
-  const screenWidth = useScreenWidth();
-  const { selectedItem, handleClick } = useClickEvent();
+
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    isUpdateOpen: false,
+    activeId: 0,
+    modalType: '',
+    isSubmitting: false,
+    isMoreActionsOpen: false,
+  });
+
   const [searchInput, setSearchInput] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeId, setActiveId] = useState(0);
-  const [modalType, setModalType] = useState('');
-  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const closeUpdateModal = () => setIsUpdateOpen(false);
-  const closeModal = () => setIsModalOpen(false);
-  const { updateSubAccountAmount } = useSubaccount();
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [documents, setDocuments] = useState<{ title: string; file: File | null }[]>([]);
+
+  const { showFilter, toggleFilter } = useFilter();
+  const { categories, fetchCategories, getCategoriesLoading } = useCategories();
   const {
     fetchSubaccountHistory,
     subaccounts,
     pagination,
     getSubaccountHistoryLoading,
+    updateSubAccountAmount
   } = useSubaccount();
 
-  const { showFilter, toggleFilter } = useFilter();
-  const { categories, fetchCategories, getCategoriesLoading } = useCategories();
-  const [documents, setDocuments] = useState<
-    { title: string; file: File | null }[]
-  >([]);
-
-  useEffect(() => {
-    if (categories.length === 0) fetchCategories();
-  }, [fetchCategories, categories]);
-
-  const formik = useFormik({
-    initialValues: {
-      // accountNumber: "",
-      // accountName: "",
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+    reset
+  } = useFormValidation(validationSchema, {
+    defaultValues: {
       merchant_name: '',
-      mode: undefined,
+      mode: '',
       contactEmail: '',
       percentage: '',
       description: '',
@@ -117,189 +117,13 @@ const SubaccountHistory = () => {
       category: '',
       documents: [],
     },
-    validationSchema: Yup.object().shape({
-      merchant_name: Yup.string().required('Merchant name is required!'),
-      mode: Yup.boolean().required('Mode is required!'),
-      contactEmail: Yup.string()
-        .email('Invalid email format')
-        .required('Contact email is required!'),
-      percentage: Yup.number().required('Percentage split is required!'),
-      siteName: Yup.string().required('Site name is required!'),
-      websiteUrl: Yup.string()
-        .url('Invalid URL format')
-        .required('Website URL is required!'),
-      riskRating: Yup.string().required('Risk rating is required!'),
-      category: Yup.string().required('Category is required!'),
-      documents: Yup.array().of(Yup.mixed()).notRequired(),
-      description: Yup.string().notRequired(),
-      callback_url: Yup.string()
-        .notRequired()
-        .matches(
-          /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
-          'Enter a valid callback URL!'
-        ),
-    }),
-    validateOnMount: true,
-    onSubmit: async (values, { resetForm }) => {
-      updateSubaccount(resetForm);
-    },
+    mode: 'onChange'
   });
 
-  const [state, setState] = useState<SubaccountsProps>({
-    subaccountsHistory: [],
-    isLoading: false,
-    showSubaccounts: false,
-    dropdownIndex: null,
-    showFilter: false,
-    //     banks: [],
-    // selectedOption: "",
-    // accountNumber: "",
-    mode: undefined,
-  });
-  // const accountNumber = formik.values.accountNumber;
+  useEffect(() => {
+    if (categories.length === 0) fetchCategories();
+  }, [fetchCategories, categories.length]);
 
-  //   const fetchBanks = async () => {
-  //     const banks = await getBanks();
-  //     setState({ ...state, banks });
-  //   };
-
-  const handleModalChange = async () => {
-    const payload = {
-      id: activeId,
-    };
-    try {
-      if (modalType === 'live') {
-        setIsModalOpen(false);
-        const response = await changeModeToLive(payload);
-        notifySuccess('Website is now live');
-        fetchSubaccountHistory();
-      } else {
-        const response = await deactivateSubAccount(payload);
-        setIsModalOpen(false);
-        fetchSubaccountHistory();
-      }
-    } catch (error: any) {
-      notifyError(error.message);
-      setIsModalOpen(false);
-    }
-  };
-
-  const updateSubaccount = async (resetForm: () => void) => {
-    setIsLoading(true);
-
-    const modeValue =
-      formik.values.mode === true || formik.values.mode === 'true' ? 1 : 0;
-
-    try {
-      const uploadedDocuments = await Promise.all(
-        documents.map(async doc => {
-          if (doc.file) {
-            const formData = new FormData();
-            formData.append('file', doc.file);
-
-            // Upload file using the existing uploadFile function
-            const uploadResponse = await uploadFile(formData);
-
-            // Extract file URL from API response
-            return { name: doc.title, url: uploadResponse.data.file };
-          }
-          return null;
-        })
-      );
-
-      const payload = {
-        merchant_name: formik.values.merchant_name,
-        email: formik.values.contactEmail,
-        mode: formik.values.mode,
-        percentage: formik.values.percentage,
-        description: formik.values.description,
-        site_name: formik.values.siteName,
-        category: formik.values.category,
-        id: activeId,
-        website_url: formik.values.websiteUrl,
-        risk_rating: formik.values.riskRating,
-        documents: uploadedDocuments.filter(Boolean),
-        callback_url: formik.values.callback_url,
-      };
-      if (formik.values.callback_url) {
-        payload['callback_url'] = `https://${formik.values.callback_url}`;
-      }
-
-      const response = await updateSubAccountAmount(payload);
-      notifySuccess(response.message);
-      setIsLoading(false);
-      setIsUpdateOpen(false);
-      fetchSubaccountHistory();
-      resetForm();
-    } catch (error: any) {
-      notifyError(error.message);
-      setIsLoading(false);
-      setIsUpdateOpen(false);
-      fetchSubaccountHistory();
-      resetForm();
-    }
-  };
-
-  const changeModal = async (id: any, type: string) => {
-    setModalType(type);
-    setActiveId(id);
-    setIsModalOpen(true);
-  };
-
-  const updateModal = async (id: any) => {
-    setActiveId(id);
-    //     fetchBanks();
-    setIsUpdateOpen(true);
-  };
-
-  //   useEffect(() => {
-  //     fetchBankDetails();
-  //   }, []);
-
-  const handleDropdownToggle = (index: number | null, selectedItem: any) => {
-    setState({
-      ...state,
-      dropdownIndex: state.dropdownIndex === index ? null : index,
-    });
-    handleClick(selectedItem, true);
-  };
-
-  const closeDropdown = () => {
-    setState({
-      ...state,
-      dropdownIndex: null,
-      showFilter: false,
-    });
-  };
-
-  //   const fetchBankDetails = async () => {
-  //     const bankDetails = await getBankDetails();
-  //     setState(prevState => ({
-  //       ...prevState,
-  //       bankDetails,
-  //       isLoading: false,
-  //     }));
-  //   };
-
-  const debouncedHandleParamsChange = useCallback(
-    debounce((value: string) => {
-      setSearchInput(value);
-    }, 300),
-    []
-  );
-
-  const handleParamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    debouncedHandleParamsChange(event.target.value);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const totalPages = pagination?.last_page;
-  const lastPage = pagination?.last_page;
-
-  // Replace problematic useEffect with optimized hook
   usePaginatedEffect(
     fetchSubaccountHistory,
     {
@@ -313,32 +137,257 @@ const SubaccountHistory = () => {
     }
   );
 
-  // useEffect(() => {
-  //   if (accountNumber.length === 10) {
-  //     nameCheck();
-  //   }
-  // }, [accountNumber]);
+  useEffect(() => {
+    if (modalState.isUpdateOpen && modalState.activeId) {
+      const selectedSubaccount = subaccounts?.find(item => item.id === modalState.activeId);
+
+      if (selectedSubaccount) {
+        console.log({ selectedSubaccount })
+        reset({
+          merchant_name: selectedSubaccount.merchant_name || '',
+          mode: selectedSubaccount.mode,
+          contactEmail: selectedSubaccount.email || '',
+          percentage: selectedSubaccount.percentage ? String(selectedSubaccount.percentage) : '',
+          description: selectedSubaccount.description || '',
+          siteName: selectedSubaccount.site_name || '',
+          websiteUrl: selectedSubaccount.website_url || '',
+          callback_url: selectedSubaccount.callback_url?.replace(/^https?:\/\//, '') || '',
+          riskRating: selectedSubaccount.risk_rating || 'low',
+          category: selectedSubaccount.category || '',
+        });
+      }
+    }
+  }, [modalState.isUpdateOpen, modalState.activeId, subaccounts, reset]);
+
+  const columns = [
+    { key: 'merchant_name', title: 'Merchant Name' },
+    {
+      key: 'merchant_key',
+      title: 'Merchant Key',
+      render: (value: string, row: any) => (
+        <p className="flex items-center font-bold text-primary ">
+          <span className="mr-1.5">{value || 'N/A'}</span>
+
+          <Icon
+            name="copy3"
+            className="cursor-pointer"
+            onClick={() => copyToClipboard(value)}
+          />
+        </p>
+      )
+    },
+    { key: 'email', title: 'Notification Email' },
+    {
+      key: 'mode',
+      title: 'Mode',
+      render: (value: string, row: any) => value
+    },
+    { key: 'created_at', title: 'Created At' },
+    {
+      key: 'message',
+      title: 'Message',
+      render: (value: string) => truncateText(value, 25) || 'N/A'
+    },
+    {
+      key: 'actions',
+      title: 'Action',
+      render: (value: any, row: any) => (
+        <ul className="list-none w-96 flex items-center justify-between">
+          <li>
+            <button
+              className="flex items-center w-full gap-2 hover:bg-gray-50"
+              onClick={() => openUpdateModal(row.id)}
+            >
+              <IconWrapper
+                src="/images/refresh-alt.svg"
+                width={14}
+                height={14}
+                alt="Update icon"
+              />
+              <span className="text-[#090727] text-sm font-semibold">Update</span>
+            </button>
+          </li>
+
+          <li className="flex items-center w-1/3 hover:bg-gray-50">
+            <Link
+              href={`/your-business/sub-accounts/transactions/${row.id}`}
+              className="flex cursor-pointer items-center gap-2 hover:text-primary"
+            >
+              <Icon name="edit2" className="text-[#005BB0]" />
+
+              <span className="text-[#090727] text-sm font-semibold">Transactions</span>
+            </Link>
+          </li>
+
+          <li>
+            <button
+              className="flex items-center w-full gap-2 hover:bg-gray-50"
+              onClick={() => openModal(row.id, 'disable')}
+            >
+              <IconWrapper
+                src="/images/alert.svg"
+                width={14}
+                height={14}
+                alt="Deactivate icon"
+              />
+              <span className="text-[#090727] text-sm font-semibold">Deactivate</span>
+            </button>
+          </li>
+        </ul>
+      )
+    },
+  ];
+
+  const transformedData = subaccounts?.map((item, index) => ({
+    no: index + 1,
+    index: index,
+    id: item.id,
+    merchant_name: item.merchant_name || 'N/A',
+    merchant_key: item.merchant_key || 'N/A',
+    email: item.email || 'N/A',
+    mode: item.mode || 'N/A',
+    message: item.message || 'N/A',
+    created_at: item.created_at || 'N/A',
+    expandedContent: (
+      <div className="p-4 bg-[#F5F8FA]">
+        <p className="text-sm text-[#7F7F7F]">
+          <span className="font-medium">Description:</span> {item.description || 'No description available'}
+        </p>
+        {item.category && (
+          <p className="text-sm text-[#7F7F7F] mt-2">
+            <span className="font-medium">Category:</span> {item.category}
+          </p>
+        )}
+        {item.website_url && (
+          <p className="text-sm text-[#7F7F7F] mt-2">
+            <span className="font-medium">Website:</span> {item.website_url}
+          </p>
+        )}
+      </div>
+    ),
+  })) || [];
+
+  const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false, activeId: 0, modalType: '' }));
+  const closeUpdateModal = () => setModalState(prev => ({ ...prev, isUpdateOpen: false, activeId: 0 }));
+
+  const openModal = (id: number, type: string) => {
+    setModalState(prev => ({ ...prev, isOpen: true, activeId: id, modalType: type }));
+  };
+
+  const openUpdateModal = (id: number) => {
+    setModalState(prev => ({ ...prev, isUpdateOpen: true, activeId: id }));
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
+
+  const handleModalAction = async () => {
+    setModalState(prev => ({ ...prev, isSubmitting: true }));
+
+    try {
+      const payload = { id: modalState.activeId };
+
+      if (modalState.modalType === 'live') {
+        await changeModeToLive(payload);
+        notifySuccess('Website is now live');
+      } else {
+        await deactivateSubAccount(payload);
+        notifySuccess('Subaccount deactivated successfully');
+      }
+
+      closeModal();
+      fetchSubaccountHistory({ page: currentPage });
+    } catch (error: any) {
+      notifyError(error.message);
+    } finally {
+      setModalState(prev => ({ ...prev, isSubmitting: false }));
+    }
+  };
+
+  const onSubmit = async (values: any) => {
+    setModalState(prev => ({ ...prev, isSubmitting: true }));
+
+    try {
+      const uploadedDocuments = await Promise.all(
+        documents.map(async doc => {
+          if (doc.file) {
+            const formData = new FormData();
+            formData.append('file', doc.file);
+            const uploadResponse = await uploadFile(formData);
+            return { name: doc.title, url: uploadResponse.data.file };
+          }
+          return null;
+        })
+      );
+
+      const payload = {
+        merchant_name: values.merchant_name,
+        email: values.contactEmail,
+        mode: values.mode,
+        percentage: values.percentage,
+        description: values.description,
+        site_name: values.siteName,
+        website_url: values.websiteUrl,
+        risk_rating: values.riskRating,
+        category: values.category,
+        id: modalState.activeId,
+        documents: uploadedDocuments.filter(Boolean),
+      };
+
+      if (values.callback_url) {
+        // @ts-ignore
+        payload.callback_url = `https://${values.callback_url}`;
+      }
+
+      // @ts-ignore
+      await updateSubAccountAmount(payload);
+      notifySuccess('Subaccount updated successfully');
+      closeUpdateModal();
+      fetchSubaccountHistory({ page: currentPage });
+      reset();
+      setDocuments([]);
+    } catch (error: any) {
+      notifyError(error.message);
+    } finally {
+      setModalState(prev => ({ ...prev, isSubmitting: false }));
+    }
+  };
+
+  if (getSubaccountHistoryLoading) {
+    return <TableSkeleton />;
+  }
+
+  if (subaccounts?.length === 0) {
+    return (
+      <EmptyState
+        title='No Sub Account found'
+        subTitle="We couldn't find any Sub Account"
+        image='/images/dashboard/your-business/subaccount-empty.svg'
+      >
+        <ActionButton
+          text='Add Subaccount'
+          ariaLabel='Add Subaccount button'
+          onClick={() => router.push(`/your-business/sub-accounts/create`)}
+        />
+      </EmptyState>
+    );
+  }
 
   return (
     <>
-      <Layout pageTitle='Sub Accounts' icon='sub-accounts'>
-        <WebPageTitle title='Sub Accounts| Ramp Merchant Portal' />
-        {/* <div>
-          <h2 className="text-xl font-semibold">Manage Subaccounts</h2>
-          <p className="text-sm pt-3 pb-5">
-            Manage Subaccounts Within Your Company
-          </p>
-        </div> */}
-        <div>
-          {getSubaccountHistoryLoading ? (
-            <Fragment>
-              <TableSkeleton />
-            </Fragment>
-          ) : subaccounts?.length !== 0 ? (
-            <Fragment>
-              <Card className='mt-10'>
-                <div className='flex justify-end pb-5'>
-                  {/* <div className="flex gap-3">
+      <div>
+        {getSubaccountHistoryLoading ? (
+          <TableSkeleton />
+        ) : subaccounts?.length !== 0 ? (
+          <>
+
+            <div className='flex justify-end pb-5'>
+              {/* <div className="flex gap-3">
                     <Button
                       ariaLabel="Filter button"
                       text="Filter"
@@ -371,166 +420,52 @@ const SubaccountHistory = () => {
                       className="absolute top-[10px] left-3"
                     />
                   </div> */}
-                  <Link href='/your-business/sub-accounts/create'>
-                    <Button
-                      ariaLabel='Create New Subaccount'
-                      text='Create New Sub Account'
-                      primary
-                      medium
-                    />
-                  </Link>
-                </div>
-                <div className='relative flex justify-end -mt-4'>
-                  <Dropdown onOpen={showFilter} onClose={toggleFilter}>
-                    <Filter filterCallback={fetchSubaccountHistory} />
-                  </Dropdown>
-                </div>
-                <Table columns={columns} className='mt-7'>
-                  {subaccounts?.map((item: any, index: number) => (
-                    <tr
-                      key={index}
-                      className='border-b last:border-none border-grey-200'
-                    >
-                      <td className='text-sm px-5 py-6'>{index + 1}</td>
-                      <td className='text-sm px-5 py-6 capitalize'>
-                        {item.merchant_name || 'N/A'}
-                      </td>
-                      <td className='text-sm px-5 py-6 flex'>
-                        <span className='mr-1 sarepayPrimary text-sm'>
-                          {item.merchant_key || 'N/A'}
-                        </span>
-                        <Image
-                          src='/images/dashboard/copy.svg'
-                          className='cursor-pointer'
-                          onClick={() => copyToClipboard(item.merchant_key)}
-                          alt='Copy Icon'
-                          width={15}
-                          height={15}
-                        />
-                      </td>
-                      <td className='text-sm px-5 py-6'>
-                        {item.email || 'N/A'}
-                      </td>
-                      <td className='text-xs px-5 py-6'>
-                        <div
-                          className={`text-center rounded-lg py-1 px-3 ${item.mode === 'Live'
-                              ? 'text-[green] bg-[#E9F7EF]'
-                              : 'text-danger bg-[#e0440326]'
-                            }`}
-                        >
-                          {item.mode}
-                        </div>
-                      </td>
-                      <td className='text-sm px-5 py-6'>
-                        {truncateText(item.message, 25) || 'N/A'}
-                      </td>
-                      <td className='text-sm px-5 py-6'>
-                        {item.created_at || 'N/A'}
-                      </td>
-                      <td
-                        className='text-sm px-5 py-6'
-                        onClick={() => handleDropdownToggle(index, item)}
-                      >
-                        <Image
-                          src='/images/dashboard/collections/more.svg'
-                          className='cursor-pointer'
-                          alt='More Icon'
-                          width={4}
-                          height={16}
-                        />
-                        <div className='flex justify-end relative'>
-                          <Dropdown
-                            onOpen={state.dropdownIndex === index}
-                            onClose={closeDropdown}
-                          >
-                            <ul className='list-none p-0'>
-                              {/* <li
-                                className="flex items-center pb-2 gap-2 hover:text-primary"
-                                onClick={() => changeModal(item.id, "live")}
-                              >
-                                <IconWrapper
-                                  src="/images/dashboard/collections/edit.svg"
-                                  width={14}
-                                  height={14}
-                                  alt="Live icon"
-                                />
-                                <span>Live</span>
-                              </li> */}
-                              <li
-                                className='flex items-center pb-2 gap-2 hover:text-primary'
-                                onClick={() => updateModal(item.id)}
-                              >
-                                <IconWrapper
-                                  src='/images/dashboard/collections/transaction.svg'
-                                  width={14}
-                                  height={14}
-                                  alt='Transaction icon'
-                                />
-                                <span>Update</span>
-                              </li>
-                              <li
-                                className='flex items-center gap-2 hover:text-primary'
-                                onClick={() => changeModal(item.id, 'disable')}
-                              >
-                                <IconWrapper
-                                  src='/images/dashboard/collections/disable.svg'
-                                  width={14}
-                                  height={14}
-                                  alt='Deactivate icon'
-                                />
-                                <span>Deactivate</span>
-                              </li>
-                              <li
-                                className='mt-2 flex items-center pb-2 gap-2 hover:text-primary'
-                                onClick={() =>
-                                  router.push(
-                                    `sub-accounts/transactions/${item.id}`
-                                  )
-                                }
-                              >
-                                <IconWrapper
-                                  src='/images/dashboard/collections/edit.svg'
-                                  width={14}
-                                  height={14}
-                                  alt='Live icon'
-                                />
-                                <span>Transactions</span>
-                              </li>
-                            </ul>
-                          </Dropdown>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </Table>
-                <Pagination
-                  lastPage={lastPage}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
+              <Link href='/your-business/sub-accounts/create'>
+                <ActionButton
+                  ariaLabel='Create New Subaccount'
+                  text='Create New Sub Account'
                 />
-              </Card>
-            </Fragment>
-          ) : (
-            <EmptyState
-              title='No Sub Account found'
-              subTitle="We couldn't find any Sub Account"
-              image='/images/dashboard/your-business/subaccount-empty.svg'
-            >
-              <Button
-                text='Add Subaccount'
-                ariaLabel='Add Subaccount button'
-                className='!w-[191px] !h-[48px]'
-                onClick={() =>
-                  router.push(`/your-business/sub-accounts/create`)
-                }
-                primary
-              />
-            </EmptyState>
-          )}
-        </div>
-      </Layout>
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
+              </Link>
+            </div>
+            <div className='relative flex justify-end -mt-4 mb-7'>
+              <Dropdown onOpen={showFilter} onClose={toggleFilter}>
+                <Filter filterCallback={fetchSubaccountHistory} />
+              </Dropdown>
+            </div>
+
+            <DynamicTable
+              columns={columns}
+              data={transformedData}
+              maxColumns={5}
+            />
+
+            <Pagination
+              lastPage={pagination.last_page}
+              currentPage={currentPage}
+              totalPages={pagination.total}
+              onPageChange={handlePageChange}
+            />
+          </>
+        ) : (
+          <EmptyState
+            title='No Sub Account found'
+            subTitle="We couldn't find any Sub Account"
+            image='/images/dashboard/your-business/subaccount-empty.svg'
+          >
+            <Button
+              text='Add Subaccount'
+              ariaLabel='Add Subaccount button'
+              className='!w-[191px] !h-[48px]'
+              onClick={() =>
+                router.push(`/your-business/sub-accounts/create`)
+              }
+              primary
+            />
+          </EmptyState>
+        )}
+      </div>
+
+      <Modal isOpen={modalState.isOpen} onClose={closeModal}>
         <div className='flex justify-center text-center'>
           <div className='flex flex-col'>
             <div className='flex justify-center'>
@@ -547,7 +482,8 @@ const SubaccountHistory = () => {
               <Button
                 text='Confirm'
                 ariaLabel='Confirm button'
-                onClick={() => handleModalChange()}
+                onClick={handleModalAction}
+                disabled={modalState.isSubmitting}
                 primary
                 small
               />
@@ -563,152 +499,196 @@ const SubaccountHistory = () => {
         </div>
       </Modal>
 
-      <Modal isOpen={isUpdateOpen} onClose={closeUpdateModal}>
-        <form onSubmit={formik.handleSubmit}>
-          <div className='grid grid-cols-2 gap-5'>
-            <FloatingLabelInput
-              label='Site Name'
-              id='siteName'
-              type='text'
-              htmlFor='siteName'
-              formik={formik}
-              {...formik.getFieldProps('siteName')}
-            />
-
-            <FloatingLabelInput
-              label='Website URL'
-              id='websiteUrl'
-              type='text'
-              htmlFor='websiteUrl'
-              formik={formik}
-              {...formik.getFieldProps('websiteUrl')}
-            />
-            <FloatingLabelInput
-              label='Merchant Name'
-              id='merchant_name'
-              type='text'
-              htmlFor='merchant_name'
-              formik={formik}
-              {...formik.getFieldProps('merchant_name')}
-            />
-            <FloatingLabelInput
-              label='Percentage Split'
-              id='percentage'
-              type='number'
-              htmlFor='percentage'
-              formik={formik}
-              maxLength={10}
-              {...formik.getFieldProps('percentage')}
-            />
-          </div>
-          <div>
-            <label className='font-semibold'>
-              Select Sub Account Mode Type
-            </label>
-            <select
-              className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
-              onChange={e => {
-                formik.setFieldValue('mode', e.target.value === 'true');
-              }}
-              name='mode'
-              value={
-                formik.values.mode === undefined
-                  ? ''
-                  : formik.values.mode
-                    ? 'true'
-                    : 'false'
-              }
-            >
-              {formik.values.mode === undefined && (
-                <option value=''>--Select--</option>
+      <Modal isOpen={modalState.isUpdateOpen} onClose={closeUpdateModal}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-2 gap-5">
+            <Controller
+              name="siteName"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label="Site Name"
+                  id="siteName"
+                  type="text"
+                  htmlFor="siteName"
+                  error={errors.siteName?.message}
+                  touched={!!errors.siteName}
+                  {...field}
+                />
               )}
-              <option value='true'>Live</option>
-              <option value='false'>Test</option>
-            </select>
-          </div>
-          <FloatingLabelInput
-            label='Contact Email'
-            id='email'
-            type='email'
-            htmlFor='email'
-            formik={formik}
-            {...formik.getFieldProps('email')}
-          />
-          <p>
-            If provided, this email address will get transaction notification
-          </p>
-
-          <div className='relative'>
-            <FloatingLabelInput
-              label={
-                screenWidth < 700
-                  ? 'Callback URL'
-                  : 'Callback URL (e.g yourbusiness.com)'
-              }
-              id='callback_url'
-              type='text'
-              htmlFor='callback_url'
-              formik={formik}
-              {...formik.getFieldProps('callback_url')}
-              hasLink
             />
-            <span className='absolute text-sm top-5 left-3'>https://</span>
+
+            <Controller
+              name="websiteUrl"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label='Website URL'
+                  id='websiteUrl'
+                  type='text'
+                  htmlFor='websiteUrl'
+                  error={errors.websiteUrl?.message}
+                  touched={!!errors.websiteUrl}
+                  {...field}
+                />
+              )}
+            />
+
+            <Controller
+              name="merchant_name"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label='Merchant Name'
+                  id='merchant_name'
+                  type='text'
+                  htmlFor='merchant_name'
+                  error={errors.merchant_name?.message}
+                  touched={!!errors.merchant_name}
+                  {...field}
+                />
+              )}
+            />
+
+            <Controller
+              name="percentage"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label='Percentage Split'
+                  id='percentage'
+                  type='number'
+                  htmlFor='percentage'
+                  error={errors.percentage?.message}
+                  touched={!!errors.percentage}
+                  maxLength={10}
+                  {...field}
+                />
+              )}
+            />
           </div>
+
+          <Controller
+            name="mode"
+            control={control}
+            render={({ field }) => (
+              <FormSelect
+                id="mode"
+                htmlFor="mode"
+                label="Select Sub Account Mode Type"
+                placeholder="Select mode"
+                options={[
+                  { value: 'true', label: 'Live' },
+                  { value: 'false', label: 'Test' },
+                ]}
+                error={errors.mode?.message}
+                touched={!!errors.mode}
+                name={field.name}
+                disabled
+              />
+            )}
+          />
+
+          <div>
+            <Controller
+              name="contactEmail"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label='Contact Email'
+                  id='contactEmail'
+                  type='email'
+                  htmlFor='contactEmail'
+                  error={errors.contactEmail?.message}
+                  touched={!!errors.contactEmail}
+                  {...field}
+                />
+              )}
+            />
+
+            <span className="text-xs text-primary font-medium">
+              If provided, this email address will get transaction notification
+            </span>
+          </div>
+
+
+          <Controller
+            name="callback_url"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label='Callback URL (e.g yourbusiness.com)'
+                id='callback_url'
+                type='text'
+                htmlFor='callback_url'
+                error={errors.callback_url?.message}
+                touched={!!errors.callback_url}
+                {...field}
+              />
+            )}
+          />
 
           <div>
             <label className='font-semibold'>Risk Rating</label>
-            <select
-              className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
-              {...formik.getFieldProps('riskRating')}
-            >
-              <option value='high'>High</option>
-              <option value='medium'>Medium</option>
-              <option value='low'>Low</option>
-            </select>
+            <Controller
+              name="riskRating"
+              control={control}
+              render={({ field }) => (
+                <select
+                  className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
+                  {...field}
+                >
+                  <option value='high'>High</option>
+                  <option value='medium'>Medium</option>
+                  <option value='low'>Low</option>
+                </select>
+              )}
+            />
           </div>
 
           <div>
             <label className='font-semibold'>Category</label>
-            <Select
-              options={categories.map((category: any) => ({
-                value: category,
-                label: category,
-              }))}
-              isSearchable
-              placeholder={
-                getCategoriesLoading
-                  ? 'Loading categories...'
-                  : 'Search or select category'
-              }
-              isDisabled={getCategoriesLoading}
-              value={
-                categories.find((opt: any) => opt === formik.values.category)
-                  ? {
-                    value: formik.values.category,
-                    label: formik.values.category,
+            <Controller
+              name="category"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  options={categories.map((category: any) => ({
+                    value: category,
+                    label: category,
+                  }))}
+                  isSearchable
+                  placeholder={
+                    getCategoriesLoading
+                      ? 'Loading categories...'
+                      : 'Search or select category'
                   }
-                  : null
-              }
-              onChange={selectedOption =>
-                formik.setFieldValue('category', selectedOption?.value)
-              }
-              styles={{
-                control: (provided, state) => ({
-                  ...provided,
-                  height: '60px',
-                  padding: '0.5rem',
-                  width: '100%',
-                  borderRadius: '0.5rem',
-                  borderWidth: '1px',
-                  borderColor: state.isFocused ? '#6750A4' : '#CAC4D0',
-                  outline: 'none',
-                  fontSize: '0.875rem',
-                  marginBottom: '1.25rem',
-                  '&:hover': {
-                    borderColor: '#6750A4',
-                  },
-                }),
-              }}
+                  isDisabled={getCategoriesLoading}
+                  value={
+                    field.value
+                      ? { value: field.value, label: field.value }
+                      : null
+                  }
+                  onChange={(option) => field.onChange(option?.value)}
+                  styles={{
+                    control: (provided, state) => ({
+                      ...provided,
+                      height: '60px',
+                      padding: '0.5rem',
+                      width: '100%',
+                      borderRadius: '0.5rem',
+                      borderWidth: '1px',
+                      borderColor: state.isFocused ? '#6750A4' : '#CAC4D0',
+                      outline: 'none',
+                      fontSize: '0.875rem',
+                      marginBottom: '1.25rem',
+                      '&:hover': {
+                        borderColor: '#6750A4',
+                      },
+                    }),
+                  }}
+                />
+              )}
             />
           </div>
 
@@ -723,19 +703,26 @@ const SubaccountHistory = () => {
             />
           </div>
 
-          <FloatingLabelInput
-            label='Description'
-            id='description'
-            type='text'
-            htmlFor='message'
-            formik={formik}
-            {...formik.getFieldProps('description')}
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label='Description'
+                id='description'
+                type='text'
+                htmlFor='description'
+                error={errors.description?.message}
+                touched={!!errors.description}
+                {...field}
+              />
+            )}
           />
           <Button
             className='text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded'
-            text={isLoading ? <Loader /> : 'Submit'}
+            text={modalState.isSubmitting ? <Loader /> : 'Submit'}
             ariaLabel='Submit Button'
-            disabled={!formik.isValid || isLoading}
+            disabled={modalState.isSubmitting}
             primary
           />
         </form>

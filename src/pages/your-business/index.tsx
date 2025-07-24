@@ -5,10 +5,12 @@ import WebPageTitle from "@/components/WebPageTitle";
 import BusinessKYC from "./kyc-verification";
 import { useRouter } from "next/router";
 import Webhooks from "./webhook";
+import SubaccountHistory from "@/pages/your-business/sub-accounts";
 
 const tabs = [
     { title: "Business KYC", link: "?tab=business-kyc" },
     { title: "Webhooks", link: "?tab=webhooks" },
+    { title: "Sub Accounts", link: "?tab=sub-accounts" },
 ];
 
 const Business = () => {
@@ -30,6 +32,7 @@ const Business = () => {
             <div className="mt-8">
                 {tab === "business-kyc" &&  <BusinessKYC />}
                 {tab === "webhooks" && <Webhooks />}
+                {tab === "sub-accounts" && <SubaccountHistory />}
             </div>
         </Layout>
     );

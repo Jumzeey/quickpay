@@ -97,6 +97,7 @@ const ApiKeysTab = () => {
             disabled={keyLoading || isLoading}
             className="!h-10 !px-4 !font-medium"
           />
+          
           <ActionButton
             ariaLabel="Generate New Encryption Keys button"
             iconName={encryptionLoading ? "loading" : undefined}

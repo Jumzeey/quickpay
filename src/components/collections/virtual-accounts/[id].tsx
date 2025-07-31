@@ -46,8 +46,8 @@ const VirtualAccountTransaction = () => {
       <div className="pt-5">
         {state.isLoading ? (
           <TableSkeleton />
-        ) : state.transactions.length !== 0 ? (
-          <Fragment>
+        ) : state.transactions.length > 0 ? (
+          <>
             <Image
               src="/images/arrow-back.svg"
               className="cursor-pointer"
@@ -114,9 +114,9 @@ const VirtualAccountTransaction = () => {
                 </tr>
               ))}
             </Table>
-          </Fragment>
+          </>
         ) : (
-          <Fragment>
+          <>
             <Image
               src="/images/arrow-back.svg"
               className="cursor-pointer"
@@ -130,7 +130,7 @@ const VirtualAccountTransaction = () => {
               subTitle="We couldn't find any transactions to this virtual account"
               image="/images/history.svg"
             />
-          </Fragment>
+          </>
         )}
       </div>
     </Layout>

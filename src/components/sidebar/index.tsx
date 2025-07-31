@@ -100,7 +100,7 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
         ></div>
       )} */}
       <aside
-        className={`fixed top-16 lg:flex flex-col h-full bg-white dark:bg-[#121212] border-r border-[#C4C4C452] min-h-full overflow-x-hidden w-[235px] ease-in-out duration-500 shadow-lg ${showSidebar ? "flex" : "hidden"
+        className={`fixed top-16 z-20 lg:flex flex-col h-full bg-white dark:bg-[#121212] border-r border-[#C4C4C452] min-h-full overflow-x-hidden w-[235px] ease-in-out duration-500 shadow-lg ${showSidebar ? "flex" : "hidden"
           }`}
         ref={bgRef}
       >

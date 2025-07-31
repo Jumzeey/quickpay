@@ -19,7 +19,7 @@ const TabHeader = ({ tabs }: ComponentProps) => {
                 const isActive = link === `?tab=${tab}`;
                 return (
                     <Link key={index} href={link}>
-                        <div className={`flex items-center h-12 px-6 text-sm font-semibold ${isActive ? "text-black border-b-2 border-[#005BB0]" : "text-[#7F7F7F] border-b border-[#C4C4C43D]"}`}>
+                        <div className={`flex items-center h-12 px-6 text-xs md:text-sm font-semibold ${isActive ? "text-black border-b-2 border-[#005BB0]" : "text-[#7F7F7F] border-b border-[#C4C4C43D]"}`}>
                             {title}
                         </div>
                     </Link>

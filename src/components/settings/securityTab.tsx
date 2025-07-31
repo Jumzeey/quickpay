@@ -75,7 +75,7 @@ const SecurityTab = () => {
     <div className="flex flex-col space-y-4">
       <div className="flex items-center justify-between border-b border-[#C4C4C452] p-4">
         <div className="text-left gap-2">
-          <h3 className="text-lg font-semibold text-black">Change Password</h3>
+          <h3 className="text-base md:text-lg font-semibold text-black">Change Password</h3>
           <p className="text-[13px] text-[#7F7F7F] font-medium">
             We’ll send a password reset token to your email address {user?.email}
           </p>
@@ -103,7 +103,7 @@ const SecurityTab = () => {
           </div> */}
 
           <div className="space-y-6 my-4">
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <FormInput
                 label="New Password"
                 id="password"
@@ -115,7 +115,7 @@ const SecurityTab = () => {
               />
             </div>
 
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <FormInput
                 label="Confirm Password"
                 id="password_confirmation"

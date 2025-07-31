@@ -5,6 +5,8 @@ import {
     InterbankPayoutPayload,
     requeryPayout,
     RequeryPayoutResponse,
+    raiseDispute,
+    requestRefund,
     validateBankAccount,
     verifyPayoutOtp,
     viewPayout,
@@ -15,14 +17,12 @@ import {
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
-// Define Bank interface locally if not exported from service
 interface Bank {
     name: string;
     code: string;
     logo?: string;
 }
 
-// TypeScript interfaces for the store state
 interface PayoutFilters {
     search: string;
     status: string;
@@ -55,6 +55,8 @@ interface PayoutState {
     bankValidationLoading: boolean;
     banksLoading: boolean;
     requeryLoading: boolean;
+    requestRefundLoading: boolean;
+    raiseDisputeLoading: boolean;
     requeryData: RequeryPayoutResponse | null;
 
     // Data - no initial mock data, should come from API
@@ -74,6 +76,18 @@ interface PayoutState {
     filters: PayoutFilters;
 }
 
+export interface RequestRefundPayload {
+    reference: string;
+    amount: number;
+    reason: string;
+    description: string;
+}
+
+export interface RaiseDisputePayload {
+    category: string;
+    description: string;
+}
+
 interface PayoutActions {
     // Filter actions
     setFilters: (newFilters: Partial<PayoutFilters>) => void;
@@ -88,6 +102,8 @@ interface PayoutActions {
     fetchBanks: () => Promise<{ success: boolean; data?: Bank[] }>;
     exportPayoutHistory: (params?: PayoutHistoryParams) => Promise<{ success: boolean; export_link?: string }>;
     requeryPayout: (reference: string) => Promise<{ success: boolean; data?: RequeryPayoutResponse }>;
+    requestRefund: (payload: RequestRefundPayload) => Promise<{ success: boolean; data?: any }>;
+    raiseDispute: (payload: RaiseDisputePayload) => Promise<{ success: boolean; data?: any }>;
 
     // Utility actions
     reset: () => void;
@@ -107,6 +123,8 @@ const initialState: PayoutState = {
     bankValidationLoading: false,
     banksLoading: false,
     requeryLoading: false,
+    requestRefundLoading: false,
+    raiseDisputeLoading: false,
     requeryData: null,
 
     // Data - no mock data, should come from API
@@ -130,8 +148,8 @@ const initialState: PayoutState = {
 
     // UI states
     filters: {
-        search: '',
-        status: '',
+        search: "",
+        status: "",
         startDate: null,
         endDate: null,
     },
@@ -177,7 +195,7 @@ const usePayout = create<PayoutStore>()(
                     const searchParams: PayoutHistoryParams = {
                         page: state.pagination.current_page,
                         per_page: state.pagination.per_page,
-                        currency: params.currency || 'NGN',
+                        currency: params.currency || "NGN",
                         ...params,
                     };
 
@@ -186,11 +204,11 @@ const usePayout = create<PayoutStore>()(
                         searchParams.search = state.filters.search;
                     }
 
-                    if (state.filters.status && state.filters.status !== '') {
+                    if (state.filters.status && state.filters.status !== "") {
                         // Ensure status is one of the allowed values
-                        const validStatuses = ['pending', 'successful', 'failed', 'processing'];
+                        const validStatuses = ["pending", "successful", "failed", "processing"];
                         if (validStatuses.includes(state.filters.status)) {
-                            searchParams.status = state.filters.status as 'pending' | 'successful' | 'failed' | 'processing';
+                            searchParams.status = state.filters.status as "pending" | "successful" | "failed" | "processing";
                         }
                     }
 
@@ -215,7 +233,7 @@ const usePayout = create<PayoutStore>()(
                 } catch (error: any) {
                     set((state) => ({
                         ...state,
-                        error: error.message || 'Failed to fetch payout history',
+                        error: error.message || "Failed to fetch payout history",
                         payoutHistoryLoading: false,
                         // payouts: [],
                     }));
@@ -257,7 +275,7 @@ const usePayout = create<PayoutStore>()(
                 } catch (error: any) {
                     set((state) => ({
                         ...state,
-                        error: error.message || 'Failed to initiate payout',
+                        error: error.message || "Failed to initiate payout",
                         initiatePayoutLoading: false,
                     }));
                     throw error;
@@ -297,7 +315,7 @@ const usePayout = create<PayoutStore>()(
                 } catch (error: any) {
                     set((state) => ({
                         ...state,
-                        error: error.message || 'Failed to verify OTP',
+                        error: error.message || "Failed to verify OTP",
                         verifyOtpLoading: false,
                     }));
                     throw error;
@@ -334,7 +352,7 @@ const usePayout = create<PayoutStore>()(
                 } catch (error: any) {
                     set((state) => ({
                         ...state,
-                        error: error.message || 'Failed to fetch payout details',
+                        error: error.message || "Failed to fetch payout details",
                         viewPayoutLoading: false,
                     }));
                     throw error;
@@ -370,7 +388,7 @@ const usePayout = create<PayoutStore>()(
                 } catch (error: any) {
                     set((state) => ({
                         ...state,
-                        bankValidationError: error.message || 'Failed to validate bank account',
+                        bankValidationError: error.message || "Failed to validate bank account",
                         bankValidationLoading: false,
                     }));
                     throw error;
@@ -406,14 +424,13 @@ const usePayout = create<PayoutStore>()(
                 } catch (error: any) {
                     set((state) => ({
                         ...state,
-                        error: error.message || 'Failed to fetch banks',
+                        error: error.message || "Failed to fetch banks",
                         banksLoading: false,
                     }));
                     throw error;
                 }
             },
 
-            // Export payout history with optimized handling
             exportPayoutHistory: async (params: PayoutHistoryParams = {}) => {
                 try {
                     const response = await getPayoutHistory({ ...params, export: true });
@@ -460,8 +477,84 @@ const usePayout = create<PayoutStore>()(
                 } catch (error: any) {
                     set((state) => ({
                         ...state,
-                        error: error.message || 'Failed to requery payout',
+                        error: error.message || "Failed to requery payout",
                         requeryLoading: false,
+                    }));
+                    throw error;
+                }
+            },
+
+            requestRefund: async (payload: RequestRefundPayload) => {
+                const state = get();
+
+                if (state.requestRefundLoading) {
+                    return { success: false };
+                }
+
+                set((state) => ({
+                    ...state,
+                    requestRefundLoading: true,
+                    error: null,
+                }));
+
+                try {
+                    const response = await requestRefund(payload);
+                    console.log({ response });
+
+                    set((state) => ({
+                        ...state,
+                        requestRefundLoading: false,
+                    }));
+
+                    await get().fetchPayoutHistory();
+
+                    return {
+                        success: true,
+                        data: response,
+                    };
+                } catch (error: any) {
+                    set((state) => ({
+                        ...state,
+                        error: error.message || "Failed to request refund",
+                        requestRefundLoading: false,
+                    }));
+                    throw error;
+                }
+            },
+
+            raiseDispute: async (payload: RaiseDisputePayload) => {
+                const state = get();
+
+                if (state.raiseDisputeLoading) {
+                    return { success: false };
+                }
+
+                set((state) => ({
+                    ...state,
+                    raiseDisputeLoading: true,
+                    error: null,
+                }));
+
+                try {
+                    const response = await raiseDispute(payload);
+                    console.log({ response });
+
+                    set((state) => ({
+                        ...state,
+                        raiseDisputeLoading: false,
+                    }));
+
+                    await get().fetchPayoutHistory();
+
+                    return {
+                        success: true,
+                        data: response,
+                    };
+                } catch (error: any) {
+                    set((state) => ({
+                        ...state,
+                        error: error.message || "Failed to raise dispute",
+                        raiseDisputeLoading: false,
                     }));
                     throw error;
                 }
@@ -477,7 +570,7 @@ const usePayout = create<PayoutStore>()(
                 return get().initiateInterBankPayout(payload);
             },
         }),
-        { name: 'payout-store' }
+        { name: "payout-store" }
     )
 );
 

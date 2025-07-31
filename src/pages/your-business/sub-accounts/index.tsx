@@ -477,7 +477,7 @@ const SubaccountHistory = () => {
               />
             </div>
             <p className='text-3xl font-bold py-2'>Head up!</p>
-            <p className=''>Are you sure you want to continue?</p>
+            <p>Are you sure you want to continue?</p>
             <div className='flex justify-center items-center gap-3 mt-4'>
               <Button
                 text='Confirm'

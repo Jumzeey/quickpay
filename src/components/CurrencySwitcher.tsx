@@ -22,9 +22,9 @@ const CurrencySwitcher = ({ currencies, contentClassName = "", className = "" }:
     };
 
     return (
-        <div className={`grid grid-cols-1 text-[#005BB0] ${className}`}>
+        <div className={`grid grid-cols-1 text-[#005BB0] w-full md:w-28 ${className}`}>
             <select
-                className={`col-start-1 row-start-1 w-28 h-12 appearance-none rounded bg-[#005BB01A] py-2 px-4 tracking-wider text-xs text-[#005BB0] font-bold outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 ${contentClassName}`}
+                className={`col-start-1 row-start-1 w-full h-12 appearance-none rounded bg-[#005BB01A] py-2 px-4 tracking-wider text-xs text-[#005BB0] font-bold outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 ${contentClassName}`}
                 aria-label="Select currency"
                 onChange={handleChange}
                 value={selectedCurrency}

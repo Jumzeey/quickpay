@@ -176,7 +176,7 @@ const FilterHistory: React.FC<FilterHistoryProps> = ({
                             className="openSansLight text-white mt-5 text-xs p-2 rounded w-full"
                             text={state.isSubmitting ? <Loader /> : "Apply Filter"}
                             ariaLabel="Apply filter"
-                            disabled={!isValid || state.isSubmitting || state.isLoading}
+                            disabled={state.isSubmitting || state.isLoading}
                             primary
                             type="submit"
                         />

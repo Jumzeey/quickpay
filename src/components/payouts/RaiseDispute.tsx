@@ -33,9 +33,9 @@ const validationSchema = Yup.object().shape({
 
 // TODO: replace with actual data
 const disputeCategories = [
-    { value: "wrong_amount", label: "Wrong Amount" },
-    { value: "failed_transaction", label: "Failed Transaction" },
-    { value: "double_debit", label: "Double Debit" },
+    { value: "wrong amount", label: "Wrong Amount" },
+    { value: "failed transaction", label: "Failed Transaction" },
+    { value: "double debit", label: "Double Debit" },
     { value: "other", label: "Other" },
 ];
 

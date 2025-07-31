@@ -1,3 +1,4 @@
+import { CollectionGatewayMetaResponse, CollectionHistoryResponse } from '@/components/collections/types';
 import api from '@/util/api';
 import { apiEndpoints } from '@/util/endpoints';
 import { notifyError } from '@/util/utils';
@@ -11,13 +12,13 @@ export interface PaymentLinkPayload {
   subaccount_id?: string;
 }
 
-export async function getCollectionHistory(params?: object) {
+export async function getCollectionHistory(params?: object): Promise<CollectionHistoryResponse | undefined> {
   try {
-    const response = await api.get(
+    const response = await api.get<CollectionHistoryResponse>(
       `${apiEndpoints.collections.GET_COLLECTION_HISTORY}`,
       { params }
     );
-    return response.data;
+    return response.data as CollectionHistoryResponse;
   } catch (error: any) {
     notifyError(error.message);
   }
@@ -187,3 +188,15 @@ export async function getSingleRefund(id: string) {
     }
   }
 }
+
+export const getCollectionGatewayMeta = async (id: string): Promise<CollectionGatewayMetaResponse | undefined> => {
+  try {
+    const response = await api.get<CollectionGatewayMetaResponse>(
+      `${apiEndpoints.collections.GET_COLLECTION_GATEWAY_META.replace(':id', id)}`
+    );
+    return response.data;
+  } catch (error: any) {
+    notifyError(error.message || 'Failed to fetch gateway metadata');
+    return undefined;
+  }
+};

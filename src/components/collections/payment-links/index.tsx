@@ -19,9 +19,9 @@ import { paymentLinksAnalytics } from "@/util/constants";
 import {
   capitalizeFirstLetterOfEachWord,
   copyToClipboard,
+  formatBalance,
   notifyError,
-  notifySuccess,
-  numberWithCommas,
+  notifySuccess
 } from "@/util/utils";
 import Link from "next/link";
 import { Fragment, useContext, useState } from "react";
@@ -48,8 +48,6 @@ const PaymentLinks = () => {
   const [isModalOpen, setIsModalOpen] = useState<ModalType>(null);
   const openModal = (type: ModalType) => setIsModalOpen(type);
   const closeModal = () => setIsModalOpen(null);
-
-  console.log({ isModalOpen });
 
   const { handleClick } = useClickEvent();
   const { handleModalClick, sharedState } = useContext(SharedStateContext)!;
@@ -285,7 +283,7 @@ const PaymentLinks = () => {
                             {item.title}
                           </td>
                           <td>
-                            &#36;&nbsp;{numberWithCommas(item.amount)}
+                            {formatBalance(item.amount)}
                           </td>
 
                           <td className='flex items-center gap-1 truncate'>

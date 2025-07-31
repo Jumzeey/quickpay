@@ -7,7 +7,7 @@ import { notifyError, notifySuccess } from "@/util/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PinInput from "react-pin-input";
 
 const OtpPage = () => {
@@ -20,23 +20,58 @@ const OtpPage = () => {
   const { source } = router.query;
   const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference } = useAuthentication();
 
+  const OTP_LENGTH = 8;
+
   const userEmail = typeof window !== "undefined" ? localStorage?.getItem("user-email") : "";
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setIsDisabled(false);
-    }
-  }, [countdown]);
+  const timerRef = useRef<NodeJS.Timeout>();
 
-  const handleSubmit = async () => {
+  const startCountdown = useCallback((count?: number) => {
+    setCountdown(count || 60);
+    setIsDisabled(true);
+
+    const decrementCount = () => {
+      setCountdown(prev => {
+        const newCount = prev - 1;
+        if (newCount <= 0) {
+          setIsDisabled(false);
+          return 0;
+        }
+        return newCount;
+      });
+    };
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    timerRef.current = setInterval(decrementCount, 1000);
+  }, []);
+
+  useEffect(() => {
+    startCountdown();
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [startCountdown]);
+
+  const handleSubmit = async (code?: string) => {
+    // TODO: Validate OTP length and format
+    const otpCode = code || otp;
+    if (!otpCode || otpCode.length !== OTP_LENGTH) {
+      console.log("Invalid OTP length", otpCode);
+      notifyError(`Please enter a valid ${OTP_LENGTH}-digit OTP`);
+      return;
+    }
+
     setVerifyOtpLoading(true);
     try {
-      const payload = { verify_reference, otp };
+      const payload = {
+        verify_reference,
+        otp: otpCode
+      };
 
       if (source === "sign-in") {
         await verifyOtp(payload);
@@ -47,6 +82,7 @@ const OtpPage = () => {
         router.push("/onboarding/reset-password");
       }
     } catch (error: any) {
+      console.log({error});
       notifyError(error.message);
     } finally {
       setVerifyOtpLoading(false);
@@ -60,8 +96,7 @@ const OtpPage = () => {
     try {
       const response = await resendOtp(verify_reference);
       notifySuccess(response.message);
-      setCountdown(30);
-      setIsDisabled(true);
+      startCountdown(30);
     } catch (error: any) {
       notifyError(error.message);
     } finally {
@@ -103,11 +138,21 @@ const OtpPage = () => {
               <div className="space-y-6">
                 <div className="flex flex-col items-center">
                   <PinInput
-                    length={8}
+                    length={OTP_LENGTH}
                     initialValue=""
                     type="numeric"
                     inputMode="number"
-                    onComplete={value => setOtp(value)}
+                    focus
+                    onChange={(value) => {
+                      setOtp(value);
+                      if (value.length === OTP_LENGTH) {
+                        setTimeout(() => handleSubmit(value), 100);
+                      }
+                    }}
+                    onComplete={(value) => {
+                      setOtp(value);
+                      setTimeout(() => handleSubmit(value), 100);
+                    }}
                     style={{
                       display: 'flex',
                       gap: '8px',
@@ -134,7 +179,7 @@ const OtpPage = () => {
                 <div className="pt-5 flex items-center justify-between">
                   <div className="w-1/2">
                     <Button
-                      onClick={handleSubmit}
+                      onClick={() => handleSubmit()}
                       className="w-full py-2.5 text-sm font-medium rounded"
                       text={verifyOtpLoading ? "Verifying..." : "Verify OTP"}
                       ariaLabel="Verify OTP Button"

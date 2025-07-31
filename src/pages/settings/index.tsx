@@ -50,14 +50,14 @@ const Settings = () => {
       />
 
       <div className="flex flex-col gap-10">
-        <section className="grid grid-cols-7">
+        <section className="grid md:grid-cols-7">
           <ProfileLeftPanel title="Business Profile" />
 
           <div className="col-span-5 border border-[#C4C4C452] rounded-lg">
             <ProfileTab />
           </div>
         </section>
-        <section className="grid grid-cols-7">
+        <section className="grid md:grid-cols-7">
           <ProfileLeftPanel
             title="Security"
             description="Reduce your risk of exposure by changing your password. Using a passphrase of random words (like: S3ndc@shdear) is secure and easy to remember"
@@ -67,7 +67,7 @@ const Settings = () => {
             <SecurityTab />
           </div>
         </section>
-        <section className="grid grid-cols-7">
+        <section className="grid md:grid-cols-7">
           <ProfileLeftPanel
             title="Webhooks"
             description="Webhooks allow you to receive real-time notifications about events in your Ramp account."
@@ -77,7 +77,7 @@ const Settings = () => {
             <WebhooksTab />
           </div>
         </section>
-        <section className="grid grid-cols-7">
+        <section className="grid md:grid-cols-7">
           <ProfileLeftPanel
             title="API Keys"
             description="Keep your API keys secure to prevent unauthorized access.
@@ -88,7 +88,7 @@ const Settings = () => {
             <ApiKeysTab />
           </div>
         </section>
-        <section className="grid grid-cols-7">
+        <section className="grid md:grid-cols-7">
           <ProfileLeftPanel
             title="IP Whitelist"
             description="Restrict access to your account by allowing only trusted IP addresses."
@@ -98,7 +98,7 @@ const Settings = () => {
             <IPWhiteListing />
           </div>
         </section>
-        <section className="grid grid-cols-7">
+        <section className="grid md:grid-cols-7">
           <ProfileLeftPanel
             title="Manage users"
             description="Efficiently manage users and their roles within your company. Assign permissions and control access levels"

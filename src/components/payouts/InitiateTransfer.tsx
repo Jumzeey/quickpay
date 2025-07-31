@@ -1,6 +1,7 @@
 import Button from "@/components/button";
 import { walletCurrencies } from "@/components/CurrencySwitcher";
 import FormInput from "@/components/FormInput";
+import FormPhoneInput from "@/components/FormPhoneInput";
 import FormSelect from "@/components/FormSelect";
 import FormSelectSearch from "@/components/FormSelectSearch";
 import Loader from "@/components/loader";
@@ -24,6 +25,14 @@ interface InitiateTransferProps {
     closeModal: () => void;
     fetchPayoutHistory: () => void;
 }
+
+const CODE_LENGTH = 6;
+
+const MOBILE_MONEY_PROVIDERS = [
+    { value: 'mtn', label: 'MTN' },
+    { value: 'airtel', label: 'Airtel' },
+    { value: 'vodafone', label: 'Vodafone' }
+];
 
 const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     isModalOpen,
@@ -121,11 +130,26 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             }
         }
 
+        if (state.selectedOptionName === "Mobile Money") {
+            return Yup.object().shape({
+                mobileProvider: Yup.string().required("Mobile provider is required"),
+                phoneNumber: Yup.string()
+                    .required("Phone number is required")
+                    .test("valid-phone", "Please enter a valid phone number", function (value) {
+                        if (!value) return false;
+
+                        return value.length >= 8 && value.length <= 15;
+                    }),
+                amount: baseAmountValidation,
+                narration: Yup.string().required("Narration is required")
+            });
+        }
+
         if (state.currentStep === 3) { // OTP step
             return Yup.object().shape({
                 otp: Yup.string()
                     .required("OTP is required")
-                    .length(6, "OTP must be 6 digits")
+                    .length(CODE_LENGTH, `OTP must be ${CODE_LENGTH} digits`)
                     .matches(/^\d+$/, "OTP must contain only digits"),
             });
         }
@@ -153,6 +177,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             targetAccountName: "",
             targetAccountNumber: "",
             otp: "",
+            mobileProvider: "mtn",
+            phoneNumber: "",
+            narration: "",
         },
         mode: 'onChange'
     });
@@ -228,6 +255,11 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     walletId: values.walletId,
                     accountName: values.accountName,
                 }),
+                ...(state.selectedOptionName === "Mobile Money" && {
+                    provider: values.mobileProvider,
+                    phone_number: values.phoneNumber,
+                    narration: values.narration,
+                }),
             };
 
             const response = await initiateInterBankPayout(payload);
@@ -254,6 +286,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             targetAccountName: "",
             targetAccountNumber: "",
             otp: "",
+            mobileProvider: "mtn",
+            phoneNumber: "",
+            narration: "",
         });
 
         if (state.currentStep === 0 || state.currentStep === 3) {
@@ -299,8 +334,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 <li key={option.id}>
                     <button
                         type="button"
-                        className={`w-full flex items-center justify-between font-semibold text-sm text-black py-5 ${option.id !== TRANSFER_OPTIONS.length ? "border-b border-[#C4C4C452]" : ""
-                            }`}
+                        className={`w-full flex items-center justify-between font-semibold text-sm text-black py-5 ${option !== TRANSFER_OPTIONS[TRANSFER_OPTIONS.length - 1] ? "border-b border-[#C4C4C452]" : ""}`}
                         onClick={() => handleOptionClick(option)}
                     >
                         {option.name}
@@ -355,10 +389,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         error={errors.bank?.message}
                         touched={!!errors.bank}
                         disabled={banksLoading}
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
                     />
                 )}
             />
@@ -377,10 +408,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         maxLength={10}
                         error={errors.accountNumber?.message}
                         touched={!!errors.accountNumber}
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
                     />
                 )}
             />
@@ -398,10 +426,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         touched={!!errors.accountName}
                         readOnly
                         disabled
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
                     />
                 )}
             />
@@ -418,10 +443,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         error={errors.amount?.message}
                         touched={!!errors.amount}
                         numberOnly
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
                     />
                 )}
             />
@@ -429,8 +451,108 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <div className="pt-10 w-52">
                 <Button
                     className="openSansLight text-white text-lg p-2 rounded w-full"
-                    text={state.isSubmitting ? <Loader /> : "Initiate Payout"}
-                    ariaLabel="Initiate Payout"
+                    text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
+                    ariaLabel="Initiate Transfer"
+                    disabled={state.isSubmitting || state.isLoading}
+                    primary
+                    type="submit"
+                />
+            </div>
+        </form>
+    );
+
+    const renderMobileMoneyForm = () => (
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+            <Controller
+                name="mobileProvider"
+                control={control}
+                render={({ field }) => (
+                    <FormSelect
+                        id="mobileProvider"
+                        htmlFor="mobileProvider"
+                        label="Mobile Money Provider"
+                        placeholder="Select Provider"
+                        options={MOBILE_MONEY_PROVIDERS}
+                        error={errors.mobileProvider?.message}
+                        touched={!!errors.mobileProvider}
+                        value={field.value || "mtn"}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                    />
+                )}
+            />
+
+            <Controller
+                name="phoneNumber"
+                control={control}
+                render={({ field }) => (
+                    <FormPhoneInput
+                        label="Phone Number"
+                        id="phoneNumber"
+                        htmlFor="phoneNumber"
+                        error={errors.phoneNumber?.message}
+                        touched={!!errors.phoneNumber}
+                        {...field}
+                    />
+                )}
+            />
+
+            <Controller
+                name="accountName"
+                control={control}
+                render={({ field }) => (
+                    <FormInput
+                        label="Account Name"
+                        id="accountName"
+                        type="text"
+                        htmlFor="accountName"
+                        error={errors.accountName?.message}
+                        touched={!!errors.accountName}
+                        disabled
+                        {...field}
+                    />
+                )}
+            />
+
+            <Controller
+                name="amount"
+                control={control}
+                render={({ field }) => (
+                    <FormInput
+                        label="Amount"
+                        id="amount"
+                        type="text"
+                        htmlFor="amount"
+                        error={errors.amount?.message}
+                        touched={!!errors.amount}
+                        numberOnly
+                        {...field}
+                    />
+                )}
+            />
+
+            <Controller
+                name="narration"
+                control={control}
+                render={({ field }) => (
+                    <FormInput
+                        label="Narration"
+                        id="narration"
+                        type="text"
+                        htmlFor="narration"
+                        error={errors.narration?.message}
+                        touched={!!errors.narration}
+                        {...field}
+                    />
+                )}
+            />
+
+            <div className="pt-10 w-52">
+                <Button
+                    className="openSansLight text-white text-lg p-2 rounded w-full"
+                    text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
+                    ariaLabel="Initiate Transfer"
                     disabled={state.isSubmitting || state.isLoading}
                     primary
                     type="submit"
@@ -452,10 +574,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         htmlFor="walletId"
                         maxLength={10}
                         error={errors.walletId?.message}
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
                     />
                 )}
             />
@@ -471,10 +590,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         htmlFor="accountName"
                         error={errors.accountName?.message}
                         readOnly
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
                     />
                 )}
             />
@@ -490,22 +606,21 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         htmlFor="amount"
                         error={errors.amount?.message}
                         numberOnly
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
                     />
                 )}
             />
 
-            <Button
-                className="openSansLight text-white mt-5 text-xs p-2 rounded w-full"
-                text={state.isSubmitting ? <Loader /> : "Initiate Payout"}
-                ariaLabel="Initiate Payout"
-                disabled={!isValid || state.isSubmitting || state.isLoading}
-                primary
-                type="submit"
-            />
+            <div className="pt-10 w-52">
+                <Button
+                    className="openSansLight text-white text-lg p-2 rounded w-full"
+                    text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
+                    ariaLabel="Initiate Transfer"
+                    disabled={state.isSubmitting || state.isLoading}
+                    primary
+                    type="submit"
+                />
+            </div>
         </form>
     );
 
@@ -604,14 +719,16 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         )}
                     />
 
-                    <Button
-                        className="openSansLight text-white mt-5 text-xs p-2 rounded w-full"
-                        text={state.isSubmitting ? <Loader /> : "Initiate Payout"}
-                        ariaLabel="Initiate Payout"
-                        disabled={!isValid || state.isSubmitting || state.isLoading}
-                        primary
-                        type="submit"
-                    />
+                    <div className="pt-10 w-52">
+                        <Button
+                            className="openSansLight text-white text-lg p-2 rounded w-full"
+                            text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
+                            ariaLabel="Initiate Transfer"
+                            disabled={state.isSubmitting || state.isLoading}
+                            primary
+                            type="submit"
+                        />
+                    </div>
                 </form>
             );
         }
@@ -624,7 +741,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             <div className="space-y-4">
                 <h3 className="text-center text-lg font-medium">Enter Verification Code</h3>
                 <p className="text-center text-gray-500 text-sm">
-                    Please enter the 6-digit code sent to you
+                    Please enter the {CODE_LENGTH}-digit code sent to you
                 </p>
 
                 <Controller
@@ -633,9 +750,24 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     render={({ field }) => (
                         <div className="space-y-2 flex items-center justify-center">
                             <PinInput
-                                length={6}
+                                length={CODE_LENGTH}
                                 initialValue=""
-                                onChange={(value) => field.onChange(value)}
+                                focus
+                                onChange={(value) => {
+                                    field.onChange(value);
+                                    if (value.length === 6) {
+                                        setTimeout(() => {
+                                            field.onChange(value);
+                                            handleSubmit(handleFormSubmit)();
+                                        }, 100);
+                                    }
+                                }}
+                                onComplete={(value) => {
+                                    field.onChange(value);
+                                    setTimeout(() => {
+                                        handleSubmit(handleFormSubmit)();
+                                    }, 100);
+                                }}
                                 type="numeric"
                                 inputMode="number"
                                 style={{ padding: '10px' }}
@@ -645,11 +777,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                                     margin: '0 4px',
                                 }}
                                 inputFocusStyle={{ borderColor: '#2563eb' }}
-                                onComplete={(value) => field.onChange(value)}
                                 autoSelect={true}
+                                regexCriteria={/^[0-9]*$/}
                             />
                             {errors.otp?.message && (
-                                <p className="text-red-500 text-xs">{errors.otp?.message}</p>
+                                <p className="text-red-500 text-xs">
+                                    {errors.otp?.message}
+                                </p>
                             )}
                         </div>
                     )}
@@ -679,6 +813,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     return renderRampBalanceForm();
                 case "Cross Currency Transfer":
                     return renderCrossCurrencyForm();
+                case "Mobile Money":
+                    return renderMobileMoneyForm();
                 default:
                     return null;
             }
@@ -693,11 +829,13 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         if (state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 2) {
             return "Target Account Details";
         }
+        if (state.selectedOptionName === "Mobile Money") {
+            return "Mobile Money Transfer";
+        }
         return state.selectedOptionName || "Transfer Details";
     };
 
     return (
-
         <Modal
             isOpen={isModalOpen}
             onClose={closeModalAndReset}

@@ -5,6 +5,7 @@ import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
 import Filter from "@/components/Filter";
+import { FilterExport } from "@/components/filter-export";
 import Icon from "@/components/icon";
 import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
@@ -12,11 +13,12 @@ import Pagination from "@/components/pagination";
 import InitiateTransfer from "@/components/payouts/InitiateTransfer";
 import RaiseDispute from "@/components/payouts/RaiseDispute";
 import RequestRefund from "@/components/payouts/RequestRefund";
+import { ReferenceSearch } from "@/components/reference-search";
 import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import { usePaginatedStoreQuery } from "@/hooks/useOptimizedFetch";
+import { getBanks } from "@/services/bank";
 import { Payout } from "@/services/payout";
-import { getBankDetails } from "@/services/user";
 import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import usePayout from "@/stores/usePayout";
@@ -97,9 +99,6 @@ const PayoutHistory = () => {
     },
     {
       enabled: Boolean(mounted && selectedCurrency),
-      onSuccess: (data) => {
-        console.log('✅ Payout history fetched successfully');
-      },
       onError: (error) => {
         console.error('❌ Failed to fetch payout history:', error);
         notifyError(error.message);
@@ -187,7 +186,7 @@ const PayoutHistory = () => {
   const lastPage = pagination?.last_page;
 
   const fetchBankDetails = async () => {
-    const bankDetails = await getBankDetails();
+    const bankDetails = await getBanks();
     setState(prevState => ({
       ...prevState,
       bankDetails,
@@ -214,7 +213,6 @@ const PayoutHistory = () => {
   };
 
   const handleParamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value)
     debouncedHandleParamsChange(event.target.value);
   };
 
@@ -348,11 +346,13 @@ const PayoutHistory = () => {
           <ActionButton
             text="Initiate Payout"
             ariaLabel="Initiate Payout button"
-            className="!h-10"
+            className="w-1/2 md:w-full"
             onClick={() => toggleModal('isInitiateTransferModalOpen')}
           />
 
-          <CurrencySwitcher contentClassName="!h-10" className="!h-10" />
+          <div className="w-1/2 h-14">
+            <CurrencySwitcher contentClassName="h-full" className="h-full" />
+          </div>
 
           {/* <ActionButton
             ariaLabel='Filter by date button'
@@ -367,52 +367,37 @@ const PayoutHistory = () => {
             onClick={handleExport}
             className="!h-10"
           /> */}
-
-          <div className='relative flex justify-end mt-4 md:mt-0'>
-            <Dropdown onOpen={showFilter} onClose={toggleFilter}>
-              <Filter filterCallback={handleFilterChange} />
-            </Dropdown>
-          </div>
         </div>
       </div>
 
       <div>
-        {payoutHistoryLoading ? (
-          <TableSkeleton />
-        ) : payouts?.length !== 0 ? (
+        {payouts?.length > 0 && (
           <>
             <div className="flex flex-col my-7 md:flex-row justify-between">
-              <div className="relative w-min">
-                <input
-                  type="text"
-                  id="searchInput"
-                  name="searchInput"
-                  placeholder="Search Reference Number..."
-                  onChange={handleParamsChange}
-                  className="h-[60px] w-full md:w-[376px] outline-none bg-[#D9D9D90D] font-medium border border-[#C4C4C43D] text-[#7F7F7F] text-sm px-3 rounded-md"
-                />
-                <Icon name="search" className="absolute top-[35%] right-4 size-5 text-[#7F7F7F]" />
-              </div>
+              <ReferenceSearch
+                value={searchInput}
+                onClear={() => setSearchInput("")}
+                handleParamsChange={handleParamsChange}
+              />
 
-              <div className="flex items-center justify-between gap-4 mt-5 md:mt-0">
-                <button
-                  onClick={toggleFilter}
-                  aria-label="Filter by date"
-                  className="flex items-center justify-center gap-2 bg-[#D9D9D91A] border border-[#C4C4C452] rounded-md text-sm font-medium text-[#7F7F7F] py-2 min-w-[112px] px-5 h-full"
-                >
-                  Filter By Date
-                  <Icon name="filter" className="size-4 text-[#7F7F7F]" />
-                </button>
-                <button
-                  onClick={handleExport}
-                  className="flex items-center justify-center gap-2 bg-[#D9D9D91A] border border-[#C4C4C452] rounded-md text-sm font-medium text-[#7F7F7F] py-2 min-w-[112px] h-full"
-                >
-                  Export
-                  <Icon name="export" className="size-4 text-[#7F7F7F]" />
-                </button>
-              </div>
+              <FilterExport
+                handleExport={handleExport}
+                toggleFilter={toggleFilter}
+              />
             </div>
 
+            <div className='relative flex justify-end mt-4 md:mt-0'>
+              <Dropdown onOpen={showFilter} onClose={toggleFilter}>
+                <Filter filterCallback={handleFilterChange} />
+              </Dropdown>
+            </div>
+          </>
+        )}
+
+        {payoutHistoryLoading ? (
+          <TableSkeleton />
+        ) : payouts?.length > 0 ? (
+          <>
             <DynamicTable
               columns={columns}
               data={payouts}

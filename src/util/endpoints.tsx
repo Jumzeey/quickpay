@@ -23,6 +23,7 @@ export const apiEndpoints = {
     POPULATE_SETTLEMENT_CHARTS: '/merchant/dashboard/settlement-chart',
     CHANGE_ACCOUNT_STATUS: '/merchant/settlements/accounts',
     GET_WALLET_HISTORY: '/merchant/client/get-wallet-logs',
+    GET_WALLET_EXPORT_STATUS: '/merchant/client/wallet-exports/:id/status',
   },
   collections: {
     GET_COLLECTION_HISTORY: '/merchant/collections-history',
@@ -38,6 +39,7 @@ export const apiEndpoints = {
     REQUEST_REFUND: '/merchant/refunds/initiate',
     GET_SINGLE_REFUNDS: '/merchant/refunds',
     GET_REFUNDS: '/merchant/refunds',
+    GET_COLLECTION_GATEWAY_META: '/merchant/collections-history/:id/gateway-meta',
   },
   conversions: {
     GET_CONVERSION_HISTORY: '/conversions/history',
@@ -77,6 +79,8 @@ export const apiEndpoints = {
     ADD_PAYOUT: '/merchant/disbursements/interbank',
     VERIFY_PAYOUT_OTP: '/merchant/disbursements/interbank/complete',
     REQUERY_PAYOUT: '/merchant/disbursements/interbank/requery',
+    REQUEST_REFUND: '/merchant/disbursements/refunds', // TODO: re-check
+    RAISE_DISPUTE: '/merchant/disbursements/disputes', // TODO: re-check
   },
   webhooks: {
     GET_WEBHOOK: '/merchant/webhook',
@@ -118,5 +122,11 @@ export const apiEndpoints = {
     CREATE_IP_WHITELIST: '/merchant/ip-whitelist',
     UPDATE_IP_WHITELIST: '/merchant/ip-whitelist',
     DELETE_IP_WHITELIST: '/merchant/ip-whitelist',
+  },
+  settlements: {
+    LIST_SETTLEMENTS: '/merchant/settlements',
+    GET_SETTLEMENT_DETAILS: '/merchant/settlements/:id',
+    GET_DAILY_BREAKDOWN: '/merchant/settlements/daily-breakdown',
+    GET_SETTLEMENT_WINDOW_TRANSACTIONS: '/merchant/settlements/:id/window-transactions',
   },
 };

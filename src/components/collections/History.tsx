@@ -1,20 +1,24 @@
 import Button from "@/components/button";
 import FilterHistory from "@/components/collections/FilterHistory";
+import TransactionMetaModal from "@/components/collections/TransactionMetaModal";
+import { CollectionGatewayMetaResponse } from "@/components/collections/types";
 import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
 import Filter from "@/components/Filter";
 import Icon from "@/components/icon";
+import Loader from "@/components/loader";
 import Pagination from "@/components/pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 import TransactionDetails from "@/components/transactionDetails";
 import { usePaginatedEffect } from "@/hooks/useEffectFetch";
-import { getCollectionHistory } from "@/services/collections";
+import { getCollectionGatewayMeta, getCollectionHistory, repushNotification } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import useCollectionHistory from "@/stores/useCollectionHistory";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
-import { downloadFile, notifyError } from "@/util/utils";
+import { copyToClipboard, downloadFile, notifyError, notifySuccess } from "@/util/utils";
+import Link from "next/link";
 import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -53,6 +57,7 @@ const CollectionHistory = () => {
         showFilterHistory: false,
         viewTransactionMeta: false,
     });
+    const [selectedMeta, setSelectedMeta] = useState<CollectionGatewayMetaResponse | null>(null);
 
     const closeDropdown = () => {
         setState({
@@ -86,6 +91,30 @@ const CollectionHistory = () => {
         title: 'Session ID',
         render: (value: any, row: any) => row?.session_id || 'N/A',
     }, {
+        key: 'processing_fee',
+        title: 'Processing Fee',
+        render: (value: any, row: any) => row?.processing_fee || 'N/A',
+    }, {
+        key: 'net_amount',
+        title: 'Net Amount',
+        render: (value: any, row: any) => row?.net_amount || 'N/A',
+    }, {
+        key: 'converted_amount',
+        title: 'Converted Amount',
+        render: (value: any, row: any) => row?.converted_amount || 'N/A',
+    }, {
+        key: 'rate',
+        title: 'Rate',
+        render: (value: any, row: any) => row?.rate || 'N/A',
+    }, {
+        key: 'refunded',
+        title: 'Refunded Value',
+        render: (value: any, row: any) => row?.refunded || 'N/A',
+    }, {
+        key: 'value_date',
+        title: 'Value Date',
+        render: (value: any, row: any) => row?.value_date || 'N/A',
+    }, {
         key: 'channel',
         title: 'Payment Method',
         render: (value: any, row: any) => row?.channel || 'N/A',
@@ -93,6 +122,38 @@ const CollectionHistory = () => {
         key: 'sender_name',
         title: 'Sender Name',
         render: (value: any, row: any) => row?.sender?.sender_name || 'N/A'
+    }, {
+        key: 'sender_account_number',
+        title: 'Sender Account Number',
+        render: (value: any, row: any) => row?.sender?.sender_account_number || 'N/A'
+    }, {
+        key: 'sender_bank_code',
+        title: 'Sender Bank Code',
+        render: (value: any, row: any) => row?.sender?.sender_bank_code || 'N/A'
+    }, {
+        key: 'card_scheme',
+        title: 'Card Scheme',
+        render: (value: any, row: any) => row?.card_scheme || 'N/A'
+    }, {
+        key: 'subaccount',
+        title: 'Sub Account',
+        render: (value: any, row: any) => row?.subaccount || 'N/A'
+    }, {
+        key: 'customer_reference',
+        title: 'Customer Reference',
+        render: (value: any, row: any) => row?.customer_reference || 'N/A',
+    }, {
+        key: 'mid',
+        title: 'Mid',
+        render: (value: any, row: any) => row?.mid || 'N/A'
+    }, {
+        key: 'fraud_check',
+        title: 'Fraud Check',
+        render: (value: any, row: any) => row?.fraud_check || 'N/A'
+    }, {
+        key: 'payment_reason',
+        title: 'Payment Reason',
+        render: (value: any, row: any) => row?.payment_reason || 'N/A'
     }, {
         key: 'gateway_message',
         title: 'Gateway Message',
@@ -106,7 +167,44 @@ const CollectionHistory = () => {
 
             return row?.gateway_message?.message || `${row?.gateway_message?.code} - ${row?.gateway_message?.message}` || 'N/A';
         }
+    }, {
+        key: 'callback_url',
+        title: 'Callback URL',
+        render: (value: any) => (
+            <div className="flex items-center gap-2">
+                <Link href={value} target='_blank'>
+                    {value.length > 30
+                        ? `${value.slice(0, 40)}...`
+                        : value}
+                </Link>
+                <Icon
+                    name='copy3'
+                    size='15'
+                    className='cursor-pointer text-[#7F7F7F]'
+                    onClick={() => copyToClipboard(value)}
+                />
+            </div>
+        )
     }];
+
+    const [isLoadingMeta, setIsLoadingMeta] = useState(false);
+
+    const handleViewMeta = async (row: any) => {
+        try {
+            setIsLoadingMeta(true);
+            const response = await getCollectionGatewayMeta(row.id);
+            if (response) {
+                console.log({ response });
+                setSelectedMeta(response);
+            }
+
+            toggleModal('viewTransactionMeta');
+        } catch (error: any) {
+            notifyError(error.message);
+        } finally {
+            setIsLoadingMeta(false);
+        }
+    };
 
     const toggleModal = (name: keyof Pick<CollectionsProps, 'showCollections' | 'showFilterStatus' | 'showFilterHistory' | 'viewTransactionMeta'>) => {
         setState(prevState => ({
@@ -129,9 +227,31 @@ const CollectionHistory = () => {
     const handleExport = async () => {
         try {
             const response = await getCollectionHistory({ export: true });
+            if (!response || !response.export_link) {
+                notifyError("Export link is not available.");
+                return;
+            }
             downloadFile(response.export_link);
         } catch (error: any) {
             notifyError(error.message);
+        }
+    };
+
+    const handleRePushNotification = async (row: any) => {
+        console.log({ row });
+        setState({ ...state, isLoading: true });
+        try {
+            const response = await repushNotification(row.id);
+            console.log({ response });
+            // @ts-ignore
+            if (response?.message) {
+                // @ts-ignore
+                notifySuccess(response.message);
+            }
+        } catch (error: any) {
+            notifyError(error.message);
+        } finally {
+            setState({ ...state, isLoading: false });
         }
     };
 
@@ -160,8 +280,6 @@ const CollectionHistory = () => {
             }
         }
     );
-
-    console.log({ collections, currentPage });
 
     return (
         <>
@@ -220,7 +338,6 @@ const CollectionHistory = () => {
                                         onClick={handleExport}
                                         plain
                                     /> */}
-                                    {/* TODO: implement this filter modal */}
                                     <button
                                         onClick={openFilterHistory}
                                         className="flex items-center justify-center gap-2 bg-[#D9D9D91A] border border-[#C4C4C452] rounded-md text-sm font-medium text-[#7F7F7F] py-2 w-[112px]"
@@ -264,17 +381,18 @@ const CollectionHistory = () => {
                                         text="Repush Notification"
                                         ariaLabel="Download receipt button"
                                         className="px-4 !h-12 !w-[175px] p-0"
-                                        onClick={() => null}
+                                        onClick={() => handleRePushNotification(row)}
                                         primary
                                     />
                                 )}
                                 secondaryBtnContent={(row: any) => (
                                     <div className="relative block border border-[#EFF7FE] rounded-lg">
                                         <button
-                                            onClick={() => toggleModal('viewTransactionMeta')}
+                                            onClick={() => handleViewMeta(row)}
+                                            disabled={isLoadingMeta}
                                             className="text-sm text-primary font-medium px-4 h-12 bg-[#EFF7FE] flex items-center justify-center"
                                         >
-                                            View Transaction Meta
+                                            {isLoadingMeta ? <Loader /> : "View Transaction Meta"}
                                         </button>
                                     </div>
                                 )}
@@ -290,6 +408,12 @@ const CollectionHistory = () => {
                                 isModalOpen={state.showFilterHistory}
                                 closeModal={closeFilterHistory}
                                 setFilter={setFilter}
+                            />
+
+                            <TransactionMetaModal
+                                isOpen={state.viewTransactionMeta}
+                                onClose={() => toggleModal('viewTransactionMeta')}
+                                metadata={selectedMeta}
                             />
                         </div>
                     ) : (

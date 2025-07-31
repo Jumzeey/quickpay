@@ -1,12 +1,12 @@
-import { Fragment, useEffect, useState } from "react";
-import Layout from "@/components/layout";
-import WebPageTitle from "@/components/WebPageTitle";
 import Card from "@/components/Card";
-import Table from "@/components/table";
-import Pagination from "@/components/pagination";
 import EmptyState from "@/components/EmptyState";
+import Layout from "@/components/layout";
+import Pagination from "@/components/pagination";
+import Table from "@/components/table";
 import TableSkeleton from "@/components/TableSkeleton";
+import WebPageTitle from "@/components/WebPageTitle";
 import useMids from "@/stores/useMids";
+import { useEffect, useState } from "react";
 
 const Mids = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,39 +33,35 @@ const Mids = () => {
       </div>
       <div>
         {getMidsLoading ? (
-          <Fragment>
-            <TableSkeleton />
-          </Fragment>
-        ) : mids.length !== 0 ? (
-          <Fragment>
-            <Card className="mt-10">
-              <Table columns={columns} className="mt-7">
-                {mids.map((item: any, index: number) => (
-                  <tr
-                    key={index}
-                    className="border-b last:border-none border-grey-200"
-                  >
-                    <td className="text-sm px-5 py-6">{index + 1}</td>
-                    <td className="text-sm px-5 py-6">
-                      {item.merchantId || "N/A"}
-                    </td>
-                    <td className="text-sm px-5 py-6">
-                      {item.business_name || "N/A"}
-                    </td>
-                    <td className="text-sm px-5 py-6 capitalize">
-                      {item.status || "N/A"}
-                    </td>
-                  </tr>
-                ))}
-              </Table>
-              <Pagination
-                lastPage={pagination?.last_page}
-                currentPage={currentPage}
-                totalPages={pagination?.last_page}
-                onPageChange={handlePageChange}
-              />
-            </Card>
-          </Fragment>
+          <TableSkeleton />
+        ) : mids.length > 0 ? (
+          <Card className="mt-10">
+            <Table columns={columns} className="mt-7">
+              {mids.map((item: any, index: number) => (
+                <tr
+                  key={index}
+                  className="border-b last:border-none border-grey-200"
+                >
+                  <td className="text-sm px-5 py-6">{index + 1}</td>
+                  <td className="text-sm px-5 py-6">
+                    {item.merchantId || "N/A"}
+                  </td>
+                  <td className="text-sm px-5 py-6">
+                    {item.business_name || "N/A"}
+                  </td>
+                  <td className="text-sm px-5 py-6 capitalize">
+                    {item.status || "N/A"}
+                  </td>
+                </tr>
+              ))}
+            </Table>
+            <Pagination
+              lastPage={pagination?.last_page}
+              currentPage={currentPage}
+              totalPages={pagination?.last_page}
+              onPageChange={handlePageChange}
+            />
+          </Card>
         ) : (
           <EmptyState
             title="No MIDs Found"

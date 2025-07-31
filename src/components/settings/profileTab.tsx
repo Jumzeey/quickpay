@@ -69,7 +69,7 @@ const ProfileTab = () => {
 
           <button
             onClick={handleFileInputClick}
-            className="text-[#005BB0] text-[13px] font-medium cursor-pointer flex items-center gap-1"
+            className="text-[#005BB0] text-xs md:text-[13px] font-medium cursor-pointer flex items-center gap-1"
           >
             <Icon name="upload" className="size-5 text-[#005BB0]" />
             {updatingImage ? (
@@ -99,21 +99,21 @@ const ProfileTab = () => {
         )}
       </div>
 
-      <div className="p-4 grid grid-cols-3 gap-x-20 gap-y-4">
+      <div className="p-4 grid md:grid-cols-3 gap-x-20 gap-y-4">
         <div>
-          <h3 className="text-[#7F7F7F] text-[13px] font-medium">Business Name:</h3>
-          <p className="text-[#090727] text-lg font-extrabold mt-0.5">
+          <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Business Name:</h3>
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
             {capitalizeFirstLetter(user?.business_name) || "N/A"}
           </p>
         </div>
         <div>
-          <h3 className="text-[#7F7F7F] text-[13px] font-medium">Business Email:</h3>
-          <p className="text-[#090727] text-lg font-extrabold mt-0.5">
+          <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Business Email:</h3>
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
             {user?.email || "N/A"}
           </p>
         </div>
         <div>
-          <h3 className="text-[#7F7F7F] text-[13px] font-medium flex items-center justify-between">
+          <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium flex items-center justify-between">
             Business ID:
 
             {user?.business_id && (
@@ -122,25 +122,25 @@ const ProfileTab = () => {
                 className="text-[#005BB0] cursor-pointer">Copy</button>
             )}
           </h3>
-          <p className="text-[#090727] text-lg font-extrabold mt-0.5">
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
             {user?.business_id || "N/A"}
           </p>
         </div>
         <div>
-          <h3 className="text-[#7F7F7F] text-[13px] font-medium">Contact Person:</h3>
-          <p className="text-[#090727] text-lg font-extrabold mt-0.5">
+          <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Contact Person:</h3>
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
             {capitalizeFirstLetter(user?.firstname) || "N/A "}
           </p>
         </div>
         <div>
-          <h3 className="text-[#7F7F7F] text-[13px] font-medium">Phone Number:</h3>
-          <p className="text-[#090727] text-lg font-extrabold mt-0.5">
+          <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Phone Number:</h3>
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
             {user?.phone || "N/A"}
           </p>
         </div>
         <div>
-          <h3 className="text-[#7F7F7F] text-[13px] font-medium">Country:</h3>
-          <p className="text-[#090727] text-lg font-extrabold mt-0.5 flex items-center gap-2">
+          <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Country:</h3>
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5 flex items-center gap-2">
             <Image
               src="/images/nigeria.svg"
               width={24}

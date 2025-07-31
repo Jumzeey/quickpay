@@ -111,7 +111,7 @@ const PaymentMandate = () => {
       ...(searchInput ? { search: searchInput } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
       ...(filter.startDate
-        ? { startDate: filter.startDate, endDate: filter.endDate }
+        ? { startDate: filter.startDate, endDate: filter.endDate || undefined }
         : {}),
     });
   }, [
@@ -139,7 +139,7 @@ const PaymentMandate = () => {
         ...(searchInput ? { search: searchInput } : {}),
         ...(statusFilter ? { status: statusFilter } : {}),
         ...(filter.startDate
-          ? { startDate: filter.startDate, endDate: filter.endDate }
+          ? { startDate: filter.startDate, endDate: filter.endDate || undefined }
           : {}),
       });
       //@ts-ignore

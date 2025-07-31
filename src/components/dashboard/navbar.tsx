@@ -51,7 +51,7 @@ const Navbar = ({
   return (
     <>
       <header className="fixed left-0 md:right-0 z-20 dark:bg-[#121212] bg-white dark:bg-gray-900 w-full lg:w-auto border-b border-[#C4C4C452] dark:border-gray-700">
-        <div className="h-auto flex px-6 py-4 md:py-3 items-center justify-between">
+        <div className="h-auto flex flex-row px-3 md:px-6 py-4 md:py-3 items-center justify-between">
           <Link href="/dashboard">
             <Image
               src={theme === "light" ? "/images/ramp-logo-light.svg" : "/images/ramp-logo-dark.svg"}
@@ -77,8 +77,8 @@ const Navbar = ({
           </div> */}
 
           <div className="flex items-center gap-6">
-            <div className="text-black dark:text-[#EFF7FE] font-medium text-sm gap-6 flex items-center">
-              <Link href="#" className="hover:text-primary-blue dark:hover:text-blue-400">
+            <div className="text-black dark:text-[#EFF7FE] font-medium text-sm gap-6 hidden md:flex items-center">
+              <Link href="docs.connectramp.com" target="_blank" className="hover:text-primary-blue dark:hover:text-blue-400">
                 API Documentation
               </Link>
               <Link href="#" className="hover:text-primary-blue dark:hover:text-blue-400">
@@ -98,7 +98,7 @@ const Navbar = ({
             </div>
 
             <div className="flex gap-2 items-center">
-              <Link href="/settings" className="hidden md:block">
+              <Link href="/settings" className="block">
                 <div className="relative w-[50px] h-[40px] overflow-hidden bg-[#005BB01A] rounded">
                   <Image
                     src={avatar ? avatar : "/images/dashboard/avatar2.svg"}

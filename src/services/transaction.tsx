@@ -170,3 +170,14 @@ export async function getWalletHistory(params?: object) {
     throw error;
   }
 }
+
+export async function checkExportStatus(jobId: number) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.transaction.GET_WALLET_EXPORT_STATUS.replace(':id', jobId.toString())}`,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}

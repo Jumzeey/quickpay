@@ -63,13 +63,37 @@ export const copyToClipboard = async (text: string) => {
 };
 
 export const getStatusColor = (status: string) => {
+  if (!status) return 'inherit';
+
+  status = status.toLowerCase();
   switch (status) {
-    case 'Successful':
+    case 'pending':
+      return '#C8AC16';
+    case 'batched':
+      return '#6B46C1';
+    case 'processing':
+      return '#FF8C00';
+    case 'sent':
+      return '#4169E1';
+    case 'confirmed':
+      return '#32CD32';
+    case 'completed':
+    case 'successful':
       return '#2BD325';
-    case 'Pending':
-      return '#B5A818';
-    case 'Failed':
+    case 'failed':
       return '#FD2727';
+    case 'cancelled':
+      return '#DC143C';
+    case 'rejected':
+      return '#B22222';
+    case 'on_hold':
+      return '#FFD700';
+    case 'settled':
+      return '#008000';
+    case 'approved':
+      return '#005BB0';
+    case 'overdue':
+      return '#FF0000';
     default:
       return 'inherit';
   }
@@ -276,13 +300,13 @@ export function dateFormat(dateString: string): string {
   return `${day} ${month}, ${year} ${time}`;
 }
 
+export const currencySymbols: Record<string, string> = {
+  'NGN': '₦',
+  'USD': '$',
+};
+
 export const replaceCurrencySymbol = (amount: string): string => {
   if (!amount) return amount;
-
-  const currencySymbols: Record<string, string> = {
-    'NGN': '₦',
-    'USD': '$',
-  };
 
   // Replace any currency at the start of the string with right symbol
   for (const [symbol, code] of Object.entries(currencySymbols)) {

@@ -10,9 +10,12 @@ export interface TransferFormValues {
     ref_id?: string;
     targetAccountName?: string;
     targetAccountNumber?: string;
+    mobileProvider: string;
+    phoneNumber: string;
+    narration: string;
 }
 
-export type TransferType = 'Same Currency Transfer' | 'Ramp Balance Transfer' | 'Cross Currency Transfer';
+export type TransferType = 'Same Currency Transfer' | 'Ramp Balance Transfer' | 'Cross Currency Transfer' | 'Mobile Money';
 
 export interface TransferOption {
     id: number;
@@ -24,6 +27,6 @@ export interface TransferState {
     isLoading: boolean;
     isSubmitting: boolean;
     // 0: options, 1: form, 2: cross-currency details (if applicable), 3: OTP verification
-    currentStep: number; 
+    currentStep: number;
     banks: BankResponse[];
 }

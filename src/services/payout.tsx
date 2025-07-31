@@ -1,5 +1,6 @@
 import { getBanks } from "@/services/bank";
 import { CurrencyOption } from "@/stores/useCurrency";
+import { RequestRefundPayload, RaiseDisputePayload } from "@/stores/usePayout";
 import api from "@/util/api";
 import { apiEndpoints } from "@/util/endpoints";
 
@@ -76,10 +77,6 @@ export interface BankResponse {
 }
 
 export interface RequeryPayoutResponse {
-  // status: boolean;
-  // message: string;
-  // data: {
-  // };
   Transaction: {
     success: boolean;
     data: {
@@ -179,6 +176,30 @@ export async function getBankList(): Promise<{ banks: Array<{ name: string; code
         code: bank.institutionCode,
       }))
     };
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function requestRefund(payload: RequestRefundPayload): Promise<PayoutResponse> {
+  try {
+    const response = await api.post(
+      `${apiEndpoints.payouts.REQUEST_REFUND}`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function raiseDispute(payload: RaiseDisputePayload): Promise<PayoutResponse> {
+  try {
+    const response = await api.post(
+      `${apiEndpoints.payouts.RAISE_DISPUTE}`,
+      payload
+    );
+    return response.data;
   } catch (error) {
     throw error;
   }

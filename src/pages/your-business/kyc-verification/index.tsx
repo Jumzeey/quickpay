@@ -93,7 +93,7 @@ const BusinessKYC = () => {
     <div className="mt-10">
       <BusinessHeader />
 
-      <div className="grid grid-cols-2 w-1/2 mt-6 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 w-1/2 mt-6 gap-6">
         <div className="space-y-2">
           <p className="text-[13px] text-[#7F7F7F] font-medium">
             Verification status:
@@ -108,7 +108,6 @@ const BusinessKYC = () => {
             Date submitted:
           </p>
 
-          {/* "26 Jun, 2025 07:04:16" */}
           <h2 className="text-lg text-[#090727] font-bold">
             {format(new Date(userKyc.created_at), "LLL do, yyyy")}
           </h2>

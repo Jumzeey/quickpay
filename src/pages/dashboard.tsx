@@ -66,9 +66,9 @@ const Dashboard = () => {
     async () => {
       return await handleDashboardData(selectedCurrency);
     },
-    [selectedCurrency, mounted], 
+    [selectedCurrency, mounted],
     {
-      enabled: Boolean(mounted && selectedCurrency), 
+      enabled: Boolean(mounted && selectedCurrency),
       onSuccess: (response) => {
         const { balances, transactions, settlements, merchantBalance } = response;
         const { settlement_balance, total_collections, total_disbursements } = merchantBalance || {};
@@ -122,7 +122,7 @@ const Dashboard = () => {
     {
       enabled: !!(selectedOption && mounted && selectedCurrency),
       onSuccess: (response) => {
-       setState(prev => ({
+        setState(prev => ({
           ...prev,
           transactions: response,
           refreshChart: false
@@ -172,7 +172,7 @@ const Dashboard = () => {
     <Layout pageTitle='Dashboard' icon='dashboard'>
       <WebPageTitle title='Dashboard | Ramp Merchant Portal' />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-row md:items-center justify-between">
         <div className="flex flex-col gap-1">
           <p className="font-bold text-sm text-[#7F7F7F] dark:text-[#EFF7FE90]">
             Good Morning, <span className="text-black dark:text-white tracking-wider">{capitalizeFirstLetter(firstname)}</span>
@@ -187,12 +187,14 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <CurrencySwitcher />
+        <div className="w-28">
+          <CurrencySwitcher />
+        </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mt-8">
-        <div className="col-span-2 relative h-56">
-          <div className="flex flex-col justify-between relative bg-[#090727] text-white h-full rounded-[10px] px-8 py-7 z-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-y-10 mt-8">
+        <div className="md:col-span-2 relative h-72 md:h-56">
+          <div className="flex flex-col justify-between relative bg-[#090727] text-white h-full rounded-[10px] px-4 md:px-8 py-3.5 md:py-7 z-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-semibold">Toggle Balance</span>
@@ -204,12 +206,12 @@ const Dashboard = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-[#7F7F7F]">
+                <p className="text-xs md:text-sm font-semibold text-[#7F7F7F]">
                   Wallet ID:
                 </p>
-                <p className="flex items-center gap-4 text-lg font-bold text-[#EFF7FE] mt-0.5">
+                <p className="flex items-center gap-4 md:text-lg font-bold text-[#EFF7FE] mt-0.5">
                   <span>{state.wallet_id}</span>
 
                   {state?.wallet_id ? (
@@ -222,10 +224,10 @@ const Dashboard = () => {
                 </p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#7F7F7F]">
+                <p className="text-xs md:text-sm font-semibold text-[#7F7F7F]">
                   Available Balance:
                 </p>
-                <p className="flex items-center gap-4 text-lg font-bold text-[#EFF7FE] mt-0.5">
+                <p className="flex items-center gap-4 md:text-lg font-bold text-[#EFF7FE] mt-0.5">
                   {showBalance ? (
                     <span>
                       <span className="text-[#7F7F7F] mr-0.5">
@@ -247,10 +249,10 @@ const Dashboard = () => {
                 </p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#7F7F7F]">
+                <p className="text-xs md:text-sm font-semibold text-[#7F7F7F]">
                   Ledger Balance:
                 </p>
-                <p className="text-lg font-bold text-[#EFF7FE] mt-0.5">
+                <p className="md:text-lg font-bold text-[#EFF7FE] mt-0.5">
                   {showBalance ? (
                     <>
                       <span className="text-[#7F7F7F] mr-0.5">
@@ -264,10 +266,10 @@ const Dashboard = () => {
                 </p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#7F7F7F]">
+                <p className="text-xs md:text-sm font-semibold text-[#7F7F7F]">
                   Locked Balance:
                 </p>
-                <p className="text-lg font-bold text-[#EFF7FE] mt-0.5">
+                <p className="md:text-lg font-bold text-[#EFF7FE] mt-0.5">
                   {showBalance ? (
                     <>
                       <span className="text-[#7F7F7F] mr-0.5">

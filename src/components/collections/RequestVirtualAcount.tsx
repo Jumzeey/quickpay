@@ -13,7 +13,7 @@ import {
   removeCommasFromValue,
 } from "@/util/utils";
 import Image from "next/image";
-import React, { ChangeEvent, Fragment, useEffect, useMemo, useState } from "react";
+import React, { ChangeEvent, useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
 import Loader from "../loader";
 
@@ -354,7 +354,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
         {state.currentStep === 1 && (
           <form onSubmit={handleSubmit(requestVirtualAccount)}>
             {state.virtualType && (
-              <Fragment>
+              <>
                 {state.virtualType === "Onetime" ? (
                   <div className="space-y-6">
                     <FormInput
@@ -405,12 +405,12 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                       }}
                     />
 
-                    <Fragment>
+                    <>
                       {state.accountType && (
                         <div className="mt-6">
                           {state.accountType === "Personal" ? (
                             <div className="space-y-6">
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormInput
                                   label="First name"
                                   id="firstName"
@@ -430,7 +430,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                 />
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormInput
                                   label="Other name"
                                   id="otherName"
@@ -450,7 +450,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                 />
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormInput
                                   label="NIN"
                                   id="nin"
@@ -472,7 +472,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                 />
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormInput
                                   label="Date of birth"
                                   id="dob"
@@ -529,7 +529,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                             </div>
                           ) : (
                             <div className="space-y-6">
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormInput
                                   label="Business name"
                                   id="businessName"
@@ -546,7 +546,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                 />
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormInput
                                   label="Phone number"
                                   id="phoneNumber"
@@ -568,7 +568,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                 />
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormInput
                                   label="NIN"
                                   id="nin"
@@ -593,7 +593,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                 />
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormSelect
                                   onChange={handleChange}
                                   name="selectedCorporateAccountType"
@@ -645,10 +645,10 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                           )}
                         </div>
                       )}
-                    </Fragment>
+                    </>
                   </>
                 )}
-              </Fragment>
+              </>
             )}
 
             <div className="w-40">
@@ -657,7 +657,6 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                 text={state.isLoading ? <Loader /> : "Request Account"}
                 ariaLabel="Submit"
                 disabled={state.isLoading}
-                // disabled={!isValid || state.isLoading}
                 primary
                 type="submit"
               />

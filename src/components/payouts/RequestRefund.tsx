@@ -5,10 +5,10 @@ import FormTextArea from "@/components/FormTextArea";
 import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
-import { addShippingFee } from "@/services/e-commerce";
 import { Payout } from "@/services/payout";
+import usePayout, { RequestRefundPayload } from "@/stores/usePayout";
 import { notifyError, notifySuccess, removeCommasFromValue } from "@/util/utils";
-import React, { useState } from "react";
+import React from "react";
 import { Controller } from "react-hook-form";
 import * as Yup from "yup";
 
@@ -17,11 +17,6 @@ interface RequestRefundProps {
     isModalOpen: boolean;
     closeModal: () => void;
     fetchPayoutHistory: () => void;
-}
-
-interface StateProps {
-    isLoading: boolean;
-    isSubmitting: boolean;
 }
 
 interface FormValues {
@@ -44,11 +39,7 @@ const RequestRefund: React.FC<RequestRefundProps> = ({
     closeModal,
     fetchPayoutHistory,
 }) => {
-    const [state, setState] = useState<StateProps>({
-        isLoading: false,
-        isSubmitting: false,
-    });
-
+    const { requestRefundLoading, requestRefund } = usePayout();
     const {
         control,
         handleSubmit,
@@ -65,43 +56,36 @@ const RequestRefund: React.FC<RequestRefundProps> = ({
 
     const closeModalAndReset = () => {
         reset();
-        setState(prev => ({
-            ...prev,
-            isLoading: false,
-            isSubmitting: false,
-        }));
         closeModal();
     };
 
     const onSubmit = async (values: FormValues) => {
-        setState(prev => ({ ...prev, isSubmitting: true }));
-
-        const payload: any = {
-            amount: removeCommasFromValue(values.amount),
+        const payload: RequestRefundPayload = {
+            amount: Number(removeCommasFromValue(values.amount)),
             reference: values.reference,
             reason: values.reason,
             description: values.description,
         };
 
         try {
-            // TODO: Replace addShippingFee with the actual API call
-            const response = await addShippingFee(payload);
+            // TODO: test and verify this
+            const response = await requestRefund(payload);
             // @ts-ignore
             notifySuccess(response.message);
             closeModalAndReset();
         } catch (error: any) {
             notifyError(error.message);
-            setState(prev => ({ ...prev, isSubmitting: false }));
         } finally {
-            fetchPayoutHistory();
+            await fetchPayoutHistory();
         }
     };
 
-    // Example reasons for refund (replace with actual data)
+    // TODO: Example reasons for refund 
     const reasons = [
-        { value: "wrong_account", label: "Wrong Account" },
-        { value: "duplicate_transaction", label: "Duplicate Transaction" },
-        { value: "payment_error", label: "Payment Error" }
+        { value: "wrong account", label: "Wrong Account" },
+        { value: "duplicate transaction", label: "Duplicate Transaction" },
+        { value: "payment error", label: "Payment Error" },
+        { value: "other", label: "Other" },
     ];
 
     return (
@@ -187,9 +171,9 @@ const RequestRefund: React.FC<RequestRefundProps> = ({
                     <div className="w-1/3">
                         <Button
                             className="openSansLight text-white text-xs rounded mt-5"
-                            text={state.isSubmitting ? <Loader /> : "Send request"}
+                            text={requestRefundLoading ? <Loader /> : "Send request"}
                             ariaLabel="Send request"
-                            disabled={state.isSubmitting || state.isLoading}
+                            disabled={requestRefundLoading}
                             primary
                             type="submit"
                         />

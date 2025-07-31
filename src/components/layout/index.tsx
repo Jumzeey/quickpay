@@ -27,7 +27,7 @@ const Layout: React.FC<DashboardLayoutProps> = ({
 
         <div className="flex">
           <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
-          <div className="overflow-y-scroll w-full pt-8 pb-10 mt-16 ml-[235px] px-5 md:px-7 bg-white dark:bg-[#121212] min-h-screen">
+          <div className="overflow-y-scroll w-full pt-8 pb-10 mt-16 md:ml-[235px] px-5 md:px-7 bg-white dark:bg-[#121212] min-h-screen">
             {children}
           </div>
         </div>

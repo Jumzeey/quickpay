@@ -6,22 +6,25 @@ import Filter from '@/components/Filter';
 import PageHeader from '@/components/PageHeader';
 import TableSkeleton from '@/components/TableSkeleton';
 import WebPageTitle from '@/components/WebPageTitle';
-import ActionButton from '@/components/action-button';
+import { FilterExport } from '@/components/filter-export';
 import Layout from '@/components/layout';
 import Pagination from '@/components/pagination';
+import { ReferenceSearch } from '@/components/reference-search';
 import { usePaginatedStoreQuery } from '@/hooks/useOptimizedFetch';
 import useCurrency from '@/stores/useCurrency';
 import useFilter from '@/stores/useFilter';
 import useWalletLogs from '@/stores/useWalletLogs';
+import debounce from '@/util/debounce';
 import {
   capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
+  downloadFile,
   formatDate,
   formatDateTime2,
   notifyError,
   replaceCurrencySymbol
 } from '@/util/utils';
-import { Fragment, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface HistoryProps {
   history: any[];
@@ -36,8 +39,14 @@ const actionMap: Record<string, string> = {
 
 const WalletHistory = () => {
   const { selectedCurrency } = useCurrency();
-  const { fetchWalletHistory, wallet, pagination, getWalletHistoryLoading } =
-    useWalletLogs();
+  const {
+    fetchWalletHistory,
+    wallet,
+    pagination,
+    getWalletHistoryLoading,
+    exportWalletHistory,
+  } = useWalletLogs();
+  const [searchInput, setSearchInput] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = pagination?.last_page;
@@ -132,23 +141,6 @@ const WalletHistory = () => {
     title: 'Current Locked Balance',
     render: (value: any, row: any) => replaceCurrencySymbol(row?.locked_balance_after) || 'N/A'
   },
-  // {
-  //   key: 'date',
-  //   title: 'Date',
-  //   render: (value: any, row: any) => {
-  //     if (!row?.date) return 'N/A';
-  //     try {
-  //       const date = new Date(row.date);
-  //       return date.toLocaleDateString('en-US', {
-  //         month: 'long',
-  //         day: 'numeric',
-  //         year: 'numeric'
-  //       });
-  //     } catch (error) {
-  //       return row.date || 'N/A';
-  //     }
-  //   },
-  // },
   {
     key: 'description',
     title: 'Description',
@@ -168,6 +160,7 @@ const WalletHistory = () => {
     {
       currency: selectedCurrency,
       page: currentPage,
+      search: searchInput,
       ...(filter.startDate ? {
         start_date: formatDate(filter.startDate),
         end_date: formatDate(filter.endDate),
@@ -213,23 +206,38 @@ const WalletHistory = () => {
 
   const handleExport = async () => {
     try {
-      // const result = await exportPayoutHistory({
-      //   ...(searchInput ? { search: searchInput } : {}),
-      //   ...(statusFilter ? { status: statusFilter as "pending" | "successful" | "failed" | "processing" } : {}),
-      //   ...(filter.startDate
-      //     ? {
-      //       start_date: formatDate(filter.startDate),
-      //       end_date: formatDate(filter.endDate),
-      //     }
-      //     : {}),
-      // });
+      const result = await exportWalletHistory({
+        ...(searchInput ? { search: searchInput } : {}),
+        ...(filter.startDate
+          ? {
+            start_date: formatDate(filter.startDate),
+            end_date: formatDate(filter.endDate),
+          }
+          : {}),
+      });
 
-      // if (result.success && result.export_link) {
-      //   downloadFile(result.export_link);
-      // }
+      if (result.success && result.export_link) {
+        downloadFile(result.export_link);
+      }
     } catch (error: any) {
       notifyError(error.message);
     }
+  };
+
+  const debouncedHandleParamsChange = useCallback(
+    (value: string) => {
+      const debouncedFn = debounce(() => {
+        console.log('Debounced search input:', value);
+        setSearchInput(value);
+        setCurrentPage(1);
+      }, 300);
+      debouncedFn();
+    },
+    []
+  );
+
+  const handleParamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedHandleParamsChange(event.target.value);
   };
 
   const startIndex = (currentPage - 1) * pagination.per_page;
@@ -249,7 +257,7 @@ const WalletHistory = () => {
     <Layout pageTitle='Balance History' icon='wallet-history'>
       <WebPageTitle title='Balance History | Ramp Merchant Portal' />
 
-      <div className="flex flex-col md:flex-row justify-between mb-8">
+      <div className="flex flex-col md:flex-row justify-between gap-5 md:gap-0 mb-8">
         <div>
           <PageHeader
             className="!mb-0"
@@ -258,55 +266,50 @@ const WalletHistory = () => {
           />
         </div>
 
-        <div className="relative flex gap-4 justify-end mt-4 md:mt-0">
-          <CurrencySwitcher className="items-center" />
-
-          <ActionButton
-            ariaLabel='Filter by date button'
-            text='Filter By Date'
-            onClick={toggleFilter}
-            className="!h-12"
-          />
-
-          <div className='relative flex justify-end mt-4 md:mt-0'>
-            <Dropdown onOpen={showFilter} onClose={toggleFilter}>
-              <Filter filterCallback={handleFilterChange} />
-            </Dropdown>
-          </div>
-
-          {/* TODO: handle export and add filter */}
-          {/* <ActionButton
-            ariaLabel='Export button'
-            text='Export'
-            onClick={handleExport}
-            className="!h-12"
-          /> */}
-        </div>
+        <CurrencySwitcher className="items-center" />
       </div>
 
-      <div className=''>
+      <div>
+        {wallet?.length > 0 && (
+          <>
+            <div className="flex flex-col my-7 md:flex-row justify-between">
+              <ReferenceSearch
+                value={searchInput}
+                onClear={() => setSearchInput("")}
+                handleParamsChange={handleParamsChange}
+              />
+
+              <FilterExport
+                handleExport={handleExport}
+                toggleFilter={toggleFilter}
+              />
+            </div>
+
+            <div className='relative flex justify-end mt-4 md:mt-0'>
+              <Dropdown onOpen={showFilter} onClose={toggleFilter}>
+                <Filter filterCallback={handleFilterChange} />
+              </Dropdown>
+            </div>
+          </>
+        )}
+
         {getWalletHistoryLoading ? (
           <TableSkeleton singleButton />
-        ) : wallet?.length !== 0 ? (
-          <Fragment>
-            <>
-              <div className='flex md:justify-end pb-5'></div>
+        ) : wallet?.length > 0 ? (
+          <>
+            <DynamicTable
+              maxColumns={6}
+              columns={columns}
+              data={currentPageHistory}
+            />
 
-              <DynamicTable
-                // pageCount={pagination.count}
-                maxColumns={6}
-                columns={columns}
-                data={currentPageHistory}
-              />
-
-              <Pagination
-                lastPage={lastPage}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </>
-          </Fragment>
+            <Pagination
+              lastPage={lastPage}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
         ) : (
           <EmptyState
             title='No Balance History found'

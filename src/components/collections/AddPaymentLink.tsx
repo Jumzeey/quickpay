@@ -1,6 +1,7 @@
 import Button from "@/components/button";
 import FormInput from "@/components/FormInput";
 import FormSelect from "@/components/FormSelect";
+import { useFormValidation } from "@/hooks/useFormValidation";
 import useScreenWidth from "@/hooks/useScreenWidth";
 import { addPaymentLink, PaymentLinkPayload } from "@/services/collections";
 import { getSubaccountHistory } from "@/services/sub-account";
@@ -15,7 +16,6 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import Loader from "../loader";
-import { useFormValidation } from "@/hooks/useFormValidation";
 
 interface AddPaymentLinkProps {
   createLink?: boolean;
@@ -122,11 +122,8 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
       const response = await addPaymentLink(payload, updateStatus, id);
       // @ts-ignore
       notifySuccess(response.message);
+      fetchPaymentLinks && await fetchPaymentLinks();
       closeModal && closeModal();
-
-      setTimeout(() => {
-        createLink ? router.back() : fetchPaymentLinks && fetchPaymentLinks();
-      }, 900);
     } catch (error: any) {
       closeModal && closeModal();
       notifyError(error.message);
@@ -213,7 +210,6 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
                 : "Redirect URL (e.g yourbusiness.com)"
             }
             id="redirectUrl"
-            type="url"
             htmlFor="redirectUrl"
             error={errors.redirectUrl?.message}
             touched={touchedFields.redirectUrl}
@@ -247,7 +243,7 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
           <Button
             text={isLoading ? <Loader /> : createLink ? "Save Link" : "Update Link"}
             ariaLabel="Create payment link"
-            disabled={!isValid || isLoading || !state?.accountType}
+            disabled={isLoading || !state?.accountType}
             primary
             type="submit"
           />

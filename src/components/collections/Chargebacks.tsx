@@ -8,7 +8,7 @@ import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { getPaymentLinks } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import { formatAmount, notifyError } from "@/util/utils";
-import { debounce } from "chart.js/helpers";
+import debounce from "@/util/debounce";
 import { Fragment, useCallback, useState } from "react";
 
 interface AccountProps {

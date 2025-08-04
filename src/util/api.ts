@@ -71,7 +71,7 @@ api.interceptors.response.use(
     }
 
     const { status, data } = err.response;
-    if (status === 401 && data.data.error_code === "kyc_01") {
+    if (status === 401 && data?.data?.error_code === "kyc_01") {
       notifyError("Kyc not verified");
       router.push("/your-business/kyc-verification");
       return {
@@ -80,7 +80,7 @@ api.interceptors.response.use(
       };
     }
 
-    if (status === 401 && data.data.error_code === "virtual_account_01") {
+    if (status === 401 && data?.data?.error_code === "virtual_account_01") {
       notifyError(
         "Upgrade to KYC for registered businesses to access a virtual account."
       );

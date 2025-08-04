@@ -165,9 +165,11 @@ const useWalletLogs = create<WalletLogsState>((set, get) => ({
       return { wallet };
     } catch (error: any) {
       console.error('Error fetching wallet history:', error);
-      if (!error.message.includes('No transaction record found')) {
-        notifyError(error.message);
-      }
+      // if (!error.message.includes('No transaction record found')) {
+      //   notifyError(error.message);
+      // } else {
+      notifyError("Failed to fetch wallet history.");
+      // }
       set(state => ({
         ...state,
         getWalletHistoryLoading: false,

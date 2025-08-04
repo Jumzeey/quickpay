@@ -151,10 +151,7 @@ const WalletHistory = () => {
     render: (value: any, row: any) => capitalizeFirstLetter(row?.status) || 'N/A',
   }];
 
-  const {
-    refetch: refetchWalletHistory,
-    invalidate: invalidateWalletHistory
-  } = usePaginatedStoreQuery(
+  usePaginatedStoreQuery(
     useWalletLogs,
     'fetchWalletHistory',
     {
@@ -173,7 +170,7 @@ const WalletHistory = () => {
       },
       onError: (error) => {
         console.error('❌ Failed to fetch wallet history:', error);
-        notifyError(error.message);
+        // notifyError(error.message);
       },
       cacheTime: 0,
     }

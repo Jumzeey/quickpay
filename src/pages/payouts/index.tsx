@@ -107,6 +107,24 @@ const PayoutHistory = () => {
     }
   );
 
+  // const _getHistory = async () => {
+  //   try {
+  //     // Call the store method directly
+  //     await getPayoutHistory({
+  //       page: currentPage,
+  //       search: searchInput,
+  //       status: statusFilter as any,
+  //       ...(filter.startDate ? {
+  //         start_date: formatDate(filter.startDate),
+  //         end_date: formatDate(filter.endDate),
+  //       } : {}),
+  //       currency: selectedCurrency,
+  //     });
+  //   } catch (error) {
+  //     console.error('Error fetching payout history:', error);
+  //   }
+  // }
+
   const columns = [{
     key: 'amount',
     title: 'Amount',

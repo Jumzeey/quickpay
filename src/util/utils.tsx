@@ -99,6 +99,10 @@ export const getStatusColor = (status: string) => {
   }
 };
 
+export const notifyInfo = (message: string) => {
+  return toast.info(message);
+};
+
 export const notifyError = (errorMessage: string) => {
   return toast.error(errorMessage);
 };
@@ -192,7 +196,7 @@ export const formattedDate = (dateString: string): string | null => {
 };
 
 export const formatBalance = (number: number | undefined | null, currency?: string): string => {
-  const currencySymbol = currency === "NGN" ? "₦" : "$";
+  const currencySymbol = currency ? currencySymbols[currency] || '' : '';
   if (!number || isNaN(number) || number === undefined || number === null) {
     return `${currencySymbol}0.00`; // Default value when input is undefined or null
   }
@@ -303,6 +307,9 @@ export function dateFormat(dateString: string): string {
 export const currencySymbols: Record<string, string> = {
   'NGN': '₦',
   'USD': '$',
+  'GHS': '₵',
+  'EUR': '€',
+  'GBP': '£',
 };
 
 export const replaceCurrencySymbol = (amount: string): string => {

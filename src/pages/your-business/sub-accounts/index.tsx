@@ -25,6 +25,7 @@ import useFilter from '@/stores/useFilter';
 import useSubaccount from '@/stores/useSubAccount';
 import {
   copyToClipboard,
+  formatDateTime2,
   notifyError,
   notifySuccess,
   truncateText
@@ -160,13 +161,41 @@ const SubaccountHistory = () => {
   }, [modalState.isUpdateOpen, modalState.activeId, subaccounts, reset]);
 
   const columns = [
+    { key: 'id', title: 'Merchant ID' },
     { key: 'merchant_name', title: 'Merchant Name' },
+    { key: 'email', title: 'Notification Email' },
+    {
+      key: 'mode',
+      title: 'Mode',
+      render: (value: string, row: any) => value
+    },
+    {
+      key: 'created_at',
+      title: 'Created At',
+      render: (value: any, row: any) => {
+        if (!row?.created_at) return 'N/A';
+        const [date, time] = formatDateTime2(row.created_at);
+
+        return (
+          <p className="text-[#090727] text-sm font-medium">
+            {date}
+
+            <span className="ml-1 text-[#7F7F7F] text-xs">({time})</span>
+          </p>
+        )
+      },
+    },
+    {
+      key: 'message',
+      title: 'Message',
+      render: (value: string) => truncateText(value, 25) || 'N/A'
+    },
     {
       key: 'merchant_key',
       title: 'Merchant Key',
       render: (value: string, row: any) => (
         <p className="flex items-center font-bold text-primary ">
-          <span className="mr-1.5">{value || 'N/A'}</span>
+          <span className="mr-1.5">{truncateText(value) || 'N/A'}</span>
 
           <Icon
             name="copy3"
@@ -175,18 +204,6 @@ const SubaccountHistory = () => {
           />
         </p>
       )
-    },
-    { key: 'email', title: 'Notification Email' },
-    {
-      key: 'mode',
-      title: 'Mode',
-      render: (value: string, row: any) => value
-    },
-    { key: 'created_at', title: 'Created At' },
-    {
-      key: 'message',
-      title: 'Message',
-      render: (value: string) => truncateText(value, 25) || 'N/A'
     },
     {
       key: 'actions',
@@ -385,41 +402,40 @@ const SubaccountHistory = () => {
           <TableSkeleton />
         ) : subaccounts?.length !== 0 ? (
           <>
-
             <div className='flex justify-end pb-5'>
               {/* <div className="flex gap-3">
-                    <Button
-                      ariaLabel="Filter button"
-                      text="Filter"
-                      onClick={() => toggleFilter()}
-                      className="!w-24 !h-10"
-                      plain
-                    />
-                    <Button
-                      ariaLabel="Export button"
-                      text="Export"
-                      className="!w-24 !h-10"
-                      plain
-                    />
-                  </div>
+                  <Button
+                    ariaLabel="Filter button"
+                    text="Filter"
+                    onClick={() => toggleFilter()}
+                    className="!w-24 !h-10"
+                    plain
+                  />
+                  <Button
+                    ariaLabel="Export button"
+                    text="Export"
+                    className="!w-24 !h-10"
+                    plain
+                  />
+                </div>
 
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="searchInput"
-                      name="searchInput"
-                      placeholder="Search by reference"
-                      onChange={handleParamsChange}
-                      className="border-0 h-[40px] w-[392px] outline-none bg-[#F5F8FA] text-sm px-12 rounded-md"
-                    />
-                    <Image
-                      src="/images/search.svg"
-                      width={20}
-                      height={20}
-                      alt="Search Icon"
-                      className="absolute top-[10px] left-3"
-                    />
-                  </div> */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="searchInput"
+                    name="searchInput"
+                    placeholder="Search by reference"
+                    onChange={handleParamsChange}
+                    className="border-0 h-[40px] w-[392px] outline-none bg-[#F5F8FA] text-sm px-12 rounded-md"
+                  />
+                  <Image
+                    src="/images/search.svg"
+                    width={20}
+                    height={20}
+                    alt="Search Icon"
+                    className="absolute top-[10px] left-3"
+                  />
+                </div> */}
               <Link href='/your-business/sub-accounts/create'>
                 <ActionButton
                   ariaLabel='Create New Subaccount'

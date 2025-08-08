@@ -15,6 +15,7 @@ type FormPhoneInputProps = {
     onChange: (value: string) => void;
     onBlur?: () => void;
     country?: string;
+    onlyCountries?: string[];
     disabled?: boolean;
 }
 
@@ -32,16 +33,17 @@ const FormPhoneInput = forwardRef<HTMLInputElement, FormPhoneInputProps>(
         onChange,
         onBlur,
         country = 'ng',
+        onlyCountries,
         disabled = false,
     }, ref) => {
-        const [focused, setFocused] = useState(false);
+        // const [focused, setFocused] = useState(false);
         const hasError = touched && error;
 
-        const handleFocus = () => setFocused(true);
-        const handleBlur = () => {
-            setFocused(false);
-            onBlur?.();
-        };
+        // const handleFocus = () => setFocused(true);
+        // const handleBlur = () => {
+        //     setFocused(false);
+        //     onBlur?.();
+        // };
 
         return (
             <div className="flex flex-col gap-0.5">
@@ -64,10 +66,11 @@ const FormPhoneInput = forwardRef<HTMLInputElement, FormPhoneInputProps>(
                 <div className="w-full h-[60px] relative">
                     <PhoneInput
                         country={country}
+                        onlyCountries={onlyCountries}
                         value={value}
                         onChange={onChange}
-                        onBlur={handleBlur}
-                        onFocus={handleFocus}
+                        // onBlur={handleBlur}
+                        // onFocus={handleFocus}
                         containerClass={`h-[60px] w-full rounded px-3 border ${hasError ? "border-danger" : "border-[#C4C4C43D]"}`}
                         buttonClass="!bg-transparent"
                         enableSearch={true}

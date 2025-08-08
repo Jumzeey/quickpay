@@ -24,6 +24,13 @@ export const apiEndpoints = {
     CHANGE_ACCOUNT_STATUS: '/merchant/settlements/accounts',
     GET_WALLET_HISTORY: '/merchant/client/get-wallet-logs',
     GET_WALLET_EXPORT_STATUS: '/merchant/client/wallet-exports/:id/status',
+
+    EXPORT_WALLET_HISTORY_TRANSACTIONS: '/merchant/client/get-wallet-logs',
+    GET_WALLET_HISTORY_EXPORT_STATUS: '/merchant/client/wallet-exports/:id/status',
+
+    //     {{CORE_BASE_URL}}/merchant/client/get-wallet-logs?account_id=a2e589a2-dfc0-4a48-bc1d-8429de3fa0ae&export=true&start_date=2025-06-01&end_date=2025-12-31
+    // use this to query for the s3 file
+    // {{CORE_BASE_URL}}/merchant/client/wallet-exports/:jobId/status
   },
   collections: {
     GET_COLLECTION_HISTORY: '/merchant/collections-history',
@@ -128,5 +135,7 @@ export const apiEndpoints = {
     GET_SETTLEMENT_DETAILS: '/merchant/settlements/:id',
     GET_DAILY_BREAKDOWN: '/merchant/settlements/daily-breakdown',
     GET_SETTLEMENT_WINDOW_TRANSACTIONS: '/merchant/settlements/:id/window-transactions',
+    EXPORT_SETTLEMENT_WINDOW_TRANSACTIONS: '/merchant/settlements/:id/window-transactions',
+    GET_SETTLEMENT_EXPORT_STATUS: '/merchant/settlements/export-jobs/:id/status',
   },
 };

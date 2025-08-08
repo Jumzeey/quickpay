@@ -1,9 +1,9 @@
-import Axios from "axios";
-import useNetworkLoaderStore from "@/stores/useNetworkLoaderStore";
-import { CustomHttpError } from "./errors/CustomHttpError";
 import env from "@/config/env";
+import useNetworkLoaderStore from "@/stores/useNetworkLoaderStore";
+import Axios from "axios";
+import router from "next/router";
+import { CustomHttpError } from "./errors/CustomHttpError";
 import { notifyError } from "./utils";
-import router, { useRouter } from "next/router";
 
 const { baseUrl } = env;
 
@@ -73,7 +73,7 @@ api.interceptors.response.use(
     const { status, data } = err.response;
     if (status === 401 && data?.data?.error_code === "kyc_01") {
       notifyError("Kyc not verified");
-      router.push("/your-business/kyc-verification");
+      router.push("/your-business?tab=business-kyc");
       return {
         success: false,
         message: "Kyc not verified",
@@ -84,7 +84,7 @@ api.interceptors.response.use(
       notifyError(
         "Upgrade to KYC for registered businesses to access a virtual account."
       );
-      router.push("/your-business/kyc-verification");
+      router.push("/your-business?tab=business-kyc");
       return {
         success: false,
         message:
@@ -108,6 +108,21 @@ api.interceptors.response.use(
     //     message: "User does not have the right permissions.",
     //   };
     // }
+
+    if (status >= 500) {
+      const errorMessage = "Something went wrong on our end. Please try again later.";
+      notifyError(errorMessage);
+      return Promise.reject(
+        new CustomHttpError(errorMessage, {
+          statusCode: status,
+          responseText: errorMessage,
+          payload: {
+            originalError: err.response.data,
+            timestamp: new Date().toISOString()
+          }
+        })
+      );
+    }
 
     if (err.response.data && err.response.data.message) {
       return Promise.reject(

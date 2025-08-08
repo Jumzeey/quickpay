@@ -6,6 +6,7 @@ import TableSkeleton from "@/components/TableSkeleton";
 import { useRouteEffect } from "@/hooks/useEffectFetch";
 import { getSettlementHistory } from "@/services/transaction";
 import useAuthentication from "@/stores/useAuthentication";
+import useCurrency from "@/stores/useCurrency";
 import useSettlement from "@/stores/useSettlement";
 import debounce from "@/util/debounce";
 import { capitalizeFirstLetter, currencySymbols, downloadFile, formatDateTime2, notifyError } from "@/util/utils";
@@ -16,6 +17,7 @@ import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 
 const Transactions = () => {
+    const { selectedCurrency } = useCurrency();
     const {
         selectedSettlement,
         dailyTransactions,
@@ -58,7 +60,7 @@ const Transactions = () => {
         key: "amount",
         render: (value: string, row: any) => {
             if (!value) return 'N/A';
-            return `${currencySymbols[row.currency]}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
+            return `${row.currency || selectedCurrency ? currencySymbols[row.currency || selectedCurrency] : ''}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`
@@ -68,7 +70,7 @@ const Transactions = () => {
         key: "charges",
         render: (value: string, row: any) => {
             if (!value) return 'N/A';
-            return `${currencySymbols[row.currency]}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
+            return `${row.currency || selectedCurrency ? currencySymbols[row.currency || selectedCurrency] : ''}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`

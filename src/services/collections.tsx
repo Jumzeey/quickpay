@@ -1,3 +1,4 @@
+// import { VirtualAccountFormValues } from '@/components/collections/RequestVirtualAcount';
 import { CollectionGatewayMetaResponse, CollectionHistoryResponse } from '@/components/collections/types';
 import api from '@/util/api';
 import { apiEndpoints } from '@/util/endpoints';
@@ -81,7 +82,7 @@ export async function getVirtualAccounts(params?: object) {
 }
 
 export async function getVirtualAccountTransactions(
-  id: string | string[] | undefined
+  id: string
 ) {
   try {
     const response = await api.get(
@@ -93,7 +94,8 @@ export async function getVirtualAccountTransactions(
   }
 }
 
-export async function createVirtualAccount(payload: any) {
+// VirtualAccountFormValues
+export async function createVirtualAccount(payload: {bvn: string} ) {
   try {
     const response = await api.post(
       apiEndpoints.collections.REQUEST_VIRTUAL_ACCOUNT,

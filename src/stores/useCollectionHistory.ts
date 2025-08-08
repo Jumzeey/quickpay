@@ -1,5 +1,7 @@
+import { VirtualAccountFormValues } from '@/components/collections/RequestVirtualAcount';
 import { CollectionHistoryResponse, CollectionsTypes } from '@/components/collections/types';
 import {
+  createVirtualAccount,
   getCollectionHistory,
   getPaymentMandates,
   getRefunds,
@@ -43,6 +45,7 @@ export interface SearchParams {
 
 interface CollectionHistoryState {
   getCollectionHistoryLoading: boolean;
+  createVirtualAccountLoading: boolean;
   getVirtualAccountsHistoryLoading: boolean;
   getPaymentMandateLoading: boolean;
   getRefundLoading?: boolean;
@@ -57,6 +60,7 @@ interface CollectionHistoryState {
 
 const initialState: CollectionHistoryState = {
   getCollectionHistoryLoading: false,
+  createVirtualAccountLoading: false,
   getVirtualAccountsHistoryLoading: false,
   getPaymentMandateLoading: false,
   virtual_accounts: [],
@@ -139,6 +143,30 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
       set((state) => ({
         ...state,
         getVirtualAccountsHistoryLoading: false,
+      }));
+    }
+  },
+
+  createVirtualAccount: async (payload: VirtualAccountFormValues) => {
+    set((state) => ({
+      ...state,
+      createVirtualAccountLoading: true,
+    }));
+    try {
+      const response = await createVirtualAccount(payload);
+      set((state) => ({
+        ...state,
+        virtual_accounts: [...state.virtual_accounts, response],
+      }));
+      await get().fetchVirtualAccounts();
+      return response;
+    } catch (error) {
+      console.error('Error creating virtual account:', error);
+      throw error;
+    } finally {
+      set((state) => ({
+        ...state,
+        createVirtualAccountLoading: false,
       }));
     }
   },

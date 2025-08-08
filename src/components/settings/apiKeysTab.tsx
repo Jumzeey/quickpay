@@ -163,23 +163,23 @@ const ApiKeysTab = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-[#C4C4C452] dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-[#C4C4C452] border-t-0 dark:border-gray-700">
             <Table columns={columns} className="border-collapse w-full">
               {Object.entries(apiCredentials).map(([key, value], index) => (
                 <tr
                   key={key}
                   className={`${index !== Object.entries(apiCredentials).length - 1
-                      ? "[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700"
-                      : ""
+                    ? "[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700"
+                    : ""
                     } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
                 >
                   <td className="text-sm px-5 py-6 text-gray-900 dark:text-gray-100">
                     {index + 1}.
                   </td>
-                  <td className="text-sm px-5 py-6 font-medium text-gray-900 dark:text-gray-100">
+                  <td className="text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100">
                     {capitalizeFirstLetterOfEachWord(key.replace("_", " "))}
                   </td>
-                  <td className="text-sm px-5 py-6">
+                  <td className="text-sm pl-3 pr-5 py-6">
                     <div className="flex items-center gap-3">
                       <span
                         className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-3 py-1 max-w-md truncate text-gray-900 dark:text-gray-100"

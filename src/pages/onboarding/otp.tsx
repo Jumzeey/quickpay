@@ -58,9 +58,8 @@ const OtpPage = () => {
   }, [startCountdown]);
 
   const handleSubmit = async (code?: string) => {
-    // TODO: Validate OTP length and format
     const otpCode = code || otp;
-    if (!otpCode || otpCode.length !== OTP_LENGTH) {
+    if (!otpCode || (otpCode.length !== OTP_LENGTH)) {
       console.log("Invalid OTP length", otpCode);
       notifyError(`Please enter a valid ${OTP_LENGTH}-digit OTP`);
       return;

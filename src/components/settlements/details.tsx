@@ -1,5 +1,7 @@
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
+import ExportModal from "@/components/export-modal";
+// import ExportPendingJobs from "@/components/export-pending-job";
 import { FilterExport } from "@/components/filter-export";
 import Icon from "@/components/icon";
 import Pagination from "@/components/pagination";
@@ -7,9 +9,11 @@ import { ReferenceSearch } from "@/components/reference-search";
 import TableSkeleton from "@/components/TableSkeleton";
 import { useRouteEffect } from "@/hooks/useEffectFetch";
 import useAuthentication from "@/stores/useAuthentication";
+import useCurrency from "@/stores/useCurrency";
 import useSettlement from "@/stores/useSettlement";
 import debounce from "@/util/debounce";
-import { capitalizeFirstLetter, currencySymbols, downloadFile, formatDateTime2, getStatusColor, notifyError } from "@/util/utils";
+import { apiEndpoints } from "@/util/endpoints";
+import { capitalizeFirstLetter, currencySymbols, formatDateTime2, getStatusColor, notifyError } from "@/util/utils";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -17,6 +21,7 @@ import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 
 const Details = () => {
+    const { selectedCurrency } = useCurrency();
     const {
         selectedSettlement,
         transactions,
@@ -28,6 +33,7 @@ const Details = () => {
         // isLoading,
     } = useSettlement()
 
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [searchInput, setSearchInput] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [filter, setFilter] = useState({
@@ -60,7 +66,7 @@ const Details = () => {
         key: "amount",
         render: (value: string, row: any) => {
             if (!value) return 'N/A';
-            return `${currencySymbols[row.currency]}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
+            return `${row.currency || selectedCurrency ? currencySymbols[row.currency || selectedCurrency] : ''}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`
@@ -70,7 +76,7 @@ const Details = () => {
         key: "charges",
         render: (value: string, row: any) => {
             if (!value) return 'N/A';
-            return `${currencySymbols[row.currency]}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
+            return `${row.currency || selectedCurrency ? currencySymbols[row.currency || selectedCurrency] : ''}${parseFloat(value.replace(/[^\d.-]/g, '')).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`
@@ -124,22 +130,24 @@ const Details = () => {
     };
 
     const handleExport = async () => {
-        try {
-            const response = fetchSettlementWindowTransactions({
-                id: id as string,
-                ...(currentPage ? { page: currentPage } : {}),
-                ...(searchInput ? { search: searchInput } : {}),
-                export: true,
-            })
+        // try {
+        //     const response = fetchSettlementWindowTransactions({
+        //         id: id as string,
+        //         ...(currentPage ? { page: currentPage } : {}),
+        //         ...(searchInput ? { search: searchInput } : {}),
+        //         export: true,
+        //     })
 
-            console.log({response});
+        //     console.log({ response });
 
-            // if (response?.export_link) {
-            //     downloadFile(response.export_link);
-            // }
-        } catch (error: any) {
-            notifyError(error.message);
-        }
+        //     // if (response?.export_link) {
+        //     //     downloadFile(response.export_link);
+        //     // }
+        // } catch (error: any) {
+        //     notifyError(error.message);
+        // }
+
+        setIsExportModalOpen(true);
     };
 
     const handlePageChange = (page: number) => {
@@ -244,9 +252,9 @@ const Details = () => {
                             <p className="font-bold text-sm md:text-base" style={{ color: getStatusColor(selectedSettlement?.status || '') }}>
                                 {selectedSettlement?.status ? capitalizeFirstLetter(selectedSettlement?.status) : 'N/A'}
 
-                                <button className="text-primary font-medium text-xs md:text-[13px] ml-1.5 underline">
+                                {/* <button className="text-primary font-medium text-xs md:text-[13px] ml-1.5 underline">
                                     Download Receipt
-                                </button>
+                                </button> */}
                             </p>
                         </div>
                     </section>
@@ -274,7 +282,7 @@ const Details = () => {
                                                 Settlement Amount:
                                             </p>
                                             <p className="font-bold text-[#090727] text-base md:text-lg">
-                                                {selectedSettlement.currency ? currencySymbols[selectedSettlement.currency] : ''}
+                                                {selectedSettlement.currency ? currencySymbols[selectedSettlement.currency] || selectedSettlement.currency : ''}
                                                 {data.total_amount.toLocaleString(undefined, {
                                                     minimumFractionDigits: 2,
                                                     maximumFractionDigits: 2
@@ -306,6 +314,8 @@ const Details = () => {
                             onClear={() => setSearchInput("")}
                             handleParamsChange={handleParamsChange} />
 
+                        {/* <ExportPendingJobs /> */}
+
                         <FilterExport
                             showFilter={false}
                             exportIconPosition="left"
@@ -331,6 +341,15 @@ const Details = () => {
                             currentPage={currentPage}
                             totalPages={totalPages}
                             onPageChange={handlePageChange}
+                        />
+
+                        <ExportModal
+                            isOpen={isExportModalOpen}
+                            onClose={() => setIsExportModalOpen(false)}
+                            title="Export Settlement Transactions"
+                            exportEndpoint={apiEndpoints.settlements.EXPORT_SETTLEMENT_WINDOW_TRANSACTIONS.replace(':id', id as string)}
+                            statusEndpoint={apiEndpoints.settlements.GET_SETTLEMENT_EXPORT_STATUS}
+                            exportType="settlement-transactions"
                         />
                     </>
                 ) : (

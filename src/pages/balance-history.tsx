@@ -6,6 +6,8 @@ import Filter from '@/components/Filter';
 import PageHeader from '@/components/PageHeader';
 import TableSkeleton from '@/components/TableSkeleton';
 import WebPageTitle from '@/components/WebPageTitle';
+import ExportModal from '@/components/export-modal';
+// import ExportPendingJobs from '@/components/export-pending-job';
 import { FilterExport } from '@/components/filter-export';
 import Layout from '@/components/layout';
 import Pagination from '@/components/pagination';
@@ -13,12 +15,12 @@ import { ReferenceSearch } from '@/components/reference-search';
 import { usePaginatedStoreQuery } from '@/hooks/useOptimizedFetch';
 import useCurrency from '@/stores/useCurrency';
 import useFilter from '@/stores/useFilter';
-import useWalletLogs from '@/stores/useWalletLogs';
+import useWalletLogs, { getAccountId } from '@/stores/useWalletLogs';
 import debounce from '@/util/debounce';
+import { apiEndpoints } from '@/util/endpoints';
 import {
   capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
-  downloadFile,
   formatDate,
   formatDateTime2,
   notifyError,
@@ -44,9 +46,12 @@ const WalletHistory = () => {
     wallet,
     pagination,
     getWalletHistoryLoading,
-    exportWalletHistory,
+    // exportWalletHistory,
   } = useWalletLogs();
   const [searchInput, setSearchInput] = useState("");
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = pagination?.last_page;
@@ -202,8 +207,34 @@ const WalletHistory = () => {
   }, [selectedCurrency, mounted]);
 
   const handleExport = async () => {
+    // try {
+    //   const result = await exportWalletHistory({
+    //     ...(searchInput ? { search: searchInput } : {}),
+    //     ...(filter.startDate
+    //       ? {
+    //         start_date: formatDate(filter.startDate),
+    //         end_date: formatDate(filter.endDate),
+    //       }
+    //       : {}),
+    //   });
+
+    //   if (result.success && result.export_link) {
+    //     downloadFile(result.export_link);
+    //   }
+    // } catch (error: any) {
+    //   notifyError(error.message);
+    // }
+
     try {
-      const result = await exportWalletHistory({
+      // Show loading state
+      setIsExportModalOpen(true);
+
+      // Await the account ID
+      const account_id = await getAccountId(selectedCurrency);
+
+      // Set the params with the resolved account ID
+      setExportParams({
+        account_id,
         ...(searchInput ? { search: searchInput } : {}),
         ...(filter.startDate
           ? {
@@ -212,12 +243,10 @@ const WalletHistory = () => {
           }
           : {}),
       });
-
-      if (result.success && result.export_link) {
-        downloadFile(result.export_link);
-      }
     } catch (error: any) {
-      notifyError(error.message);
+      console.error("Failed to get account ID for export:", error);
+      notifyError("Failed to prepare export. Please try again.");
+      setIsExportModalOpen(false);
     }
   };
 
@@ -276,6 +305,8 @@ const WalletHistory = () => {
                 handleParamsChange={handleParamsChange}
               />
 
+              {/* <ExportPendingJobs /> */}
+
               <FilterExport
                 handleExport={handleExport}
                 toggleFilter={toggleFilter}
@@ -306,13 +337,28 @@ const WalletHistory = () => {
               totalPages={totalPages}
               onPageChange={handlePageChange}
             />
+
+            {isExportModalOpen && exportParams && (
+              <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => {
+                  setIsExportModalOpen(false);
+                  setExportParams(null);
+                }}
+                title="Export Wallet History"
+                exportEndpoint={apiEndpoints.transaction.EXPORT_WALLET_HISTORY_TRANSACTIONS}
+                statusEndpoint={apiEndpoints.transaction.GET_WALLET_HISTORY_EXPORT_STATUS}
+                params={exportParams}
+                exportType="wallet-history"
+              />
+            )}
           </>
         ) : (
           <EmptyState
             title='No Balance History found'
             subTitle="We couldn't find any balance history to this account"
             image='/images/dashboard/disbursement/disbursement-empty-state.svg'
-          ></EmptyState>
+          />
         )}
       </div>
     </Layout>

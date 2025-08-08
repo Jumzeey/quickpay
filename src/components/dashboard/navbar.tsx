@@ -59,7 +59,7 @@ const Navbar = ({
               className="h-10 w-auto"
               width={83}
               height={40}
-              priority
+              // priority
             />
           </Link>
 

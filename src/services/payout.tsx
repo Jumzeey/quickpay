@@ -1,6 +1,6 @@
 import { getBanks } from "@/services/bank";
 import { CurrencyOption } from "@/stores/useCurrency";
-import { RequestRefundPayload, RaiseDisputePayload } from "@/stores/usePayout";
+import { RaiseDisputePayload, RequestRefundPayload } from "@/stores/usePayout";
 import api from "@/util/api";
 import { apiEndpoints } from "@/util/endpoints";
 

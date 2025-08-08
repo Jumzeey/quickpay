@@ -46,38 +46,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         currentStep: 0,
         banks: [],
     }
-
-    const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
     const [state, setState] = useState<TransferState>(initialState);
-
-    const { data: banks, loading: banksLoading } = useEffectFetch(
-        async () => {
-            const response: BankResponse[] = await getBanks();
-            return response;
-        },
-        [],
-        {
-            onSuccess: (response) => {
-                setState(prev => ({
-                    ...prev,
-                    banks: response
-                }));
-            },
-            onError: (error) => {
-                notifyError(error.message);
-            }
-        }
-    );
-
-    const bankOptions = useMemo(() => {
-        if (!banks || banks.length === 0) {
-            return [];
-        }
-        return (banks || []).map((bank: BankResponse) => ({
-            value: bank.institutionCode,
-            label: bank.institutionName,
-        }));
-    }, [banks]);
+    const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
 
     const validationSchema = useMemo(() => {
         const baseAmountValidation = Yup.string()
@@ -95,10 +65,15 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 ref_id: Yup.string().required("Please validate your account details"),
                 accountNumber: Yup.string()
                     .required("Account number is required")
-                    .length(10, "Account number must be 10 digits")
+                    .test("account-number-length", "Account number must be 10 digits for NGN or 12 digits for GHS", function (value): boolean {
+                        if (!value) return false;
+                        const isNGN: boolean = watch("currency") === "NGN";
+                        return isNGN ? value.length === 10 : value.length === 12;
+                    })
                     .matches(/^\d+$/, "Account number must contain only digits"),
                 accountName: Yup.string().required("Account name is required"),
                 amount: baseAmountValidation,
+                narration: Yup.string()
             });
         }
 
@@ -130,20 +105,18 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             }
         }
 
-        if (state.selectedOptionName === "Mobile Money") {
-            return Yup.object().shape({
-                mobileProvider: Yup.string().required("Mobile provider is required"),
-                phoneNumber: Yup.string()
-                    .required("Phone number is required")
-                    .test("valid-phone", "Please enter a valid phone number", function (value) {
-                        if (!value) return false;
-
-                        return value.length >= 8 && value.length <= 15;
-                    }),
-                amount: baseAmountValidation,
-                narration: Yup.string().required("Narration is required")
-            });
-        }
+        // if (currency === "GHS") {
+        //     return Yup.object().shape({
+        //         mobileProvider: Yup.string().required("Mobile provider is required"),
+        //         phoneNumber: Yup.string()
+        //             .required("Phone number is required")
+        //             .test("valid-phone", "Please enter a valid phone number", function (value) {
+        //                 if (!value) return false;
+        //                 return value.length >= 8 && value.length <= 15;
+        //             }),
+        //         amount: baseAmountValidation,
+        //     });
+        // }
 
         if (state.currentStep === 3) { // OTP step
             return Yup.object().shape({
@@ -184,13 +157,47 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         mode: 'onChange'
     });
 
+    const currency = watch("currency");
     const accountNumber = watch("accountNumber");
     const selectedBank = watch("bank");
+
+    const { data: banks, loading: banksLoading } = useEffectFetch(
+        async () => {
+            const response: BankResponse[] = await getBanks(
+                { countryCode: currency === "GHS" ? "GH" : "NG" }
+            );
+            return response;
+        },
+        [currency],
+        {
+            onSuccess: (response) => {
+                setState(prev => ({
+                    ...prev,
+                    banks: response
+                }));
+            },
+            onError: (error) => {
+                notifyError(error.message);
+            }
+        }
+    );
+
+    const bankOptions = useMemo(() => {
+        if (!banks || banks.length === 0) {
+            return [];
+        }
+        return (banks || []).map((bank: BankResponse) => ({
+            value: bank.institutionCode,
+            label: bank.institutionName,
+        }));
+    }, [banks]);
 
     const nameCheck = async () => {
         const payload = {
             bank_code: selectedBank,
             account_number: accountNumber,
+            // if country is gh then pass country_code
+            ...(currency === "GHS" && { country_code: "GH" })
         };
         try {
             setState({ ...state, isLoading: true });
@@ -205,10 +212,18 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     };
 
     useEffect(() => {
-        if (accountNumber.length === 10 && selectedBank) {
+        // check if currency is NGN then check account name and selected bank
+        // if currency is GHS then check phone number == 12 and selected bank
+
+        console.log({ currency })
+        const validateCheck =
+            (currency === 'NGN' && accountNumber.length === 10) ||
+            (currency === 'GHS' && accountNumber.length === 12) && selectedBank;
+
+        if (validateCheck) {
             nameCheck();
         }
-    }, [accountNumber]);
+    }, [accountNumber, currency, selectedBank]);
 
     const handleFormSubmit = async (values: TransferFormValues & { otp: string }) => {
         setState((prev) => ({ ...prev, isSubmitting: true }));
@@ -227,9 +242,12 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     otp: values.otp,
                 });
 
-                notifySuccess(response?.message || 'Payout completed successfully!');
-                closeModalAndReset();
-                await fetchPayoutHistory();
+                if (response?.success) {
+                    notifySuccess(response?.message || 'Payout completed successfully!');
+                    closeModalAndReset();
+                    await fetchPayoutHistory();
+                }
+
                 return;
             }
 
@@ -245,7 +263,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     targetAccountNumber: values.targetAccountNumber,
                 }),
                 ...(state.selectedOptionName === "Same Currency Transfer" && {
-                    currency: "NGN",
+                    currency: values.currency,
                     bank_code: values.bank,
                     account_number: values.accountNumber,
                     account_name: values.accountName,
@@ -254,11 +272,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 ...(state.selectedOptionName === "Ramp Balance Transfer" && {
                     walletId: values.walletId,
                     accountName: values.accountName,
-                }),
-                ...(state.selectedOptionName === "Mobile Money" && {
-                    provider: values.mobileProvider,
-                    phone_number: values.phoneNumber,
-                    narration: values.narration,
                 }),
             };
 
@@ -275,7 +288,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         }
     };
 
-    const closeModalAndReset = () => {
+    const resetForm = () => {
         reset({
             amount: "",
             currency: "NGN",
@@ -290,6 +303,10 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             phoneNumber: "",
             narration: "",
         });
+    };
+
+    const closeModalAndReset = () => {
+        resetForm();
 
         if (state.currentStep === 0 || state.currentStep === 3) {
             if (state.currentStep === 3) {
@@ -317,15 +334,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             isLoading: false,
         }));
 
-        reset({
-            amount: "",
-            bank: "",
-            accountNumber: "",
-            accountName: "",
-            walletId: "",
-            targetAccountName: "",
-            targetAccountNumber: "",
-        });
+        resetForm();
     };
 
     const renderTransferOptions = () => (
@@ -362,14 +371,11 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         htmlFor="currency"
                         label="Select Currency"
                         placeholder="Select Currency"
-                        options={walletCurrencies}
-                        // error={errors.currency?.message}
-                        // touched={!!errors.currency}
+                        options={walletCurrencies.filter(c => c.value !== "USD")}
+                        error={errors.currency?.message}
+                        touched={!!errors.currency}
+                        {...field}
                         value={field.value || "NGN"}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        disabled
                     />
                 )}
             />
@@ -394,24 +400,12 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 )}
             />
 
-            <Controller
-                name="accountNumber"
-                control={control}
-                render={({ field }) => (
-                    <FormInput
-                        label="Account Number"
-                        id="accountNumber"
-                        type="text"
-                        htmlFor="accountNumber"
-                        isLoading={state.isLoading}
-                        loadingText="Loading details..."
-                        maxLength={10}
-                        error={errors.accountNumber?.message}
-                        touched={!!errors.accountNumber}
-                        {...field}
-                    />
-                )}
-            />
+            {/* check if currency is NGN */}
+            {watch('currency') == null || watch('currency') === 'NGN' ? (
+                renderNGNForm()
+            ) : (
+                renderGHSForm()
+            )}
 
             <Controller
                 name="accountName"
@@ -448,6 +442,24 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 )}
             />
 
+            {currency === "GHS" ? (
+                <Controller
+                    name="narration"
+                    control={control}
+                    render={({ field }) => (
+                        <FormInput
+                            label="Narration"
+                            id="narration"
+                            type="text"
+                            htmlFor="narration"
+                            error={errors.narration?.message}
+                            touched={!!errors.narration}
+                            {...field}
+                        />
+                    )}
+                />
+            ) : null}
+
             <div className="pt-10 w-52">
                 <Button
                     className="openSansLight text-white text-lg p-2 rounded w-full"
@@ -461,9 +473,32 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         </form>
     );
 
-    const renderMobileMoneyForm = () => (
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+    const renderNGNForm = () => (
+        <>
             <Controller
+                name="accountNumber"
+                control={control}
+                render={({ field }) => (
+                    <FormInput
+                        label="Account Number"
+                        id="accountNumber"
+                        type="text"
+                        htmlFor="accountNumber"
+                        isLoading={state.isLoading}
+                        loadingText="Loading details..."
+                        maxLength={10}
+                        error={errors.accountNumber?.message}
+                        touched={!!errors.accountNumber}
+                        {...field}
+                    />
+                )}
+            />
+        </>
+    );
+
+    const renderGHSForm = () => (
+        <>
+            {/* <Controller
                 name="mobileProvider"
                 control={control}
                 render={({ field }) => (
@@ -475,90 +510,42 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         options={MOBILE_MONEY_PROVIDERS}
                         error={errors.mobileProvider?.message}
                         touched={!!errors.mobileProvider}
-                        value={field.value || "mtn"}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
+                        {...field}
+                        onChange={(value) => {
+                            field.onChange(value);
+                            // When provider changes, validate if phone number exists
+                            if (getValues('phoneNumber')) {
+                                handlePhoneNumberValidation(String(value), getValues('phoneNumber'));
+                            }
+                        }}
                     />
                 )}
-            />
+            /> */}
 
             <Controller
-                name="phoneNumber"
+                name="accountNumber"
                 control={control}
                 render={({ field }) => (
                     <FormPhoneInput
                         label="Phone Number"
-                        id="phoneNumber"
-                        htmlFor="phoneNumber"
-                        error={errors.phoneNumber?.message}
-                        touched={!!errors.phoneNumber}
+                        id="accountNumber"
+                        htmlFor="accountNumber"
+                        error={errors.accountNumber?.message}
+                        touched={!!errors.accountNumber}
+                        country="gh"
+                        onlyCountries={["gh", 'tz']}
                         {...field}
+                    // onChange={(value) => {
+                    //     field.onChange(value);
+                    //     // Validate when phone number changes if provider is selected
+                    //     if (getValues('mobileProvider')) {
+                    //         handlePhoneNumberValidation(getValues('mobileProvider'), value);
+                    //     }
+                    // }}
                     />
                 )}
             />
-
-            <Controller
-                name="accountName"
-                control={control}
-                render={({ field }) => (
-                    <FormInput
-                        label="Account Name"
-                        id="accountName"
-                        type="text"
-                        htmlFor="accountName"
-                        error={errors.accountName?.message}
-                        touched={!!errors.accountName}
-                        disabled
-                        {...field}
-                    />
-                )}
-            />
-
-            <Controller
-                name="amount"
-                control={control}
-                render={({ field }) => (
-                    <FormInput
-                        label="Amount"
-                        id="amount"
-                        type="text"
-                        htmlFor="amount"
-                        error={errors.amount?.message}
-                        touched={!!errors.amount}
-                        numberOnly
-                        {...field}
-                    />
-                )}
-            />
-
-            <Controller
-                name="narration"
-                control={control}
-                render={({ field }) => (
-                    <FormInput
-                        label="Narration"
-                        id="narration"
-                        type="text"
-                        htmlFor="narration"
-                        error={errors.narration?.message}
-                        touched={!!errors.narration}
-                        {...field}
-                    />
-                )}
-            />
-
-            <div className="pt-10 w-52">
-                <Button
-                    className="openSansLight text-white text-lg p-2 rounded w-full"
-                    text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
-                    ariaLabel="Initiate Transfer"
-                    disabled={state.isSubmitting || state.isLoading}
-                    primary
-                    type="submit"
-                />
-            </div>
-        </form>
+        </>
     );
 
     const renderRampBalanceForm = () => (
@@ -813,8 +800,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     return renderRampBalanceForm();
                 case "Cross Currency Transfer":
                     return renderCrossCurrencyForm();
-                case "Mobile Money":
-                    return renderMobileMoneyForm();
                 default:
                     return null;
             }
@@ -828,9 +813,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         if (state.currentStep === 3) return "Verify Transfer";
         if (state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 2) {
             return "Target Account Details";
-        }
-        if (state.selectedOptionName === "Mobile Money") {
-            return "Mobile Money Transfer";
         }
         return state.selectedOptionName || "Transfer Details";
     };

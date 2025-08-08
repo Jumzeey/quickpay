@@ -70,7 +70,7 @@ const History = () => {
         render: (value: any, row: any) => (
             <span className="text-[#090727] font-medium">
                 <span className="text-[#7F7F7F] mr-0.5">
-                    {currencySymbols[row.currency]}
+                    {currencySymbols[row.currency || selectedCurrency]}
                 </span>
                 {Number(value).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
@@ -184,8 +184,6 @@ const History = () => {
                 <TableSkeleton />
             ) : settlements?.length > 0 ? (
                 <>
-
-
                     <DynamicTable
                         maxColumns={6}
                         columns={columns}

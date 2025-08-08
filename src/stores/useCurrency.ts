@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type CurrencyOption = "NGN" | "USD";
+export type CurrencyOption = "NGN" | "USD" | "GHS" | "TZX" | "KES";
 
 interface AccountInfo {
     main_account_id: string;
@@ -59,6 +59,9 @@ const useCurrency = create<CurrencyState>()(
                 switch (selectedCurrency) {
                     case "NGN": return "₦";
                     case "USD": return "$";
+                    case "GHS": return "₵";
+                    // case "GBP": return "£";
+                    // case "EUR": return "€";
                     default: return "₦";
                 }
             },
@@ -68,6 +71,7 @@ const useCurrency = create<CurrencyState>()(
                 switch (selectedCurrency) {
                     case "NGN": return "🇳🇬";
                     case "USD": return "🇺🇸";
+                    case "GHS": return "🇬🇭";
                     // case "GBP": return "🇬🇧";
                     // case "EUR": return "🇪🇺";
                     default: return "🇳🇬";

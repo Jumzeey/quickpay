@@ -9,6 +9,7 @@ type CurrencySwitcherProps = {
 export const walletCurrencies = [
     { value: "NGN" as CurrencyOption, label: "₦ NGN" },
     { value: "USD" as CurrencyOption, label: "$ USD" },
+    { value: "GHS" as CurrencyOption, label: "₵ GHS" },
     // { value: "GBP" as CurrencyOption, label: "£ GBP" },
     // { value: "EUR" as CurrencyOption, label: "€ EUR" },
 ];

@@ -10,7 +10,7 @@ import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { handleDashboardData, populateCharts } from "@/services/transaction";
 import useAuthentication from "@/stores/useAuthentication";
 import useCurrency from "@/stores/useCurrency";
-import { capitalizeFirstLetter, copyToClipboard, formatBalance } from "@/util/utils";
+import { capitalizeFirstLetter, copyToClipboard, currencySymbols, formatBalance } from "@/util/utils";
 import Link from "next/link";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -92,6 +92,8 @@ const Dashboard = () => {
           setAccounts(selectedCurrency, accountInfo);
         }
 
+        console.log({ total_collections, total_disbursements, selectedCurrency });
+
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -104,8 +106,8 @@ const Dashboard = () => {
           settlements,
           rolling_reserve: formatBalance(rolling_reserve_account_balance?.available_balance, selectedCurrency),
           rolling_reserve_ledger: formatBalance(rolling_reserve_account_balance?.actual_balance, selectedCurrency),
-          total_collections: formatBalance(total_collections, selectedCurrency),
-          total_disbursements: formatBalance(total_disbursements, selectedCurrency)
+          total_collections: total_collections || `${currencySymbols[selectedCurrency]}0.00`, // fallback to 0 if undefined
+          total_disbursements: total_disbursements || `${currencySymbols[selectedCurrency]}0.00`,
         }));
       },
       onError: (error) => {

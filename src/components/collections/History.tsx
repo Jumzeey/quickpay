@@ -77,7 +77,7 @@ const CollectionHistory = () => {
     }, {
         key: 'channel',
         title: 'Transaction Type',
-        render: (value: any, row: any) => row?.channel || 'N/A',
+        render: (value: any, row: any) => row?.channel?.replace('_', ' ') || 'N/A',
     }, {
         key: 'created_at',
         title: 'Date',
@@ -141,7 +141,25 @@ const CollectionHistory = () => {
     }, {
         key: 'customer_reference',
         title: 'Customer Reference',
-        render: (value: any, row: any) => row?.customer_reference || 'N/A',
+        render: (value: any, row: any) => {
+            if (!value) return 'N/A';
+
+            return (
+                <div className="flex items-center gap-2">
+                    <Link href={value} target='_blank'>
+                        {value?.length > 30
+                            ? `${value?.slice(0, 40)}...`
+                            : value}
+                    </Link>
+                    <Icon
+                        name='copy3'
+                        size='15'
+                        className='cursor-pointer text-[#7F7F7F]'
+                        onClick={() => copyToClipboard(value)}
+                    />
+                </div>
+            )
+        },
     }, {
         key: 'mid',
         title: 'Mid',
@@ -170,21 +188,24 @@ const CollectionHistory = () => {
     }, {
         key: 'callback_url',
         title: 'Callback URL',
-        render: (value: any) => (
-            <div className="flex items-center gap-2">
-                <Link href={value} target='_blank'>
-                    {value.length > 30
-                        ? `${value.slice(0, 40)}...`
-                        : value}
-                </Link>
-                <Icon
-                    name='copy3'
-                    size='15'
-                    className='cursor-pointer text-[#7F7F7F]'
-                    onClick={() => copyToClipboard(value)}
-                />
-            </div>
-        )
+        render: (value: any) => {
+            if (!value) return 'N/A';
+            return (
+                <div className="flex items-center gap-2">
+                    <Link href={value} target='_blank'>
+                        {value?.length > 30
+                            ? `${value?.slice(0, 40)}...`
+                            : value}
+                    </Link>
+                    <Icon
+                        name='copy3'
+                        size='15'
+                        className='cursor-pointer text-[#7F7F7F]'
+                        onClick={() => copyToClipboard(value)}
+                    />
+                </div>
+            )
+        }
     }];
 
     const [isLoadingMeta, setIsLoadingMeta] = useState(false);

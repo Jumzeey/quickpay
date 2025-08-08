@@ -2,14 +2,16 @@ import api from "@/util/api";
 import { apiEndpoints } from "@/util/endpoints";
 
 interface NameCheckProps {
-    bank_code: string;
-    account_number: string;
+  bank_code: string;
+  account_number: string;
+  country_code?: string;
 }
 
-export async function getBanks() {
+export async function getBanks(params?: { countryCode?: string }) {
   try {
     const response = await api.get(
-      apiEndpoints.bank.GET_BANKS
+      apiEndpoints.bank.GET_BANKS,
+      { params }
     );
     return response.data.banks;
   } catch (error) {

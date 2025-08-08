@@ -21,6 +21,7 @@ import { apiEndpoints } from '@/util/endpoints';
 import {
   capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
+  downloadFile,
   formatDate,
   formatDateTime2,
   notifyError,

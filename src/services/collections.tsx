@@ -6,6 +6,7 @@ import { notifyError } from '@/util/utils';
 
 export interface PaymentLinkPayload {
   title: string;
+  currency: string;
   amount: string;
   description: string;
   redirect_url?: string;

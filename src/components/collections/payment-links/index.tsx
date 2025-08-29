@@ -42,7 +42,7 @@ interface paymentLinksProps {
 
 type ModalType = "create" | "edit" | null;
 
-const columns = ["No.", "title", "amount", "link", "date Created", ""];
+const columns = ["No.", "title", "currency", "amount", "link", "date Created", ""];
 
 const PaymentLinks = () => {
   const [isModalOpen, setIsModalOpen] = useState<ModalType>(null);
@@ -279,32 +279,37 @@ const PaymentLinks = () => {
                             {index + 1}.
                           </td>
 
-                          <td className='capitalize'>
+                          <td className="capitalize">
                             {item.title}
                           </td>
+
+                          <td className="capitalize">
+                            {item?.currency || 'N/A'}
+                          </td>
+
                           <td>
                             {formatBalance(item.amount)}
                           </td>
 
-                          <td className='flex items-center gap-1 truncate'>
-                            <Link href={paymentLink} target='_blank'>
+                          <td className="flex items-center gap-1 truncate">
+                            <Link href={paymentLink} target="_blank">
                               {paymentLink.length > 30
                                 ? `${paymentLink.slice(0, 40)}...`
                                 : paymentLink}
                             </Link>
                             <Icon
-                              name='copy3'
-                              size='15'
-                              className='cursor-pointer text-[#7F7F7F]'
+                              name="copy3"
+                              size="15"
+                              className="cursor-pointer text-[#7F7F7F]"
                               onClick={() => copyToClipboard(paymentLink)}
                             />
                           </td>
                           <td>{item.created_at}</td>
-                          <td className='flex items-center justify-end gap-8 text-right'>
+                          <td className="flex items-center justify-end gap-8 text-right">
                             <div
                               className={`flex items-center gap-1 cursor-pointer w-20 ${item.status === 1
-                                ? 'text-primary'
-                                : 'text-[#7F7F7F]'
+                                ? "text-primary"
+                                : "text-[#7F7F7F]"
                                 }`}
                             >
                               <Switch
@@ -314,24 +319,24 @@ const PaymentLinks = () => {
                                 containerClassName={item.status !== 1 ? "bg-white border border-[#7F7F7F]" : undefined}
                                 contentClassName={item.status !== 1 ? "!bg-[#7F7F7F] ml-[3px]" : undefined}
                               />
-                              {item.status === 1 ? 'Active' : 'Inactive'}
+                              {item.status === 1 ? "Active" : "Inactive"}
                             </div>
 
                             <div>
                               <Icon
                                 onClick={() => handleDropdownToggle(index, item)}
                                 name="more"
-                                className='cursor-pointer text-primary'
+                                className="cursor-pointer text-primary"
                               />
 
-                              <div className='flex justify-end relative z-20'>
+                              <div className="flex justify-end relative z-20">
                                 <Dropdown
                                   onOpen={state.dropdownIndex === index}
                                   onClose={closeDropdown}
                                 >
-                                  <ul className='list-none p-0 space-y-5'>
+                                  <ul className="list-none p-0 space-y-5">
                                     <li
-                                      className='flex items-center gap-2 text-[#090727] text-sm font-medium cursor-pointer'
+                                      className="flex items-center gap-2 text-[#090727] text-sm font-medium cursor-pointer"
                                       onClick={() => openModal("edit")}
                                     >
                                       <Icon name="edit3" className="text-[#005BB0]" />
@@ -339,7 +344,7 @@ const PaymentLinks = () => {
                                       <span>Edit Link</span>
                                     </li>
                                     <li
-                                      className='flex items-center gap-2 text-[#090727] text-sm font-medium cursor-pointer'
+                                      className="flex items-center gap-2 text-[#090727] text-sm font-medium cursor-pointer"
                                       onClick={viewTransactions}
                                     >
                                       <Icon name="eye" className="text-[#005BB0]" />

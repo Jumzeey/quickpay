@@ -1,4 +1,5 @@
 import Button from "@/components/button";
+import { walletCurrencies } from "@/components/CurrencySwitcher";
 import FormInput from "@/components/FormInput";
 import FormSelect from "@/components/FormSelect";
 import { useFormValidation } from "@/hooks/useFormValidation";
@@ -12,7 +13,6 @@ import {
   numberWithCommas,
   removeCommasFromValue,
 } from "@/util/utils";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import Loader from "../loader";
@@ -24,16 +24,17 @@ interface AddPaymentLinkProps {
 }
 
 interface PaymentLinkState {
-  accountType: string;
-  selectedSubAccount: string;
   subAccounts: any[];
 }
 
 type FormValues = {
   title: string;
+  currency: string;
   amount: string;
   description: string;
   redirectUrl: string;
+  accountType: string;
+  selectedSubAccount: string;
 };
 
 const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
@@ -41,19 +42,17 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
   fetchPaymentLinks,
   closeModal,
 }) => {
-  const router = useRouter();
   const { selectedItem } = useClickEvent();
   const screenWidth = useScreenWidth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [state, setState] = useState<PaymentLinkState>({
-    accountType: "",
-    selectedSubAccount: "",
     subAccounts: [],
   });
 
   const validationSchema = Yup.object().shape({
     title: Yup.string().required("Payment link name is required!"),
+    currency: Yup.string().required("Currency is required!"),
     amount: Yup.string().required("Amount is required!"),
     description: Yup.string().required("Description is required!"),
     redirectUrl: Yup.string()
@@ -62,28 +61,46 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
         /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
         "Enter a valid redirect URL!"
       ),
+    accountType: Yup.string()
+      .when('currency', {
+        is: (currency: string) => currency?.toLowerCase() === 'usd',
+        then: (schema) => schema.oneOf(['subaccount'], "USD payments require a subaccount")
+          .required("Account type is required for USD payments"),
+        otherwise: (schema) => schema.notRequired()
+      }),
+    selectedSubAccount: Yup.string()
+      .when(['currency', 'accountType'], {
+        is: (currency: string, accountType: string) =>
+          currency?.toLowerCase() === 'usd' && accountType === 'subaccount',
+        then: (schema) => schema.required("Sub-account is required for USD payments"),
+        otherwise: (schema) => schema.notRequired()
+      })
   });
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid, touchedFields },
-    reset,
+    formState: { errors, touchedFields },
+    watch,
     setValue,
-    watch
   } = useFormValidation<FormValues>(validationSchema, {
     defaultValues: {
       title: "",
+      currency: "NGN",
       amount: "",
       description: "",
       redirectUrl: "",
+      accountType: "",
+      selectedSubAccount: "",
     },
+    mode: 'onChange',
   });
 
   // Initialize form values when editing existing payment link
   useEffect(() => {
     if (!createLink && selectedItem) {
       setValue("title", selectedItem.title || "");
+      setValue("currency", selectedItem.currency || "NGN");
       setValue("amount", numberWithCommas(selectedItem.amount) || "");
       setValue("description", selectedItem.meta?.description || "");
       setValue("redirectUrl", selectedItem.meta?.redirect_url?.replace("https://", "") || "");
@@ -91,21 +108,22 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
   }, [createLink, selectedItem, setValue]);
 
   const createAndUpdatePaymentLink = async (formValues: FormValues) => {
+    const { title, currency, amount, description, redirectUrl, accountType, selectedSubAccount } = formValues;
+
     setIsLoading(true);
     let updateStatus;
     let id;
 
-    const { title, amount, description, redirectUrl } = formValues;
-
     const payload: PaymentLinkPayload = {
       title,
+      currency,
       amount: removeCommasFromValue(amount),
       description,
-      account_type: state.accountType,
+      account_type: accountType,
     };
 
-    if (state.selectedSubAccount) {
-      payload["subaccount_id"] = state.selectedSubAccount;
+    if (selectedSubAccount) {
+      payload["subaccount_id"] = selectedSubAccount;
     }
     if (redirectUrl) {
       payload["redirect_url"] = `https://${redirectUrl}`;
@@ -132,11 +150,14 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
     }
   };
 
+  const formCurrency = watch("currency");
+  const accountType = watch("accountType");
+
   useEffect(() => {
-    if (state.accountType === "subaccount") {
+    if (accountType === "subaccount") {
       fetchSubAccounts();
     }
-  }, [state.accountType]);
+  }, [accountType]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -179,6 +200,17 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
           {...register("title")}
         />
 
+        <FormSelect
+          id="currency"
+          htmlFor="currency"
+          label="Select Currency"
+          placeholder="Select Currency"
+          options={walletCurrencies}
+          error={errors.currency?.message}
+          touched={touchedFields.currency}
+          {...register("currency")}
+        />
+
         <FormInput
           label="Amount"
           id="amount"
@@ -218,24 +250,24 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
         </div>
 
         <FormSelect
-          onChange={handleSelectChange}
-          name="accountType"
           id="accountType"
           htmlFor="accountType"
-          value={state?.accountType}
           label="Account Type"
           options={accountTypeOptions}
+          error={errors.accountType?.message}
+          touched={touchedFields.accountType}
+          {...register("accountType")}
         />
 
-        {state?.accountType === "subaccount" && (
+        {accountType === "subaccount" && (
           <FormSelect
-            onChange={handleSelectChange}
-            name="selectedSubAccount"
             id="selectedSubAccount"
             htmlFor="selectedSubAccount"
-            value={state.selectedSubAccount}
             label="Sub-account"
             options={subAccountOptions}
+            error={errors.selectedSubAccount?.message}
+            touched={touchedFields.selectedSubAccount}
+            {...register("selectedSubAccount")}
           />
         )}
 
@@ -243,7 +275,7 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
           <Button
             text={isLoading ? <Loader /> : createLink ? "Save Link" : "Update Link"}
             ariaLabel="Create payment link"
-            disabled={isLoading || !state?.accountType}
+            // disabled={isLoading || !state?.accountType}
             primary
             type="submit"
           />

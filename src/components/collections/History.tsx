@@ -5,6 +5,7 @@ import { CollectionGatewayMetaResponse } from "@/components/collections/types";
 import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
+import ExportModal from "@/components/export-modal";
 import Filter from "@/components/Filter";
 import Icon from "@/components/icon";
 import Loader from "@/components/loader";
@@ -12,12 +13,13 @@ import Pagination from "@/components/pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 import TransactionDetails from "@/components/transactionDetails";
 import { usePaginatedEffect } from "@/hooks/useEffectFetch";
-import { getCollectionGatewayMeta, getCollectionHistory, repushNotification } from "@/services/collections";
+import { getCollectionGatewayMeta, repushNotification } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import useCollectionHistory from "@/stores/useCollectionHistory";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
-import { copyToClipboard, downloadFile, notifyError, notifySuccess } from "@/util/utils";
+import { apiEndpoints } from "@/util/endpoints";
+import { copyToClipboard, formatDate, notifyError, notifySuccess } from "@/util/utils";
 import Link from "next/link";
 import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -58,6 +60,9 @@ const CollectionHistory = () => {
         viewTransactionMeta: false,
     });
     const [selectedMeta, setSelectedMeta] = useState<CollectionGatewayMetaResponse | null>(null);
+
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
 
     const closeDropdown = () => {
         setState({
@@ -246,15 +251,34 @@ const CollectionHistory = () => {
     };
 
     const handleExport = async () => {
+        // try {
+        //     const response = await getCollectionHistory({ export: true });
+        //     if (!response || !response.export_link) {
+        //         notifyError("Export link is not available.");
+        //         return;
+        //     }
+        //     downloadFile(response.export_link);
+        // } catch (error: any) {
+        //     notifyError(error.message);
+        // }
         try {
-            const response = await getCollectionHistory({ export: true });
-            if (!response || !response.export_link) {
-                notifyError("Export link is not available.");
-                return;
-            }
-            downloadFile(response.export_link);
+            // Show loading state
+            setIsExportModalOpen(true);
+
+            // Set the params with the resolved account ID
+            setExportParams({
+                ...(searchInput ? { search: searchInput } : {}),
+                ...(filter.startDate
+                    ? {
+                        start_date: formatDate(filter.startDate),
+                        end_date: formatDate(filter.endDate),
+                    }
+                    : {}),
+            });
         } catch (error: any) {
-            notifyError(error.message);
+            console.error("Failed to get account ID for export:", error);
+            notifyError("Failed to prepare export. Please try again.");
+            setIsExportModalOpen(false);
         }
     };
 
@@ -424,6 +448,21 @@ const CollectionHistory = () => {
                                 totalPages={totalPages}
                                 onPageChange={handlePageChange}
                             />
+
+                            {isExportModalOpen && exportParams && (
+                                <ExportModal
+                                    isOpen={isExportModalOpen}
+                                    onClose={() => {
+                                        setIsExportModalOpen(false);
+                                        setExportParams(null);
+                                    }}
+                                    title="Export Collection History"
+                                    exportEndpoint={apiEndpoints.collections.EXPORT_COLLECTION_HISTORY_TRANSACTIONS}
+                                    statusEndpoint={apiEndpoints.collections.GET_COLLECTION_EXPORT_STATUS}
+                                    params={exportParams}
+                                    exportType="collection-history"
+                                />
+                            )}
 
                             <FilterHistory
                                 isModalOpen={state.showFilterHistory}

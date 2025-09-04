@@ -1,5 +1,5 @@
 import api from '@/util/api';
-import { downloadFile, notifyError, notifySuccess } from '@/util/utils';
+import { notifyError, notifySuccess } from '@/util/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -103,8 +103,9 @@ export const useExportJob = () => {
                 console.log('Export status response:', response.data);
 
                 // Check if export is completed 
-                if (response?.data?.status === 'completed' && (response?.data?.file_url || response?.data?.export_link)) {
-                    const downloadUrl = response.data.file_url || response.data.export_link;
+                const urlChecker = response?.data?.file_url || response?.data?.export_link || response?.data?.s3_link;
+                if (response?.data?.status === 'completed' && urlChecker) {
+                    const downloadUrl = urlChecker;
                     setState(prev => ({
                         ...prev,
                         status: 'completed',
@@ -182,9 +183,12 @@ export const useExportJob = () => {
             // Add export=true to params
             const exportParams = { ...params, export: true };
 
+            console.log({ exportParams })
+
             // Make the export request
             const response = await api.get(exportEndpoint, { params: exportParams });
 
+            console.log({ response })
             // Check if export is already completed (immediate completion case)
             if (response?.data?.status === 'completed' && (response?.data?.file_url || response?.data?.export_link)) {
                 const downloadUrl = response.data.file_url || response.data.export_link;

@@ -1,4 +1,4 @@
-import Button from '@/components/button';
+import ActionButton from '@/components/action-button';
 import Icon from '@/components/icon';
 import Modal from '@/components/modal';
 import { ExportType, useExportJob } from '@/hooks/useExportJob';
@@ -144,7 +144,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 {/* File Information Card (when completed) */}
                 {isCompleted && downloadUrl && (
                     <div className="w-full max-w-md mb-6">
-                        <div className="bg-gray-50 border border-primary rounded-lg p-4">
+                        <div className="bg-gray-50 border border-primary/10 rounded-lg p-4">
                             <div className="flex items-center">
                                 <div className="mr-3 text-primary">
                                     <Icon
@@ -183,45 +183,43 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-4 mt-4">
+                <div className="flex gap-4 mt-4 w-3/4">
                     {isCompleted ? (
                         <>
-                            <Button
-                                primary
+                            <ActionButton
                                 text="Download"
-                                // icon="download"
                                 ariaLabel="Download export file"
+                                className="w-full text-center justify-center"
                                 onClick={handleDownloadClick}
-                                className="px-6"
                             />
-                            <Button
+                            <ActionButton
                                 text="Close"
                                 ariaLabel="Close export modal"
                                 onClick={handleClose}
-                                className="px-6"
+                                className="w-full text-center justify-center bg-[#EB575710] !text-danger"
                             />
                         </>
                     ) : (
                         <>
                             {status === 'failed' ? (
-                                <Button
-                                    primary
+                                <ActionButton
                                     text="Try Again"
                                     ariaLabel="Retry export"
+                                    className="w-full text-center justify-center"
                                     onClick={() => startExport({
                                         exportEndpoint,
                                         statusEndpoint,
                                         params,
                                         exportType
                                     })}
-                                    className="px-6"
                                 />
                             ) : null}
-                            <Button
+
+                            <ActionButton
                                 text="Cancel"
                                 ariaLabel="Cancel export"
+                                className="bg-[#EB575710] !text-danger w-full text-center justify-center"
                                 onClick={handleClose}
-                                className="px-6"
                             />
                         </>
                     )}

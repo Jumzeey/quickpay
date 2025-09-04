@@ -51,7 +51,6 @@ const WalletHistory = () => {
   } = useWalletLogs();
   const [searchInput, setSearchInput] = useState("");
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-
   const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);

@@ -4,6 +4,7 @@ import CurrencySwitcher from "@/components/CurrencySwitcher";
 import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
+import ExportModal from "@/components/export-modal";
 import Filter from "@/components/Filter";
 import { FilterExport } from "@/components/filter-export";
 import Icon from "@/components/icon";
@@ -23,7 +24,8 @@ import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
-import { capitalizeFirstLetter, copyToClipboard, downloadFile, formatDate, formatDateTime2, notifyError, notifySuccess } from "@/util/utils";
+import { apiEndpoints } from "@/util/endpoints";
+import { capitalizeFirstLetter, copyToClipboard, formatDate, formatDateTime2, notifyError, notifySuccess } from "@/util/utils";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -63,6 +65,9 @@ const PayoutHistory = () => {
     isRaiseDisputeModalOpen: false,
     isMoreActionsOpen: false,
   });
+
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
 
   const {
     requeryPayout,
@@ -239,23 +244,43 @@ const PayoutHistory = () => {
   };
 
   const handleExport = async () => {
+    // try {
+    //   const result = await exportPayoutHistory({
+    //     ...(searchInput ? { search: searchInput } : {}),
+    //     ...(statusFilter ? { status: statusFilter as "pending" | "successful" | "failed" | "processing" } : {}),
+    //     ...(filter.startDate
+    //       ? {
+    //         start_date: formatDate(filter.startDate),
+    //         end_date: formatDate(filter.endDate),
+    //       }
+    //       : {}),
+    //   });
+
+    //   if (result.success && result.export_link) {
+    //     downloadFile(result.export_link);
+    //   }
+    // } catch (error: any) {
+    //   notifyError(error.message);
+    // }
     try {
-      const result = await exportPayoutHistory({
+      // Show loading state
+      setIsExportModalOpen(true);
+
+      // Set the params with the resolved account ID
+      setExportParams({
         ...(searchInput ? { search: searchInput } : {}),
-        ...(statusFilter ? { status: statusFilter as "pending" | "successful" | "failed" | "processing" } : {}),
         ...(filter.startDate
           ? {
             start_date: formatDate(filter.startDate),
             end_date: formatDate(filter.endDate),
           }
           : {}),
+        currency: selectedCurrency,
       });
-
-      if (result.success && result.export_link) {
-        downloadFile(result.export_link);
-      }
     } catch (error: any) {
-      notifyError(error.message);
+      console.error("Failed to get account ID for export:", error);
+      notifyError("Failed to prepare export. Please try again.");
+      setIsExportModalOpen(false);
     }
   };
 
@@ -522,6 +547,21 @@ const PayoutHistory = () => {
               lastPage={lastPage || 1}
               onPageChange={handlePageChange}
             />
+
+            {isExportModalOpen && exportParams && (
+              <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => {
+                  setIsExportModalOpen(false);
+                  setExportParams(null);
+                }}
+                title="Export Payout History"
+                exportEndpoint={apiEndpoints.payouts.EXPORT_PAYOUT_HISTORY_TRANSACTIONS}
+                statusEndpoint={apiEndpoints.payouts.GET_PAYOUT_EXPORT_STATUS}
+                params={exportParams}
+                exportType="payout-history"
+              />
+            )}
           </>
         ) : (
           <EmptyState

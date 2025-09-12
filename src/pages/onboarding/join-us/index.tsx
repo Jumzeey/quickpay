@@ -7,6 +7,7 @@ import Modal from "@/components/modal";
 import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
 import { useFormValidation } from "@/hooks/useFormValidation";
+// import { SupportedCountry } from "@/services/authentication";
 import useAuthentication from "@/stores/useAuthentication";
 import useLoadRecaptcha from "@/util/useLoadRecaptcha";
 import { notifyError, notifySuccess } from "@/util/utils";
@@ -63,16 +64,49 @@ const validationSchema = Yup.object().shape({
 
 const RegisterPage = () => {
   const router = useRouter();
-  const { signUp } = useAuthentication();
+  const {
+    signUp,
+    getSupportedCountries,
+    supportedCountries,
+    supportedCountriesLoading
+  } = useAuthentication();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // Load supported countries on component mount
+  // useEffect(() => {
+  //   async function fetchSupportedCountries() {
+  //     try {
+  //       const response = await getSupportedCountries();
+  //       console.log('Supported countries loaded:', response);
+  //     } catch (error) {
+  //       console.error('Failed to load supported countries:', error);
+  //       // Fallback to country-list if API fails
+  //     }
+  //   }
+
+  //   fetchSupportedCountries();
+  // }, [getSupportedCountries]);
+
+  // Fallback countries from country-list package
   const countries = useMemo(() =>
     getData().map(country => ({
       value: country.code,
       label: country.name
     })), []
   );
+
+  // const countries = useMemo(() => {
+  //   if (supportedCountries && supportedCountries.length > 0) {
+  //     return supportedCountries.map((country: any) => ({
+  //       value: country.code,
+  //       label: country.label
+  //     }));
+  //   }
+  //   return fallbackCountries;
+  // }, [supportedCountries, fallbackCountries]);
+
+  // console.log({countries, supportedCountries, fallbackCountries})
 
   useLoadRecaptcha();
 
@@ -243,12 +277,14 @@ const RegisterPage = () => {
                   render={({ field }) => (
                     <FormSelectSearch
                       placeholder=""
+                      // placeholder={supportedCountriesLoading ? "Loading countries..." : "Select country"}
                       label="Country"
                       id="country"
                       htmlFor="country"
                       options={countries}
                       error={errors.country?.message}
                       touched={!!errors.country}
+                      // disabled={supportedCountriesLoading}
                       {...field}
                     />
                   )}
@@ -312,7 +348,7 @@ const RegisterPage = () => {
                     </div>
                   )}
                 />
-                
+
                 {errors.agree_to_terms && (
                   <p className="text-danger font-medium text-xs mt-1">{errors.agree_to_terms.message}</p>
                 )}
@@ -323,7 +359,7 @@ const RegisterPage = () => {
                     className="w-full py-2.5 text-sm font-medium rounded"
                     text={isLoading ? <Loader /> : "Sign up"}
                     ariaLabel="Sign up Button"
-                    disabled={isLoading}
+                    disabled={isLoading || supportedCountriesLoading}
                     primary
                   />
                 </div>

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type CurrencyOption = "NGN" | "USD" | "GHS" | "TZX" | "KES";
+export type CurrencyOption = "NGN" | "USD" | "GHS" | "TZX" | "KES" | "ZMW" | "EUR" | "GBP";
 
 interface AccountInfo {
     main_account_id: string;
@@ -27,11 +27,11 @@ const useCurrency = create<CurrencyState>()(
         (set, get) => ({
             selectedCurrency: "NGN",
             accounts: {},
-            
+
             setCurrency: (currency: CurrencyOption) => {
                 set({ selectedCurrency: currency });
             },
-            
+
             setAccounts: (currency: CurrencyOption, accounts: AccountInfo) => {
                 set((state) => ({
                     accounts: {
@@ -40,28 +40,31 @@ const useCurrency = create<CurrencyState>()(
                     }
                 }));
             },
-            
+
             getAccountId: (currency: CurrencyOption, accountType: 'main' | 'reserve' = 'main') => {
                 const { accounts } = get();
                 const currencyAccounts = accounts[currency];
-                
+
                 if (!currencyAccounts) return null;
-                
+
                 if (accountType === 'reserve') {
                     return currencyAccounts.rolling_reserve_account_id || null;
                 }
-                
+
                 return currencyAccounts.main_account_id || null;
             },
-            
+
             getCurrencySymbol: () => {
                 const { selectedCurrency } = get();
                 switch (selectedCurrency) {
                     case "NGN": return "₦";
                     case "USD": return "$";
                     case "GHS": return "₵";
-                    // case "GBP": return "£";
-                    // case "EUR": return "€";
+                    case "GBP": return "£";
+                    case "EUR": return "€";
+                    case "TZX": return "TSh";
+                    case "KES": return "KSh";
+                    case "ZMW": return "ZK";
                     default: return "₦";
                 }
             },
@@ -71,9 +74,12 @@ const useCurrency = create<CurrencyState>()(
                 switch (selectedCurrency) {
                     case "NGN": return "🇳🇬";
                     case "USD": return "🇺🇸";
+                    case "EUR": return "🇪🇺";
+                    case "GBP": return "🇬🇧";
                     case "GHS": return "🇬🇭";
-                    // case "GBP": return "🇬🇧";
-                    // case "EUR": return "🇪🇺";
+                    case "TZX": return "🇹🇿";
+                    case "KES": return "🇰🇪";
+                    case "ZMW": return "🇿🇲";
                     default: return "🇳🇬";
                 }
             }

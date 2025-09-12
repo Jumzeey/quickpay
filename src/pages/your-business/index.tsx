@@ -2,13 +2,15 @@ import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
 import TabHeader from "@/components/TabHeader";
 import WebPageTitle from "@/components/WebPageTitle";
-import BusinessKYC from "./kyc-verification";
-import { useRouter } from "next/router";
-import Webhooks from "./webhook";
 import SubaccountHistory from "@/pages/your-business/sub-accounts";
+import { useRouter } from "next/router";
+import BusinessKYC from "./kyc-verification";
+import Webhooks from "./webhook";
+import UpgradeAccount from "./upgrade-account";
 
 const tabs = [
     { title: "Business KYC", link: "?tab=business-kyc" },
+    // { title: "Upgrade Account", link: "?tab=upgrade-account" }, 
     { title: "Webhooks", link: "?tab=webhooks" },
     { title: "Sub Accounts", link: "?tab=sub-accounts" },
 ];
@@ -30,9 +32,10 @@ const Business = () => {
             <TabHeader tabs={tabs} />
 
             <div className="mt-8">
-                {tab === "business-kyc" &&  <BusinessKYC />}
+                {tab === "business-kyc" && <BusinessKYC />}
                 {tab === "webhooks" && <Webhooks />}
                 {tab === "sub-accounts" && <SubaccountHistory />}
+                {tab === "upgrade-account" && <UpgradeAccount />}
             </div>
         </Layout>
     );

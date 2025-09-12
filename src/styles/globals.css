@@ -335,3 +335,8 @@ body,
   border: none !important;
   border-radius: 0;
 }
+
+.rdrDefinedRangesWrapper,
+.rdrDateDisplayWrapper {
+  display: none;
+}

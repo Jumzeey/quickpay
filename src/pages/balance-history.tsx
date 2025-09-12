@@ -21,7 +21,6 @@ import { apiEndpoints } from '@/util/endpoints';
 import {
   capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
-  downloadFile,
   formatDate,
   formatDateTime2,
   notifyError,
@@ -292,7 +291,7 @@ const WalletHistory = () => {
           />
         </div>
 
-        <CurrencySwitcher className="items-center" />
+        <CurrencySwitcher currencies={['all']} className="items-center" />
       </div>
 
       <div>

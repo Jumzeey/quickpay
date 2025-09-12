@@ -20,12 +20,13 @@ import WebPageTitle from "@/components/WebPageTitle";
 import { usePaginatedStoreQuery } from "@/hooks/useOptimizedFetch";
 import { getBanks } from "@/services/bank";
 import { Payout } from "@/services/payout";
+import useAuthentication from "@/stores/useAuthentication";
 import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { capitalizeFirstLetter, copyToClipboard, formatDate, formatDateTime2, notifyError, notifySuccess } from "@/util/utils";
+import { capitalizeFirstLetter, copyToClipboard, formatDate, formatDateTime2, Modules, notifyError, notifySuccess } from "@/util/utils";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -68,6 +69,11 @@ const PayoutHistory = () => {
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
+
+  const { modules } = useAuthentication();
+  const payoutCurrency: string[] = modules?.find((m: Modules) => m.product === 'Payout')?.sub_product?.currency;
+
+  console.log({ modules, payoutCurrency });
 
   const {
     requeryPayout,
@@ -394,7 +400,11 @@ const PayoutHistory = () => {
           />
 
           <div className="w-1/2 h-14">
-            <CurrencySwitcher contentClassName="h-full" className="h-full" />
+            <CurrencySwitcher
+              contentClassName="h-full"
+              className="h-full"
+              currencies={payoutCurrency}
+            />
           </div>
 
           {/* <ActionButton

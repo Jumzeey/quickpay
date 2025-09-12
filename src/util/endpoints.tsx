@@ -118,6 +118,7 @@ export const apiEndpoints = {
   },
   utilities: {
     UPLOAD_FILE: '/utilities/upload',
+    SUPPORTED_COUNTRIES: '/utility/supported-countries',
   },
   ecommerce: {
     GET_SHIPPING_SETTINGS: '/merchant/ecommerce/shippings',

@@ -317,6 +317,19 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
     }
   };
 
+  const getModalTitle = () => {
+    switch (state.currentStep) {
+      case 0:
+        return "Select Virtual Account Currency";
+      case 1:
+        return "Select Virtual Account Type";
+      case 2:
+        return "Request Virtual Account";
+      default:
+        return "Request Virtual Account";
+    }
+  };
+
   return (
     <Modal
       title={getModalTitle()}

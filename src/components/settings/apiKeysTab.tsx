@@ -20,6 +20,15 @@ interface APICredentials {
   encryption_iv: string;
 }
 
+const columns = ["No.", "Key Type", "Key Value"];
+
+interface APICredentials {
+  public_key: string;
+  secret_key: string;
+  encryption_key: string;
+  encryption_iv: string;
+}
+
 const ApiKeysTab = () => {
   const [keyLoading, setKeyLoading] = useState(false);
   const [encryptionLoading, setEncryptionLoading] = useState(false);
@@ -97,7 +106,6 @@ const ApiKeysTab = () => {
             disabled={keyLoading || isLoading}
             className="!h-10 !px-4 !font-medium"
           />
-          
           <ActionButton
             ariaLabel="Generate New Encryption Keys button"
             iconName={encryptionLoading ? "loading" : undefined}

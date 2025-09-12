@@ -9,6 +9,7 @@ const nextConfig = {
       'rampadminproductionbucket.s3.amazonaws.com',
     ],
   },
+  optimizeFonts: true,
 };
 
 export default nextConfig;

@@ -16,6 +16,7 @@ import { usePaginatedEffect } from "@/hooks/useEffectFetch";
 import { getCollectionGatewayMeta, repushNotification } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import useCollectionHistory from "@/stores/useCollectionHistory";
+import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
@@ -49,6 +50,7 @@ const CollectionHistory = () => {
         getCollectionHistoryLoading,
     } = useCollectionHistory();
 
+    const { selectedCurrency } = useCurrency();
     const { showFilter, toggleFilter } = useFilter();
 
     const [state, setState] = useState<CollectionsProps>({
@@ -317,7 +319,8 @@ const CollectionHistory = () => {
             search: searchInput,
             status: statusFilter,
             startDate: filter.startDate,
-            endDate: filter.endDate
+            endDate: filter.endDate,
+            currency: selectedCurrency,
         },
         {
             onError: (error) => {

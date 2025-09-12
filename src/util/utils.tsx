@@ -1,5 +1,5 @@
+import { format } from 'date-fns';
 import Cookies from 'js-cookie';
-import moment from 'moment';
 import { toast } from 'sonner';
 import * as Yup from 'yup';
 
@@ -139,11 +139,11 @@ export const downloadFile = (url: string) => {
 };
 
 export const formatDate = (date: any) => {
-  return moment(date).format('YYYY-MM-DD');
+  return format(new Date(date), 'yyyy-MM-dd');
 };
 
 export const formatDateTime = (dateTimeString: any) => {
-  return moment(dateTimeString).format('MMMM Do, YYYY, h:mm:ss A');
+  return format(new Date(dateTimeString), 'MMMM do, yyyy, h:mm:ss a');
 };
 
 export const formatDateTime2 = (date: string): string[] => {
@@ -355,4 +355,53 @@ export const formatAmount = (amountStr: string): string => {
   return isNegative
     ? `-${currencySymbol}${formattedNumberPart}`
     : `${currencySymbol}${formattedNumberPart}`;
+};
+export interface Modules {
+  id: number;
+  user_id: number;
+  product: string;
+  sub_product: {
+    payment_type?: string[];
+    currency?: string[];
+  };
+}
+
+export const allCardCurrencies = ['NGN', 'USD', 'GHS']
+
+export const mapCurrencyCodesToOptions = (currencyCodes: string[]): { value: string; label: string }[] => {
+  const isAllCurrency = currencyCodes.at(0)?.toLowerCase() === "all";
+  if (isAllCurrency) {
+    currencyCodes = Object.keys(currencySymbols);
+  }
+
+  return currencyCodes.map(code => ({
+    value: code,
+    label: `${currencySymbols[code] || ''} ${code}`
+  }));
+};
+
+export const isImageFile = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  return ['jpg', 'jpeg', 'png'].includes(extension || '');
+};
+
+export const getPreviewUrl = (file: File) => {
+  return URL.createObjectURL(file);
+};
+
+export const getFileIcon = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'pdf':
+      return 'file-pdf';
+    case 'doc':
+    case 'docx':
+      return 'file-text';
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+      return 'file-image';
+    default:
+      return 'file';
+  }
 };

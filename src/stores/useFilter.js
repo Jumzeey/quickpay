@@ -1,8 +1,8 @@
-import moment from "moment";
-import { create } from "zustand";
 import { getCollectionHistory } from "@/services/collections";
 import { getSubaccountHistory } from "@/services/sub-account";
 import { getSettlementHistory } from "@/services/transaction";
+import { formatDate } from '@/util/utils';
+import { create } from "zustand";
 
 const initialDateDate = {
     startDate: new Date(),

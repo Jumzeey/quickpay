@@ -1,10 +1,14 @@
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
+import { mapCurrencyCodesToOptions } from "@/util/utils";
 
 type CurrencySwitcherProps = {
-    currencies?: { value: CurrencyOption; label: string }[];
+    // currencies?: { value: CurrencyOption; label: string }[];
+    currencies?: string[];
     className?: string;
     contentClassName?: string;
 }
+
+// TODO: show default else show all you have 
 
 export const walletCurrencies = [
     { value: "NGN" as CurrencyOption, label: "₦ NGN" },
@@ -30,7 +34,9 @@ const CurrencySwitcher = ({ currencies, contentClassName = "", className = "" }:
                 onChange={handleChange}
                 value={selectedCurrency}
             >
-                {(currencies || walletCurrencies).map((option) => (
+                {(currencies
+                    ? mapCurrencyCodesToOptions(currencies)
+                    : walletCurrencies).map((option) => (
                     <option key={option.value} value={option.value}>
                         {option.label}
                     </option>

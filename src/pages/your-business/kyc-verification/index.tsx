@@ -1,13 +1,9 @@
-// import Button from "@/components/button";
-// import Card from "@/components/Card";
+import BusinessHeader from "@/components/BusinessHeader";
 import CardSkeleton from "@/components/card-skeleton";
 import env from "@/config/env";
 import { useAsyncFetch } from "@/hooks/useAsyncFetch";
 import { getKyc } from "@/services/kyc";
 import useAuthentication from "@/stores/useAuthentication";
-// import { capitalizeFirstLetter, formatDate } from "@/util/utils";
-// import Image from "next/image";
-import BusinessHeader from "@/components/BusinessHeader";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -83,15 +79,17 @@ const BusinessKYC = () => {
 
   if (getKycLoading) return <CardSkeleton />;
 
+  console.log({ userKyc })
+
+
   if (!userKyc || userKyc.fields.length === 0) {
     return <KYCForm />
   }
 
-  console.log({ userKyc })
 
   return (
     <div className="mt-10">
-      <BusinessHeader />
+      <BusinessHeader isStarterBusiness={isStarterBusiness()} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 w-1/2 mt-6 gap-6">
         <div className="space-y-2">

@@ -10,7 +10,7 @@ import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { handleDashboardData, populateCharts } from "@/services/transaction";
 import useAuthentication from "@/stores/useAuthentication";
 import useCurrency from "@/stores/useCurrency";
-import { capitalizeFirstLetter, copyToClipboard, currencySymbols, formatBalance } from "@/util/utils";
+import { capitalizeFirstLetter, copyToClipboard, currencySymbols, formatBalance, notifyError } from "@/util/utils";
 import Link from "next/link";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -71,7 +71,29 @@ const Dashboard = () => {
       enabled: Boolean(mounted && selectedCurrency),
       onSuccess: (response) => {
         const { balances, transactions, settlements, merchantBalance } = response;
-        const { settlement_balance, total_collections, total_disbursements } = merchantBalance || {};
+        const { settlement_balance, total_collections, total_disbursements, accounts } = merchantBalance || {};
+
+        if (accounts?.message?.toLowerCase() === "no accounts found") {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            wallet_id: "N/A",
+            available_balance: `${currencySymbols[selectedCurrency]}0.00`,
+            ledger_balance: `${currencySymbols[selectedCurrency]}0.00`,
+            locked_balance: `${currencySymbols[selectedCurrency]}0.00`,
+            settlement_balance: `${currencySymbols[selectedCurrency]}0.00`,
+            rolling_reserve: `${currencySymbols[selectedCurrency]}0.00`,
+            rolling_reserve_ledger: `${currencySymbols[selectedCurrency]}0.00`,
+            total_collections: `${currencySymbols[selectedCurrency]}0.00`,
+            total_disbursements: `${currencySymbols[selectedCurrency]}0.00`,
+            transactions: [],
+            settlements: [],
+          }));
+
+          // display error message
+          notifyError("No accounts found. Please contact support.");
+          return;
+        }
 
         const main_account_balance = merchantBalance?.accounts?.find(
           (account: any) => account.account_type === "main"
@@ -190,7 +212,7 @@ const Dashboard = () => {
         </div>
 
         <div className="w-28">
-          <CurrencySwitcher />
+          <CurrencySwitcher currencies={['all']} />
         </div>
       </div>
 

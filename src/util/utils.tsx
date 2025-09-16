@@ -1,3 +1,4 @@
+import { CurrencyOption } from '@/stores/useCurrency';
 import { format } from 'date-fns';
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
@@ -310,6 +311,8 @@ export const currencySymbols: Record<string, string> = {
   'GHS': '₵',
   'EUR': '€',
   'GBP': '£',
+  'KES': 'KSh',
+  'ZMW': 'ZMW',
 };
 
 export const replaceCurrencySymbol = (amount: string): string => {
@@ -356,6 +359,7 @@ export const formatAmount = (amountStr: string): string => {
     ? `-${currencySymbol}${formattedNumberPart}`
     : `${currencySymbol}${formattedNumberPart}`;
 };
+
 export interface Modules {
   id: number;
   user_id: number;
@@ -365,6 +369,23 @@ export interface Modules {
     currency?: string[];
   };
 }
+
+export const getAllCurrencies = (modules: Modules[]): { value: CurrencyOption; label: string }[] => {
+  const currencySet = new Set<string>();
+
+  modules.forEach((module) => {
+    if (module.sub_product.currency) {
+      module.sub_product.currency.forEach((currency) => {
+        currencySet.add(currency);
+      });
+    }
+  });
+
+  return Array.from(currencySet).map(currency => ({
+    value: currency as CurrencyOption,
+    label: `${currencySymbols[currency] || ''} ${currency}`
+  }));
+};
 
 export const allCardCurrencies = ['NGN', 'USD', 'GHS']
 

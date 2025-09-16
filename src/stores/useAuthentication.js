@@ -125,7 +125,7 @@ const useAuthentication = create(
 
       // Get countries by supported product type
       getCountriesByProduct: (productType) => {
-        const { supportedCountries } = get();
+        const supportedCountries = get().supportedCountries;
         return supportedCountries.filter(country =>
           country.supportedProducts.includes(productType)
         );
@@ -133,7 +133,7 @@ const useAuthentication = create(
 
       // Get available currencies
       getAvailableCurrencies: () => {
-        const { supportedCountries } = get();
+        const supportedCountries = get().supportedCountries;
         return supportedCountries
           .filter(country => country.isActive)
           .map(country => ({

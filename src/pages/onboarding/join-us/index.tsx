@@ -12,6 +12,7 @@ import useAuthentication from "@/stores/useAuthentication";
 import useLoadRecaptcha from "@/util/useLoadRecaptcha";
 import { notifyError, notifySuccess } from "@/util/utils";
 import { getData } from "country-list";
+import countryToCurrency, { Countries, Currencies } from "country-to-currency";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -141,6 +142,7 @@ const RegisterPage = () => {
 
       const response = await signUp({
         ...values,
+        currency: countryToCurrency[values.country as Countries] as Currencies || 'NGN',
         business_type: "starter",
         recaptchaToken: token
       });

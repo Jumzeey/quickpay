@@ -150,7 +150,6 @@ const useAuthentication = create(
         const { data, message } = await verifyOtp(payload);
         Cookies.set('accessToken', data.token);
 
-        console.log({ modules: data.modules });
         set((state) => ({
           ...state,
           user: data.user,

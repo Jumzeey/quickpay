@@ -19,6 +19,7 @@
     "chart.js": "^4.4.1",
     "clsx": "^2.1.1",
     "country-list": "^2.3.0",
+    "country-to-currency": "^2.0.2",
     "date-fns": "^4.1.0",
     "formik": "^2.4.5",
     "framer-motion": "^11.1.7",

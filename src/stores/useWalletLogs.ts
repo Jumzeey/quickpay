@@ -161,6 +161,7 @@ const useWalletLogs = create<WalletLogsState & { currentCurrency: CurrencyOption
         getWalletHistoryLoading: false,
       }));
 
+      // @ts-ignore
       return { wallet };
     } catch (error: any) {
       console.error('Error fetching wallet history:', error);

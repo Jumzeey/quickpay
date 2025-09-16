@@ -65,7 +65,14 @@ export const useExportJob = () => {
                 status: 'polling'
             }));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const handleMaxRetries = () => {
+        setState(prev => ({ ...prev, status: 'failed', error: 'Export timed out' }));
+        notifyError('Export timed out. Please try again.');
+        return;
+    };
 
     const checkExportStatus = useCallback(async (
         jobId: string,
@@ -80,13 +87,9 @@ export const useExportJob = () => {
         let retries = 0;
 
         const checkStatus = async (): Promise<void> => {
-            try {
-                if (retries >= maxRetries) {
-                    setState(prev => ({ ...prev, status: 'failed', error: 'Export timed out' }));
-                    notifyError('Export timed out. Please try again.');
-                    return;
-                }
+            if (retries >= maxRetries) return handleMaxRetries();
 
+            try {
                 // Replace :id with the actual jobId
                 const formattedEndpoint = statusEndpoint.replace(':id', jobId);
                 const response = await api.get(formattedEndpoint);

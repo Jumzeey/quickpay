@@ -21,7 +21,6 @@ import { apiEndpoints } from '@/util/endpoints';
 import {
   capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
-  downloadFile,
   formatDate,
   formatDateTime2,
   notifyError,
@@ -51,7 +50,6 @@ const WalletHistory = () => {
   } = useWalletLogs();
   const [searchInput, setSearchInput] = useState("");
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-
   const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -293,7 +291,7 @@ const WalletHistory = () => {
           />
         </div>
 
-        <CurrencySwitcher className="items-center" />
+        <CurrencySwitcher currencies={['all']} className="items-center" />
       </div>
 
       <div>

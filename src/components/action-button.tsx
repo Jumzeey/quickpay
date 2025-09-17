@@ -6,6 +6,7 @@ interface ActionButtonProps {
     iconName?: string;
     className?: string;
     ariaLabel: string;
+    type?: "button" | "submit" | "reset";
     onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
     disabled?: any;
 }
@@ -16,6 +17,7 @@ const ActionButton: FC<ActionButtonProps> = ({
     className,
     ariaLabel,
     onClick,
+    type = "button",
     disabled,
 }) => {
     return (
@@ -23,6 +25,7 @@ const ActionButton: FC<ActionButtonProps> = ({
             disabled={disabled}
             aria-label={ariaLabel}
             onClick={onClick}
+            type={type}
             className={"cursor-pointer flex items-center h-14 gap-2 bg-[#EFF7FE] text-primary text-[13px] font-semibold px-5 rounded-md hover:bg-primary-dark transition-colors duration-200" + (className ? ` ${className}` : "")}>
             {iconName && <Icon name={iconName} size="16" className="text-primary" />}
 

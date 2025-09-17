@@ -214,8 +214,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     useEffect(() => {
         // check if currency is NGN then check account name and selected bank
         // if currency is GHS then check phone number == 12 and selected bank
-
-        console.log({ currency })
         const validateCheck =
             (currency === 'NGN' && accountNumber.length === 10) ||
             (currency === 'GHS' && accountNumber.length === 12) && selectedBank;
@@ -223,6 +221,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         if (validateCheck) {
             nameCheck();
         }
+        
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountNumber, currency, selectedBank]);
 
     const handleFormSubmit = async (values: TransferFormValues & { otp: string }) => {

@@ -1,6 +1,28 @@
 import api from "@/util/api";
 import { apiEndpoints } from "@/util/endpoints";
 
+export interface SupportedCountry {
+  id: string;
+  product_type: string;
+  currency: string;
+  is_active: boolean;
+}
+
+export interface SupportedCountriesResponse {
+  success: boolean;
+  data: SupportedCountry[];
+  meta: any;
+}
+
+export async function getSupportedCountries(): Promise<SupportedCountry[]> {
+  try {
+    const response = await api.get(apiEndpoints.utilities.SUPPORTED_COUNTRIES);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function signIn(payload: any) {
   try {
     const response = await api.post(apiEndpoints.auth.LOGIN,payload);

@@ -1,10 +1,14 @@
+import useAuthentication from "@/stores/useAuthentication";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
+import { getAllCurrencies } from "@/util/utils";
 
 type CurrencySwitcherProps = {
-    currencies?: { value: CurrencyOption; label: string }[];
+    // currencies?: { value: CurrencyOption; label: string }[];
+    currencies?: string[];
     className?: string;
     contentClassName?: string;
 }
+
 
 export const walletCurrencies = [
     { value: "NGN" as CurrencyOption, label: "₦ NGN" },
@@ -16,11 +20,15 @@ export const walletCurrencies = [
 
 const CurrencySwitcher = ({ currencies, contentClassName = "", className = "" }: CurrencySwitcherProps) => {
     const { selectedCurrency, setCurrency } = useCurrency();
+    const { modules } = useAuthentication();
+
+    const allCurrencies = getAllCurrencies(modules);
 
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const newCurrency = event.target.value as CurrencyOption;
         setCurrency(newCurrency);
     };
+
 
     return (
         <div className={`grid grid-cols-1 text-[#005BB0] w-full md:w-28 ${className}`}>
@@ -30,7 +38,14 @@ const CurrencySwitcher = ({ currencies, contentClassName = "", className = "" }:
                 onChange={handleChange}
                 value={selectedCurrency}
             >
-                {(currencies || walletCurrencies).map((option) => (
+                {/* {(currencies
+                    ? mapCurrencyCodesToOptions(currencies)
+                    : walletCurrencies).map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))} */}
+                {allCurrencies.map((option) => (
                     <option key={option.value} value={option.value}>
                         {option.label}
                     </option>

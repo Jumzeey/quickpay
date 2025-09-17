@@ -1,8 +1,23 @@
 import React from 'react';
 
-const FancyFileUpload: React.FC<{ documents: any[]; setDocuments: any }> = ({
+interface FancyFileUploadProps {
+  acceptedTypes?: string[];
+  documents: any[];
+  setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
+  maxFileSize?: number; // in MB
+  onFilesSelected?: (files: File[]) => void; // Optional callback for compatibility
+  multiple?: boolean;
+  className?: string;
+}
+
+const FancyFileUpload: React.FC<FancyFileUploadProps> = ({
+  acceptedTypes = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx'],
   documents,
   setDocuments,
+  maxFileSize = 5, // Default max file size is 5MB
+  onFilesSelected,
+  multiple = true,
+  className = ''
 }) => {
   // Trigger file input when clicking the upload zone
   const handleZoneClick = () => {
@@ -12,11 +27,27 @@ const FancyFileUpload: React.FC<{ documents: any[]; setDocuments: any }> = ({
   // Handle File Upload
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const newFiles = Array.from(event.target.files).map(file => ({
-        file,
-        title: file.name, // Default title as file name
-      }));
-      setDocuments((prevFiles: any) => [...prevFiles, ...newFiles]);
+      const files = Array.from(event.target.files);
+      const validFiles = files.filter(file => {
+        const isValidType = acceptedTypes.some(type => 
+          type.startsWith('.') ? file.name.toLowerCase().endsWith(type.toLowerCase()) : file.type.includes(type)
+        );
+        const isValidSize = file.size <= maxFileSize * 1024 * 1024; // Convert MB to bytes
+        return isValidType && isValidSize;
+      });
+
+      // Call the optional callback if provided (for compatibility)
+      if (onFilesSelected) {
+        onFilesSelected(validFiles);
+      } else {
+        // Use the existing pattern
+        const newFiles = validFiles.map(file => ({
+          file,
+          title: file.name, // Default title as file name
+          id: Math.random().toString(36).substr(2, 9), // Add unique ID
+        }));
+        setDocuments((prevFiles: any) => [...prevFiles, ...newFiles]);
+      }
     }
   };
 
@@ -37,7 +68,7 @@ const FancyFileUpload: React.FC<{ documents: any[]; setDocuments: any }> = ({
   };
 
   return (
-    <div className='max-w-lg mx-auto py-2'>
+    <div className={`max-w-lg mx-auto py-2 ${className}`}>
       {/* Clickable Upload Zone */}
       <div
         className='border-dashed border-2 border-gray-400 rounded-lg p-6 flex flex-col items-center justify-center text-gray-600 cursor-pointer bg-gray-50 hover:bg-gray-100 transition'
@@ -47,14 +78,14 @@ const FancyFileUpload: React.FC<{ documents: any[]; setDocuments: any }> = ({
           type='file'
           id='fileInput'
           className='hidden'
-          accept='.jpg,.jpeg,.png,.pdf,.doc,.docx'
-          multiple
+          accept={acceptedTypes.join(',')}
+          multiple={multiple}
           onChange={handleFileChange}
         />
         <p className='text-sm'>Click to upload files</p>
       </div>
       <span className='text-xs mt-1 text-black'>
-        JPG, PNG or PDF, file size no more than 3MB
+        JPG, PNG or PDF, file size no more than {maxFileSize}MB
       </span>
 
       {/* Uploaded Files List - ONLY SHOW IF FILES EXIST */}
@@ -67,7 +98,7 @@ const FancyFileUpload: React.FC<{ documents: any[]; setDocuments: any }> = ({
 
             return (
               <div
-                key={index}
+                key={fileObj.id || index}
                 className='flex items-center justify-between gap-3 p-3 bg-gray-100 rounded-lg shadow'
               >
                 {/* Title Input (Styled - No Borders, Only Outline on Focus) */}
@@ -100,7 +131,6 @@ const FancyFileUpload: React.FC<{ documents: any[]; setDocuments: any }> = ({
                   >
                     <path
                       strokeLinecap='round'
-                      strokeLinejoin='round'
                       d='M3 6h18M9 6V4h6v2m3 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6h12z'
                     />
                   </svg>

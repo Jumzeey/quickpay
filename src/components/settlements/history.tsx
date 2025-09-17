@@ -167,6 +167,7 @@ const History = () => {
                         />
 
                         <FilterExport
+                            showExport={false}
                             handleExport={handleExport}
                             toggleFilter={toggleFilter}
                         />

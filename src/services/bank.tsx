@@ -13,8 +13,8 @@ export async function getBanks(params?: { countryCode?: string }) {
       apiEndpoints.bank.GET_BANKS,
       { params }
     );
-    return response.data.banks;
-  } catch (error) {
+    return response?.data?.banks;
+  } catch (error: any) {
     throw error;
   }
 }

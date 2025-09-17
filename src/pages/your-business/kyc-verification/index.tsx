@@ -79,13 +79,9 @@ const BusinessKYC = () => {
 
   if (getKycLoading) return <CardSkeleton />;
 
-  console.log({ userKyc })
-
-
   if (!userKyc || userKyc.fields.length === 0) {
     return <KYCForm />
   }
-
 
   return (
     <div className="mt-10">

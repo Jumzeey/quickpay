@@ -27,8 +27,6 @@ const BusinessHeader = ({ isStarterBusiness }: BusinessHeaderProps) => {
         router.push('/your-business?tab=upgrade-account');
     };
 
-    console.log({ kycData });
-
     return (
         <div className="flex justify-between items-center">
             <div>

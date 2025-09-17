@@ -114,8 +114,6 @@ const Dashboard = () => {
           setAccounts(selectedCurrency, accountInfo);
         }
 
-        console.log({ total_collections, total_disbursements, selectedCurrency });
-
         setState(prev => ({
           ...prev,
           isLoading: false,

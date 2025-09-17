@@ -120,17 +120,18 @@ export const getAccountId = async (currency: CurrencyOption): Promise<string> =>
   return accountId;
 }
 
-// const POLLING_INTERVAL = 5000;
-// const MAX_RETRIES = 20;
-
-
-const useWalletLogs = create<WalletLogsState>((set, get) => ({
+const useWalletLogs = create<WalletLogsState & { currentCurrency: CurrencyOption }>((set, get) => ({
   ...initialState,
+  currentCurrency: 'NGN', // Default currency
 
   fetchWalletHistory: async (searchParams?: FetchWalletHistoryParams): Promise<{ wallet: WalletTransaction[] }> => {
+    const previousCurrency = get().currentCurrency;
+    const currentCurrency = searchParams?.currency || 'NGN';
+
     set(state => ({
       ...state,
       getWalletHistoryLoading: true,
+      currentCurrency, // Update the current currency
     }));
 
     try {
@@ -160,92 +161,24 @@ const useWalletLogs = create<WalletLogsState>((set, get) => ({
         getWalletHistoryLoading: false,
       }));
 
+      // @ts-ignore
       return { wallet };
     } catch (error: any) {
       console.error('Error fetching wallet history:', error);
-      // if (!error.message.includes('No transaction record found')) {
-      //   notifyError(error.message);
-      // } else {
       notifyError("Failed to fetch wallet history.");
-      // }
+
+      // if the current account is not the same as previous, reset wallet logs
+      const currencyChanged = previousCurrency !== get().currentCurrency;
+
       set(state => ({
         ...state,
         getWalletHistoryLoading: false,
+        // Reset wallet data if currency changed
+        ...(currencyChanged && { wallet: [], pagination: initialState.pagination }),
       }));
       throw error;
     }
   },
-
-  // pollExportStatus: async (jobId: number): Promise<string> => {
-  //   let retries = 0;
-
-  //   const checkStatus = async (): Promise<string> => {
-  //     try {
-  //       const response = await checkExportStatus(jobId);
-
-  //       if (response.data.status === 'completed' && response.data.export_url) {
-  //         return response.data.export_url;
-  //       }
-
-  //       if (response.data.status === 'failed') {
-  //         throw new Error('Export failed');
-  //       }
-
-  //       if (retries >= MAX_RETRIES) {
-  //         throw new Error('Export timed out');
-  //       }
-
-  //       retries++;
-  //       await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
-  //       return checkStatus();
-  //     } catch (error) {
-  //       throw error;
-  //     }
-  //   };
-
-  //   return checkStatus();
-  // },
-
-  // exportWalletHistory: async (searchParams: FetchWalletHistoryParams = {}) => {
-  //   try {
-  //     let { currency = 'NGN', ...otherParams } = searchParams || {};
-
-  //     // Fetch wallet history with account_id
-  //     const params: FetchWalletHistoryParams = {
-  //       ...otherParams,
-  //       account_id: await getAccountId(currency),
-  //       export: true,
-  //     };
-
-  //     console.log('Exporting wallet history with params:', params, searchParams);
-
-  //     const response: ExportJobResponse = await getWalletHistory(params);
-  //     if (response.export_link) {
-  //       set(state => ({ ...state, isExporting: false }));
-
-  //       return {
-  //         success: true,
-  //         export_link: response.export_link
-  //       };
-  //     }
-
-  //     if (!response?.job_id) {
-  //       throw new Error('No job ID received');
-  //     }
-
-  //     // Poll for the export URL
-  //     const exportUrl = await get().pollExportStatus(response.job_id);
-
-  //     set(state => ({ ...state, isExporting: false }));
-  //     return {
-  //       success: true,
-  //       export_link: exportUrl
-  //     };
-  //   } catch (error: any) {
-  //     set(state => ({ ...state, isExporting: false }));
-  //     throw error;
-  //   }
-  // },
 }));
 
 export default useWalletLogs;

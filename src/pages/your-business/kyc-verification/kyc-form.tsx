@@ -105,11 +105,12 @@ const KYCForm = () => {
   );
 
   const businessType = watch("business_type");
+  const isStarterBusiness = businessType === "starter";
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      const payload = businessType === "starter"
+      const payload = isStarterBusiness
         ? {
           business_type: values.business_type,
           id_number: values.id_number,
@@ -120,8 +121,7 @@ const KYCForm = () => {
           note: values.note,
           bvn: values.bvn,
           nin: values.nin,
-        }
-        : {
+        } : {
           business_type: values.business_type,
           business_description: values.business_description,
           director_nin: values.director_nin,
@@ -157,7 +157,7 @@ const KYCForm = () => {
   return (
     <div className="w-full">
       <div>
-        <BusinessHeader />
+        <BusinessHeader isStarterBusiness={isStarterBusiness} />
 
         <p className="my-5 text-[13px] text-[#7F7F7F] font-medium">
           Please provide the following details and submit your account for review
@@ -277,9 +277,7 @@ const KYCForm = () => {
                 text="Upload ID FILE"
                 folderName="kyc"
               />
-
             </div>
-
           </>
         ) : (
           <>
@@ -341,11 +339,10 @@ const KYCForm = () => {
               name="director_tin"
               control={control}
               render={({ field }) => (
-                <FormSelect
+                <FormInput
                   label="Tax Identification Number"
                   id="director_tin"
                   htmlFor="director_tin"
-                  options={documentTypes}
                   error={errors.director_tin?.message}
                   touched={!!errors.director_tin}
                   {...field}

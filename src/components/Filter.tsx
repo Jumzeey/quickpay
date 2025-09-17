@@ -1,14 +1,14 @@
-import { DateRangePicker } from "react-date-range";
-import Button from "./button";
 import useFilter from "@/stores/useFilter";
+import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import Button from "./button";
 
 interface FilterProps {
   filterCallback: Function;
 }
 
-const Filter: React.FC<FilterProps> = ({ filterCallback}) => {
+const Filter: React.FC<FilterProps> = ({ filterCallback }) => {
   const { handleDateChange, selectionRange, toggleFilter, handleReset } =
     useFilter();
 

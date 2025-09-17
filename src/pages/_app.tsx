@@ -19,8 +19,13 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export default function App({ Component, pageProps }: AppProps) {
   const { user } = useAuthentication() || {};
   const [tracker, setTracker] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
 
   const logoutTimer: any = useRef(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const startLogoutTimer = () => {
     const isAuthenticated = getToken();
@@ -83,7 +88,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
       <SharedState>
-        <main className={`${plusJakartaSans.variable} font-sans`}>
+        <main className={isClient ? `${plusJakartaSans.variable} font-sans` : "font-sans"}>
           <Toaster position="top-center" richColors />
           <meta
             name="viewport"

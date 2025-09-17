@@ -147,7 +147,7 @@ const FormSelectSearch = forwardRef<HTMLInputElement, FormSelectSearchProps>(
                                     <ComboboxOption
                                         key={index}
                                         value={option}
-                                        className="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 data-[focus]:bg-blue-100 data-[selected]:bg-blue-500 data-[selected]:text-white"
+                                        className="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 data-[focus]:bg-blue-100 data-[selected]:bg-blue-500"
                                     >
                                         {option.label}
                                     </ComboboxOption>

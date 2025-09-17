@@ -27,11 +27,7 @@ export const apiEndpoints = {
 
     EXPORT_WALLET_HISTORY_TRANSACTIONS: '/merchant/client/get-wallet-logs',
     GET_WALLET_HISTORY_EXPORT_STATUS: '/merchant/client/wallet-exports/:id/status',
-
-    //     {{CORE_BASE_URL}}/merchant/client/get-wallet-logs?account_id=a2e589a2-dfc0-4a48-bc1d-8429de3fa0ae&export=true&start_date=2025-06-01&end_date=2025-12-31
-    // use this to query for the s3 file
-    // {{CORE_BASE_URL}}/merchant/client/wallet-exports/:jobId/status
-  },
+ },
   collections: {
     GET_COLLECTION_HISTORY: '/merchant/collections-history',
     GET_PAYMENT_LINKS: '/merchant/payment-links',
@@ -47,6 +43,8 @@ export const apiEndpoints = {
     GET_SINGLE_REFUNDS: '/merchant/refunds',
     GET_REFUNDS: '/merchant/refunds',
     GET_COLLECTION_GATEWAY_META: '/merchant/collections-history/:id/gateway-meta',
+    EXPORT_COLLECTION_HISTORY_TRANSACTIONS: '/merchant/collections-history',
+    GET_COLLECTION_EXPORT_STATUS: '/merchant/client/exports/:id/status',
   },
   conversions: {
     GET_CONVERSION_HISTORY: '/conversions/history',
@@ -86,6 +84,8 @@ export const apiEndpoints = {
     ADD_PAYOUT: '/merchant/disbursements/interbank',
     VERIFY_PAYOUT_OTP: '/merchant/disbursements/interbank/complete',
     REQUERY_PAYOUT: '/merchant/disbursements/interbank/requery',
+    EXPORT_PAYOUT_HISTORY_TRANSACTIONS: '/merchant/disbursements',
+    GET_PAYOUT_EXPORT_STATUS: '/merchant/client/exports/:id/status',
     REQUEST_REFUND: '/merchant/disbursements/refunds', // TODO: re-check
     RAISE_DISPUTE: '/merchant/disbursements/disputes', // TODO: re-check
   },
@@ -118,6 +118,7 @@ export const apiEndpoints = {
   },
   utilities: {
     UPLOAD_FILE: '/utilities/upload',
+    SUPPORTED_COUNTRIES: '/utility/supported-countries',
   },
   ecommerce: {
     GET_SHIPPING_SETTINGS: '/merchant/ecommerce/shippings',

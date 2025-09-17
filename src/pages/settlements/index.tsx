@@ -39,7 +39,7 @@ const Settlements = () => {
         </div>
 
         {id || view ? null : <div className="relative flex gap-4 justify-end mt-4 md:mt-0">
-          <CurrencySwitcher className="items-center" />
+          <CurrencySwitcher currencies={['all']} className="items-center" />
 
           {/* <ActionButton
             ariaLabel='Filter by date button'

@@ -20,15 +20,6 @@ interface APICredentials {
   encryption_iv: string;
 }
 
-const columns = ["No.", "Key Type", "Key Value"];
-
-interface APICredentials {
-  public_key: string;
-  secret_key: string;
-  encryption_key: string;
-  encryption_iv: string;
-}
-
 const ApiKeysTab = () => {
   const [keyLoading, setKeyLoading] = useState(false);
   const [encryptionLoading, setEncryptionLoading] = useState(false);

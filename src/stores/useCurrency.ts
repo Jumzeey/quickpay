@@ -25,7 +25,7 @@ interface CurrencyState {
 const useCurrency = create<CurrencyState>()(
     persist(
         (set, get) => ({
-            selectedCurrency: "NGN",
+            selectedCurrency: null as unknown as CurrencyOption,
             accounts: {},
 
             setCurrency: (currency: CurrencyOption) => {

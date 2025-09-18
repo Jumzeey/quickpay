@@ -164,7 +164,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     const { data: banks, loading: banksLoading } = useEffectFetch(
         async () => {
             const response: BankResponse[] = await getBanks(
-                { countryCode: currency === "GHS" ? "GH" : "NG" }
+                { countryCode: currency === "GHS" ? "GH" : undefined }
             );
             return response;
         },

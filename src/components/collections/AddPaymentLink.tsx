@@ -104,6 +104,10 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
       setValue("amount", numberWithCommas(selectedItem.amount) || "");
       setValue("description", selectedItem.meta?.description || "");
       setValue("redirectUrl", selectedItem.meta?.redirect_url?.replace("https://", "") || "");
+      setValue("accountType", selectedItem.account_type || "main");
+      if (selectedItem.account_type === "subaccount") {
+        setValue("selectedSubAccount", selectedItem.subaccount_id || "");
+      }
     }
   }, [createLink, selectedItem, setValue]);
 

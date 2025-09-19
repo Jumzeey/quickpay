@@ -379,7 +379,7 @@ const PaymentLinks = () => {
 
       <Modal
         title={isModalOpen === "edit" ? "Edit Payment Link" : "Create A Payment Link"}
-        isOpen={isModalOpen === "create"}
+        isOpen={["create", "edit"].includes(isModalOpen as string)}
         onClose={closeModal}
       >
         <AddPaymentLink

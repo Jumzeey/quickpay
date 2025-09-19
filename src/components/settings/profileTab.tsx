@@ -2,11 +2,13 @@ import ActionButton from "@/components/action-button";
 import Icon from "@/components/icon";
 import { updateProfileImage } from "@/services/settings";
 import useAuthentication from "@/stores/useAuthentication";
+import useCurrency from "@/stores/useCurrency";
 import { capitalizeFirstLetter, copyToClipboard, notifyError } from "@/util/utils";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
 const ProfileTab = () => {
+  const { defaultCurrency, getCurrencyFlag } = useCurrency();
   const { user = {}, setUser } = useAuthentication();
   const initialAvatar = user?.avatar || "/images/dashboard/avatar.svg";
   const [updatingImage, setUpdatingImage] = useState(false);
@@ -41,7 +43,9 @@ const ProfileTab = () => {
       }
     }
   };
-  
+
+  console.log({ defaultCurrency });
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex items-center justify-between border-b border-[#C4C4C452] p-4">
@@ -95,20 +99,21 @@ const ProfileTab = () => {
             ariaLabel="Upgrade to business account"
             text="Upgrade to business account"
             className="!h-10 !px-4 !font-medium"
+            onClick={() => window.location.href = "/your-business?tab=upgrade-account"}
           />
         )}
       </div>
 
-      <div className="p-4 grid md:grid-cols-3 gap-x-20 gap-y-4">
+      <div className="p-4 grid md:grid-cols-3 gap-x-5 gap-y-4">
         <div>
           <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Business Name:</h3>
-          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5 truncate">
             {capitalizeFirstLetter(user?.business_name) || "N/A"}
           </p>
         </div>
         <div>
           <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Business Email:</h3>
-          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
+          <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5 truncate">
             {user?.email || "N/A"}
           </p>
         </div>
@@ -129,7 +134,7 @@ const ProfileTab = () => {
         <div>
           <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Contact Person:</h3>
           <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5">
-            {capitalizeFirstLetter(user?.firstname) || "N/A "}
+            {capitalizeFirstLetter(user?.firstname) || "N/A "} {capitalizeFirstLetter(user?.lastname) || ""}
           </p>
         </div>
         <div>
@@ -141,13 +146,14 @@ const ProfileTab = () => {
         <div>
           <h3 className="text-[#7F7F7F] text-xs md:text-[13px] font-medium">Country:</h3>
           <p className="text-[#090727] text-base md:text-lg font-extrabold mt-0.5 flex items-center gap-2">
-            <Image
+            {/* <Image
               src="/images/nigeria.svg"
               width={24}
               height={14}
               alt="Nigeria Icon"
-            />
-            <span>Nigeria</span>
+            /> */}
+            {getCurrencyFlag("default")}
+            <span>{defaultCurrency}</span>
           </p>
         </div>
       </div>

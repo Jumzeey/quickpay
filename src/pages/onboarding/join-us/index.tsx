@@ -10,7 +10,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 // import { SupportedCountry } from "@/services/authentication";
 import useAuthentication from "@/stores/useAuthentication";
 import useLoadRecaptcha from "@/util/useLoadRecaptcha";
-import { notifyError, notifySuccess } from "@/util/utils";
+import { notifyError, notifySuccess, passwordValidation } from "@/util/utils";
 import { getData } from "country-list";
 import countryToCurrency, { Countries, Currencies } from "country-to-currency";
 import Image from "next/image";
@@ -45,16 +45,7 @@ const validationSchema = Yup.object().shape({
   phone: Yup.string().required("Phone number is required!"),
   country: Yup.string().required("Country is required!"),
   business_name: Yup.string().required("Business Name is required!"),
-  password: Yup.string()
-    .required("Password is required!")
-    .matches(
-      /[!@#$%^&*(),.?":{}|<>=-]/,
-      "Password must contain at least one symbol"
-    )
-    .matches(/\d/, "Password must contain at least one number")
-    .min(8, "Password must be at least 8 characters long")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter"),
+  password: passwordValidation,
   password_confirmation: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),

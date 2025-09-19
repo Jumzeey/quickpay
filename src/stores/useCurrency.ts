@@ -13,23 +13,30 @@ interface CurrencyAccounts {
 }
 
 interface CurrencyState {
+    defaultCurrency: CurrencyOption;
     selectedCurrency: CurrencyOption;
     accounts: CurrencyAccounts;
     setCurrency: (currency: CurrencyOption) => void;
     setAccounts: (currency: CurrencyOption, accounts: AccountInfo) => void;
     getAccountId: (currency: CurrencyOption, accountType?: 'main' | 'reserve') => string | null;
     getCurrencySymbol: () => string;
-    getCurrencyFlag: () => string;
+    getCurrencyFlag: (type?: "selected" | "default") => string;
 }
 
 const useCurrency = create<CurrencyState>()(
     persist(
         (set, get) => ({
             selectedCurrency: null as unknown as CurrencyOption,
+            defaultCurrency: null as unknown as CurrencyOption,
+
             accounts: {},
 
             setCurrency: (currency: CurrencyOption) => {
                 set({ selectedCurrency: currency });
+            },
+
+            setDefaultCurrency: (currency: CurrencyOption) => {
+                set({ defaultCurrency: currency });
             },
 
             setAccounts: (currency: CurrencyOption, accounts: AccountInfo) => {
@@ -69,9 +76,10 @@ const useCurrency = create<CurrencyState>()(
                 }
             },
 
-            getCurrencyFlag: () => {
-                const { selectedCurrency } = get();
-                switch (selectedCurrency) {
+            getCurrencyFlag: (type: "selected" | "default" = "selected") => {
+                const { selectedCurrency, defaultCurrency } = get();
+                const currency = type === "selected" ? selectedCurrency : defaultCurrency;
+                switch (currency) {
                     case "NGN": return "🇳🇬";
                     case "USD": return "🇺🇸";
                     case "EUR": return "🇪🇺";

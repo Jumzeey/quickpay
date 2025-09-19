@@ -155,6 +155,7 @@ const useAuthentication = create(
         if (allCurrencies.length > 0) {
           import("@/stores/useCurrency").then(({ default: useCurrency }) => {
             useCurrency.getState().setCurrency(allCurrencies[0].value);
+            useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
           });
         }
 

@@ -150,31 +150,9 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     const handleSubmitUpgrade = async (data: UpgradeFormData) => {
         if (!validateSubmission()) return;
 
-        // setIsSubmitting(true);
+        setIsSubmitting(true);
 
         try {
-            // const formData = new FormData();
-            // formData.append('business_type', data.businessType);
-            // formData.append('current_account_type', currentAccountType);
-
-            // // Group documents by type
-            // const documentsByType: { [key: string]: any[] } = {};
-            // documents.forEach(doc => {
-            //     if (!documentsByType[doc.documentType]) {
-            //         documentsByType[doc.documentType] = [];
-            //     }
-            //     documentsByType[doc.documentType].push(doc);
-            // });
-
-            // // Append files grouped by type
-            // Object.entries(documentsByType).forEach(([documentType, docs]) => {
-            //     docs.forEach((doc, index) => {
-            //         formData.append(`documents[${documentType}][]`, doc.file);
-            //         formData.append(`document_titles[${documentType}][]`, doc.title);
-            //     });
-            // });
-
-            // Prepare payload
             const payload = {
                 business_type: data.businessType,
                 current_account_type: currentAccountType,

@@ -29,7 +29,6 @@ const CurrencySwitcher = ({ currencies, contentClassName = "", className = "" }:
         setCurrency(newCurrency);
     };
 
-
     return (
         <div className={`grid grid-cols-1 text-[#005BB0] w-full md:w-28 ${className}`}>
             <select
@@ -50,6 +49,7 @@ const CurrencySwitcher = ({ currencies, contentClassName = "", className = "" }:
                         {option.label}
                     </option>
                 ))}
+                {/* <option value="tzx">Tzx</option> */}
             </select>
 
             <svg className="pointer-events-none col-start-1 row-start-1 mr-5 size-5 self-center justify-self-end text-gray-500 sm:size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg">

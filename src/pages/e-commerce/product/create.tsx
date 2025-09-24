@@ -51,7 +51,7 @@ const CreateProduct: React.FC = () => {
     proof_of_address: Yup.string().required("Proof Of Address is required!"),
     nin: Yup.string()
       .required("NIN is required!")
-      // .matches(/^\d{11}$/, "NIN must be exactly 11 digits!"),
+    // .matches(/^\d{11}$/, "NIN must be exactly 11 digits!"),
   });
 
   const registeredSchema = Yup.object().shape({
@@ -62,7 +62,7 @@ const CreateProduct: React.FC = () => {
     ),
     director_nin: Yup.string()
       .required("Director NIN is required!"),
-      // .matches(/^\d{11}$/, "Director NIN must be exactly 11 digits!"),
+    // .matches(/^\d{11}$/, "Director NIN must be exactly 11 digits!"),
     company_business_status: Yup.string().required(
       "Company Business Status is required!"
     ),
@@ -157,7 +157,8 @@ const CreateProduct: React.FC = () => {
     }
     try {
       const response = await createKyc(payload);
-      notifySuccess(response.message);
+      // @ts-ignore
+      notifySuccess(response?.message || "KYC submitted successfully");
       setIsLoading(false);
       router.push({
         pathname: "/your-business/kyc-verification",

@@ -1,10 +1,24 @@
-import { create } from "zustand";
 import {
-  getKycMethods,
-  getKyc,
   createKyc,
+  getKyc,
+  getKycMethods,
 } from "@/services/kyc";
+import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+interface KycState {
+  getKycLoading: boolean;
+  getKycMethodsLoading: boolean;
+  createKycLoading: boolean;
+  userKyc?: any;
+  message?: string;
+
+  // Methods
+  createKyc: (payload: any) => Promise<{ message?: string }>;
+  getKyc: () => Promise<{ userKyc?: any }>;
+  setKycLoading: (value: boolean) => void;
+  getKycMethods: (payload: any) => Promise<any>;
+}
 
 const initialState = {
   getKycLoading: false,
@@ -12,7 +26,7 @@ const initialState = {
   createKycLoading: false,
 };
 
-const useKyc = create(
+const useKyc = create<KycState>()(
   persist(
     (set, get) => ({
       ...initialState,
@@ -21,10 +35,11 @@ const useKyc = create(
           ...state,
           createKycLoading: true,
         }));
-        const { data, message } = await createKyc(payload);
+        const { data, message } = await createKyc(payload) as any;
         set((state) => ({
           ...state,
           message,
+          createKycLoading: false,
         }));
         return { message };
       },
@@ -39,8 +54,8 @@ const useKyc = create(
             ...state,
             userKyc: data?.[0][0],
           }));
-          return { 
-            userKyc: data?.[0][0] 
+          return {
+            userKyc: data?.[0][0]
           };
         } finally {
           set((state) => ({
@@ -55,26 +70,26 @@ const useKyc = create(
           getKycLoading: value
         }));
       },
-      getKycMethods: async (payload) => {
+      getKycMethods: async () => {
         set((state) => ({
           ...state,
           getKycMethodsLoading: true,
         }));
-        const { data, message } = await getKycMethods(payload);
+        const { data, message } = await getKycMethods() as any;
         set((state) => ({
           ...state,
-
+          getKycMethodsLoading: false,
         }));
         return {
+          data,
+          message
         };
       },
     }),
     {
       name: "kyc",
-      whitelist: [],
     }
   )
 );
-
 
 export default useKyc;

@@ -138,7 +138,8 @@ const KYCForm = () => {
         };
 
       const response = await createKyc(payload);
-      notifySuccess(response.message);
+      // @ts-ignore
+      notifySuccess(response?.message || "KYC submitted successfully");
       // router.push("/your-business");
       router.reload();
     } catch (error: any) {

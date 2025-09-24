@@ -32,7 +32,7 @@ export async function getKyc() {
 
 export async function uploadFile(payload: any) {
   try {
-    const response = await api.post(apiEndpoints.utilities.UPLOAD_FILE, payload,{
+    const response = await api.post(apiEndpoints.utilities.UPLOAD_FILE, payload, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response;

@@ -79,13 +79,9 @@ const BusinessKYC = () => {
 
   if (getKycLoading) return <CardSkeleton />;
 
-  console.log({ userKyc })
-
-
-  if (!userKyc || userKyc.fields.length === 0) {
+  if (!userKyc || Object.keys(userKyc).length === 0 || userKyc?.fields?.length === 0) {
     return <KYCForm />
   }
-
 
   return (
     <div className="mt-10">
@@ -107,7 +103,7 @@ const BusinessKYC = () => {
           </p>
 
           <h2 className="text-lg text-[#090727] font-bold">
-            {format(new Date(userKyc.created_at), "LLL do, yyyy")}
+            {userKyc.created_at ? format(new Date(userKyc.created_at), "LLL do, yyyy") : "N/A"}
           </h2>
         </div>
       </div>

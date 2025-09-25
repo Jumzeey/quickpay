@@ -1,26 +1,26 @@
-import Sidebar from "@/components/onboarding/sidebar";
+import { MultiStepAnimation } from "@/animations";
 import Button from "@/components/button";
-import Image from "next/image";
+import FloatingLabelInput from "@/components/floating-input";
+import Loader from "@/components/loader";
+import Modal from "@/components/modal";
+import WebPageTitle from "@/components/WebPageTitle";
+import env from "@/config/env";
 import useAuthentication from "@/stores/useAuthentication";
-import { useRouter } from "next/router";
-import Link from "next/link";
-import * as Yup from "yup";
+import useLoadRecaptcha from "@/util/useLoadRecaptcha";
 import {
   capitalizeFirstLetter,
   // nigerianPhoneNumberSchema,
   notifyError,
+  passwordValidation,
 } from "@/util/utils";
 import { useFormik } from "formik";
-import { useEffect, useState } from "react";
-import FloatingLabelInput from "@/components/floating-input";
-import Loader from "@/components/loader";
-import Modal from "@/components/modal";
-import { useParams } from "next/navigation";
-import WebPageTitle from "@/components/WebPageTitle";
-import { MultiStepAnimation } from "@/animations";
 import { motion } from "framer-motion";
-import env from "@/config/env";
-import useLoadRecaptcha from "@/util/useLoadRecaptcha";
+import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import * as Yup from "yup";
 
 declare global {
   interface Window {
@@ -83,19 +83,8 @@ const RegisterPage: React.FC = () => {
     typeof params?.business === "string"
       ? capitalizeFirstLetter(params?.business)
       : Array.isArray(params?.business) && params?.business.length > 0
-      ? capitalizeFirstLetter(params?.business[0])
-      : "";
-
-  const passwordValidation = Yup.string()
-    .required("Password is required!")
-    .matches(
-      /[!@#$%^&*(),.?":{}|<>=-]/,
-      "Password must contain at least one symbol ."
-    )
-    .matches(/\d/, "Password must contain at least one number.")
-    .min(8, "Password must be at least 8 characters long")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter");
+        ? capitalizeFirstLetter(params?.business[0])
+        : "";
 
   const formik = useFormik({
     initialValues: {

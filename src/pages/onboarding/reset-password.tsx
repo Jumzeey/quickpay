@@ -1,3 +1,5 @@
+import { MultiStepAnimation } from "@/animations";
+import { AuthFooter } from "@/components/AuthFooter";
 import Button from "@/components/button";
 import FormInput from "@/components/FormInput";
 import Loader from "@/components/loader";
@@ -5,7 +7,7 @@ import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import useAuthentication from "@/stores/useAuthentication";
-import { notifyError, notifySuccess } from "@/util/utils";
+import { notifyError, notifySuccess, passwordValidation } from "@/util/utils";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,8 +15,6 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
 import * as Yup from "yup";
-import { MultiStepAnimation } from "@/animations";
-import { AuthFooter } from "@/components/AuthFooter";
 
 interface FormValues {
   password: string;
@@ -22,16 +22,7 @@ interface FormValues {
 }
 
 const validationSchema = Yup.object().shape({
-  password: Yup.string()
-    .required("Password is required!")
-    .matches(
-      /[!@#$%^&*(),.?":{}|<>=-]/,
-      "Password must contain at least one symbol"
-    )
-    .matches(/\d/, "Password must contain at least one number")
-    .min(8, "Password must be at least 8 characters long")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter"),
+  password: passwordValidation,
   password_confirmation: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),
@@ -39,7 +30,7 @@ const validationSchema = Yup.object().shape({
 
 const ResetPassword: React.FC = () => {
   const router = useRouter();
-  const { resetPassword } = useAuthentication();
+  const { newPassword } = useAuthentication();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -57,8 +48,13 @@ const ResetPassword: React.FC = () => {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      const response = await resetPassword(values);
+      const payload = {
+        ...values,
+        email: localStorage.getItem("user-email"),
+      };
+      const response = await newPassword(payload);
       notifySuccess(response.message);
+      await localStorage.removeItem("user-email");
       router.push("/onboarding/sign-in");
     } catch (error: any) {
       notifyError(error.message);

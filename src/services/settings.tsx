@@ -44,7 +44,8 @@ export async function addUser(payload: AddUser, id: number, isUpdate: boolean) {
 export async function getRoles() {
   try {
     const response = await api.get(apiEndpoints.settings.GET_ROLES);
-    return response.data?.[0].roles ;
+    console.log('roles ', response.data?.[0]?.roles);
+    return response.data?.[0]?.roles;
   } catch (error) {
     throw error;
   }

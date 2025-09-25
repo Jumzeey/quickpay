@@ -1,5 +1,6 @@
 import { forgotPassword, forgotPasswordOtp, getSupportedCountries, newPassword, resendOtp, signIn, signUp, verifyEmail, verifyOtp } from "@/services/authentication";
 import api from "@/util/api";
+import { getAllCurrencies } from "@/util/utils";
 import Cookies from "js-cookie";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -149,6 +150,14 @@ const useAuthentication = create(
         }));
         const { data, message } = await verifyOtp(payload);
         Cookies.set('accessToken', data.token);
+
+        const allCurrencies = getAllCurrencies(data.modules);
+        if (allCurrencies.length > 0) {
+          import("@/stores/useCurrency").then(({ default: useCurrency }) => {
+            useCurrency.getState().setCurrency(allCurrencies[0].value);
+            useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
+          });
+        }
 
         set((state) => ({
           ...state,

@@ -3,21 +3,14 @@ import Button from '@/components/button';
 import Dropdown from '@/components/Dropdown';
 import DynamicTable from '@/components/DynamicTable';
 import EmptyState from '@/components/EmptyState';
-import FancyFileUpload from '@/components/FancyFileUpload';
 import Filter from '@/components/Filter';
-import FormInput from '@/components/FormInput';
-import FormSelect from '@/components/FormSelect';
 import Icon from '@/components/icon';
 import IconWrapper from '@/components/IconWrapper';
-import Loader from '@/components/loader';
-import Modal from '@/components/modal';
 import Pagination from '@/components/pagination';
 import TableSkeleton from '@/components/TableSkeleton';
 import { usePaginatedEffect } from "@/hooks/useEffectFetch";
 import { useFormValidation } from '@/hooks/useFormValidation';
-import { uploadFile } from '@/services/kyc';
 import {
-  changeModeToLive,
   deactivateSubAccount
 } from '@/services/sub-account';
 import useCategories from '@/stores/useCategories';
@@ -26,17 +19,15 @@ import useSubaccount from '@/stores/useSubAccount';
 import {
   copyToClipboard,
   formatDateTime2,
-  notifyError,
-  notifySuccess,
   truncateText
 } from '@/util/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
-import { Controller } from 'react-hook-form';
+import { useEffect, useState } from 'react';
 import 'react-loading-skeleton/dist/skeleton.css';
-import Select from 'react-select';
 import * as Yup from 'yup';
+import DeleteSubAccountModal from './delete';
+import UpdateSubAccountModal from './update';
 
 const validationSchema = Yup.object().shape({
   merchant_name: Yup.string().required('Merchant name is required!'),
@@ -66,6 +57,7 @@ const validationSchema = Yup.object().shape({
 interface ModalState {
   isOpen: boolean;
   isUpdateOpen: boolean;
+  isDeactivateOpen: boolean;
   activeId: number;
   modalType: string;
   isSubmitting: boolean;
@@ -74,10 +66,10 @@ interface ModalState {
 
 const SubaccountHistory = () => {
   const router = useRouter();
-
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     isUpdateOpen: false,
+    isDeactivateOpen: false,
     activeId: 0,
     modalType: '',
     isSubmitting: false,
@@ -87,7 +79,7 @@ const SubaccountHistory = () => {
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [documents, setDocuments] = useState<{ title: string; file: File | null }[]>([]);
+  // const [documents, setDocuments] = useState<{ title: string; file: File | null }[]>([]);
 
   const { showFilter, toggleFilter } = useFilter();
   const { categories, fetchCategories, getCategoriesLoading } = useCategories();
@@ -138,27 +130,32 @@ const SubaccountHistory = () => {
     }
   );
 
-  useEffect(() => {
-    if (modalState.isUpdateOpen && modalState.activeId) {
-      const selectedSubaccount = subaccounts?.find(item => item.id === modalState.activeId);
+  const closeDeactivateModal = () => setModalState(prev => ({ ...prev, isDeactivateOpen: false, activeId: 0 }));
+  const openDeactivateModal = (id: number) => {
+    setModalState(prev => ({ ...prev, isDeactivateOpen: true, activeId: id }));
+  };
 
-      if (selectedSubaccount) {
-        console.log({ selectedSubaccount })
-        reset({
-          merchant_name: selectedSubaccount.merchant_name || '',
-          mode: selectedSubaccount.mode,
-          contactEmail: selectedSubaccount.email || '',
-          percentage: selectedSubaccount.percentage ? String(selectedSubaccount.percentage) : '',
-          description: selectedSubaccount.description || '',
-          siteName: selectedSubaccount.site_name || '',
-          websiteUrl: selectedSubaccount.website_url || '',
-          callback_url: selectedSubaccount.callback_url?.replace(/^https?:\/\//, '') || '',
-          riskRating: selectedSubaccount.risk_rating || 'low',
-          category: selectedSubaccount.category || '',
-        });
-      }
-    }
-  }, [modalState.isUpdateOpen, modalState.activeId, subaccounts, reset]);
+  // useEffect(() => {
+  //   if (modalState.isUpdateOpen && modalState.activeId) {
+  //     const selectedSubaccount = subaccounts?.find(item => item.id === modalState.activeId);
+
+  //     if (selectedSubaccount) {
+  //       console.log({ selectedSubaccount })
+  //       reset({
+  //         merchant_name: selectedSubaccount.merchant_name || '',
+  //         mode: selectedSubaccount.mode,
+  //         contactEmail: selectedSubaccount.email || '',
+  //         percentage: selectedSubaccount.percentage ? String(selectedSubaccount.percentage) : '',
+  //         description: selectedSubaccount.description || '',
+  //         siteName: selectedSubaccount.site_name || '',
+  //         websiteUrl: selectedSubaccount.website_url || '',
+  //         callback_url: selectedSubaccount.callback_url?.replace(/^https?:\/\//, '') || '',
+  //         riskRating: selectedSubaccount.risk_rating || 'low',
+  //         category: selectedSubaccount.category || '',
+  //       });
+  //     }
+  //   }
+  // }, [modalState.isUpdateOpen, modalState.activeId, subaccounts, reset]);
 
   const columns = [
     { key: 'id', title: 'Merchant ID' },
@@ -239,7 +236,7 @@ const SubaccountHistory = () => {
           <li>
             <button
               className="flex items-center w-full gap-2 hover:bg-gray-50"
-              onClick={() => openModal(row.id, 'disable')}
+              onClick={() => openDeactivateModal(row.id)}
             >
               <IconWrapper
                 src="/images/alert.svg"
@@ -247,7 +244,7 @@ const SubaccountHistory = () => {
                 height={14}
                 alt="Deactivate icon"
               />
-              <span className="text-[#090727] text-sm font-semibold">Deactivate</span>
+              <span className="text-[#090727] text-sm font-semibold">Delete</span>
             </button>
           </li>
         </ul>
@@ -284,12 +281,7 @@ const SubaccountHistory = () => {
     ),
   })) || [];
 
-  const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false, activeId: 0, modalType: '' }));
   const closeUpdateModal = () => setModalState(prev => ({ ...prev, isUpdateOpen: false, activeId: 0 }));
-
-  const openModal = (id: number, type: string) => {
-    setModalState(prev => ({ ...prev, isOpen: true, activeId: id, modalType: type }));
-  };
 
   const openUpdateModal = (id: number) => {
     setModalState(prev => ({ ...prev, isUpdateOpen: true, activeId: id }));
@@ -299,81 +291,7 @@ const SubaccountHistory = () => {
     setCurrentPage(page);
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value);
-  };
-
-  const handleModalAction = async () => {
-    setModalState(prev => ({ ...prev, isSubmitting: true }));
-
-    try {
-      const payload = { id: modalState.activeId };
-
-      if (modalState.modalType === 'live') {
-        await changeModeToLive(payload);
-        notifySuccess('Website is now live');
-      } else {
-        await deactivateSubAccount(payload);
-        notifySuccess('Subaccount deactivated successfully');
-      }
-
-      closeModal();
-      fetchSubaccountHistory({ page: currentPage });
-    } catch (error: any) {
-      notifyError(error.message);
-    } finally {
-      setModalState(prev => ({ ...prev, isSubmitting: false }));
-    }
-  };
-
-  const onSubmit = async (values: any) => {
-    setModalState(prev => ({ ...prev, isSubmitting: true }));
-
-    try {
-      const uploadedDocuments = await Promise.all(
-        documents.map(async doc => {
-          if (doc.file) {
-            const formData = new FormData();
-            formData.append('file', doc.file);
-            const uploadResponse = await uploadFile(formData);
-            return { name: doc.title, url: uploadResponse.data.file };
-          }
-          return null;
-        })
-      );
-
-      const payload = {
-        merchant_name: values.merchant_name,
-        email: values.contactEmail,
-        mode: values.mode,
-        percentage: values.percentage,
-        description: values.description,
-        site_name: values.siteName,
-        website_url: values.websiteUrl,
-        risk_rating: values.riskRating,
-        category: values.category,
-        id: modalState.activeId,
-        documents: uploadedDocuments.filter(Boolean),
-      };
-
-      if (values.callback_url) {
-        // @ts-ignore
-        payload.callback_url = `https://${values.callback_url}`;
-      }
-
-      // @ts-ignore
-      await updateSubAccountAmount(payload);
-      notifySuccess('Subaccount updated successfully');
-      closeUpdateModal();
-      fetchSubaccountHistory({ page: currentPage });
-      reset();
-      setDocuments([]);
-    } catch (error: any) {
-      notifyError(error.message);
-    } finally {
-      setModalState(prev => ({ ...prev, isSubmitting: false }));
-    }
-  };
+  const activeSubAccount = subaccounts?.find(item => item.id === modalState.activeId);
 
   if (getSubaccountHistoryLoading) {
     return <TableSkeleton />;
@@ -481,268 +399,23 @@ const SubaccountHistory = () => {
         )}
       </div>
 
-      <Modal isOpen={modalState.isOpen} onClose={closeModal}>
-        <div className='flex justify-center text-center'>
-          <div className='flex flex-col'>
-            <div className='flex justify-center'>
-              <IconWrapper
-                src='/images/dashboard/collections/delete.svg'
-                width={94}
-                height={106}
-                alt='Delete Icon'
-              />
-            </div>
-            <p className='text-3xl font-bold py-2'>Head up!</p>
-            <p>Are you sure you want to continue?</p>
-            <div className='flex justify-center items-center gap-3 mt-4'>
-              <Button
-                text='Confirm'
-                ariaLabel='Confirm button'
-                onClick={handleModalAction}
-                disabled={modalState.isSubmitting}
-                primary
-                small
-              />
-              <Button
-                text='Cancel'
-                ariaLabel='Cancel button'
-                onClick={closeModal}
-                plain
-                small
-              />
-            </div>
-          </div>
-        </div>
-      </Modal>
+      <DeleteSubAccountModal
+        isOpen={modalState.isDeactivateOpen}
+        onClose={closeDeactivateModal}
+        activeSubAccount={activeSubAccount}
+        onSuccess={() => fetchSubaccountHistory({ page: currentPage })}
+        deactivateSubAccount={deactivateSubAccount}
+      />
 
-      <Modal isOpen={modalState.isUpdateOpen} onClose={closeUpdateModal}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-2 gap-5">
-            <Controller
-              name="siteName"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label="Site Name"
-                  id="siteName"
-                  type="text"
-                  htmlFor="siteName"
-                  error={errors.siteName?.message}
-                  touched={!!errors.siteName}
-                  {...field}
-                />
-              )}
-            />
-
-            <Controller
-              name="websiteUrl"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label='Website URL'
-                  id='websiteUrl'
-                  type='text'
-                  htmlFor='websiteUrl'
-                  error={errors.websiteUrl?.message}
-                  touched={!!errors.websiteUrl}
-                  {...field}
-                />
-              )}
-            />
-
-            <Controller
-              name="merchant_name"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label='Merchant Name'
-                  id='merchant_name'
-                  type='text'
-                  htmlFor='merchant_name'
-                  error={errors.merchant_name?.message}
-                  touched={!!errors.merchant_name}
-                  {...field}
-                />
-              )}
-            />
-
-            <Controller
-              name="percentage"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label='Percentage Split'
-                  id='percentage'
-                  type='number'
-                  htmlFor='percentage'
-                  error={errors.percentage?.message}
-                  touched={!!errors.percentage}
-                  maxLength={10}
-                  {...field}
-                />
-              )}
-            />
-          </div>
-
-          <Controller
-            name="mode"
-            control={control}
-            render={({ field }) => (
-              <FormSelect
-                id="mode"
-                htmlFor="mode"
-                label="Select Sub Account Mode Type"
-                placeholder="Select mode"
-                options={[
-                  { value: 'true', label: 'Live' },
-                  { value: 'false', label: 'Test' },
-                ]}
-                error={errors.mode?.message}
-                touched={!!errors.mode}
-                name={field.name}
-                disabled
-              />
-            )}
-          />
-
-          <div>
-            <Controller
-              name="contactEmail"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label='Contact Email'
-                  id='contactEmail'
-                  type='email'
-                  htmlFor='contactEmail'
-                  error={errors.contactEmail?.message}
-                  touched={!!errors.contactEmail}
-                  {...field}
-                />
-              )}
-            />
-
-            <span className="text-xs text-primary font-medium">
-              If provided, this email address will get transaction notification
-            </span>
-          </div>
-
-
-          <Controller
-            name="callback_url"
-            control={control}
-            render={({ field }) => (
-              <FormInput
-                label='Callback URL (e.g yourbusiness.com)'
-                id='callback_url'
-                type='text'
-                htmlFor='callback_url'
-                error={errors.callback_url?.message}
-                touched={!!errors.callback_url}
-                {...field}
-              />
-            )}
-          />
-
-          <div>
-            <label className='font-semibold'>Risk Rating</label>
-            <Controller
-              name="riskRating"
-              control={control}
-              render={({ field }) => (
-                <select
-                  className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
-                  {...field}
-                >
-                  <option value='high'>High</option>
-                  <option value='medium'>Medium</option>
-                  <option value='low'>Low</option>
-                </select>
-              )}
-            />
-          </div>
-
-          <div>
-            <label className='font-semibold'>Category</label>
-            <Controller
-              name="category"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  options={categories.map((category: any) => ({
-                    value: category,
-                    label: category,
-                  }))}
-                  isSearchable
-                  placeholder={
-                    getCategoriesLoading
-                      ? 'Loading categories...'
-                      : 'Search or select category'
-                  }
-                  isDisabled={getCategoriesLoading}
-                  value={
-                    field.value
-                      ? { value: field.value, label: field.value }
-                      : null
-                  }
-                  onChange={(option) => field.onChange(option?.value)}
-                  styles={{
-                    control: (provided, state) => ({
-                      ...provided,
-                      height: '60px',
-                      padding: '0.5rem',
-                      width: '100%',
-                      borderRadius: '0.5rem',
-                      borderWidth: '1px',
-                      borderColor: state.isFocused ? '#6750A4' : '#CAC4D0',
-                      outline: 'none',
-                      fontSize: '0.875rem',
-                      marginBottom: '1.25rem',
-                      '&:hover': {
-                        borderColor: '#6750A4',
-                      },
-                    }),
-                  }}
-                />
-              )}
-            />
-          </div>
-
-          <div className='mb-5'>
-            <label className='font-semibold text-gray-700'>
-              Upload Supporting Documents
-            </label>
-
-            <FancyFileUpload
-              documents={documents}
-              setDocuments={setDocuments}
-            />
-          </div>
-
-          <Controller
-            name="description"
-            control={control}
-            render={({ field }) => (
-              <FormInput
-                label='Description'
-                id='description'
-                type='text'
-                htmlFor='description'
-                error={errors.description?.message}
-                touched={!!errors.description}
-                {...field}
-              />
-            )}
-          />
-          <Button
-            className='text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded'
-            text={modalState.isSubmitting ? <Loader /> : 'Submit'}
-            ariaLabel='Submit Button'
-            disabled={modalState.isSubmitting}
-            primary
-          />
-        </form>
-      </Modal>
+      <UpdateSubAccountModal
+        isOpen={modalState.isUpdateOpen}
+        onClose={closeUpdateModal}
+        activeSubAccount={activeSubAccount}
+        categories={categories}
+        getCategoriesLoading={getCategoriesLoading}
+        onSuccess={() => fetchSubaccountHistory({ page: currentPage })}
+        updateSubAccountAmount={updateSubAccountAmount}
+      />
     </>
   );
 };

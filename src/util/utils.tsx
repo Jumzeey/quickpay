@@ -426,3 +426,14 @@ export const getFileIcon = (fileName: string) => {
       return 'file';
   }
 };
+
+export const passwordValidation = Yup.string()
+  .required("Password is required!")
+  .matches(
+    /[!@#$%^&*(),.?":{}|<>]/,
+    "Password must contain at least one symbol."
+  )
+  .matches(/\d/, "Password must contain at least one number.")
+  .min(12, "Password must be at least 12 characters long")
+  .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+  .matches(/[A-Z]/, "Password must contain at least one uppercase letter");

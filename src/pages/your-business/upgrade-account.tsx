@@ -86,6 +86,8 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     const [documents, setDocuments] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    console.log({ documents });
+
     const validationSchema = Yup.object().shape({
         businessType: Yup.string().required('Please select a business type'),
     });
@@ -101,10 +103,19 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
 
     const selectedBusinessType = watch('businessType') as BusinessType;
 
-    const handleDocumentTypeChange = (documentIndex: number, documentType: string) => {
+    // const handleDocumentTypeChange = (documentIndex: number, documentType: string) => {
+    //     setDocuments(prev =>
+    //         prev.map((doc, index) =>
+    //             index === documentIndex
+    //                 ? { ...doc, documentType }
+    //                 : doc
+    //         )
+    //     );
+    // };
+    const handleDocumentTypeChange = (documentId: string, documentType: string) => {
         setDocuments(prev =>
-            prev.map((doc, index) =>
-                index === documentIndex
+            prev.map(doc =>
+                doc.id === documentId
                     ? { ...doc, documentType }
                     : doc
             )
@@ -140,27 +151,20 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
         if (!validateSubmission()) return;
 
         setIsSubmitting(true);
+
         try {
-            const formData = new FormData();
-            formData.append('business_type', data.businessType);
-            formData.append('current_account_type', currentAccountType);
+            const payload = {
+                business_type: data.businessType,
+                current_account_type: currentAccountType,
+                documents: documents.map(doc => ({
+                    url: doc.uploadedUrl,
+                    // title: doc.title,
+                    type: doc.documentType
+                }))
+            };
 
-            // Group documents by type
-            const documentsByType: { [key: string]: any[] } = {};
-            documents.forEach(doc => {
-                if (!documentsByType[doc.documentType]) {
-                    documentsByType[doc.documentType] = [];
-                }
-                documentsByType[doc.documentType].push(doc);
-            });
-
-            // Append files grouped by type
-            Object.entries(documentsByType).forEach(([documentType, docs]) => {
-                docs.forEach((doc, index) => {
-                    formData.append(`documents[${documentType}][]`, doc.file);
-                    formData.append(`document_titles[${documentType}][]`, doc.title);
-                });
-            });
+            console.log({ data, payload });
+            return;
 
             // Replace with your actual API call
             // await upgradeBusinessAccount(formData);

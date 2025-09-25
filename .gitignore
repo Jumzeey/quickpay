@@ -39,3 +39,5 @@ next-env.d.ts
 yarn.lock
 
 .npmrc
+
+git-workflow-helper.sh

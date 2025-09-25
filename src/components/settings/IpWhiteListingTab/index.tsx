@@ -26,17 +26,6 @@ const IPWhiteListing = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
-
-  // const fetchIpWhitelist = useCallback(async () => {
-  //   try {
-  //     const response = await getIPWhitelist();
-  //     setentries(response.data || []);
-  //   } catch (error: any) {
-  //     notifyError(error.message);
-  //     return [];
-  //   }
-  // }, []);
-
   const {
     entries,
     isLoading,

@@ -434,6 +434,8 @@ const PayoutHistory = () => {
               />
 
               <FilterExport
+                exportText="Get Statement"
+                exportIconName="download2"
                 handleExport={handleExport}
                 toggleFilter={toggleFilter}
               />

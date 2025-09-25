@@ -66,6 +66,7 @@ const useAuthentication = create(
           'KES': { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
           'GHS': { code: 'GH', name: 'Ghana', flag: '🇬🇭' },
           'TZS': { code: 'TZ', name: 'Tanzania', flag: '🇹🇿' },
+          'ZMW': { code: 'ZM', name: 'Zambia', flag: '🇿🇲' },
           'EUR': { code: 'EU', name: 'European Union', flag: '🇪🇺' },
           'GBP': { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
         };

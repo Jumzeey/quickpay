@@ -407,7 +407,7 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
         </div>
 
         {isUploading && (
-          <div className="mt-4 text-center text-blue-500">
+          <div className="mt-4 text-center flex items-center flex-col text-blue-500">
             <Spinner />
             <p className="text-xs mt-2">Uploading...</p>
           </div>

@@ -2,7 +2,7 @@ import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
 import ApiKeysTab from "@/components/settings/apiKeysTab";
 import IPWhiteListing from "@/components/settings/IpWhiteListingTab";
-import ManageUserTab from "@/components/settings/manageUserTab";
+import ManageUserTab from "@/components/settings/ManageUserTab";
 import ProfileTab from "@/components/settings/profileTab";
 import SecurityTab from "@/components/settings/securityTab";
 import WebhooksTab from "@/components/settings/webhooksTab";

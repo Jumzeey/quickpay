@@ -371,6 +371,19 @@ export interface Modules {
 }
 
 export const getAllCurrencies = (modules: Modules[]): { value: CurrencyOption; label: string }[] => {
+  if (!modules || modules.length === 0) {
+    return [
+      { value: "NGN" as CurrencyOption, label: "₦ NGN" },
+      { value: "USD" as CurrencyOption, label: "$ USD" },
+      { value: "GHS" as CurrencyOption, label: "₵ GHS" },
+      { value: "GBP" as CurrencyOption, label: "£ GBP" },
+      { value: "EUR" as CurrencyOption, label: "€ EUR" },
+      { value: "KES" as CurrencyOption, label: "KSh KES" },
+      { value: "ZMW" as CurrencyOption, label: "ZMW ZMW" },
+      { value: "TZS" as CurrencyOption, label: "TZS TZS" },
+    ];
+  };
+
   const currencySet = new Set<string>();
 
   modules.forEach((module) => {

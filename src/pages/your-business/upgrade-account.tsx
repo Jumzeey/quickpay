@@ -2,8 +2,10 @@ import Button from '@/components/button';
 import FormSelect from '@/components/FormSelect';
 import Icon from '@/components/icon';
 import Loader from '@/components/loader';
+import Modal from '@/components/modal';
 import UploadComponent from '@/components/upload-component';
 import { useFormValidation } from '@/hooks/useFormValidation';
+import useKyc from '@/stores/useKyc';
 import { getFileIcon, getPreviewUrl, isImageFile, notifyError, notifySuccess } from '@/util/utils';
 import Image from "next/image";
 import React, { useState } from 'react';
@@ -15,7 +17,13 @@ interface UpgradeAccountFormProps {
     onSuccess?: () => void;
 }
 
-type BusinessType = 'private_limited' | 'public_limited' | 'ngo_religious';
+type BusinessType =
+    | 'individual'
+    | 'sole_proprietor'
+    | 'private_limited'
+    | 'public_limited'
+    | 'ngo_religious'
+    | 'government';
 
 interface DocumentWithType {
     id: string;
@@ -30,6 +38,16 @@ interface UpgradeFormData {
 
 const BUSINESS_TYPES = [
     {
+        value: 'individual' as BusinessType,
+        label: 'Individual',
+        description: 'For personal/individual accounts'
+    },
+    {
+        value: 'sole_proprietor' as BusinessType,
+        label: 'Sole Proprietor (Business Name Registration)',
+        description: 'For registered business names with a single owner'
+    },
+    {
         value: 'private_limited' as BusinessType,
         label: 'Private Limited Liability Company',
         description: 'For private companies with limited liability'
@@ -43,16 +61,32 @@ const BUSINESS_TYPES = [
         value: 'ngo_religious' as BusinessType,
         label: 'Non-Government Organization / Religious Organization',
         description: 'For NGOs, associations, and religious organizations'
+    },
+    {
+        value: 'government' as BusinessType,
+        label: 'Government (Federal / State / LGA)',
+        description: 'For government entities and agencies'
     }
 ];
 
 const DOCUMENT_TYPES = {
+    individual: [
+        { value: 'valid_id', label: 'Valid ID Card (Driver\'s License, Int\'l Passport, Permanent Voters Card)' },
+        { value: 'proof_of_address', label: 'Proof of Address (Utility Bill, Bank Statement, Tenancy Agreement, Address Verification Report)' },
+    ],
+    sole_proprietor: [
+        { value: 'business_registration_cert', label: 'Certificate of Registration of Business Name' },
+        { value: 'cac_bn1_form', label: 'Certified True Copy of Form CAC/BN/1' },
+        { value: 'primary_id', label: 'Valid Primary Identification Documents' },
+        { value: 'bvn_documents', label: 'BVN of Registered Sole Proprietor(s)' },
+        { value: 'proof_of_address', label: 'Proof of Business Operating Address' },
+    ],
     private_limited: [
         { value: 'business_registration_cert', label: 'Certificate of Registration of Business Name' },
         { value: 'cac_bn1_form', label: 'Certified True Copy of Form CAC/BN/1' },
         { value: 'primary_id', label: 'Valid Primary Identification Documents' },
         { value: 'bvn_documents', label: 'BVN of Registered Sole Proprietor(s)' },
-        { value: 'business_address_proof', label: 'Proof of Business Operating Address' },
+        { value: 'proof_of_address', label: 'Proof of Business Operating Address' },
         { value: 'partnership_resolution', label: 'Partnership Resolution (For Partnerships)' },
         { value: 'partnership_deed', label: 'Partnership Deed/Agreement (For Partnerships)' },
         { value: 'scuml_certificate', label: 'SCUML Certificate (Where Applicable)' },
@@ -62,7 +96,7 @@ const DOCUMENT_TYPES = {
         { value: 'memorandum_articles', label: 'Memorandum and Articles of Association' },
         { value: 'cac7_form', label: 'Form CAC 7 (Particulars of Directors)' },
         { value: 'cac2_form', label: 'Form CAC 2 or CAC 1.1' },
-        { value: 'business_address_proof', label: 'Proof of Business Operating Address' },
+        { value: 'proof_of_address', label: 'Proof of Business Operating Address' },
         { value: 'shareholders_id', label: 'Primary ID of Shareholders (5%+ ownership)' },
         { value: 'directors_bvn', label: 'BVN of All Registered Directors' },
         { value: 'scuml_certificate', label: 'SCUML Certificate' },
@@ -72,21 +106,108 @@ const DOCUMENT_TYPES = {
         { value: 'registration_cert', label: 'Certificate of Registration/Incorporation' },
         { value: 'cac_it1_form', label: 'Certified Copy of Form CAC/IT 1' },
         { value: 'resolution', label: 'Resolution or Minutes of Last Meeting' },
-        { value: 'business_address_proof', label: 'Proof of Operating Address' },
+        { value: 'proof_of_address', label: 'Proof of Operating Address' },
         { value: 'trustees_bvn', label: 'BVN of All Registered Trustees' },
         { value: 'trustees_id', label: 'Valid Primary Identification of Trustees' },
         { value: 'scuml_certificate_ngo', label: 'SCUML Certificate for NGO' },
+    ],
+    government: [
+        { value: 'mandate_letter', label: 'Mandate Letter Signed by Authorized Signatory' },
     ]
 };
+
+interface PreviewModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    file: File | null;
+    documentTitle: string;
+}
+
+const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, documentTitle }) => {
+    if (!file) return null;
+
+    const fileUrl = getPreviewUrl(file);
+    const isPdf = file.type === 'application/pdf';
+    const isImage = isImageFile(file.name);
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title={documentTitle || 'Document Preview'}>
+            <div className="w-full py-4">
+                {isImage && (
+                    <div className="flex justify-center">
+                        <Image
+                            src={fileUrl}
+                            alt={documentTitle}
+                            width={500}
+                            height={500}
+                            className="max-w-full h-auto object-contain"
+                            style={{ maxHeight: '70vh' }}
+                        />
+                    </div>
+                )}
+
+                {isPdf && (
+                    <div className="w-full h-[70vh]">
+                        <iframe
+                            src={`${fileUrl}#toolbar=0`}
+                            className="w-full h-full"
+                            title={documentTitle}
+                        />
+                    </div>
+                )}
+
+                {!isImage && !isPdf && (
+                    <div className="text-center py-8">
+                        <div className="mx-auto w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <Icon
+                                name={getFileIcon(file.name)}
+                                className="h-10 w-10 text-gray-500"
+                            />
+                        </div>
+                        <p className="text-lg font-medium text-gray-800 mb-2">{file.name}</p>
+                        <p className="text-sm text-gray-500 mb-6">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type || 'Unknown file type'}
+                        </p>
+                        <Button
+                            text="Download File"
+                            ariaLabel="Download document"
+                            onClick={() => {
+                                const a = document.createElement('a');
+                                a.href = fileUrl;
+                                a.download = file.name;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            }}
+                            primary
+                        />
+                    </div>
+                )}
+            </div>
+        </Modal>
+    );
+};
+
 
 const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     currentAccountType = 'starter',
     onSuccess
 }) => {
+    const { createKyc } = useKyc();
     const [documents, setDocuments] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    console.log({ documents });
+    // preview modal state
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [previewFile, setPreviewFile] = useState<File | null>(null);
+    const [previewTitle, setPreviewTitle] = useState('');
+
+    // Function to open the preview modal
+    const handleOpenPreview = (file: File, title: string) => {
+        setPreviewFile(file);
+        setPreviewTitle(title);
+        setPreviewModalOpen(true);
+    };
 
     const validationSchema = Yup.object().shape({
         businessType: Yup.string().required('Please select a business type'),
@@ -103,15 +224,6 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
 
     const selectedBusinessType = watch('businessType') as BusinessType;
 
-    // const handleDocumentTypeChange = (documentIndex: number, documentType: string) => {
-    //     setDocuments(prev =>
-    //         prev.map((doc, index) =>
-    //             index === documentIndex
-    //                 ? { ...doc, documentType }
-    //                 : doc
-    //         )
-    //     );
-    // };
     const handleDocumentTypeChange = (documentId: string, documentType: string) => {
         setDocuments(prev =>
             prev.map(doc =>
@@ -125,6 +237,29 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     const getAvailableDocumentTypes = () => {
         if (!selectedBusinessType) return [];
         return DOCUMENT_TYPES[selectedBusinessType] || [];
+    };
+
+    const validateRequiredDocuments = () => {
+        // Get required document types for the selected business type
+        const requiredDocTypes = DOCUMENT_TYPES[selectedBusinessType] || [];
+
+        // Create a map of submitted document types
+        const submittedDocTypes = documents
+            .filter(doc => doc.documentType)
+            .map(doc => doc.documentType);
+
+        // Check if each required document type has at least one submission
+        const missingDocTypes = requiredDocTypes.filter(docType =>
+            !submittedDocTypes.includes(docType.value)
+        );
+
+        if (missingDocTypes.length > 0) {
+            const missingDocs = missingDocTypes.map(doc => doc.label).join(', ');
+            notifyError(`Missing required documents: ${missingDocs}`);
+            return false;
+        }
+
+        return true;
     };
 
     const validateSubmission = () => {
@@ -144,7 +279,7 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
             return false;
         }
 
-        return true;
+        return validateRequiredDocuments();
     };
 
     const handleSubmitUpgrade = async (data: UpgradeFormData) => {
@@ -153,28 +288,26 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
         setIsSubmitting(true);
 
         try {
+            // get proof_of_address document if exists
+            const proofOfAddressDoc = documents.find(doc => doc.documentType === 'proof_of_address');
+
             const payload = {
                 business_type: data.businessType,
                 current_account_type: currentAccountType,
+                // include proof_of_address_url if exists
+                ...(proofOfAddressDoc ? { proof_of_address: proofOfAddressDoc.uploadedUrl } : {}),
                 documents: documents.map(doc => ({
                     url: doc.uploadedUrl,
-                    // title: doc.title,
                     type: doc.documentType
                 }))
             };
 
-            console.log({ data, payload });
-            return;
-
-            // Replace with your actual API call
-            // await upgradeBusinessAccount(formData);
-
+            await createKyc(payload);
             notifySuccess('Account upgrade request submitted successfully! We will review your documents and get back to you.');
 
             setDocuments([]);
             reset();
             onSuccess?.();
-
         } catch (error: any) {
             notifyError(error.message || 'Failed to submit upgrade request');
         } finally {
@@ -206,7 +339,7 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                 />
 
                 {selectedBusinessType ? (
-                    <div className="">
+                    <div>
                         <h3 className="text-lg font-semibold mb-4 text-[#7F7F7F]">Required Documents</h3>
                         <ul className="list-disc list-inside space-y-2">
                             {DOCUMENT_TYPES[selectedBusinessType].map(doc => (
@@ -217,11 +350,11 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                         </ul>
                     </div>
                 ) : (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="bg-[#D9D9D90D] border border-[#C4C4C43D] rounded-lg p-4">
                         <div className="flex items-start">
                             <div className="text-sm">
-                                <p className="font-medium text-blue-800">Important Information</p>
-                                <ul className="text-blue-700 mt-2 space-y-1">
+                                <p className="font-semibold text-[#7F7F7F]">Important Information</p>
+                                <ul className="text-[#7F7F7F] mt-2 space-y-1">
                                     <li>• Your account upgrade request will be reviewed by our compliance team</li>
                                     <li>• The review process may take 3-5 business days</li>
                                     <li>• We will notify you once the review is complete</li>
@@ -250,15 +383,43 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                 {documents.length > 0 && selectedBusinessType && (
                     <div className="mt-6 space-y-4">
                         <h4 className="text-sm font-medium text-[#7f7f7f]">
-                            {/* Document ({documents.filter(doc => doc.documentType).length}/{documents.length} completed) */}
-                            Documents ({documents.length})
+                            Document ({documents.filter(doc => doc.documentType).length}/{documents.length} completed)
+                            {/* Documents ({documents.length}) */}
                         </h4>
+
+                        {/* Add a progress indicator */}
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div
+                                className="bg-primary h-2.5 rounded-full"
+                                style={{
+                                    width: `${(documents.filter(doc => doc.documentType).length / documents.length) * 100}%`
+                                }}
+                            />
+                        </div>
+
+                        {/* Document Type Requirements Status */}
+                        <div className="space-y-2 mb-4">
+                            <h5 className="text-sm font-medium text-[#7f7f7f]">Required Documents Status:</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {DOCUMENT_TYPES[selectedBusinessType].map(docType => {
+                                    const isUploaded = documents.some(doc => doc.documentType === docType.value);
+                                    return (
+                                        <div key={docType.value} className="flex items-center gap-2">
+                                            <div className={`w-3 h-3 rounded-full ${isUploaded ? 'bg-success' : 'bg-danger'}`}></div>
+                                            <span className={`text-xs ${isUploaded ? 'text-green-700' : 'text-red-700'}`}>
+                                                {docType.label}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
                         <div className="space-y-3">
                             {documents.map((doc) => (
                                 <div key={doc.id} className="flex items-center gap-4 px-2 py-1.5 bg-[#D9D9D90D] border border-[#C4C4C43D] rounded-lg">
                                     <div className="flex-1 flex items-center gap-4">
-                                        <div className="">
+                                        <div>
                                             {isImageFile(doc.file.name) ? (
                                                 <div className="relative">
                                                     <Image
@@ -267,13 +428,17 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                         width={36}
                                                         height={36}
                                                         className="w-9 h-9 object-cover rounded border group-hover:opacity-80 transition-opacity"
+                                                        onClick={() => handleOpenPreview(doc.file, doc.title)}
                                                     />
                                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded">
                                                         <Icon name="eye" className="h-4 w-4 text-white" />
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="w-9 h-9 bg-gray-100 rounded border flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                                                <div
+                                                    className="w-9 h-9 bg-gray-100 rounded border flex items-center justify-center group-hover:bg-gray-200 transition-colors"
+                                                    onClick={() => handleOpenPreview(doc.file, doc.title)}
+                                                >
                                                     <Icon
                                                         name={getFileIcon(doc.file.name)}
                                                         className="h-5 w-5 text-gray-400 group-hover:text-gray-600"
@@ -281,10 +446,18 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="">
+                                        <div className="flex items-end gap-2">
                                             <p className="font-medium text-sm text-[#7F7F7F]">{doc.title}</p>
-                                            <p className="text-[10px] text-[#9F9F9F]">
-                                                {doc.file?.name} | {(doc.file?.size / 1024 / 1024).toFixed(2)} MB
+                                            <p className="flex items-center gap-3 text-[10px] text-[#9F9F9F] divide-x divide-[#9F9F9F]">
+                                                <span>
+                                                    {(doc.file?.size / 1024 / 1024).toFixed(2)} MB
+                                                </span>
+                                                <button
+                                                    onClick={() => handleOpenPreview(doc.file, doc.title)}
+                                                    className="pl-3 hover:text-primary cursor-pointer transition-colors focus:outline-none"
+                                                >
+                                                    Preview
+                                                </button>
                                             </p>
                                         </div>
                                     </div>
@@ -295,11 +468,22 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                             className="w-full px-3 py-2 text-[#7F7F7F] border border-[#C4C4C43D] rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm"
                                         >
                                             <option value="">Select document type</option>
-                                            {getAvailableDocumentTypes().map(type => (
-                                                <option key={type.value} value={type.value}>
-                                                    {type.label}
-                                                </option>
-                                            ))}
+                                            {getAvailableDocumentTypes().map(type => {
+                                                const isAlreadyUploaded = documents.some(d =>
+                                                    d.id !== doc.id && d.documentType === type.value
+                                                );
+                                                const isRequired = !documents.some(d => d.documentType === type.value);
+
+                                                return (
+                                                    <option
+                                                        key={type.value}
+                                                        value={type.value}
+                                                        className={isRequired ? 'font-bold' : ''}
+                                                    >
+                                                        {type.label} {isRequired ? '(Required)' : isAlreadyUploaded ? '(Already uploaded)' : ''}
+                                                    </option>
+                                                );
+                                            })}
                                         </select>
                                     </div>
                                 </div>
@@ -319,6 +503,13 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                     type="submit"
                 />
             </div>
+
+            <PreviewModal
+                isOpen={previewModalOpen}
+                onClose={() => setPreviewModalOpen(false)}
+                file={previewFile}
+                documentTitle={previewTitle}
+            />
         </div>
     );
 };

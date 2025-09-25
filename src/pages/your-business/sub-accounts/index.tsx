@@ -28,6 +28,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import * as Yup from 'yup';
 import DeleteSubAccountModal from './delete';
 import UpdateSubAccountModal from './update';
+import CreateSubAccountModal from '@/pages/your-business/sub-accounts/create';
 
 const validationSchema = Yup.object().shape({
   merchant_name: Yup.string().required('Merchant name is required!'),
@@ -58,6 +59,7 @@ interface ModalState {
   isOpen: boolean;
   isUpdateOpen: boolean;
   isDeactivateOpen: boolean;
+  isCreateOpen: boolean;
   activeId: number;
   modalType: string;
   isSubmitting: boolean;
@@ -70,6 +72,7 @@ const SubaccountHistory = () => {
     isOpen: false,
     isUpdateOpen: false,
     isDeactivateOpen: false,
+    isCreateOpen: false,
     activeId: 0,
     modalType: '',
     isSubmitting: false,
@@ -134,6 +137,10 @@ const SubaccountHistory = () => {
   const openDeactivateModal = (id: number) => {
     setModalState(prev => ({ ...prev, isDeactivateOpen: true, activeId: id }));
   };
+
+
+  const openCreateModal = () => setModalState(prev => ({ ...prev, isCreateOpen: true }));
+  const closeCreateModal = () => setModalState(prev => ({ ...prev, isCreateOpen: false }));
 
   // useEffect(() => {
   //   if (modalState.isUpdateOpen && modalState.activeId) {
@@ -293,26 +300,6 @@ const SubaccountHistory = () => {
 
   const activeSubAccount = subaccounts?.find(item => item.id === modalState.activeId);
 
-  if (getSubaccountHistoryLoading) {
-    return <TableSkeleton />;
-  }
-
-  if (subaccounts?.length === 0) {
-    return (
-      <EmptyState
-        title='No Sub Account found'
-        subTitle="We couldn't find any Sub Account"
-        image='/images/dashboard/your-business/subaccount-empty.svg'
-      >
-        <ActionButton
-          text='Add Subaccount'
-          ariaLabel='Add Subaccount button'
-          onClick={() => router.push(`/your-business/sub-accounts/create`)}
-        />
-      </EmptyState>
-    );
-  }
-
   return (
     <>
       <div>
@@ -354,12 +341,11 @@ const SubaccountHistory = () => {
                     className="absolute top-[10px] left-3"
                   />
                 </div> */}
-              <Link href='/your-business/sub-accounts/create'>
-                <ActionButton
-                  ariaLabel='Create New Subaccount'
-                  text='Create New Sub Account'
-                />
-              </Link>
+              <ActionButton
+                ariaLabel='Create New Subaccount'
+                text='Create New Sub Account'
+                onClick={openCreateModal}
+              />
             </div>
             <div className='relative flex justify-end -mt-4 mb-7'>
               <Dropdown onOpen={showFilter} onClose={toggleFilter}>
@@ -386,13 +372,20 @@ const SubaccountHistory = () => {
             subTitle="We couldn't find any Sub Account"
             image='/images/dashboard/your-business/subaccount-empty.svg'
           >
-            <Button
+            {/* <Button
               text='Add Subaccount'
               ariaLabel='Add Subaccount button'
               className='!w-[191px] !h-[48px]'
               onClick={() =>
                 router.push(`/your-business/sub-accounts/create`)
               }
+              primary
+            /> */}
+            <Button
+              text='Add Subaccount'
+              ariaLabel='Add Subaccount button'
+              className='!w-[191px] !h-[48px]'
+              onClick={openCreateModal}
               primary
             />
           </EmptyState>
@@ -415,6 +408,15 @@ const SubaccountHistory = () => {
         getCategoriesLoading={getCategoriesLoading}
         onSuccess={() => fetchSubaccountHistory({ page: currentPage })}
         updateSubAccountAmount={updateSubAccountAmount}
+      />
+
+      <CreateSubAccountModal
+        isOpen={modalState.isCreateOpen}
+        onClose={closeCreateModal}
+        categories={categories}
+        getCategoriesLoading={getCategoriesLoading}
+        onSuccess={() => fetchSubaccountHistory({ page: currentPage })}
+        // postSubAccountAmount={postSubAccountAmount}
       />
     </>
   );

@@ -66,7 +66,7 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
             merchant_name: '',
             mode: '',
             contactEmail: '',
-            percentage: '',
+            percentage: undefined,
             description: '',
             siteName: '',
             websiteUrl: '',
@@ -81,9 +81,9 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
         if (isOpen && activeSubAccount) {
             reset({
                 merchant_name: activeSubAccount.merchant_name || '',
-                mode: activeSubAccount.mode ? 'live' : 'test',
+                mode: activeSubAccount.mode || '',
                 contactEmail: activeSubAccount.email || '',
-                percentage: activeSubAccount.percentage ? String(activeSubAccount.percentage) : '',
+                percentage: activeSubAccount.percentage,
                 description: activeSubAccount.description || '',
                 siteName: activeSubAccount.site_name || '',
                 websiteUrl: activeSubAccount.website_url || '',
@@ -251,8 +251,8 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
                                                 {...field}
                                             >
                                                 <option value="">Select mode</option>
-                                                <option value="true">Live</option>
-                                                <option value="false">Test</option>
+                                                <option>Live</option>
+                                                <option>Test</option>
                                             </select>
                                         )}
                                     />

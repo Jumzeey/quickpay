@@ -2,6 +2,7 @@ import Button from '@/components/button';
 import FormSelect from '@/components/FormSelect';
 import Icon from '@/components/icon';
 import Loader from '@/components/loader';
+import Modal from '@/components/modal';
 import UploadComponent from '@/components/upload-component';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import useKyc from '@/stores/useKyc';
@@ -115,6 +116,79 @@ const DOCUMENT_TYPES = {
     ]
 };
 
+interface PreviewModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    file: File | null;
+    documentTitle: string;
+}
+
+const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, documentTitle }) => {
+    if (!file) return null;
+
+    const fileUrl = getPreviewUrl(file);
+    const isPdf = file.type === 'application/pdf';
+    const isImage = isImageFile(file.name);
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title={documentTitle || 'Document Preview'}>
+            <div className="w-full py-4">
+                {isImage && (
+                    <div className="flex justify-center">
+                        <Image
+                            src={fileUrl}
+                            alt={documentTitle}
+                            width={500}
+                            height={500}
+                            className="max-w-full h-auto object-contain"
+                            style={{ maxHeight: '70vh' }}
+                        />
+                    </div>
+                )}
+
+                {isPdf && (
+                    <div className="w-full h-[70vh]">
+                        <iframe
+                            src={`${fileUrl}#toolbar=0`}
+                            className="w-full h-full"
+                            title={documentTitle}
+                        />
+                    </div>
+                )}
+
+                {!isImage && !isPdf && (
+                    <div className="text-center py-8">
+                        <div className="mx-auto w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <Icon
+                                name={getFileIcon(file.name)}
+                                className="h-10 w-10 text-gray-500"
+                            />
+                        </div>
+                        <p className="text-lg font-medium text-gray-800 mb-2">{file.name}</p>
+                        <p className="text-sm text-gray-500 mb-6">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type || 'Unknown file type'}
+                        </p>
+                        <Button
+                            text="Download File"
+                            ariaLabel="Download document"
+                            onClick={() => {
+                                const a = document.createElement('a');
+                                a.href = fileUrl;
+                                a.download = file.name;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            }}
+                            primary
+                        />
+                    </div>
+                )}
+            </div>
+        </Modal>
+    );
+};
+
+
 const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     currentAccountType = 'starter',
     onSuccess
@@ -122,6 +196,18 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     const { createKyc } = useKyc();
     const [documents, setDocuments] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // preview modal state
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [previewFile, setPreviewFile] = useState<File | null>(null);
+    const [previewTitle, setPreviewTitle] = useState('');
+
+    // Function to open the preview modal
+    const handleOpenPreview = (file: File, title: string) => {
+        setPreviewFile(file);
+        setPreviewTitle(title);
+        setPreviewModalOpen(true);
+    };
 
     const validationSchema = Yup.object().shape({
         businessType: Yup.string().required('Please select a business type'),
@@ -209,7 +295,7 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                 business_type: data.businessType,
                 current_account_type: currentAccountType,
                 // include proof_of_address_url if exists
-                ...(proofOfAddressDoc ? { proof_of_address_url: proofOfAddressDoc.uploadedUrl } : {}),
+                ...(proofOfAddressDoc ? { proof_of_address: proofOfAddressDoc.uploadedUrl } : {}),
                 documents: documents.map(doc => ({
                     url: doc.uploadedUrl,
                     type: doc.documentType
@@ -342,13 +428,17 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                         width={36}
                                                         height={36}
                                                         className="w-9 h-9 object-cover rounded border group-hover:opacity-80 transition-opacity"
+                                                        onClick={() => handleOpenPreview(doc.file, doc.title)}
                                                     />
                                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded">
                                                         <Icon name="eye" className="h-4 w-4 text-white" />
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="w-9 h-9 bg-gray-100 rounded border flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                                                <div
+                                                    className="w-9 h-9 bg-gray-100 rounded border flex items-center justify-center group-hover:bg-gray-200 transition-colors"
+                                                    onClick={() => handleOpenPreview(doc.file, doc.title)}
+                                                >
                                                     <Icon
                                                         name={getFileIcon(doc.file.name)}
                                                         className="h-5 w-5 text-gray-400 group-hover:text-gray-600"
@@ -362,23 +452,16 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                 <span>
                                                     {(doc.file?.size / 1024 / 1024).toFixed(2)} MB
                                                 </span>
-                                                <span className="pl-3">Preview</span>
+                                                <button
+                                                    onClick={() => handleOpenPreview(doc.file, doc.title)}
+                                                    className="pl-3 hover:text-primary cursor-pointer transition-colors focus:outline-none"
+                                                >
+                                                    Preview
+                                                </button>
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex-shrink-0 w-64">
-                                        {/* <select
-                                            value={doc.documentType || ''}
-                                            onChange={(e) => handleDocumentTypeChange(doc.id, e.target.value)}
-                                            className="w-full px-3 py-2 text-[#7F7F7F] border border-[#C4C4C43D] rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm"
-                                        >
-                                            <option value="">Select document type</option>
-                                            {getAvailableDocumentTypes().map(type => (
-                                                <option key={type.value} value={type.value}>
-                                                    {type.label}
-                                                </option>
-                                            ))}
-                                        </select> */}
                                         <select
                                             value={doc.documentType || ''}
                                             onChange={(e) => handleDocumentTypeChange(doc.id, e.target.value)}
@@ -420,6 +503,13 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                     type="submit"
                 />
             </div>
+
+            <PreviewModal
+                isOpen={previewModalOpen}
+                onClose={() => setPreviewModalOpen(false)}
+                file={previewFile}
+                documentTitle={previewTitle}
+            />
         </div>
     );
 };

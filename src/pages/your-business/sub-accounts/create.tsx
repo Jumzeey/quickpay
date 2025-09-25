@@ -1,21 +1,23 @@
 import Button from '@/components/button';
-import Card from '@/components/Card';
 import FancyFileUpload from '@/components/FancyFileUpload';
-import FormInput from '@/components/FormInput';
-import Layout from '@/components/layout';
 import Loader from '@/components/loader';
+import Modal from '@/components/modal';
 import { useFormValidation } from '@/hooks/useFormValidation';
-import useScreenWidth from '@/hooks/useScreenWidth';
 import { uploadFile } from '@/services/kyc';
-import useCategories from '@/stores/useCategories';
 import useSubAccount from '@/stores/useSubAccount';
 import { notifyError, notifySuccess } from '@/util/utils';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import Select from 'react-select';
 import * as Yup from 'yup';
+
+interface CreateSubAccountModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  categories: string[];
+  getCategoriesLoading: boolean;
+  onSuccess: () => void;
+}
 
 const validationSchema = Yup.object().shape({
   merchant_name: Yup.string().required('Merchant name is required!'),
@@ -30,7 +32,6 @@ const validationSchema = Yup.object().shape({
     .required('Website URL is required!'),
   riskRating: Yup.string().required('Risk rating is required!'),
   category: Yup.string().required('Category is required!'),
-  documents: Yup.array().of(Yup.mixed()).notRequired(),
   description: Yup.string().notRequired(),
   callback_url: Yup.string()
     .notRequired()
@@ -51,27 +52,24 @@ interface SubAccountFormValues {
   callback_url: string;
   riskRating: string;
   category: string;
-  documents: any[];
 }
 
-const SubAccountForm = () => {
-  const router = useRouter();
-  const screenWidth = useScreenWidth();
-  const { postSubAccountAmount, postSubAccountAmountLoading } = useSubAccount();
+const CreateSubAccountModal: React.FC<CreateSubAccountModalProps> = ({
+  isOpen,
+  onClose,
+  categories,
+  getCategoriesLoading,
+  onSuccess,
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { categories, fetchCategories, getCategoriesLoading } = useCategories();
   const [documents, setDocuments] = useState<{ title: string; file: File | null }[]>([]);
-
-  useEffect(() => {
-    if (categories.length === 0) fetchCategories();
-  }, [fetchCategories, categories.length]);
+  const { postSubAccountAmount, postSubAccountAmountLoading } = useSubAccount();
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
-    setValue,
-    getValues
+    formState: { errors },
+    reset
   } = useFormValidation<SubAccountFormValues>(validationSchema, {
     defaultValues: {
       merchant_name: '',
@@ -84,7 +82,6 @@ const SubAccountForm = () => {
       callback_url: '',
       riskRating: '',
       category: '',
-      documents: [],
     },
     mode: 'onChange'
   });
@@ -127,8 +124,11 @@ const SubAccountForm = () => {
 
       // @ts-ignore
       const response = await postSubAccountAmount(payload);
-      notifySuccess(response.message);
-      router.push('/your-business?tab=sub-accounts');
+      notifySuccess(response.message || 'Sub account created successfully');
+      onClose();
+      onSuccess();
+      reset();
+      setDocuments([]);
     } catch (error: any) {
       notifyError(error.message);
     } finally {
@@ -137,257 +137,306 @@ const SubAccountForm = () => {
   };
 
   return (
-    <Layout pageTitle='Sub Account' icon='sub-accounts'>
-      <div className='flex justify-between items-center p-4 sm:p-6 lg:p-12'>
-        <Image
-          src='/images/arrow-back.svg'
-          className='cursor-pointer'
-          width={36}
-          height={36}
-          onClick={() => router.back()}
-          alt='back icon'
-        />
-      </div>
-      <div className='flex justify-center mt-4 sm:mt-6 lg:mt-2'>
-        <Card extraPadding>
-          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+    <Modal isOpen={isOpen} onClose={onClose} title="Create Sub Account">
+      <div className="mt-5">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Site Name */}
+              <div>
+                <label className="text-sm text-black mb-1 font-medium">Site Name</label>
+                <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                  <Controller
+                    name="siteName"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        type="text"
+                        className="w-full h-12 active:border-none focus-visible:outline-none"
+                        {...field}
+                      />
+                    )}
+                  />
+                </div>
+                {errors.siteName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.siteName.message}</p>
+                )}
+              </div>
+
+              {/* Website URL */}
+              <div>
+                <label className="text-sm text-black mb-1 font-medium">Website URL</label>
+                <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                  <Controller
+                    name="websiteUrl"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        type="text"
+                        className="w-full h-12 active:border-none focus-visible:outline-none"
+                        {...field}
+                      />
+                    )}
+                  />
+                </div>
+                {errors.websiteUrl && (
+                  <p className="text-red-500 text-xs mt-1">{errors.websiteUrl.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* Merchant Name */}
+              <div>
+                <label className="text-sm text-black mb-1 font-medium">Merchant Name</label>
+                <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                  <Controller
+                    name="merchant_name"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        type="text"
+                        className="w-full h-12 active:border-none focus-visible:outline-none"
+                        {...field}
+                      />
+                    )}
+                  />
+                </div>
+                {errors.merchant_name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.merchant_name.message}</p>
+                )}
+              </div>
+
+              {/* Percentage Split */}
+              <div>
+                <label className="text-sm text-black mb-1 font-medium">Percentage Split</label>
+                <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                  <Controller
+                    name="percentage"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        type="number"
+                        className="w-full h-12 active:border-none focus-visible:outline-none"
+                        {...field}
+                      />
+                    )}
+                  />
+                </div>
+                {errors.percentage && (
+                  <p className="text-red-500 text-xs mt-1">{errors.percentage.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* Sub Account Mode */}
+              <div>
+                <label className="text-sm text-black mb-1 font-medium">
+                  Select Sub Account Mode Type
+                </label>
+                <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                  <Controller
+                    name="mode"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        className="w-full h-12 appearance-none bg-transparent focus-visible:outline-none"
+                        onChange={(e) => field.onChange(e.target.value === 'true')}
+                        value={field.value === undefined ? '' : field.value ? 'true' : 'false'}
+                      >
+                        {field.value === undefined && <option value="">--Select--</option>}
+                        <option value="true">Live</option>
+                        <option value="false">Test</option>
+                      </select>
+                    )}
+                  />
+                </div>
+                {errors.mode && (
+                  <p className="text-red-500 text-xs mt-1">{errors.mode.message}</p>
+                )}
+              </div>
+
+              {/* Risk Rating */}
+              <div>
+                <label className="text-sm text-black mb-1 font-medium">Risk Rating</label>
+                <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                  <Controller
+                    name="riskRating"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        className="w-full h-12 appearance-none bg-transparent focus-visible:outline-none"
+                        {...field}
+                      >
+                        <option value="">--Select--</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
+                    )}
+                  />
+                </div>
+                {errors.riskRating && (
+                  <p className="text-red-500 text-xs mt-1">{errors.riskRating.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {/* Contact Email */}
+              <div>
+                <label className="text-sm text-black mb-1 font-medium">Contact Email</label>
+                <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                  <Controller
+                    name="contactEmail"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        type="email"
+                        className="w-full h-12 active:border-none focus-visible:outline-none"
+                        {...field}
+                      />
+                    )}
+                  />
+                </div>
+                {errors.contactEmail && (
+                  <p className="text-red-500 text-xs mt-1">{errors.contactEmail.message}</p>
+                )}
+                <span className="text-xs text-[#005BB0] font-medium">
+                  If provided, this email address will get transaction notification
+                </span>
+              </div>
+            </div>
+
+            {/* Callback URL */}
             <div>
-              <label className='font-semibold text-sm'>
-                Select Sub Account Mode Type
-              </label>
-              <Controller
-                name="mode"
-                control={control}
-                render={({ field }) => (
-                  <select
-                    className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
-                    onChange={(e) => field.onChange(e.target.value === 'true')}
-                    value={field.value === undefined ? '' : field.value ? 'true' : 'false'}
-                  >
-                    {field.value === undefined && <option value=''>--Select--</option>}
-                    <option value='true'>Live</option>
-                    <option value='false'>Test</option>
-                  </select>
-                )}
-              />
-              {errors.mode && (
-                <p className="text-red-500 text-xs mt-1">{errors.mode.message}</p>
-              )}
-            </div>
-
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6'>
-              <Controller
-                name="siteName"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    label='Site Name'
-                    id='siteName'
-                    type='text'
-                    htmlFor='siteName'
-                    error={errors.siteName?.message}
-                    touched={!!errors.siteName}
-                    {...field}
-                  />
-                )}
-              />
-
-              <Controller
-                name="websiteUrl"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    label='Website URL'
-                    id='websiteUrl'
-                    type='text'
-                    htmlFor='websiteUrl'
-                    error={errors.websiteUrl?.message}
-                    touched={!!errors.websiteUrl}
-                    {...field}
-                  />
-                )}
-              />
-
-              <Controller
-                name="merchant_name"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    label='Merchant Name'
-                    id='merchant_name'
-                    type='text'
-                    htmlFor='merchant_name'
-                    error={errors.merchant_name?.message}
-                    touched={!!errors.merchant_name}
-                    {...field}
-                  />
-                )}
-              />
-
-              <Controller
-                name="percentage"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    label='Percentage split'
-                    id='percentage'
-                    type='number'
-                    htmlFor='percentage'
-                    error={errors.percentage?.message}
-                    touched={!!errors.percentage}
-                    maxLength={10}
-                    {...field}
-                  />
-                )}
-              />
-            </div>
-
-            <Controller
-              name="contactEmail"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label='Contact Email'
-                  id='contactEmail'
-                  type='email'
-                  htmlFor='contactEmail'
-                  error={errors.contactEmail?.message}
-                  touched={!!errors.contactEmail}
-                  {...field}
+              <label className="text-sm text-black mb-1 font-medium">Callback URL (e.g yourbusiness.com)</label>
+              <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                <Controller
+                  name="callback_url"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="text"
+                      className="w-full h-12 active:border-none focus-visible:outline-none"
+                      {...field}
+                    />
+                  )}
                 />
-              )}
-            />
-
-            <Controller
-              name="callback_url"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label={
-                    screenWidth < 700
-                      ? 'Callback URL'
-                      : 'Callback URL (e.g yourbusiness.com)'
-                  }
-                  id='callback_url'
-                  type='text'
-                  htmlFor='callback_url'
-                  error={errors.callback_url?.message}
-                  touched={!!errors.callback_url}
-                  {...field}
-                />
-              )}
-            />
-
-            <div>
-              <label className='font-semibold text-sm'>Risk Rating</label>
-              <Controller
-                name="riskRating"
-                control={control}
-                render={({ field }) => (
-                  <select
-                    className='h-[60px] px-2 w-full rounded-lg border-[1px] border-[#CAC4D0] focus:border-[#6750A4] focus:outline-none text-sm mb-5'
-                    {...field}
-                  >
-                    <option value=''>--Select--</option>
-                    <option value='high'>High</option>
-                    <option value='medium'>Medium</option>
-                    <option value='low'>Low</option>
-                  </select>
-                )}
-              />
-              {errors.riskRating && (
-                <p className="text-red-500 text-xs mt-1">{errors.riskRating.message}</p>
+              </div>
+              {errors.callback_url && (
+                <p className="text-red-500 text-xs mt-1">{errors.callback_url.message}</p>
               )}
             </div>
 
+            {/* Category */}
             <div>
-              <label className='font-semibold text-sm'>Category</label>
-              <Controller
-                name="category"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    options={categories.map((category: string) => ({
-                      value: category,
-                      label: category,
-                    }))}
-                    isSearchable
-                    placeholder={
-                      getCategoriesLoading
-                        ? 'Loading categories...'
-                        : 'Search or select category'
-                    }
-                    isDisabled={getCategoriesLoading}
-                    value={
-                      field.value
-                        ? { value: field.value, label: field.value }
-                        : null
-                    }
-                    onChange={(option) => field.onChange(option?.value)}
-                    styles={{
-                      control: (provided, state) => ({
-                        ...provided,
-                        height: '60px',
-                        padding: '0.5rem',
-                        width: '100%',
-                        borderRadius: '0.5rem',
-                        borderWidth: '1px',
-                        borderColor: state.isFocused ? '#6750A4' : '#CAC4D0',
-                        outline: 'none',
-                        fontSize: '0.875rem',
-                        marginBottom: '1.25rem',
-                        '&:hover': {
-                          borderColor: '#6750A4',
-                        },
-                      }),
-                    }}
-                  />
-                )}
-              />
+              <label className="text-sm text-black mb-1 font-medium">Category</label>
+              <div className="w-full border border-[#C4C4C43D] rounded">
+                <Controller
+                  name="category"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      options={categories.map((category: any) => ({
+                        value: category,
+                        label: category,
+                      }))}
+                      isSearchable
+                      placeholder={
+                        getCategoriesLoading
+                          ? 'Loading categories...'
+                          : 'Search or select category'
+                      }
+                      isDisabled={getCategoriesLoading}
+                      value={
+                        field.value
+                          ? { value: field.value, label: field.value }
+                          : null
+                      }
+                      onChange={(option) => field.onChange(option?.value)}
+                      styles={{
+                        control: (provided) => ({
+                          ...provided,
+                          height: '48px',
+                          padding: '0.25rem',
+                          border: 'none',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            border: 'none',
+                          },
+                        }),
+                        placeholder: (provided) => ({
+                          ...provided,
+                          fontSize: '0.875rem',
+                        }),
+                        input: (provided) => ({
+                          ...provided,
+                          fontSize: '0.875rem',
+                        }),
+                        option: (provided) => ({
+                          ...provided,
+                          fontSize: '0.875rem',
+                        }),
+                      }}
+                    />
+                  )}
+                />
+              </div>
               {errors.category && (
                 <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>
               )}
             </div>
 
-            <div className='mb-5'>
-              <label className='font-semibold text-sm text-gray-700'>
+            {/* Supporting Documents */}
+            <div>
+              <label className="text-sm text-black mb-1 font-medium">
                 Upload Supporting Documents
               </label>
-
               <FancyFileUpload
                 documents={documents}
                 setDocuments={setDocuments}
               />
             </div>
 
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label='Description'
-                  id='description'
-                  type='text'
-                  htmlFor='description'
-                  error={errors.description?.message}
-                  touched={!!errors.description}
-                  {...field}
+            {/* Description */}
+            <div>
+              <label className="text-sm text-black mb-1 font-medium">Description</label>
+              <div className="w-full border border-[#C4C4C43D] rounded p-2">
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="text"
+                      className="w-full h-12 active:border-none focus-visible:outline-none"
+                      {...field}
+                    />
+                  )}
                 />
+              </div>
+              {errors.description && (
+                <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>
               )}
-            />
+            </div>
 
-            <Button
-              className='text-white mt-4 text-xs sm:text-sm p-2 sm:p-3 rounded'
-              text={isSubmitting || postSubAccountAmountLoading ? <Loader /> : 'Create Sub Account'}
-              ariaLabel='Create Sub Account Button'
-              disabled={isSubmitting || postSubAccountAmountLoading}
-              primary
-            />
-          </form>
-        </Card>
+            {/* Submit Button */}
+            <div className="w-[113px]">
+              <Button
+                className="font-medium text-white mt-5 text-xs p-2 rounded w-full"
+                text={isSubmitting ? <Loader /> : "Create"}
+                ariaLabel="Create Sub Account"
+                disabled={isSubmitting}
+                primary
+                type="submit"
+              />
+            </div>
+          </div>
+        </form>
       </div>
-    </Layout>
+    </Modal>
   );
 };
 
-export default SubAccountForm;
+export default CreateSubAccountModal;

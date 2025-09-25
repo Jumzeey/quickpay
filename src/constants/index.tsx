@@ -23,7 +23,7 @@ export const sidebarLinks = [
   {
     href: "/payouts",
     icon: "payout2",
-    title: "Disbursements",
+    title: "Payouts",
   },
   // {
   //   href: "/e-commerce/online-store",

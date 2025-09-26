@@ -20,6 +20,8 @@ interface APICredentials {
   encryption_iv: string;
 }
 
+const MASKED_KEY_VALUE = "xxxxxxxxxxxxxxxx";
+
 const ApiKeysTab = () => {
   const [keyLoading, setKeyLoading] = useState(false);
   const [encryptionLoading, setEncryptionLoading] = useState(false);
@@ -180,20 +182,26 @@ const ApiKeysTab = () => {
                   </td>
                   <td className="text-sm pl-3 pr-5 py-6">
                     <div className="flex items-center gap-3">
-                      <span
-                        className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-3 py-1 max-w-md truncate text-gray-900 dark:text-gray-100"
-                        title={value || 'N/A'}
-                      >
-                        {value || "N/A"}
-                      </span>
+                      {value !== MASKED_KEY_VALUE && (
+                        <span
+                          className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-3 py-1 max-w-md truncate text-gray-900 dark:text-gray-100"
+                          title={value || 'N/A'}
+                        >
+                          {value || "N/A"}
+                        </span>
+                      )}
 
-                      {value && (
+                      {value && value !== MASKED_KEY_VALUE && (
                         <Icon
                           name="copy3"
                           size="15"
                           className="cursor-pointer text-[#7F7F7F] hover:text-[#164988] dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
                           onClick={() => copyToClipboard(value)}
                         />
+                      )}
+
+                      {value === MASKED_KEY_VALUE && (
+                        <button onClick={handleGenerateNewKeys} title="Regenerate Secrete Key" className="text-xs text-blue-500 cursor-pointer bg-success text-white font-medium rounded-3xl px-2 pt-0.5 pb-1 ml-4">regenerate</button>
                       )}
                     </div>
                   </td>

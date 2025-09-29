@@ -1,4 +1,6 @@
 "use client";
+import Button from '@/components/button';
+import Modal from '@/components/modal';
 import SharedState from "@/context/sharedState";
 import { ThemeProvider } from "@/context/ThemeContext";
 import useAuthentication from "@/stores/useAuthentication";
@@ -6,7 +8,8 @@ import "@/styles/globals.css";
 import { getToken, handleLogOut } from "@/util/utils";
 import type { AppProps } from "next/app";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useIdleTimer } from 'react-idle-timer';
 import { Toaster } from "sonner";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -21,21 +24,135 @@ export default function App({ Component, pageProps }: AppProps) {
   const [tracker, setTracker] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
 
-  const logoutTimer: any = useRef(null);
+  const [showIdleWarning, setShowIdleWarning] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(0);
+  const idleTimeoutInMinutes = 5; // Configure idle timeout
+  const warningTimeBeforeLogoutInSeconds = 60; // Show warning 1 minute before logout
+
+  // const logoutTimer: any = useRef(null);
+
+  const handleIdle = () => {
+    setShowIdleWarning(true);
+  };
+
+  const handleActive = () => {
+    if (showIdleWarning) {
+      setShowIdleWarning(false);
+    }
+  };
+
+  const handleLogoutTimer = () => {
+    handleLogOut();
+    setShowIdleWarning(false);
+  };
+
+  // Timer for warning
+  const { getRemainingTime, activate: activateWarning } = useIdleTimer({
+    timeout: 1000 * 60 * idleTimeoutInMinutes - 1000 * warningTimeBeforeLogoutInSeconds,
+    onIdle: () => setShowIdleWarning(true),
+    // onActive: () => setShowIdleWarning(false),
+    debounce: 500,
+    crossTab: true,
+    events: [
+      'mousemove',
+      'keydown',
+      'wheel',
+      'DOMMouseScroll',
+      'mousewheel',
+      'mousedown',
+      'touchstart',
+      'touchmove',
+      'MSPointerDown',
+      'MSPointerMove',
+      'visibilitychange',
+      'focus'
+    ]
+  });
+
+  // Timer for actual logout - separate from the warning timer
+  const { activate: activateLogout } = useIdleTimer({
+    timeout: 1000 * 60 * idleTimeoutInMinutes,
+    onIdle: () => {
+      // Only logout if the warning is showing (meaning user didn't interact after warning)
+      if (showIdleWarning) {
+        handleLogOut();
+        setShowIdleWarning(false);
+      }
+    },
+    onActive: () => {
+      // If user becomes active while warning is shown, hide the warning
+      if (showIdleWarning) {
+        setShowIdleWarning(false);
+      }
+    },
+    crossTab: true,
+  });
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (showIdleWarning) {
+      interval = setInterval(() => {
+        // Calculate remaining time until the full timeout (5 minutes)
+        const remaining = Math.ceil((1000 * 60 * idleTimeoutInMinutes - (Date.now() - getRemainingTime())) / 1000);
+        setRemainingTime(remaining > 0 ? remaining : 0);
+
+        // Countdown is handled by the second idle timer - we don't need to call logout here
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [showIdleWarning]);
+
+  useEffect(() => {
+    // Only run for authenticated users
+    const isAuthenticated = getToken();
+    if (!isAuthenticated) return;
+
+    // Function to reset both timers
+    const resetAllTimers = () => {
+      activateWarning();
+      activateLogout();
+    };
+
+    // Set up event listeners for user activity
+    window.addEventListener("mousemove", resetAllTimers);
+    window.addEventListener("keydown", resetAllTimers);
+    window.addEventListener("wheel", resetAllTimers);
+    window.addEventListener("mousedown", resetAllTimers);
+
+    return () => {
+      // Clean up event listeners
+      window.removeEventListener("mousemove", resetAllTimers);
+      window.removeEventListener("keydown", resetAllTimers);
+      window.removeEventListener("wheel", resetAllTimers);
+      window.removeEventListener("mousedown", resetAllTimers);
+    };
+  }, [activateWarning, activateLogout]);
+
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const startLogoutTimer = () => {
+  useEffect(() => {
     const isAuthenticated = getToken();
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      setShowIdleWarning(false);
+    }
+  }, []);
 
-    if (logoutTimer.current) clearTimeout(logoutTimer.current);
-    logoutTimer.current = setTimeout(() => {
-      handleLogOut();
-    }, 300000); // 5 minutes
-  };
+  // const startLogoutTimer = () => {
+  //   const isAuthenticated = getToken();
+  //   if (!isAuthenticated) return;
+
+  //   if (logoutTimer.current) clearTimeout(logoutTimer.current);
+  //   logoutTimer.current = setTimeout(() => {
+  //     handleLogOut();
+  //   }, 300000); // 5 minutes
+  // };
 
   useEffect(() => {
     if (
@@ -62,28 +179,28 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [tracker, user]);
 
-  useEffect(() => {
-    startLogoutTimer();
+  // useEffect(() => {
+  //   startLogoutTimer();
 
-    const handleUserActivity = () => {
-      startLogoutTimer();
-    };
+  //   const handleUserActivity = () => {
+  //     startLogoutTimer();
+  //   };
 
-    // Set up event listeners for user activity
-    window.addEventListener("mousemove", handleUserActivity);
-    window.addEventListener("keydown", handleUserActivity);
-    window.addEventListener("scroll", handleUserActivity);
-    window.addEventListener("click", handleUserActivity);
+  //   // Set up event listeners for user activity
+  //   window.addEventListener("mousemove", handleUserActivity);
+  //   window.addEventListener("keydown", handleUserActivity);
+  //   window.addEventListener("scroll", handleUserActivity);
+  //   window.addEventListener("click", handleUserActivity);
 
-    return () => {
-      if (logoutTimer.current) clearTimeout(logoutTimer.current);
-      // Clean up event listeners
-      window.removeEventListener("mousemove", handleUserActivity);
-      window.removeEventListener("keydown", handleUserActivity);
-      window.removeEventListener("scroll", handleUserActivity);
-      window.removeEventListener("click", handleUserActivity);
-    };
-  }, []);
+  //   return () => {
+  //     if (logoutTimer.current) clearTimeout(logoutTimer.current);
+  //     // Clean up event listeners
+  //     window.removeEventListener("mousemove", handleUserActivity);
+  //     window.removeEventListener("keydown", handleUserActivity);
+  //     window.removeEventListener("scroll", handleUserActivity);
+  //     window.removeEventListener("click", handleUserActivity);
+  //   };
+  // }, []);
 
   return (
     <ThemeProvider>
@@ -95,6 +212,41 @@ export default function App({ Component, pageProps }: AppProps) {
             content="width=device-width, initial-scale=1, maximum-scale=1"
           />
           <Component {...pageProps} />
+
+          <Modal
+            isOpen={showIdleWarning}
+            onClose={() => { }}
+            title="Session Timeout Warning"
+          >
+            <div className="p-4">
+              <p className="mb-4">
+                Your session will expire in {remainingTime > 60
+                  ? `${Math.floor(remainingTime / 60)} minute(s) and ${remainingTime % 60} seconds`
+                  : `${remainingTime} seconds`
+                } due to inactivity.
+                Would you like to continue your session?
+              </p>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  text="Log Out Now"
+                  ariaLabel="Log out now"
+                  onClick={handleLogoutTimer}
+                  className="bg-gray-200 text-gray-800"
+                />
+                <Button
+                  text="Continue Session"
+                  ariaLabel="Continue session"
+                  onClick={() => {
+                    activateWarning(); // Reset the warning timer
+                    activateLogout();  // Reset the logout timer
+                    setShowIdleWarning(false);
+                  }}
+                  primary
+                />
+              </div>
+            </div>
+          </Modal>
         </main>
       </SharedState>
     </ThemeProvider>

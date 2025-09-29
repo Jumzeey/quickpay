@@ -23,7 +23,7 @@ interface UpdateSubAccountModalProps {
 const validationSchema = Yup.object().shape({
     merchant_name: Yup.string().required('Merchant name is required!'),
     mode: Yup.string()
-        .oneOf(['test', 'live'], 'Mode must be either test or live')
+        .oneOf(['Test', 'Live'], 'Mode must be either Test or Live')
         .required('Mode is required!'),
     contactEmail: Yup.string()
         .email('Invalid email format')
@@ -35,7 +35,7 @@ const validationSchema = Yup.object().shape({
         .required('Website URL is required!'),
     riskRating: Yup.string().required('Risk rating is required!'),
     category: Yup.string().required('Category is required!'),
-    description: Yup.string().notRequired(),
+    message: Yup.string().notRequired(),
     callback_url: Yup.string()
         .notRequired()
         .matches(
@@ -67,7 +67,7 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
             mode: '',
             contactEmail: '',
             percentage: undefined,
-            description: '',
+            message: '',
             siteName: '',
             websiteUrl: '',
             callback_url: '',
@@ -77,6 +77,8 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
         mode: 'onChange'
     });
 
+    console.log({ errors })
+
     useEffect(() => {
         if (isOpen && activeSubAccount) {
             reset({
@@ -84,7 +86,7 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
                 mode: activeSubAccount.mode || '',
                 contactEmail: activeSubAccount.email || '',
                 percentage: activeSubAccount.percentage,
-                description: activeSubAccount.description || '',
+                message: activeSubAccount.message || '',
                 siteName: activeSubAccount.site_name || '',
                 websiteUrl: activeSubAccount.website_url || '',
                 callback_url: activeSubAccount.callback_url?.replace(/^https?:\/\//, '') || '',
@@ -113,9 +115,9 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
             const payload = {
                 merchant_name: values.merchant_name,
                 email: values.contactEmail,
-                mode: values.mode,
+                mode: values.mode === "Live" ? 1 : 0,
                 percentage: values.percentage,
-                description: values.description,
+                message: values.message,
                 site_name: values.siteName,
                 website_url: values.websiteUrl,
                 risk_rating: values.riskRating,
@@ -404,7 +406,7 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
                             <label className="text-sm text-black mb-1 font-medium">Description</label>
                             <div className="w-full border border-[#C4C4C43D] rounded p-2">
                                 <Controller
-                                    name="description"
+                                    name="message"
                                     control={control}
                                     render={({ field }) => (
                                         <input
@@ -415,8 +417,8 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
                                     )}
                                 />
                             </div>
-                            {errors.description && (
-                                <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>
+                            {errors.message && (
+                                <p className="text-red-500 text-xs mt-1">{errors.message.message}</p>
                             )}
                         </div>
 

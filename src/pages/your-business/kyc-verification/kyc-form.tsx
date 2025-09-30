@@ -110,6 +110,40 @@ const KYCForm = () => {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
+      const starterDocuments = [
+        {
+          url: values.id_file,
+          type: values.id_type
+        },
+        {
+          url: values.proof_of_address,
+          type: "proof_of_address"
+        }
+      ].filter(doc => !!doc.url);
+
+      const registeredDocuments = [
+        {
+          url: values.cac_documents,
+          type: "cac_documents"
+        },
+        {
+          url: values.company_business_status,
+          type: "company_business_status"
+        },
+        {
+          url: values.document_beneficiary_file,
+          type: "document_beneficiary_file"
+        },
+        {
+          url: values.document_file,
+          type: values.document_type
+        },
+        {
+          url: values.proof_of_address,
+          type: "proof_of_address"
+        }
+      ].filter(doc => !!doc.url);
+
       const payload = isStarterBusiness
         ? {
           business_type: values.business_type,
@@ -121,6 +155,7 @@ const KYCForm = () => {
           note: values.note,
           bvn: values.bvn,
           nin: values.nin,
+          documents: starterDocuments
         } : {
           business_type: values.business_type,
           business_description: values.business_description,
@@ -135,6 +170,7 @@ const KYCForm = () => {
           document_file: values.document_file,
           proof_of_address: values.proof_of_address,
           note: values.note,
+          documents: registeredDocuments
         };
 
       const response = await createKyc(payload);
@@ -260,7 +296,7 @@ const KYCForm = () => {
               />
 
               <UploadComponent
-                className="h-[380px]"
+                className="min-h-[380px]"
                 onFileUpload={onFileUpload}
                 buttonText="Select File"
                 name="proof_of_address"
@@ -271,7 +307,7 @@ const KYCForm = () => {
 
             <div className="col-span-2">
               <UploadComponent
-                className="h-[230px] col-span-"
+                className="min-h-[230px]"
                 onFileUpload={onFileUpload}
                 buttonText="Select File"
                 name="id_file"
@@ -305,7 +341,7 @@ const KYCForm = () => {
                 name="document_file"
                 text="Document Upload"
                 folderName="kyc"
-                className="h-[230px]"
+                className="min-h-[230px]"
               />
             </div>
 
@@ -332,7 +368,7 @@ const KYCForm = () => {
                 name="document_beneficiary_file"
                 text="Document Upload (Ultimate Beneficial Owner)"
                 folderName="kyc"
-                className="h-[230px]"
+                className="min-h-[230px]"
               />
             </div>
 
@@ -351,7 +387,7 @@ const KYCForm = () => {
               )}
             />
             <UploadComponent
-              className="h-[230px]"
+              className="min-h-[230px]"
               onFileUpload={onFileUpload}
               buttonText="Select File"
               name="proof_of_address"
@@ -361,7 +397,7 @@ const KYCForm = () => {
 
 
             <UploadComponent
-              className="h-[260px]"
+              className="min-h-[260px]"
               onFileUpload={onFileUpload}
               buttonText="Select File"
               name="cac_documents"
@@ -369,7 +405,7 @@ const KYCForm = () => {
               folderName="kyc"
             />
             <UploadComponent
-              className="h-[260px]"
+              className="min-h-[260px]"
               onFileUpload={onFileUpload}
               buttonText="Select File"
               name="company_business_status"

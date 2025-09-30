@@ -371,7 +371,7 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                     className="h-auto"
                     name="upgrade_documents"
                     text="Upload Required Documents"
-                    folderName="business-upgrade"
+                    folderName="kyc"
                     multiple
                     showPreview
                     documents={documents}

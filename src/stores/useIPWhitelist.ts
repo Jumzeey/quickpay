@@ -32,6 +32,7 @@ type IPWhitelistStore = {
 
 const initialState = {
     entries: [],
+    allFilteredEntries: [],
     isLoading: false,
     error: null,
     pagination: {
@@ -45,7 +46,7 @@ const initialState = {
 
 const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
     ...initialState,
-    
+
     // Fetch all IP whitelist entries (no server pagination)
     fetchIPWhitelist: async (searchParams = {}) => {
         set(state => ({
@@ -53,34 +54,34 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
             isLoading: true,
             error: null,
         }));
-        
+
         try {
             // Get all entries from API
             const response = await getIPWhitelist();
             const allEntries = response.data || [];
-            
+
             // Calculate pagination based on all entries
             const { search } = searchParams as { search?: string };
-            
+
             // Filter entries if search is provided
-            const filteredEntries = search 
-                ? allEntries.filter(entry => 
-                    entry.ip_address.includes(search) || 
+            const filteredEntries = search
+                ? allEntries.filter(entry =>
+                    entry.ip_address.includes(search) ||
                     entry.description.toLowerCase().includes(search.toLowerCase())
-                  )
+                )
                 : allEntries;
-                
+
             const perPage = 5;
             const total = filteredEntries.length;
             const lastPage = Math.max(1, Math.ceil(total / perPage));
-            
+
             // Set initial pagination
             const currentPage = 1;
-            
+
             // Calculate which entries to show on the current page
             const startIndex = (currentPage - 1) * perPage;
             const paginatedEntries = filteredEntries.slice(startIndex, startIndex + perPage);
-            
+
             set(state => ({
                 ...state,
                 // Store all filtered entries in a hidden property
@@ -95,7 +96,7 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
                     last_page: lastPage,
                 },
             }));
-            
+
             return { entries: paginatedEntries };
         } catch (error) {
             console.error('IP whitelist fetch error:', error);
@@ -105,18 +106,17 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
             set(state => ({ ...state, isLoading: false }));
         }
     },
-    
+
     // Set pagination - recalculate entries for current page
     setPagination: (page, allEntriesParam) => {
         const state = get();
-        // const allEntries = allEntriesParam || state.allFilteredEntries || [];
-        const allEntries = allEntriesParam || [];
+        const allEntries = allEntriesParam || state.allFilteredEntries || [];
         const perPage = state.pagination.per_page;
-        
+
         // Calculate new pagination
         const startIndex = (page - 1) * perPage;
         const paginatedEntries = allEntries.slice(startIndex, startIndex + perPage);
-        
+
         set(state => ({
             ...state,
             entries: paginatedEntries,
@@ -126,7 +126,7 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
             }
         }));
     },
-    
+
     // Add new IP to whitelist
     addIPWhitelist: async (payload) => {
         set(state => ({ ...state, isLoading: true, error: null }));
@@ -143,7 +143,7 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
             set(state => ({ ...state, isLoading: false }));
         }
     },
-    
+
     // Update existing IP in whitelist
     updateIPWhitelist: async (id, payload) => {
         set(state => ({ ...state, isLoading: true, error: null }));
@@ -160,7 +160,7 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
             set(state => ({ ...state, isLoading: false }));
         }
     },
-    
+
     // Remove IP from whitelist
     removeIPWhitelist: async (id) => {
         set(state => ({ ...state, isLoading: true, error: null }));

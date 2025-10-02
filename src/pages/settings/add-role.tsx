@@ -105,7 +105,7 @@ const AddRole = () => {
 
   return (
     <Layout pageTitle="Add Role" icon="person">
-      <WebPageTitle title="Add Role | Ramp Merchant Portal" />
+      <WebPageTitle title="Add Role | Cray Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"

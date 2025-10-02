@@ -6,7 +6,7 @@ import WebPageTitle from "@/components/WebPageTitle";
 const Loan = () => {
   return (
     <Layout pageTitle="Loans" icon="loans">
-      <WebPageTitle title="Loans | Ramp Merchant Portal" />
+      <WebPageTitle title="Loans | Cray Merchant Portal" />
       <ComingSoon />
     </Layout>
   );

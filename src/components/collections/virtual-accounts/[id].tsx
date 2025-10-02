@@ -42,7 +42,7 @@ const VirtualAccountTransaction = () => {
 
   return (
     <Layout pageTitle="Virtual Account Transactions" icon="virtual-accounts">
-      <WebPageTitle title="Virtual Account Transactions | Ramp Merchant Portal" />
+      <WebPageTitle title="Virtual Account Transactions | Cray Merchant Portal" />
       <div className="pt-5">
         {state.isLoading ? (
           <TableSkeleton />

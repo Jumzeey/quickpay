@@ -143,7 +143,7 @@ const SettlementAccounts = () => {
 
   return (
     <Layout pageTitle="Settlement Accounts" icon="settlement-accounts">
-      <WebPageTitle title="Settlement Accounts | Ramp Merchant Portal" />
+      <WebPageTitle title="Settlement Accounts | Cray Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Settlement Accounts</h2>
         <p className="text-sm pt-3 pb-5">

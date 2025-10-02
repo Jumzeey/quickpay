@@ -7,7 +7,7 @@ import Link from 'next/link';
 const Page404 = () => {
   return (
     <>
-      <WebPageTitle title='Page Not Found | Ramp Merchant Portal' />
+      <WebPageTitle title='Page Not Found | Cray Merchant Portal' />
       <div className='Poppins-Regular'>
         {/* <Header /> */}
         <section className='mt-20 h-screen flex justify-center'>

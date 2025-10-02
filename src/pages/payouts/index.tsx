@@ -373,7 +373,7 @@ const PayoutHistory = () => {
   if (!mounted) {
     return (
       <Layout pageTitle="Pay Outs" icon="disbursement">
-        <WebPageTitle title="Payouts | Ramp Merchant Portal" />
+        <WebPageTitle title="Payouts | Cray Merchant Portal" />
         <TableSkeleton />
       </Layout>
     );
@@ -381,7 +381,7 @@ const PayoutHistory = () => {
 
   return (
     <Layout pageTitle="Pay Outs" icon="disbursement">
-      <WebPageTitle title="Payouts | Ramp Merchant Portal" />
+      <WebPageTitle title="Payouts | Cray Merchant Portal" />
       <div className="flex flex-col md:flex-row justify-between mb-8">
         <div>
           <PageHeader

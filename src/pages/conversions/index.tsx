@@ -140,7 +140,7 @@ const ConversionHistory = () => {
 
   return (
     <Layout pageTitle="Conversions" icon="collection-history">
-      <WebPageTitle title="Conversions | Ramp Merchant Portal" />
+      <WebPageTitle title="Conversions | Cray Merchant Portal" />
 
       <div className="flex flex-col md:flex-row justify-between">
         <div>

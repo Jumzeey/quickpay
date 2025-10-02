@@ -42,7 +42,7 @@ const Settings = () => {
 
   return (
     <Layout pageTitle="Business Settings" icon="settings">
-      <WebPageTitle title="Business Settings | Ramp Merchant Portal" />
+      <WebPageTitle title="Business Settings | Cray Merchant Portal" />
 
       <PageHeader
         title="Account Settings"
@@ -70,7 +70,7 @@ const Settings = () => {
         <section className="grid md:grid-cols-7">
           <ProfileLeftPanel
             title="Webhooks"
-            description="Webhooks allow you to receive real-time notifications about events in your Ramp account."
+            description="Webhooks allow you to receive real-time notifications about events in your Cray account."
           />
 
           <div className="col-span-5 border border-[#C4C4C452] rounded-lg">

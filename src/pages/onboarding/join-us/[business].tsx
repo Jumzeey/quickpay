@@ -203,11 +203,11 @@ const RegisterPage: React.FC = () => {
   }, [formik.values.password]);
   return (
     <>
-      <div className="w-full min-h-screen flex justify-center text-white bg-ramp">
+      <div className="w-full min-h-screen flex justify-center text-white bg-white">
         <WebPageTitle
           title={`${capitalizeFirstLetter(
             params?.business as string
-          )} | Ramp Merchant Portal`}
+          )} | Cray Merchant Portal`}
         />
         {/* <Sidebar /> */}
         <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
@@ -404,7 +404,7 @@ const RegisterPage: React.FC = () => {
                       rel="noopener noreferrer"
                       className="ml-1 font-medium underline-animation cursor-pointer"
                     >
-                      Ramp Privacy Policy
+                      Cray Privacy Policy
                     </a>
                   </Link>
                 </label>

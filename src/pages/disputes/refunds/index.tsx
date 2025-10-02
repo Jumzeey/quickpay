@@ -104,7 +104,7 @@ const Refunds = () => {
 
   return (
     <Layout pageTitle='Refunds' icon='payment-mandate'>
-      <WebPageTitle title='Refunds | Ramp Merchant Portal' />
+      <WebPageTitle title='Refunds | Cray Merchant Portal' />
       {showRefundDetails ? (
         <TransactionDetails
           selectedItem={selectedRefund}

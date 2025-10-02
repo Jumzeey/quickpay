@@ -108,8 +108,8 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
           {/* <li className="mb-3.5 font-semibold">
               <Link href="/dashboard">
                 <Image
-                  src="/images/ramp-logo.svg"
-                  alt="RampLogo"
+                  src="/images/cray-logo.svg"
+                  alt="Cray Logo"
                   // className="mt-3"
                   width={130}
                   height={29}

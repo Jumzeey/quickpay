@@ -66,7 +66,7 @@ const SettlementTransaction = () => {
 
   return (
     <Layout pageTitle="Settlement Transaction" icon="history">
-      <WebPageTitle title="Settlement Transactions | Ramp Merchant Portal" />
+      <WebPageTitle title="Settlement Transactions | Cray Merchant Portal" />
       {state.showCollections ? (
         <TransactionDetails
           selectedItem={state.selectedItem}

@@ -148,7 +148,7 @@ const OnlineStore = () => {
 
   return (
     <Layout pageTitle="Online Store History" icon="ecommerce">
-      <WebPageTitle title="Online Store History | Ramp Merchant Portal" />
+      <WebPageTitle title="Online Store History | Cray Merchant Portal" />
       <div>
         <h2 className="text-xl font-semibold">Manage Your Online Store</h2>
         <p className="text-sm pt-3 pb-5">

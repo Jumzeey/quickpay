@@ -41,7 +41,7 @@ const Permissions = () => {
   };
   return (
     <Layout pageTitle="Role Permissions" icon="person">
-      <WebPageTitle title="Role Permissions | Ramp Merchant Portal" />
+      <WebPageTitle title="Role Permissions | Cray Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"

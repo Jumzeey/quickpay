@@ -30,27 +30,38 @@ export default function App({ Component, pageProps }: AppProps) {
   const warningTimeBeforeLogoutInSeconds = 60; // Show warning 1 minute before logout
 
   // const logoutTimer: any = useRef(null);
+  const [shouldLogout, setShouldLogout] = useState(false);
 
-  const handleIdle = () => {
-    setShowIdleWarning(true);
-  };
+  // const handleIdle = () => {
+  //   setShowIdleWarning(true);
+  // };
 
-  const handleActive = () => {
-    if (showIdleWarning) {
-      setShowIdleWarning(false);
-    }
-  };
+  // const handleActive = () => {
+  //   if (showIdleWarning) {
+  //     setShowIdleWarning(false);
+  //   }
+  // };
 
   const handleLogoutTimer = () => {
     handleLogOut();
     setShowIdleWarning(false);
+    setShouldLogout(false);
   };
 
   // Timer for warning
-  const { getRemainingTime, activate: activateWarning } = useIdleTimer({
-    timeout: 1000 * 60 * idleTimeoutInMinutes - 1000 * warningTimeBeforeLogoutInSeconds,
-    onIdle: () => setShowIdleWarning(true),
-    // onActive: () => setShowIdleWarning(false),
+  const { activate: activateWarning } = useIdleTimer({
+    timeout: 1000 * 60 * idleTimeoutInMinutes - 1000 * warningTimeBeforeLogoutInSeconds, // 4 minutes
+    onIdle: () => {
+      setShowIdleWarning(true);
+      setShouldLogout(true);
+      setRemainingTime(warningTimeBeforeLogoutInSeconds);
+    },
+    onActive: () => {
+      // Only hide warning if user is active before the logout timer expires
+      if (showIdleWarning && !shouldLogout) {
+        setShowIdleWarning(false);
+      }
+    },
     debounce: 500,
     crossTab: true,
     events: [
@@ -74,37 +85,40 @@ export default function App({ Component, pageProps }: AppProps) {
     timeout: 1000 * 60 * idleTimeoutInMinutes,
     onIdle: () => {
       // Only logout if the warning is showing (meaning user didn't interact after warning)
-      if (showIdleWarning) {
-        handleLogOut();
-        setShowIdleWarning(false);
-      }
+      handleLogoutTimer();
     },
-    onActive: () => {
-      // If user becomes active while warning is shown, hide the warning
-      if (showIdleWarning) {
-        setShowIdleWarning(false);
-      }
-    },
+    // onActive: () => {
+    //   // If user becomes active while warning is shown, hide the warning
+    //   if (showIdleWarning) {
+    //     setShowIdleWarning(false);
+    //   }
+    // },
     crossTab: true,
   });
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (showIdleWarning) {
+    if (showIdleWarning && shouldLogout) {
       interval = setInterval(() => {
-        // Calculate remaining time until the full timeout (5 minutes)
-        const remaining = Math.ceil((1000 * 60 * idleTimeoutInMinutes - (Date.now() - getRemainingTime())) / 1000);
-        setRemainingTime(remaining > 0 ? remaining : 0);
+        setRemainingTime((prevTime) => {
+          const newTime = prevTime - 1;
 
-        // Countdown is handled by the second idle timer - we don't need to call logout here
+          // If countdown reaches 0, logout immediately
+          if (newTime <= 0) {
+            handleLogoutTimer();
+            return 0;
+          }
+
+          return newTime;
+        });
       }, 1000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [showIdleWarning]);
+  }, [showIdleWarning, shouldLogout]);
 
   useEffect(() => {
     // Only run for authenticated users
@@ -115,6 +129,7 @@ export default function App({ Component, pageProps }: AppProps) {
     const resetAllTimers = () => {
       activateWarning();
       activateLogout();
+      setShowIdleWarning(false);
     };
 
     // Set up event listeners for user activity
@@ -130,7 +145,7 @@ export default function App({ Component, pageProps }: AppProps) {
       window.removeEventListener("wheel", resetAllTimers);
       window.removeEventListener("mousedown", resetAllTimers);
     };
-  }, [activateWarning, activateLogout]);
+  }, [activateWarning, activateLogout, shouldLogout]);
 
 
   useEffect(() => {
@@ -141,6 +156,7 @@ export default function App({ Component, pageProps }: AppProps) {
     const isAuthenticated = getToken();
     if (!isAuthenticated) {
       setShowIdleWarning(false);
+      setShouldLogout(false);
     }
   }, []);
 

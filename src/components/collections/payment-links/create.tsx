@@ -8,7 +8,7 @@ const CreatePaymentLink = () => {
 
   return (
     <Layout pageTitle="Create Payment Link" icon="link">
-      <WebPageTitle title="Create Payment Link | Ramp Merchant Portal" />
+      <WebPageTitle title="Create Payment Link | Cray Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"

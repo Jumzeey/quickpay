@@ -180,6 +180,10 @@ const CollectionHistory = () => {
         title: 'Payment Reason',
         render: (value: any, row: any) => row?.payment_reason || 'N/A'
     }, {
+        key: 'failure_reason',
+        title: 'Failure Reason',
+        render: (value: any, row: any) => row?.failure_reason || 'N/A'
+    }, {
         key: 'gateway_message',
         title: 'Gateway Message',
         render: (value: any, row: any) => {

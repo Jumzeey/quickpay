@@ -101,7 +101,7 @@ const SubaccountTransactions = () => {
 
   return (
     <Layout pageTitle="Sub Account Transactions" icon="SUBACCOUNT">
-      <WebPageTitle title="Sub Account Transactions| Ramp Merchant Portal" />
+      <WebPageTitle title="Sub Account Transactions| Cray Merchant Portal" />
 
       <div className="mt-5 mb-5">
         <Image

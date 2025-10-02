@@ -54,8 +54,8 @@ const Navbar = ({
         <div className="h-auto flex flex-row px-3 md:px-6 py-4 md:py-3 items-center justify-between">
           <Link href="/dashboard">
             <Image
-              src={theme === "light" ? "/images/ramp-logo-light.svg" : "/images/ramp-logo-dark.svg"}
-              alt="RampLogo"
+              src={theme === "light" ? "/images/cray-logo.svg" : "/images/cray-logo-white.svg"}
+              alt="Cray Logo"
               className="h-10 w-auto"
               width={83}
               height={40}
@@ -78,7 +78,7 @@ const Navbar = ({
 
           <div className="flex items-center gap-6">
             <div className="text-black dark:text-[#EFF7FE] font-medium text-sm gap-6 hidden md:flex items-center">
-              <Link href="docs.connectramp.com" target="_blank" className="hover:text-primary-blue dark:hover:text-blue-400">
+              <Link href="https://docs.connectramp.com" target="_blank" className="hover:text-primary-blue dark:hover:text-blue-400">
                 API Documentation
               </Link>
               <Link href="#" className="hover:text-primary-blue dark:hover:text-blue-400">

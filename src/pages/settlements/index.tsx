@@ -27,7 +27,7 @@ const Settlements = () => {
 
   return (
     <Layout pageTitle="Settlement History" icon="history">
-      <WebPageTitle title="Settlement History | Ramp Merchant Portal" />
+      <WebPageTitle title="Settlement History | Cray Merchant Portal" />
 
       <div className="flex flex-col md:flex-row justify-between mb-8">
         <div>

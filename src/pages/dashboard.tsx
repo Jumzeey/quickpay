@@ -138,6 +138,8 @@ const Dashboard = () => {
     }
   );
 
+  console.log(currencySymbols[selectedCurrency], currencySymbols, selectedCurrency)
+
   const { loading: isChartLoading } = useEffectFetch(
     async () => {
       return await populateCharts(selectedOption, selectedCurrency);
@@ -170,6 +172,20 @@ const Dashboard = () => {
     setRotation(rotation + 360);
   };
 
+  const splitCurrencyAmount = (value: string) => {
+    const match = value.match(/^([^\d]+)(.*)$/);
+    if (match) {
+      const [, currency, amount] = match;
+      return (
+        <>
+          <span className="text-[#7F7F7F] mr-1">{currency}</span>
+          {amount}
+        </>
+      );
+    }
+    return value;
+  }
+
   const secondOptions = [
     { value: "7", label: "Last 7 Days" },
     { value: "30", label: "Last One Month" },
@@ -186,7 +202,7 @@ const Dashboard = () => {
   if (!mounted) {
     return (
       <Layout pageTitle='Dashboard' icon='dashboard'>
-        <WebPageTitle title='Dashboard | Ramp Merchant Portal' />
+        <WebPageTitle title='Dashboard | Cray Merchant Portal' />
         <TableSkeleton />
       </Layout>
     );
@@ -194,7 +210,7 @@ const Dashboard = () => {
 
   return (
     <Layout pageTitle='Dashboard' icon='dashboard'>
-      <WebPageTitle title='Dashboard | Ramp Merchant Portal' />
+      <WebPageTitle title='Dashboard | Cray Merchant Portal' />
 
       <div className="flex flex-row md:items-center justify-between">
         <div className="flex flex-col gap-1">
@@ -254,11 +270,11 @@ const Dashboard = () => {
                 <p className="flex items-center gap-4 md:text-lg font-bold text-[#EFF7FE] mt-0.5">
                   {showBalance ? (
                     <span>
-                      <span className="text-[#7F7F7F] mr-0.5">
+                      {/* <span className="text-[#7F7F7F] mr-0.5">
                         {state.available_balance.charAt(0)}
                       </span>
-                      {state.available_balance.slice(1)}
-
+                      {state.available_balance.slice(1)} */}
+                      {splitCurrencyAmount(state.available_balance)}
                     </span>
                   ) : (
                     <span className="text-[#7F7F7F]">******</span>
@@ -279,10 +295,11 @@ const Dashboard = () => {
                 <p className="md:text-lg font-bold text-[#EFF7FE] mt-0.5">
                   {showBalance ? (
                     <>
-                      <span className="text-[#7F7F7F] mr-0.5">
+                      {/* <span className="text-[#7F7F7F] mr-0.5">
                         {state.ledger_balance.charAt(0)}
                       </span>
-                      {state.ledger_balance.slice(1)}
+                      {state.ledger_balance.slice(1)} */}
+                      {splitCurrencyAmount(state.ledger_balance)}
                     </>
                   ) : (
                     <span className="text-[#7F7F7F]">******</span>
@@ -296,10 +313,11 @@ const Dashboard = () => {
                 <p className="md:text-lg font-bold text-[#EFF7FE] mt-0.5">
                   {showBalance ? (
                     <>
-                      <span className="text-[#7F7F7F] mr-0.5">
+                      {/* <span className="text-[#7F7F7F] mr-0.5">
                         {state.locked_balance.charAt(0)}
                       </span>
-                      {state.locked_balance.slice(1)}
+                      {state.locked_balance.slice(1)} */}
+                      {splitCurrencyAmount(state.locked_balance)}
                     </>
                   ) : (
                     <span className="text-[#7F7F7F]">******</span>
@@ -322,10 +340,7 @@ const Dashboard = () => {
               Total Disbursements:
             </p>
             <p className="text-lg font-bold text-[#090727] dark:text-[#EFF7FE90] mt-2">
-              <span className="text-[#7F7F7F] mr-1">
-                {state.total_disbursements.charAt(0)}
-              </span>
-              {state.total_disbursements.slice(1)}
+              {splitCurrencyAmount(state.total_disbursements)}
             </p>
           </div>
         </div>
@@ -340,10 +355,7 @@ const Dashboard = () => {
               Total Collections:
             </p>
             <p className="text-lg font-bold text-[#090727] dark:text-[#EFF7FE90] mt-2">
-              <span className="text-[#7F7F7F] mr-1">
-                {state.total_collections.charAt(0)}
-              </span>
-              {state.total_collections.slice(1)}
+              {splitCurrencyAmount(state.total_collections)}
             </p>
           </div>
         </div>

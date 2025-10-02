@@ -22,7 +22,7 @@ const Business = () => {
 
     return (
         <Layout pageTitle="Your Business" icon="business">
-            <WebPageTitle title="Your Business | Ramp Merchant Portal" />
+            <WebPageTitle title="Your Business | Cray Merchant Portal" />
 
             <PageHeader
                 title="Your Business"

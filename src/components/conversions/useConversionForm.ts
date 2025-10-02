@@ -30,7 +30,7 @@ export const useConversionForm = ({
                 otherwise: (schema) => schema.notRequired(),
             }),
             walletId: Yup.string().when([], {
-                is: () => selectedOptionName === 'Ramp Balance Conversion',
+                is: () => selectedOptionName === 'Cray Balance Conversion',
                 then: (schema) => schema.required('Wallet ID is required!'),
                 otherwise: (schema) => schema.notRequired(),
             }),

@@ -662,10 +662,10 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 <>
                     <div className="flex items-center justify-center mb-6 h-52">
                         <Image
-                            src="/images/ramp-logo.svg"
+                            src="/images/cray-logo.svg"
                             width={83}
                             height={40}
-                            alt="Ramp Logo"
+                            alt="Cray Logo"
                             priority
                             className="animate-pulse"
                         />

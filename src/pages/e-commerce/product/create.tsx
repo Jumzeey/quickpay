@@ -172,7 +172,7 @@ const CreateProduct: React.FC = () => {
 
   return (
     <Layout pageTitle="Product Page" icon="kyc">
-      <WebPageTitle title="Submit Product | Ramp Merchant Portal" />
+      <WebPageTitle title="Submit Product | Cray Merchant Portal" />
       <div className="pt-5">
         <Image
           src="/images/arrow-back.svg"

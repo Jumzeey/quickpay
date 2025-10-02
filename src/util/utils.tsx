@@ -313,6 +313,7 @@ export const currencySymbols: Record<string, string> = {
   'GBP': '£',
   'KES': 'KSh',
   'ZMW': 'ZMW',
+  'TZS': 'TZS',
 };
 
 export const replaceCurrencySymbol = (amount: string): string => {

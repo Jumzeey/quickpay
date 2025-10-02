@@ -111,7 +111,7 @@ const ManageRoles = () => {
 
   return (
     <Layout pageTitle="Manage Roles" icon="person">
-      <WebPageTitle title="Manage Roles | Ramp Merchant Portal" />
+      <WebPageTitle title="Manage Roles | Cray Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"

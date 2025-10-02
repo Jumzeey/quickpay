@@ -138,7 +138,7 @@ const ManageUsers = () => {
 
   return (
     <Layout pageTitle="Manage Users" icon="user">
-      <WebPageTitle title="Manage Users | Ramp Merchant Portal" />
+      <WebPageTitle title="Manage Users | Cray Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer pb-5"

@@ -66,7 +66,7 @@ const SettlementBreakdown = () => {
 
   return (
     <Layout pageTitle="Settlement Breakdown" icon="history">
-      <WebPageTitle title="Settlement Breakdown | Ramp Merchant Portal" />
+      <WebPageTitle title="Settlement Breakdown | Cray Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer pb-5"

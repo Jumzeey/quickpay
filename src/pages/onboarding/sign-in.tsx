@@ -69,7 +69,7 @@ const SignInPage: React.FC = () => {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
-      <WebPageTitle title="Login | Ramp Merchant Portal" />
+      <WebPageTitle title="Login | Cray Merchant Portal" />
       <NoSSR>
         <motion.div
           className="flex flex-col items-center justify-center "
@@ -84,8 +84,8 @@ const SignInPage: React.FC = () => {
               <div className="px-8 pt-8 pb-4 bg-auth-header">
                 <div className="flex items-center">
                   <Image
-                    src="/images/ramp-logo.svg"
-                    alt="Ramp"
+                    src="/images/cray-logo.svg"
+                    alt="Cray"
                     width={80}
                     height={40}
                     priority
@@ -160,7 +160,7 @@ const SignInPage: React.FC = () => {
               {/* Create Account Section */}
               <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
                 <p className="text-sm text-[#7F7F7F] font-semibold">
-                  New to Ramp?
+                  New to Cray?
                   <Link
                     href="/onboarding/join-us"
                     className="text-primary hover:text-blue-700 ml-1"

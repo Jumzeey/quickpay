@@ -136,8 +136,6 @@ const Dashboard = () => {
     }
   );
 
-  console.log(currencySymbols[selectedCurrency], currencySymbols, selectedCurrency)
-
   const { loading: isChartLoading } = useEffectFetch(
     async () => {
       return await populateCharts(selectedOption, selectedCurrency);

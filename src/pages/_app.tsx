@@ -19,14 +19,14 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const timeout = 2 * 60 * 1000 // 10 minutes
+const timeout = 10 * 60 * 1000 // 10 minutes
 const promptBeforeIdle = 1 * 60 * 1000 // (1 minute)
 
 export default function App({ Component, pageProps }: AppProps) {
   const { user } = useAuthentication() || {};
   const [tracker, setTracker] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
-  const [shouldLogout, setShouldLogout] = useState(false);
+  const [shouldLogout, setShouldLogout] = useState(true);
   const [state, setState] = useState<string>('Active')
   const [remaining, setRemaining] = useState<number>(timeout)
   const [open, setOpen] = useState<boolean>(false)
@@ -54,13 +54,18 @@ export default function App({ Component, pageProps }: AppProps) {
     onPrompt,
     timeout,
     promptBeforeIdle,
-    throttle: 500,
+    throttle: 1000,
     crossTab: true,
     syncTimers: 1000,
     events: ['mousemove', 'keydown', 'wheel', 'DOMMouseScroll', 'mousewheel', 'mousedown', 'touchstart', 'touchmove', 'MSPointerDown', 'MSPointerMove'],
   })
 
   useEffect(() => {
+    const isAuthenticated = getToken();
+    if (!isAuthenticated) {
+      return;
+    }
+
     const interval = setInterval(() => {
       setRemaining(Math.ceil(getRemainingTime() / 1000))
     }, 500)
@@ -75,7 +80,10 @@ export default function App({ Component, pageProps }: AppProps) {
   const seconds = remaining > 1 ? 'seconds' : 'second'
 
   const handleLogoutTimer = () => {
-    handleLogOut();
+    const isAuthenticated = getToken();
+    if (isAuthenticated) {
+      handleLogOut();
+    }
     setShouldLogout(false);
   };
 
@@ -85,9 +93,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const isAuthenticated = getToken();
-    if (!isAuthenticated) {
-      setShouldLogout(false);
-    }
+    setShouldLogout(!isAuthenticated ? false : true);
   }, []);
 
   useEffect(() => {
@@ -115,8 +121,6 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [tracker, user]);
 
-  console.log({remaining, state})
-
   return (
     <ThemeProvider>
       <SharedState>
@@ -129,7 +133,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <Component {...pageProps} />
 
           <Modal
-            isOpen={state === 'Prompted' && open && !shouldLogout}
+            isOpen={state === 'Prompted' && open && shouldLogout}
             onClose={() => { }}
             title="Session Timeout Warning"
           >

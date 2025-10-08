@@ -19,7 +19,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const timeout = 10 * 60 * 1000 // 10 minutes
+const timeout = 2 * 60 * 1000 // 10 minutes
 const promptBeforeIdle = 1 * 60 * 1000 // (1 minute)
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -54,9 +54,10 @@ export default function App({ Component, pageProps }: AppProps) {
     onPrompt,
     timeout,
     promptBeforeIdle,
-    throttle: 1000,
+    throttle: 500,
     crossTab: true,
     syncTimers: 1000,
+    events: ['mousemove', 'keydown', 'wheel', 'DOMMouseScroll', 'mousewheel', 'mousedown', 'touchstart', 'touchmove', 'MSPointerDown', 'MSPointerMove'],
   })
 
   useEffect(() => {
@@ -71,8 +72,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   const handleStillHere = () => activate();
 
-  const timeTillPrompt = Math.max(remaining - promptBeforeIdle / 1000, 0)
-  const seconds = timeTillPrompt > 1 ? 'seconds' : 'second'
+  const seconds = remaining > 1 ? 'seconds' : 'second'
 
   const handleLogoutTimer = () => {
     handleLogOut();
@@ -115,6 +115,8 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [tracker, user]);
 
+  console.log({remaining, state})
+
   return (
     <ThemeProvider>
       <SharedState>
@@ -133,7 +135,7 @@ export default function App({ Component, pageProps }: AppProps) {
           >
             <div className="p-4">
               <p className="mb-4">
-                Your session will expire in {timeTillPrompt} {seconds} due to inactivity.
+                Your session will expire in {remaining} {seconds} due to inactivity.
                 Would you like to continue your session?
               </p>
 

@@ -2,6 +2,7 @@ import Switch from "@/components/Switch";
 import env from "@/config/env";
 import { useTheme } from "@/context/ThemeContext";
 import useAuthentication from "@/stores/useAuthentication";
+import useMode from "@/stores/useMode";
 import { capitalizeFirstLetterOfEachWord, handleLogOut } from "@/util/utils";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +28,7 @@ const Navbar = ({
   const { business_name, firstname, lastname, avatar } = useAuthentication().user || {};
   const { oldUrl } = env;
   const { theme, toggleTheme } = useTheme();
+  const { isLiveMode, toggleMode } = useMode();
 
   const [state, setState] = useState({
     showProfileMenu: false,
@@ -59,7 +61,7 @@ const Navbar = ({
               className="h-10 w-auto"
               width={83}
               height={40}
-              // priority
+            // priority
             />
           </Link>
 
@@ -86,12 +88,12 @@ const Navbar = ({
               </Link>
 
               <div className="flex items-center gap-2 leading-[40px] border-x border-[#C4C4C452] dark:border-gray-600 px-6">
-                Live Mode
+                {isLiveMode ? 'Live Mode' : 'Test Mode'}
                 <Switch
                   id="live-mode-switch"
-                  enabled={true}
-                  onChange={() => { }}
-                  containerClassName="bg-[#2BD325]"
+                  enabled={isLiveMode}
+                  onChange={toggleMode}
+                  containerClassName={isLiveMode ? "bg-[#2BD325]" : "bg-[#FFA500]"}
                   contentClassName="size-1.5 ml-0.5"
                 />
               </div>

@@ -19,134 +19,73 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const timeout = 10 * 60 * 1000 // 10 minutes
+const promptBeforeIdle = 1 * 60 * 1000 // (1 minute)
+
 export default function App({ Component, pageProps }: AppProps) {
   const { user } = useAuthentication() || {};
   const [tracker, setTracker] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
+  const [shouldLogout, setShouldLogout] = useState(true);
+  const [state, setState] = useState<string>('Active')
+  const [remaining, setRemaining] = useState<number>(timeout)
+  const [open, setOpen] = useState<boolean>(false)
 
-  const [showIdleWarning, setShowIdleWarning] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(0);
-  const idleTimeoutInMinutes = 5; // Configure idle timeout
-  const warningTimeBeforeLogoutInSeconds = 60; // Show warning 1 minute before logout
+  const onIdle = () => {
+    setState('Idle')
+    setOpen(false)
+    handleLogoutTimer()
+  }
 
-  // const logoutTimer: any = useRef(null);
-  const [shouldLogout, setShouldLogout] = useState(false);
+  const onActive = () => {
+    setState('Active')
+    setOpen(false)
+  }
 
-  // const handleIdle = () => {
-  //   setShowIdleWarning(true);
-  // };
+  // this will open modal
+  const onPrompt = () => {
+    setState('Prompted')
+    setOpen(true)
+  }
 
-  // const handleActive = () => {
-  //   if (showIdleWarning) {
-  //     setShowIdleWarning(false);
-  //   }
-  // };
-
-  const handleLogoutTimer = () => {
-    handleLogOut();
-    setShowIdleWarning(false);
-    setShouldLogout(false);
-  };
-
-  // Timer for warning
-  const { activate: activateWarning } = useIdleTimer({
-    timeout: 1000 * 60 * idleTimeoutInMinutes - 1000 * warningTimeBeforeLogoutInSeconds, // 4 minutes
-    onIdle: () => {
-      setShowIdleWarning(true);
-      setShouldLogout(true);
-      setRemainingTime(warningTimeBeforeLogoutInSeconds);
-    },
-    onActive: () => {
-      // Only hide warning if user is active before the logout timer expires
-      if (showIdleWarning && !shouldLogout) {
-        setShowIdleWarning(false);
-      }
-    },
-    debounce: 500,
+  const { getRemainingTime, activate } = useIdleTimer({
+    onIdle,
+    onActive,
+    onPrompt,
+    timeout,
+    promptBeforeIdle,
+    throttle: 1000,
     crossTab: true,
-    events: [
-      'mousemove',
-      'keydown',
-      'wheel',
-      'DOMMouseScroll',
-      'mousewheel',
-      'mousedown',
-      'touchstart',
-      'touchmove',
-      'MSPointerDown',
-      'MSPointerMove',
-      'visibilitychange',
-      'focus'
-    ]
-  });
-
-  // Timer for actual logout - separate from the warning timer
-  const { activate: activateLogout } = useIdleTimer({
-    timeout: 1000 * 60 * idleTimeoutInMinutes,
-    onIdle: () => {
-      // Only logout if the warning is showing (meaning user didn't interact after warning)
-      handleLogoutTimer();
-    },
-    // onActive: () => {
-    //   // If user becomes active while warning is shown, hide the warning
-    //   if (showIdleWarning) {
-    //     setShowIdleWarning(false);
-    //   }
-    // },
-    crossTab: true,
-  });
+    syncTimers: 1000,
+    events: ['mousemove', 'keydown', 'wheel', 'DOMMouseScroll', 'mousewheel', 'mousedown', 'touchstart', 'touchmove', 'MSPointerDown', 'MSPointerMove'],
+  })
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (showIdleWarning && shouldLogout) {
-      interval = setInterval(() => {
-        setRemainingTime((prevTime) => {
-          const newTime = prevTime - 1;
-
-          // If countdown reaches 0, logout immediately
-          if (newTime <= 0) {
-            handleLogoutTimer();
-            return 0;
-          }
-
-          return newTime;
-        });
-      }, 1000);
+    const isAuthenticated = getToken();
+    if (!isAuthenticated) {
+      return;
     }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [showIdleWarning, shouldLogout]);
+    const interval = setInterval(() => {
+      setRemaining(Math.ceil(getRemainingTime() / 1000))
+    }, 500)
 
-  useEffect(() => {
-    // Only run for authenticated users
+    return () => {
+      clearInterval(interval)
+    }
+  })
+
+  const handleStillHere = () => activate();
+
+  const seconds = remaining > 1 ? 'seconds' : 'second'
+
+  const handleLogoutTimer = () => {
     const isAuthenticated = getToken();
-    if (!isAuthenticated) return;
-
-    // Function to reset both timers
-    const resetAllTimers = () => {
-      activateWarning();
-      activateLogout();
-      setShowIdleWarning(false);
-    };
-
-    // Set up event listeners for user activity
-    window.addEventListener("mousemove", resetAllTimers);
-    window.addEventListener("keydown", resetAllTimers);
-    window.addEventListener("wheel", resetAllTimers);
-    window.addEventListener("mousedown", resetAllTimers);
-
-    return () => {
-      // Clean up event listeners
-      window.removeEventListener("mousemove", resetAllTimers);
-      window.removeEventListener("keydown", resetAllTimers);
-      window.removeEventListener("wheel", resetAllTimers);
-      window.removeEventListener("mousedown", resetAllTimers);
-    };
-  }, [activateWarning, activateLogout, shouldLogout]);
-
+    if (isAuthenticated) {
+      handleLogOut();
+    }
+    setShouldLogout(false);
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -154,21 +93,8 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const isAuthenticated = getToken();
-    if (!isAuthenticated) {
-      setShowIdleWarning(false);
-      setShouldLogout(false);
-    }
+    setShouldLogout(!isAuthenticated ? false : true);
   }, []);
-
-  // const startLogoutTimer = () => {
-  //   const isAuthenticated = getToken();
-  //   if (!isAuthenticated) return;
-
-  //   if (logoutTimer.current) clearTimeout(logoutTimer.current);
-  //   logoutTimer.current = setTimeout(() => {
-  //     handleLogOut();
-  //   }, 300000); // 5 minutes
-  // };
 
   useEffect(() => {
     if (
@@ -195,29 +121,6 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [tracker, user]);
 
-  // useEffect(() => {
-  //   startLogoutTimer();
-
-  //   const handleUserActivity = () => {
-  //     startLogoutTimer();
-  //   };
-
-  //   // Set up event listeners for user activity
-  //   window.addEventListener("mousemove", handleUserActivity);
-  //   window.addEventListener("keydown", handleUserActivity);
-  //   window.addEventListener("scroll", handleUserActivity);
-  //   window.addEventListener("click", handleUserActivity);
-
-  //   return () => {
-  //     if (logoutTimer.current) clearTimeout(logoutTimer.current);
-  //     // Clean up event listeners
-  //     window.removeEventListener("mousemove", handleUserActivity);
-  //     window.removeEventListener("keydown", handleUserActivity);
-  //     window.removeEventListener("scroll", handleUserActivity);
-  //     window.removeEventListener("click", handleUserActivity);
-  //   };
-  // }, []);
-
   return (
     <ThemeProvider>
       <SharedState>
@@ -230,16 +133,13 @@ export default function App({ Component, pageProps }: AppProps) {
           <Component {...pageProps} />
 
           <Modal
-            isOpen={showIdleWarning}
+            isOpen={state === 'Prompted' && open && shouldLogout}
             onClose={() => { }}
             title="Session Timeout Warning"
           >
             <div className="p-4">
               <p className="mb-4">
-                Your session will expire in {remainingTime > 60
-                  ? `${Math.floor(remainingTime / 60)} minute(s) and ${remainingTime % 60} seconds`
-                  : `${remainingTime} seconds`
-                } due to inactivity.
+                Your session will expire in {remaining} {seconds} due to inactivity.
                 Would you like to continue your session?
               </p>
 
@@ -253,11 +153,7 @@ export default function App({ Component, pageProps }: AppProps) {
                 <Button
                   text="Continue Session"
                   ariaLabel="Continue session"
-                  onClick={() => {
-                    activateWarning(); // Reset the warning timer
-                    activateLogout();  // Reset the logout timer
-                    setShowIdleWarning(false);
-                  }}
+                  onClick={handleStillHere}
                   primary
                 />
               </div>

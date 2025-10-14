@@ -58,9 +58,9 @@ const Navbar = ({
             <Image
               src={theme === "light" ? "/images/cray-logo.svg" : "/images/cray-logo-white.svg"}
               alt="Cray Logo"
-              className="h-10 w-auto"
+              className="h-8 w-auto"
               width={83}
-              height={40}
+              height={32}
             // priority
             />
           </Link>

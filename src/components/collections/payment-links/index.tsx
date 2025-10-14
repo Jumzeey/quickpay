@@ -8,11 +8,12 @@ import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/icon";
 import Loader from "@/components/loader";
 import Modal from "@/components/modal";
+import Pagination from "@/components/pagination";
 import Switch from "@/components/Switch";
 import Table from "@/components/table";
 import TableSkeleton from "@/components/TableSkeleton";
 import { SharedStateContext } from "@/context/sharedState";
-import { useEffectFetch } from "@/hooks/useEffectFetch";
+import { usePaginatedEffect } from "@/hooks/useEffectFetch";
 import { disablePaymentLink, getPaymentLinks } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import { paymentLinksAnalytics } from "@/util/constants";
@@ -62,20 +63,24 @@ const PaymentLinks = () => {
     currentStep: "payment-links",
   });
 
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pagination, setPagination] = useState<any>(null);
+
   const {
     data: paymentLinksData,
     loading: isLoading,
     error,
     refetch: fetchPaymentLinks
-  } = useEffectFetch(
-    async () => {
-      const response = await getPaymentLinks(false);
+  } = usePaginatedEffect(
+    async (params) => {
+      const response = await getPaymentLinks(false, undefined, params);
       return response;
     },
-    [],
+    { page: currentPage },
     {
       onSuccess: (response) => {
-        const { total_links, active_links, paused_links } = response || {};
+        // Response shape expected to contain: payment_links, total_links, active_links, paused_links, pagination
+        const { total_links, active_links, paused_links, pagination } = response || {};
         setState(prevState => ({
           ...prevState,
           paymentLinks: response?.payment_links || [],
@@ -83,6 +88,7 @@ const PaymentLinks = () => {
           activeLinks: active_links || 0,
           pausedLinks: paused_links || 0,
         }));
+        setPagination(pagination || null);
       },
       onError: (error) => {
         notifyError(error.message);
@@ -361,6 +367,17 @@ const PaymentLinks = () => {
                   </Table>
                 </div>
               </div>
+
+              {pagination && (
+                <div className="px-4">
+                  <Pagination
+                    lastPage={pagination?.last_page}
+                    currentPage={currentPage}
+                    totalPages={pagination?.last_page}
+                    onPageChange={(page: number) => setCurrentPage(page)}
+                  />
+                </div>
+              )}
             </>
           )}
 

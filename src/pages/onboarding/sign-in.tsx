@@ -87,9 +87,9 @@ const SignInPage: React.FC = () => {
                     src="/images/cray-logo.svg"
                     alt="Cray"
                     width={80}
-                    height={40}
+                    height={32}
                     priority
-                    className="h-10 w-auto"
+                    className="h-8 w-auto"
                   />
                 </div>
               </div>

@@ -174,7 +174,7 @@ const CollectionHistory = () => {
     }, {
         key: 'fraud_check',
         title: 'Fraud Check',
-        render: (value: any, row: any) => row?.fraud_check || 'N/A'
+        render: (value: any, row: any) => row?.fraud_check?.status || 'N/A'
     }, {
         key: 'payment_reason',
         title: 'Payment Reason',

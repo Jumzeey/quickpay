@@ -128,30 +128,35 @@ interface CollectionsPaginationTypes {
 }
 
 interface CollectionsTypes {
-  id: number
-  reference: string
-  customer_reference: string
-  amount: string
-  processing_fee: string
-  net_amount: string
-  converted_amount: string
-  rate: string
-  status: string
-  created_at: string
-  value_date: string
+  id: number;
+  reference: string;
+  customer_reference: string;
+  amount: string;
+  processing_fee: string;
+  net_amount: string;
+  converted_amount: string;
+  rate: string;
+  status: string;
+  created_at: string;
+  value_date: string;
   sender: {
-    sender_name: string
-    sender_bank_code: string | null
-    sender_account_number: string | null
-  }
-  callback_url: string
-  card_scheme: string
-  mid: string
-  subaccount: string
-  payment_reason: string | null
-  channel: string
-  refunded: number
-  fraud_check: string | null
+    sender_name: string | null;
+    sender_bank_code: string | null;
+    sender_account_number: string | null;
+  };
+  callback_url: string;
+  card_scheme: string;
+  mid: string;
+  subaccount: string;
+  payment_reason: string | null;
+  channel: string;
+  refunded: number;
+  currency: string;
+  fraud_check: {
+    reference: string | null;
+    response: string | null;
+    status: string | null;
+  } | null;
 }
 
 interface CollectionHistoryExport {

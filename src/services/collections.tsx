@@ -26,12 +26,12 @@ export async function getCollectionHistory(params?: object): Promise<CollectionH
   }
 }
 
-export async function getPaymentLinks(getTransactions: boolean, id?: number) {
+export async function getPaymentLinks(getTransactions: boolean, id?: number, params?: object) {
   const endpoint = getTransactions
     ? `${apiEndpoints.collections.GET_PAYMENT_LINKS}/${id}`
     : apiEndpoints.collections.GET_PAYMENT_LINKS;
   try {
-    const response = await api.get(endpoint);
+    const response = await api.get(endpoint, params ? { params } : undefined);
 
     const res = id ? response.data.payment_link_transactions : response.data;
     return res;
@@ -96,7 +96,7 @@ export async function getVirtualAccountTransactions(
 }
 
 // VirtualAccountFormValues
-export async function createVirtualAccount(payload: {bvn: string} ) {
+export async function createVirtualAccount(payload: { bvn: string }) {
   try {
     const response = await api.post(
       apiEndpoints.collections.REQUEST_VIRTUAL_ACCOUNT,

@@ -5,8 +5,8 @@ import TableSkeleton from "@/components/TableSkeleton";
 import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { getPaymentLinks } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
-import { formatAmount, notifyError } from "@/util/utils";
 import debounce from "@/util/debounce";
+import { formatAmount, notifyError } from "@/util/utils";
 import { Fragment, useCallback, useState } from "react";
 
 interface AccountProps {
@@ -70,7 +70,7 @@ const PaymentLinkTransactions = () => {
   });
 
   const {
-    // data,
+    data,
     loading: isLoading,
     // error,
   } = useEffectFetch(
@@ -89,6 +89,8 @@ const PaymentLinkTransactions = () => {
       }
     }
   );
+
+  console.log({ data, selectedItem })
 
   // const fetchPaymentLinkTransactions = async () => {
   //   if (selectedItem?.id) {
@@ -153,7 +155,6 @@ const PaymentLinkTransactions = () => {
               columns={columns}
               data={state.transactions}
             />
-
 
             {/* <Pagination
               lastPage={lastPage}

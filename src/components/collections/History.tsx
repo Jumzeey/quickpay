@@ -223,10 +223,10 @@ const CollectionHistory = () => {
 
     const handleViewMeta = async (row: any) => {
         try {
+            setSelectedMeta(null);
             setIsLoadingMeta(true);
             const response = await getCollectionGatewayMeta(row.id);
             if (response) {
-                console.log({ response });
                 setSelectedMeta(response);
             }
 
@@ -437,17 +437,21 @@ const CollectionHistory = () => {
                                         primary
                                     />
                                 )}
-                                secondaryBtnContent={(row: any) => (
-                                    <div className="relative block border border-[#EFF7FE] rounded-lg">
-                                        <button
-                                            onClick={() => handleViewMeta(row)}
-                                            disabled={isLoadingMeta}
-                                            className="text-sm text-primary font-medium px-4 h-12 bg-[#EFF7FE] flex items-center justify-center"
-                                        >
-                                            {isLoadingMeta ? <Loader /> : "View Transaction Meta"}
-                                        </button>
-                                    </div>
-                                )}
+                                secondaryBtnContent={(row: any) => {
+                                    if (row.currency === 'NGN') return null;
+
+                                    return (
+                                        <div className="relative block border border-[#EFF7FE] rounded-lg">
+                                            <button
+                                                onClick={() => handleViewMeta(row)}
+                                                disabled={isLoadingMeta}
+                                                className="text-sm text-primary font-medium px-4 h-12 bg-[#EFF7FE] flex items-center justify-center"
+                                            >
+                                                {isLoadingMeta ? <Loader /> : "View Transaction Meta"}
+                                            </button>
+                                        </div>
+                                    )
+                                }}
                             />
                             <Pagination
                                 lastPage={lastPage}

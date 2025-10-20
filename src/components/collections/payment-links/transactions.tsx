@@ -1,17 +1,17 @@
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/icon";
+import Pagination from "@/components/pagination";
 import TableSkeleton from "@/components/TableSkeleton";
-import { useEffectFetch } from "@/hooks/useEffectFetch";
+import { usePaginatedEffect } from "@/hooks/useEffectFetch";
 import { getPaymentLinks } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import debounce from "@/util/debounce";
-import { formatAmount, notifyError } from "@/util/utils";
+import { notifyError } from "@/util/utils";
 import { Fragment, useCallback, useState } from "react";
 
 interface AccountProps {
   transactions: any[];
-  // isLoading: boolean;
 }
 
 const columns = [{
@@ -32,17 +32,17 @@ const columns = [{
 {
   key: 'amount',
   title: 'Amount',
-  render: (value: any, row: any) => formatAmount(row?.amount) || 'N/A',
+  render: (value: any, row: any) => row?.amount || 'N/A',
 },
 {
   key: 'charges',
   title: 'Charges',
-  render: (value: any, row: any) => formatAmount(row?.charges) || 'N/A',
+  render: (value: any, row: any) => row?.charges || 'N/A',
 },
 {
-  key: 'date',
+  key: 'created_at',
   title: 'Date Created',
-  render: (value: any, row: any) => row?.date || 'N/A',
+  render: (value: any, row: any) => row?.created_at || 'N/A',
 },
 {
   key: 'status',
@@ -56,63 +56,35 @@ const PaymentLinkTransactions = () => {
   const [searchInput, setSearchInput] = useState("");
 
   const [state, setState] = useState<AccountProps>({
-    transactions: [{
-      reference: "TRX-987654321",
-      sender_name: "Zainab Al-Farsi",
-      sender_email: "test@gmail.com",
-      amount: '₦2,500,000',
-      charges: '₦2,500',
-      date: "Feb 8th, 2025 (11:10:44 AM)",
-      status: "Successful",
-      id: "1",
-      created_at: "Feb 8th, 2025 (11:10:44 AM)",
-    }]
+    transactions: []
   });
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pagination, setPagination] = useState<any>(null);
 
   const {
-    data,
+    // data,
     loading: isLoading,
     // error,
-  } = useEffectFetch(
+  } = usePaginatedEffect(
     async () => {
       const response = await getPaymentLinks(true, selectedItem?.id);
       return response;
     },
-    [],
+    { page: currentPage },
     {
       onSuccess: (response) => {
-        return;
-        setState({ ...state, transactions: response, });
+        const { payment_link_transactions = [], pagination } = response || {};
+        setState(prevState => ({
+          ...prevState,
+          transactions: payment_link_transactions
+        }));
+        setPagination(pagination || null);
       },
       onError: (error) => {
         notifyError(error.message);
       }
     }
   );
-
-  console.log({ data, selectedItem })
-
-  // const fetchPaymentLinkTransactions = async () => {
-  //   if (selectedItem?.id) {
-  //     return;
-  //     const transactions = await getPaymentLinks(true, selectedItem?.id);
-  //     setState({ ...state, transactions,});
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchPaymentLinkTransactions();
-  // }, [selectedItem?.id]);
-
-  // const formattedData = state.transactions.map((item: any) => ({
-  //   reference: item.reference,
-  //   sender: item.sender_name,
-  //   sender_email: item.sender_email,
-  //   amount: item.amount,
-  //   charges: item.charges,
-  //   date: item.created_at,
-  //   status: item.status,
-  // }));
 
   const debouncedHandleParamsChange = useCallback(
     debounce((value: string) => {
@@ -156,12 +128,14 @@ const PaymentLinkTransactions = () => {
               data={state.transactions}
             />
 
-            {/* <Pagination
-              lastPage={lastPage}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            /> */}
+            {pagination && (
+              <Pagination
+                lastPage={pagination?.last_page}
+                currentPage={currentPage}
+                totalPages={pagination?.last_page}
+                onPageChange={(page: number) => setCurrentPage(page)}
+              />
+            )}
           </>
         </Fragment>
       )}

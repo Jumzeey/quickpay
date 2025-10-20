@@ -79,7 +79,6 @@ const PaymentLinks = () => {
     { page: currentPage },
     {
       onSuccess: (response) => {
-        // Response shape expected to contain: payment_links, total_links, active_links, paused_links, pagination
         const { total_links, active_links, paused_links, pagination } = response || {};
         setState(prevState => ({
           ...prevState,

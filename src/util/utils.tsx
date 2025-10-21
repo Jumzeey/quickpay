@@ -451,3 +451,10 @@ export const passwordValidation = Yup.string()
   .min(12, "Password must be at least 12 characters long")
   .matches(/[a-z]/, "Password must contain at least one lowercase letter")
   .matches(/[A-Z]/, "Password must contain at least one uppercase letter");
+
+export const uuid = (): string =>
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });

@@ -1,18 +1,18 @@
-import env from "@/config/env";
-import useNetworkLoaderStore from "@/stores/useNetworkLoaderStore";
-import Axios from "axios";
-import router from "next/router";
-import { CustomHttpError } from "./errors/CustomHttpError";
-import { notifyError } from "./utils";
+import env from '@/config/env';
+import useNetworkLoaderStore from '@/stores/useNetworkLoaderStore';
+import Axios from 'axios';
+import router from 'next/router';
+import { CustomHttpError } from './errors/CustomHttpError';
+import { notifyError } from './utils';
 
-const { baseUrl } = env;
+const { baseUrl, altUrl, secretKey } = env;
 
 const api = Axios.create({
   baseURL: baseUrl,
   withCredentials: false,
   headers: {
-    Accept: "application/json",
-    ...(process.env.NODE_ENV === "development" ? { "dev-mode": "true" } : {})
+    Accept: 'application/json',
+    ...(process.env.NODE_ENV === 'development' ? { 'dev-mode': 'true' } : {}),
   },
 });
 api.interceptors.request.use(
@@ -31,7 +31,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   function (response) {
     hideLoadingBar();
-    if (response.data?.status === "error") {
+    if (response.data?.status === 'error') {
       if (
         response.data?.errors &&
         Object.values(response.data?.errors).length
@@ -60,35 +60,35 @@ api.interceptors.response.use(
     if (!err.response) {
       return Promise.reject(
         new CustomHttpError(
-          "Error occurred while sending the request, please check your internet settings",
+          'Error occurred while sending the request, please check your internet settings',
           {
             statusCode: 0,
             responseText:
-              "Error occurred while sending the request, please check your internet settings",
+              'Error occurred while sending the request, please check your internet settings',
           }
         )
       );
     }
 
     const { status, data } = err.response;
-    if (status === 401 && data?.data?.error_code === "kyc_01") {
-      notifyError("Kyc not verified");
-      router.push("/your-business?tab=business-kyc");
+    if (status === 401 && data?.data?.error_code === 'kyc_01') {
+      notifyError('Kyc not verified');
+      router.push('/your-business?tab=business-kyc');
       return {
         success: false,
-        message: "Kyc not verified",
+        message: 'Kyc not verified',
       };
     }
 
-    if (status === 401 && data?.data?.error_code === "virtual_account_01") {
+    if (status === 401 && data?.data?.error_code === 'virtual_account_01') {
       notifyError(
-        "Upgrade to KYC for registered businesses to access a virtual account."
+        'Upgrade to KYC for registered businesses to access a virtual account.'
       );
-      router.push("/your-business?tab=business-kyc");
+      router.push('/your-business?tab=business-kyc');
       return {
         success: false,
         message:
-          "Upgrade to KYC for registered businesses to access a virtual account.",
+          'Upgrade to KYC for registered businesses to access a virtual account.',
       };
     }
 
@@ -110,7 +110,8 @@ api.interceptors.response.use(
     // }
 
     if (status >= 500) {
-      const errorMessage = "Something went wrong on our end. Please try again later.";
+      const errorMessage =
+        'Something went wrong on our end. Please try again later.';
       notifyError(errorMessage);
       return Promise.reject(
         new CustomHttpError(errorMessage, {
@@ -118,8 +119,8 @@ api.interceptors.response.use(
           responseText: errorMessage,
           payload: {
             originalError: err.response.data,
-            timestamp: new Date().toISOString()
-          }
+            timestamp: new Date().toISOString(),
+          },
         })
       );
     }
@@ -137,9 +138,9 @@ api.interceptors.response.use(
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     return Promise.reject(
-      new CustomHttpError("Error occurred while sending the request", {
+      new CustomHttpError('Error occurred while sending the request', {
         statusCode: err.response.status,
-        responseText: "Error occurred while sending the request",
+        responseText: 'Error occurred while sending the request',
       })
     );
   }
@@ -152,5 +153,13 @@ function showLoadingBar() {
 function hideLoadingBar() {
   useNetworkLoaderStore.getState().decreaseLoadingCount();
 }
+
+export const virtualAccountApi = Axios.create({
+  baseURL: altUrl,
+  withCredentials: false,
+  headers: {
+    'api-key': secretKey,
+  },
+});
 
 export default api;

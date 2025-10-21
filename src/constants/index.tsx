@@ -5,14 +5,29 @@ export const sidebarLinks = [
     title: "Dashboard",
   },
   {
-    href: "/balance-history",
-    icon: "walletHistory2",
-    title: "Balance History",
-  },
-  {
     href: "/your-business",
     icon: "business2",
     title: "Your Business",
+  },
+  {
+    href: "/payouts",
+    icon: "payout2",
+    title: "Payouts",
+  },
+  {
+    href: "/collections",
+    icon: "collections",
+    title: "Collections",
+  },
+  {
+    href: "/settlements",
+    icon: "settlement",
+    title: "Settlements",
+  },
+  {
+    href: "/balance-history",
+    icon: "walletHistory2",
+    title: "Balance History",
   },
   // TODO: ask if i should remove this
   // {
@@ -20,31 +35,16 @@ export const sidebarLinks = [
   //   icon: "payment-mandate",
   //   title: "Disputes",
   // },
-  {
-    href: "/payouts",
-    icon: "payout2",
-    title: "Payouts",
-  },
   // {
   //   href: "/e-commerce/online-store",
   //   icon: "ecommerce",
   //   title: "E-commerce",
   // },
-  {
-    href: "/settlements",
-    icon: "settlement",
-    title: "Settlements",
-  },
   // {
   //   href: "/conversions",
   //   icon: "conversions",
   //   title: "Conversions",
   // },
-  {
-    href: "/collections",
-    icon: "collections",
-    title: "Collections",
-  },
   // {
   //   href: "/mids",
   //   icon: "mids",

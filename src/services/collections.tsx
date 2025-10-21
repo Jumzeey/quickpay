@@ -1,6 +1,9 @@
 // import { VirtualAccountFormValues } from '@/components/collections/RequestVirtualAcount';
-import { CollectionGatewayMetaResponse, CollectionHistoryResponse } from '@/components/collections/types';
-import api from '@/util/api';
+import {
+  CollectionGatewayMetaResponse,
+  CollectionHistoryResponse,
+} from '@/components/collections/types';
+import api, { virtualAccountApi } from '@/util/api';
 import { apiEndpoints } from '@/util/endpoints';
 import { notifyError } from '@/util/utils';
 
@@ -14,7 +17,44 @@ export interface PaymentLinkPayload {
   subaccount_id?: string;
 }
 
-export async function getCollectionHistory(params?: object): Promise<CollectionHistoryResponse | undefined> {
+export interface VirtualAccountFormValues {
+  reference: string;
+  account_name: string;
+  customer_email: string;
+  type: string;
+  virtual_account_type: string;
+  bvn?: string;
+  currency: string;
+  provider?: string;
+  first_name?: string;
+  last_name?: string;
+  other_name?: string;
+  dob?: string;
+  rc_number?: string;
+  business_name?: string;
+  phone_number?: string;
+  date_of_birth?: string;
+  address?: string;
+  id_number?: string;
+  tax_id?: string;
+  business_url?: string;
+  beneficial_owner?: string;
+  business_description?: string;
+  government_id?: File | null;
+  proof_of_address?: File | null;
+  tax_identification?: File | null;
+  source_of_funds?: File | null;
+  certificate_of_incorporation?: File | null;
+  tax_certificate?: File | null;
+  proof_of_registered_address?: File | null;
+  shareholder_register?: File | null;
+  beneficial_owner_ids?: File | null;
+  director_id?: File | null;
+}
+
+export async function getCollectionHistory(
+  params?: object
+): Promise<CollectionHistoryResponse | undefined> {
   try {
     const response = await api.get<CollectionHistoryResponse>(
       `${apiEndpoints.collections.GET_COLLECTION_HISTORY}`,
@@ -82,9 +122,7 @@ export async function getVirtualAccounts(params?: object) {
   }
 }
 
-export async function getVirtualAccountTransactions(
-  id: string
-) {
+export async function getVirtualAccountTransactions(id: string) {
   try {
     const response = await api.get(
       `${apiEndpoints.collections.GET_VIRTUAL_ACCOUNTS}/${id}`
@@ -96,11 +134,29 @@ export async function getVirtualAccountTransactions(
 }
 
 // VirtualAccountFormValues
-export async function createVirtualAccount(payload: { bvn: string }) {
+export async function createVirtualAccount(payload: FormData) {
   try {
-    const response = await api.post(
+    const response = await virtualAccountApi.post(
       apiEndpoints.collections.REQUEST_VIRTUAL_ACCOUNT,
       payload
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function verifyVirtualAccountOtp({
+  otp,
+  customer_email,
+}: {
+  otp: string;
+  customer_email: string;
+}) {
+  try {
+    const response = await virtualAccountApi.post(
+      apiEndpoints.collections.VERIFY_VIRTUAL_ACCOUNT_OTP,
+      { otp, customer_email }
     );
     return response;
   } catch (error) {
@@ -192,10 +248,15 @@ export async function getSingleRefund(id: string) {
   }
 }
 
-export const getCollectionGatewayMeta = async (id: string): Promise<CollectionGatewayMetaResponse | undefined> => {
+export const getCollectionGatewayMeta = async (
+  id: string
+): Promise<CollectionGatewayMetaResponse | undefined> => {
   try {
     const response = await api.get<CollectionGatewayMetaResponse>(
-      `${apiEndpoints.collections.GET_COLLECTION_GATEWAY_META.replace(':id', id)}`
+      `${apiEndpoints.collections.GET_COLLECTION_GATEWAY_META.replace(
+        ':id',
+        id
+      )}`
     );
     return response.data;
   } catch (error: any) {

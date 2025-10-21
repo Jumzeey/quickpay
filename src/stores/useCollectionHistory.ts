@@ -1,4 +1,3 @@
-import { VirtualAccountFormValues } from '@/components/collections/RequestVirtualAcount';
 import { CollectionHistoryResponse, CollectionsTypes } from '@/components/collections/types';
 import {
   createVirtualAccount,
@@ -7,6 +6,7 @@ import {
   getRefunds,
   getSingleRefund,
   getVirtualAccounts,
+  VirtualAccountFormValues,
 } from '@/services/collections';
 import { Pagination } from '@/stores/useWalletLogs';
 import { create } from 'zustand';
@@ -147,7 +147,7 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
     }
   },
 
-  createVirtualAccount: async (payload: VirtualAccountFormValues) => {
+  createVirtualAccount: async (payload: FormData) => {
     set((state) => ({
       ...state,
       createVirtualAccountLoading: true,

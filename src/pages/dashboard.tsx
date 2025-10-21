@@ -208,7 +208,7 @@ const Dashboard = () => {
     <Layout pageTitle='Dashboard' icon='dashboard'>
       <WebPageTitle title='Dashboard | Cray Merchant Portal' />
 
-      <div className="flex flex-row md:items-center justify-between">
+      <div className="flex flex-row md:items-center justify-between ">
         <div className="flex flex-col gap-1">
           <p className="font-bold text-sm text-[#7F7F7F] dark:text-[#EFF7FE90]">
             Good Morning, <span className="text-black dark:text-white tracking-wider">{capitalizeFirstLetter(firstname)}</span>
@@ -223,7 +223,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="w-28">
+        <div>
           <CurrencySwitcher currencies={['all']} />
         </div>
       </div>

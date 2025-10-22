@@ -7,15 +7,15 @@ import useAuthentication from "@/stores/useAuthentication";
 import "@/styles/globals.css";
 import { getToken, handleLogOut } from "@/util/utils";
 import type { AppProps } from "next/app";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { useEffect, useState } from "react";
 import { useIdleTimer } from 'react-idle-timer';
 import { Toaster } from "sonner";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600", "700"],
-  variable: "--font-plus-jakarta",
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -124,7 +124,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
       <SharedState>
-        <main className={isClient ? `${plusJakartaSans.variable} font-sans` : "font-sans"}>
+        <main className={isClient ? `${manrope.variable} font-sans` : "font-sans"}>
           <Toaster position="top-center" richColors />
           <meta
             name="viewport"

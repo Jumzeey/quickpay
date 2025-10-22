@@ -151,9 +151,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
         <div className='flex items-center flex-col gap-1 text-[13px] text-primary bg-[#005BB01A] px-5 py-7 rounded-md font-medium'>
           <p className='font-bold'>Important:</p>
           <span>
-            Please upload your company registration documents. These documents
-            are required to set up your Payroll Accounts, which will be used for
-            customer disbursements.
+            Please upload your company registration documents. These documents are required to create your USD Virtual Account, which will be used to receive and process international payments.
           </span>
         </div>
 

@@ -29,7 +29,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
   const [files, setFiles] = useState<UploadedDoc[]>([]);
 
   const documentOptions =
-    type === 'Individual'
+    type === 'individual'
       ? [
           { value: 'government_id', label: 'Government ID' },
           { value: 'proof_of_address', label: 'Proof of Address' },

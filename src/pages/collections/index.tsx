@@ -8,8 +8,10 @@ import PageHeader from "@/components/PageHeader";
 import TabHeader from "@/components/TabHeader";
 import WebPageTitle from "@/components/WebPageTitle";
 import useAuthentication from "@/stores/useAuthentication";
+import useCurrency from "@/stores/useCurrency";
 import { Modules } from "@/util/utils";
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 
 const tabs = [
   { title: "Collection History", link: "?tab=collection-history" },
@@ -20,11 +22,19 @@ const tabs = [
 
 const Collection = () => {
   const router = useRouter()
+  const { selectedCurrency, setCurrency } = useCurrency();
 
   const { tab: urlTab } = router.query;
   const tab = urlTab || (tabs.length > 0 ? tabs[0].link.replace('?tab=', '') : '');
 
   const { modules } = useAuthentication();
+
+  // Set NGN as default currency when virtual accounts tab is active
+  useEffect(() => {
+    if (tab === 'virtual-accounts' && !selectedCurrency) {
+      setCurrency('NGN');
+    }
+  }, [tab, selectedCurrency, setCurrency]);
 
   const cardSubProduct = modules?.find((m: Modules) => m.product === 'Card Payments')?.sub_product;
   const cardCurrency: string[] = cardSubProduct?.currency || (cardSubProduct?.payment_type?.includes('all') ? walletCurrencies.map(currency => currency.value) : []);

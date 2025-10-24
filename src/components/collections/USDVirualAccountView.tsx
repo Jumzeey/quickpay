@@ -7,9 +7,10 @@ import Loader from '@/components/loader';
 import { Controller } from 'react-hook-form';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import * as Yup from 'yup';
-import { notifyError, notifySuccess, uuid } from '@/util/utils';
+import { uuid } from '@/util/utils';
 import { createVirtualAccount } from '@/services/collections';
 import USDVirtualAccountDocuments from './USDVirtualAccountDocuments';
+import { useApiResponse } from '@/hooks/useApiResponse';
 
 interface Props {
   onBack: () => void;
@@ -19,16 +20,18 @@ interface Props {
 interface USDFormValues {
   account_name: string;
   customer_email: string;
-  phone_number?: string;
-  date_of_birth?: string;
-  address?: string;
+  phone_number: string;
+  date_of_birth: string;
+  address: string;
   rc_number?: string;
-  id_number?: string;
-  tax_id?: string;
-  business_url?: string;
-  beneficial_owner?: string;
-  business_name?: string;
+  id_number: string;
+  tax_id: string;
+  business_url: string;
+  beneficial_owner: string;
+  business_name: string;
   business_description?: string;
+  first_name: string;
+  last_name: string;
   type: string;
 }
 
@@ -37,10 +40,11 @@ const USDVirtualAccountView: React.FC<Props> = ({
   virtualAccountType,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [accountType, setAccountType] = useState('Individual');
+  const [accountType, setAccountType] = useState('individual');
   const [uploadedDocuments, setUploadedDocuments] = useState<
     { type: string; file: File }[]
   >([]);
+  const { handleError, handleSuccess } = useApiResponse();
 
   const validationSchema = useMemo(
     () =>
@@ -52,21 +56,21 @@ const USDVirtualAccountView: React.FC<Props> = ({
         phone_number: Yup.string()
           .required('Phone number is required')
           .matches(/^[0-9]{10,15}$/, 'Enter a valid phone number'),
+        first_name: Yup.string().required('First name is required'),
+        last_name: Yup.string().required('Last name is required'),
         id_number: Yup.string().required('Identification number is required'),
         date_of_birth: Yup.string().required('Date of birth is required'),
         address: Yup.string().required('Address is required'),
-        rc_number: Yup.string().required('RC Number is required'),
         tax_id: Yup.string().required('Tax ID is required'),
         business_url: Yup.string()
           .url('Invalid URL')
           .required('Business URL is required'),
         beneficial_owner: Yup.string().required('Beneficial owner is required'),
         business_name: Yup.string().required('Business name is required'),
+        business_description: Yup.string().required('Business description is required'),
         type: Yup.string().required('Account type is required'),
         ...(accountType === 'corporate' && {
-          business_description: Yup.string().required(
-            'Business description is required'
-          ),
+          rc_number: Yup.string().required('RC Number is required'),
         }),
       }),
     [accountType]
@@ -91,6 +95,8 @@ const USDVirtualAccountView: React.FC<Props> = ({
       beneficial_owner: '',
       business_name: '',
       business_description: '',
+      first_name: '',
+      last_name: '',
       type: 'individual',
     },
     mode: 'onChange',
@@ -121,14 +127,12 @@ const USDVirtualAccountView: React.FC<Props> = ({
       });
 
       const response = await createVirtualAccount(formData);
-      notifySuccess(
-        response?.data?.data?.message || 'USD Virtual Account created successfully'
-      );
+      handleSuccess(response, 'USD Virtual Account created successfully');
 
       reset();
       onBack();
     } catch (error: any) {
-      notifyError(error?.message || 'Failed to create USD Virtual Account');
+      handleError(error, 'Failed to create USD Virtual Account');
     } finally {
       setIsLoading(false);
     }
@@ -235,6 +239,38 @@ const USDVirtualAccountView: React.FC<Props> = ({
                     .toISOString()
                     .split('T')[0]
                 }
+                {...field}
+              />
+            )}
+          />
+
+          <Controller
+            name='first_name'
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label='First Name'
+                id='first_name'
+                type='text'
+                htmlFor='first_name'
+                error={errors.first_name?.message}
+                touched={!!errors.first_name}
+                {...field}
+              />
+            )}
+          />
+
+          <Controller
+            name='last_name'
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label='Last Name'
+                id='last_name'
+                type='text'
+                htmlFor='last_name'
+                error={errors.last_name?.message}
+                touched={!!errors.last_name}
                 {...field}
               />
             )}
@@ -366,23 +402,21 @@ const USDVirtualAccountView: React.FC<Props> = ({
             )}
           />
 
-          {accountType === 'corporate' && (
-            <Controller
-              name='business_description'
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label='Business Description'
-                  id='business_description'
-                  type='text'
-                  htmlFor='business_description'
-                  error={errors.business_description?.message}
-                  touched={!!errors.business_description}
-                  {...field}
-                />
-              )}
-            />
-          )}
+          <Controller
+            name='business_description'
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label='Business Description'
+                id='business_description'
+                type='text'
+                htmlFor='business_description'
+                error={errors.business_description?.message}
+                touched={!!errors.business_description}
+                {...field}
+              />
+            )}
+          />
         </div>
 
         {/* 3. Supporting documents */}

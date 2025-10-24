@@ -13,6 +13,7 @@ import { getVirtualAccounts } from '@/services/collections';
 import useClickEvent from '@/stores/useClickEvent';
 import useCollectionHistory from '@/stores/useCollectionHistory';
 import useFilter from '@/stores/useFilter';
+import useCurrency from '@/stores/useCurrency';
 import debounce from '@/util/debounce';
 import {
   capitalizeFirstLetter,
@@ -58,6 +59,7 @@ const VirtualAccounts = () => {
   const closeModal = () => setIsModalOpen(false);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+  const { selectedCurrency, setCurrency } = useCurrency();
   const [filter, setFilter] = useState({
     startDate: null,
     endDate: null,
@@ -78,6 +80,13 @@ const VirtualAccounts = () => {
     pagination,
     getVirtualAccountsHistoryLoading,
   } = useCollectionHistory();
+
+  // Set NGN as default currency on mount if not already set
+  React.useEffect(() => {
+    if (!selectedCurrency) {
+      setCurrency('NGN');
+    }
+  });
 
   const columns = [
     'No.',
@@ -101,7 +110,10 @@ const VirtualAccounts = () => {
 
   const handleExport = async () => {
     try {
-      const response = await getVirtualAccounts({ export: true });
+      const response = await getVirtualAccounts({
+        export: true,
+        currency: selectedCurrency || 'NGN'
+      });
       // const response = await fetchVirtualAccounts({ export: true });
       console.log(response);
       response?.export_link && downloadFile(response.export_link);
@@ -122,11 +134,12 @@ const VirtualAccounts = () => {
     {
       page: currentPage,
       search: searchInput,
+      currency: selectedCurrency || 'NGN',
       ...(filter.startDate
         ? {
-            start_date: formatDate(filter.startDate),
-            end_date: formatDate(filter.endDate),
-          }
+          start_date: formatDate(filter.startDate),
+          end_date: formatDate(filter.endDate),
+        }
         : {}),
     },
     {
@@ -194,11 +207,10 @@ const VirtualAccounts = () => {
                     return (
                       <tr
                         key={index}
-                        className={`${
-                          index !== virtual_accounts.length - 1
+                        className={`${index !== virtual_accounts.length - 1
                             ? '[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700'
                             : ''
-                        } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
+                          } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
                       >
                         <td className='text-sm px-5 py-6 font-medium text-gray-900 dark:text-gray-100'>
                           {index + 1}
@@ -266,8 +278,8 @@ const VirtualAccounts = () => {
             </>
           ) : (
             <EmptyState
-              title='No Virtual Accounts found'
-              subTitle="We couldn't find any virtual accounts"
+              title={`No Virtual Accounts found for ${selectedCurrency || 'NGN'}`}
+              subTitle={`We couldn't find any virtual accounts in ${selectedCurrency || 'NGN'}. Try switching to a different currency or request a new account.`}
               image='/images/virtual-acc-empty.svg'
             >
               <ActionButton

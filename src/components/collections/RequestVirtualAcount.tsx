@@ -56,14 +56,15 @@ export type VirtualAccountFormValues = {
   first_name?: string;
   last_name?: string;
   other_name?: string;
-  dob?: string;
+  date_of_birth?: string;
 
   // Corporate account fields
   business_name?: string;
   rc_number?: string;
 
-  // bvn remains
+  // bvn and nin
   bvn?: string;
+  nin?: string;
 };
 
 
@@ -81,7 +82,8 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
     last_name: '',
     other_name: '',
     bvn: '',
-    dob: '',
+    nin: '',
+    date_of_birth: '',
     business_name: '',
     rc_number: '',
   };
@@ -121,13 +123,21 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
         first_name: Yup.string().required('First name is required'),
         last_name: Yup.string().required('Last name is required'),
         other_name: Yup.string().required('Other name is required'),
-        dob: Yup.string().required('Date of birth is required'),
+        date_of_birth: Yup.string().required('Date of birth is required'),
+        nin: Yup.string()
+          .required('NIN is required')
+          .min(11, 'NIN should contain 11 digits')
+          .max(11, 'NIN should contain 11 digits'),
       });
     } else if (state.accountType === 'Corporate') {
       return Yup.object().shape({
         ...baseSchema,
         business_name: Yup.string().required('Business name is required'),
         rc_number: Yup.string().required('RC Number is required'),
+        nin: Yup.string()
+          .required('NIN is required')
+          .min(11, 'NIN should contain 11 digits')
+          .max(11, 'NIN should contain 11 digits'),
       });
     }
 
@@ -230,12 +240,14 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
           first_name: values.first_name,
           last_name: values.last_name,
           other_name: values.other_name,
-          dob: values.dob,
+          date_of_birth: values.date_of_birth,
+          nin: values.nin,
         });
       } else {
         Object.assign(payload, {
           business_name: values.business_name,
           rc_number: values.rc_number,
+          nin: values.nin,
         });
       }
 
@@ -586,16 +598,16 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                   />
 
                                   <Controller
-                                    name='dob'
+                                    name='date_of_birth'
                                     control={control}
                                     render={({ field }) => (
                                       <FormInput
                                         label='Date of birth'
-                                        id='dob'
+                                        id='date_of_birth'
                                         type='date'
-                                        htmlFor='dob'
-                                        error={errors.dob?.message}
-                                        touched={!!errors.dob}
+                                        htmlFor='date_of_birth'
+                                        error={errors.date_of_birth?.message}
+                                        touched={!!errors.date_of_birth}
                                         max={
                                           new Date(
                                             new Date().setFullYear(
@@ -625,6 +637,24 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                         numberOnly
                                         error={errors.bvn?.message}
                                         touched={!!errors.bvn}
+                                        {...field}
+                                      />
+                                    )}
+                                  />
+
+                                  <Controller
+                                    name='nin'
+                                    control={control}
+                                    render={({ field }) => (
+                                      <FormInput
+                                        label='NIN'
+                                        id='nin'
+                                        type='text'
+                                        htmlFor='nin'
+                                        maxLength={11}
+                                        numberOnly
+                                        error={errors.nin?.message}
+                                        touched={!!errors.nin}
                                         {...field}
                                       />
                                     )}
@@ -681,6 +711,24 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                         numberOnly
                                         error={errors.bvn?.message}
                                         touched={!!errors.bvn}
+                                        {...field}
+                                      />
+                                    )}
+                                  />
+
+                                  <Controller
+                                    name='nin'
+                                    control={control}
+                                    render={({ field }) => (
+                                      <FormInput
+                                        label='NIN'
+                                        id='nin'
+                                        type='text'
+                                        htmlFor='nin'
+                                        maxLength={11}
+                                        numberOnly
+                                        error={errors.nin?.message}
+                                        touched={!!errors.nin}
                                         {...field}
                                       />
                                     )}

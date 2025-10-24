@@ -11,6 +11,44 @@ export interface PaymentLinkPayload {
   subaccount_id?: string;
 }
 
+export async function addConversion(payload: any) {
+  try {
+    const response = await api.post(
+      apiEndpoints.conversions.GET_CONVERSION_HISTORY,
+      payload
+    );
+    return response;
+  } catch (error: any) {
+    notifyError(error.message);
+    throw error;
+  }
+}
+
+export async function verifyConversionOtp(payload: any) {
+  try {
+    const response = await api.post(
+      `${apiEndpoints.conversions.GET_CONVERSION_HISTORY}/verify`,
+      payload
+    );
+    return response;
+  } catch (error: any) {
+    notifyError(error.message);
+    throw error;
+  }
+}
+
+export async function viewConversion(id: string) {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.conversions.GET_CONVERSION_HISTORY}/${id}`
+    );
+    return response.data;
+  } catch (error: any) {
+    notifyError(error.message);
+    throw error;
+  }
+}
+
 export async function getConversionHistory(params?: object) {
   try {
     const response = await api.get(

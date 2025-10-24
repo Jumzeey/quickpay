@@ -10,11 +10,9 @@ import { useRef, useState } from "react";
 const ProfileTab = () => {
   const { defaultCurrency, getCurrencyFlag } = useCurrency();
   const { user = {}, setUser } = useAuthentication();
-  const initialAvatar = user?.avatar || "/images/dashboard/avatar.svg";
   const [updatingImage, setUpdatingImage] = useState(false);
-  const [avatar, setAvatar] = useState(
-    initialAvatar || "/images/dashboard/avatar.svg"
-  );
+  const [avatar, setAvatar] = useState(user?.avatar || null);
+  const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileInputClick = () => {
@@ -31,6 +29,7 @@ const ProfileTab = () => {
         const response = await updateProfileImage(file);
         if (response?.avatar) {
           setAvatar(response.avatar);
+          setImageError(false);
           setUser({
             ...user,
             avatar: response.avatar,
@@ -48,19 +47,16 @@ const ProfileTab = () => {
     <div className="flex flex-col space-y-4">
       <div className="flex items-center justify-between border-b border-[#C4C4C452] p-4">
         <div className="flex items-center gap-3">
-          {user?.avatar ? (
+          {avatar && !imageError ? (
             <div className="w-[65px] h-[60px] rounded-lg flex items-center justify-center">
               <Image
-                src={
-                  avatar
-                    ? `${avatar}?t=${new Date().getTime()}`
-                    : "/images/dashboard/avatar.svg"
-                }
+                src={`${avatar}?t=${new Date().getTime()}`}
                 alt="Profile Picture"
                 width={65}
                 height={60}
                 className="rounded-lg object-cover"
                 priority
+                onError={() => setImageError(true)}
               />
             </div>
           ) : (
@@ -78,7 +74,7 @@ const ProfileTab = () => {
               <span>Updating...</span>
             ) : (
               <>
-                {user?.avatar ? "Upload" : "Change"} business logo
+                {user?.avatar ? "Change" : "Upload"} business logo
               </>
             )}
           </button>

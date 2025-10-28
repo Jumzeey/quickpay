@@ -5,11 +5,12 @@ import Modal from '@/components/modal';
 import TabButton from '@/components/TabButton';
 import PinInput from 'react-pin-input';
 import { useFormValidation } from '@/hooks/useFormValidation';
+import { useApiResponse } from '@/hooks/useApiResponse';
 import {
   createVirtualAccount,
   verifyVirtualAccountOtp,
 } from '@/services/collections';
-import { notifyError, notifyInfo, notifySuccess, uuid } from '@/util/utils';
+import { notifyInfo, uuid } from '@/util/utils';
 import Image from 'next/image';
 import React, { ChangeEvent, useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
@@ -74,6 +75,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
   fetchVirtualAccounts,
   onUSDRouting,
 }) => {
+  const { handleError, handleSuccess } = useApiResponse();
   const initialValues: VirtualAccountFormValues = {
     account_name: '',
     customer_email: '',
@@ -254,18 +256,16 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       const response = await createVirtualAccount(payload);
       // @ts-ignore
       if (values.provider === 'Wema' && response?.data?.message) {
-        notifySuccess(response?.data?.message || 'OTP sent to your phone');
+        handleSuccess(response, 'OTP sent to your phone');
         setIsOtpStep(true); // move to OTP step
       } else {
-        notifySuccess(
-          response?.data?.message || 'Virtual account created successfully'
-        );
+        handleSuccess(response, 'Virtual account created successfully');
         resetAndClose();
         closeModal();
         await fetchVirtualAccounts();
       }
     } catch (error: any) {
-      notifyError(error.message || 'Failed to create virtual account');
+      handleError(error, 'Failed to create virtual account');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -274,7 +274,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
   const handleOtpSubmit = async (code?: string) => {
     const otpCode = code || otp;
     if (!otpCode || otpCode.length < 4) {
-      notifyError('Please enter a valid OTP');
+      handleError({ message: 'Please enter a valid OTP' }, 'Please enter a valid OTP');
       return;
     }
 
@@ -285,13 +285,13 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
         customer_email: watch('customer_email') ?? '', // pull from previous form
       };
       const response = await verifyVirtualAccountOtp(payload);
-      notifySuccess(response?.data?.message || 'OTP verified successfully');
+      handleSuccess(response, 'OTP verified successfully');
       setIsOtpStep(false);
       resetAndClose();
       closeModal();
       await fetchVirtualAccounts();
     } catch (error: any) {
-      notifyError(error?.response?.data?.message || 'Failed to verify OTP');
+      handleError(error, 'Failed to verify OTP');
     } finally {
       setOtpLoading(false);
     }

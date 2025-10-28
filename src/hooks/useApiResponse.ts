@@ -3,6 +3,7 @@ import { notifyError, notifySuccess } from '@/util/utils';
 
 interface ApiError {
   message?: string;
+  responseText?: string;
   payload?: Record<string, any>;
   response?: {
     data?: {
@@ -51,10 +52,15 @@ export function useApiResponse() {
     }
     
     // Handle single error message
+    // Check CustomHttpError properties first (message, responseText)
+    // Then check standard Axios error structure (response.data.message)
     const errorMessage = error?.message || 
+                        error?.responseText ||
                         error?.response?.data?.message || 
                         fallbackMessage || 
                         'An error occurred';
+    
+    console.error('API Error:', error);
     notifyError(errorMessage);
   }, []);
 

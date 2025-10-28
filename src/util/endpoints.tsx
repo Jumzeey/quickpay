@@ -35,7 +35,7 @@ export const apiEndpoints = {
     CREATE_PAYMENT_LINK: '/merchant/payment-links/store',
     UPDATE_PAYMENT_LINK: '/merchant/payment-links/update',
     GET_VIRTUAL_ACCOUNTS: '/merchant/virtual-accounts',
-    REQUEST_VIRTUAL_ACCOUNT: '/virtual-accounts/create',
+    REQUEST_VIRTUAL_ACCOUNT: '/merchant/virtual-accounts/store',
     VERIFY_VIRTUAL_ACCOUNT_OTP: '/virtual-accounts/generate-wallet',
     REPUSH_NOTIFICATION: '/merchant/collections-history',
     GET_PAYMENT_MANDATES: '/merchant/mandates',

@@ -136,7 +136,7 @@ export async function getVirtualAccountTransactions(id: string) {
 // VirtualAccountFormValues
 export async function createVirtualAccount(payload: FormData) {
   try {
-    const response = await virtualAccountApi.post(
+    const response = await api.post(
       apiEndpoints.collections.REQUEST_VIRTUAL_ACCOUNT,
       payload
     );

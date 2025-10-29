@@ -51,7 +51,7 @@ const Collection = () => {
 
   return (
     <Layout pageTitle="Pay In History" icon="collection-history">
-      <WebPageTitle title="Pay In History | Cray Merchant Portal" />
+      <WebPageTitle title="Pay In History | Merchant Portal" />
 
       <PageHeader
         title="Collections"

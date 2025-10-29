@@ -65,7 +65,7 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
-      <WebPageTitle title="Forgot Password | Cray Merchant Portal" />
+      <WebPageTitle title="Forgot Password | Merchant Portal" />
       <NoSSR>
         <motion.div
           className="flex flex-col items-center justify-center"
@@ -80,8 +80,8 @@ const ForgotPassword: React.FC = () => {
               <div className="px-8 pt-8 pb-4 bg-auth-header">
                 <div className="flex items-center">
                   <Image
-                    src="/images/cray-logo.svg"
-                    alt="Cray"
+                    src="/images/logo-blue.svg"
+                    alt="Logo"
                     width={80}
                     height={32}
                     priority

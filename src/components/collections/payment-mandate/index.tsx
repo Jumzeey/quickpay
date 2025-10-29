@@ -151,7 +151,7 @@ const PaymentMandate = () => {
 
   return (
     <Layout pageTitle="Payment Mandate" icon="payment-mandate">
-      <WebPageTitle title="Payment Mandate | Cray Merchant Portal" />
+      <WebPageTitle title="Payment Mandate | Merchant Portal" />
 
       {showMandates ? (
         <TransactionDetails

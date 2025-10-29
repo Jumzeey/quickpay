@@ -272,7 +272,7 @@ const WalletHistory = () => {
   if (!mounted) {
     return (
       <Layout pageTitle='Balance History' icon='wallet-history'>
-        <WebPageTitle title='Balance History | Cray Merchant Portal' />
+        <WebPageTitle title='Balance History | Merchant Portal' />
         <TableSkeleton />
       </Layout>
     );
@@ -280,7 +280,7 @@ const WalletHistory = () => {
 
   return (
     <Layout pageTitle='Balance History' icon='wallet-history'>
-      <WebPageTitle title='Balance History | Cray Merchant Portal' />
+      <WebPageTitle title='Balance History | Merchant Portal' />
 
       <div className="flex flex-col md:flex-row justify-between gap-5 md:gap-0 mb-8">
         <div>

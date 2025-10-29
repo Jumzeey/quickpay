@@ -15,7 +15,7 @@ export interface TransferFormValues {
     narration: string;
 }
 
-export type TransferType = 'Same Currency Transfer' | 'Cray Balance Transfer' | 'Cross Currency Transfer' | 'Mobile Money';
+export type TransferType = 'Same Currency Transfer' | 'Wallet Balance Transfer' | 'Cross Currency Transfer' | 'Mobile Money';
 
 export interface TransferOption {
     id: number;

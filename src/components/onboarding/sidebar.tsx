@@ -11,7 +11,7 @@ export default function OnboardingSidebar() {
   const texts = [
     "<p>Join our leading-edge payment infrastructure solution designed to simplify and secure your financial transactions.</p>",
     "<p>Begin your journey in just three straightforward steps: <br/> Sign up, integrate seamlessly, and securely process payments. <br/> Join us and enjoy a seamless payment experience.</p>",
-    "<p>Don’t miss out! <br/> Join thousands of satisfied customers who trust Sarepay for their payment collection and payout needs. <br/> Sign up now!</p>",
+    "<p>Don’t miss out! <br/> Join thousands of satisfied customers who trust Quickpay for their payment collection and payout needs. <br/> Sign up now!</p>",
   ];
 
   useEffect(() => {
@@ -23,12 +23,12 @@ export default function OnboardingSidebar() {
   }, [texts.length]);
 
   return (
-    <div className="w-1/2 p-4 lg:p-20 hidden md:block bg-sarepay">
+    <div className="w-1/2 p-4 lg:p-20 hidden md:block bg-quickpay">
       <div className="pb-20">
         <Link href={`${publicUrl}/`}>
           <Image
-            src="/images/sarepay-logo.svg"
-            alt="sarepay-logo"
+            src="/images/quickpay-logo.svg"
+            alt="quickpay-logo"
             width={127}
             height={29}
             priority

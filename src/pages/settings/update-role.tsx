@@ -110,7 +110,7 @@ const UpdateRole = () => {
 
   return (
     <Layout pageTitle="Update Role" icon="person">
-      <WebPageTitle title="Update Role | Cray Merchant Portal" />
+      <WebPageTitle title="Update Role | Merchant Portal" />
       <Image
         src="/images/arrow-back.svg"
         className="cursor-pointer"

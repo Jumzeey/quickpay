@@ -105,19 +105,6 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
         ref={bgRef}
       >
         <ul className="list-none p-0 space-y-5 pt-6 pl-4">
-          {/* <li className="mb-3.5 font-semibold">
-              <Link href="/dashboard">
-                <Image
-                  src="/images/cray-logo.svg"
-                  alt="Cray Logo"
-                  // className="mt-3"
-                  width={130}
-                  height={29}
-                  priority
-                />
-              </Link>
-            </li> */}
-
           {/* <li className="mt-10 mr-2">
               <div> */}
           {/* {state.activeSidebar !== sidebarLinks && (

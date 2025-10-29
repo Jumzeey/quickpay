@@ -54,7 +54,7 @@ const Header = () => {
             src="/images/logo-blue.svg"
             width={169}
             height={42}
-            alt="Cray Logo"
+            alt="Logo"
             priority
           />
         </Link>

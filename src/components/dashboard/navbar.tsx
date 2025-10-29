@@ -56,8 +56,8 @@ const Navbar = ({
         <div className="h-auto flex flex-row px-3 md:px-6 py-4 md:py-3 items-center justify-between">
           <Link href="/dashboard">
             <Image
-              src={theme === "light" ? "/images/cray-logo.svg" : "/images/cray-logo-white.svg"}
-              alt="Cray Logo"
+              src={theme === "light" ? "/images/logo-blue.svg" : "/images/logo-blue.svg"}
+              alt="Logo"
               className="h-7 w-auto"
               width={83}
               height={32}
@@ -73,7 +73,7 @@ const Navbar = ({
           </div> */}
 
           {/* <div> 
-            <p onClick={openModal} className="underline text-sm sarepayPrimary lg:text-base cursor-pointer">
+            <p onClick={openModal} className="underline text-sm quickpayPrimary lg:text-base cursor-pointer">
               Switch To The Old Dashboard
             </p>
           </div> */}
@@ -188,7 +188,7 @@ const Navbar = ({
       </header>
       <Modal isOpen={isModalOpen} onClose={closeModal}>
         <div>
-          <h6 className="font-bold text-2xl sarepayPrimary">
+          <h6 className="font-bold text-2xl quickpayPrimary">
             Return To Old Website
           </h6>
           {/* <p className="font-thin mt-10">

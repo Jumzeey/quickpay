@@ -147,7 +147,7 @@ const ProductCategories = () => {
 
   return (
     <Layout pageTitle="Product Categories" icon="settlement-accounts">
-      <WebPageTitle title="Product Categories | Cray Merchant Portal" />
+      <WebPageTitle title="Product Categories | Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Product Categories</h2>
         <p className="text-sm pt-3 pb-5">

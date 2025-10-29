@@ -120,8 +120,10 @@ const USDVirtualAccountView: React.FC<Props> = ({
       });
 
       // ✅ Append all file documents directly as files
+      console.log('Uploaded documents to append:', uploadedDocuments.length);
       uploadedDocuments.forEach(doc => {
         if (doc.type && doc.file) {
+          console.log(`Appending file - Field: ${doc.type}, Name: ${doc.file.name}, Type: ${doc.file.type}, Size: ${doc.file.size}`);
           formData.append(doc.type, doc.file); // actual file blob
         }
       });

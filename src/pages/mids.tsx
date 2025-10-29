@@ -24,7 +24,7 @@ const Mids = () => {
 
   return (
     <Layout pageTitle="MIDs Management" icon="mids">
-      <WebPageTitle title="MIDs | Cray Merchant Portal" />
+      <WebPageTitle title="MIDs | Merchant Portal" />
       <div>
         <h2 className="text-xl font-semibold">Manage Merchant IDs</h2>
         <p className="text-sm pt-3 pb-5">

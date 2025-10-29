@@ -70,21 +70,21 @@ body,
   position: relative;
 }
 
-.sarepayAsh {
+.quickpayAsh {
   color: #9499a1;
 }
 
-.sarepayGreen {
+.quickpayGreen {
   color: #17da7c;
 }
 .secondaryColor {
   color: #36a2eb;
 }
-.sarepayPrimary {
+.quickpayPrimary {
   color: #042468;
 }
 
-.sarepayGrey {
+.quickpayGrey {
   color: #6e6893;
 }
 
@@ -147,7 +147,7 @@ body,
   /* background: url(mesh-gradient.png); */
 }
 
-.bg-sarepay {
+.bg-quickpay {
   background-image: url("/images/background-pattern.svg");
   background-color: #042468;
   min-height: 100vh;

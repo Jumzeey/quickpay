@@ -198,7 +198,7 @@ const Dashboard = () => {
   if (!mounted) {
     return (
       <Layout pageTitle='Dashboard' icon='dashboard'>
-        <WebPageTitle title='Dashboard | Cray Merchant Portal' />
+        <WebPageTitle title='Dashboard | Merchant Portal' />
         <TableSkeleton />
       </Layout>
     );
@@ -206,7 +206,7 @@ const Dashboard = () => {
 
   return (
     <Layout pageTitle='Dashboard' icon='dashboard'>
-      <WebPageTitle title='Dashboard | Cray Merchant Portal' />
+      <WebPageTitle title='Dashboard | Merchant Portal' />
 
       <div className="flex flex-row md:items-center justify-between ">
         <div className="flex flex-col gap-1">

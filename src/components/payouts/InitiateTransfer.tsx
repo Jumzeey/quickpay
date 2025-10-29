@@ -77,7 +77,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             });
         }
 
-        if (state.selectedOptionName === "Cray Balance Transfer") {
+        if (state.selectedOptionName === "Wallet Balance Transfer") {
             return Yup.object().shape({
                 walletId: Yup.string()
                     .required("Wallet ID is required")
@@ -269,7 +269,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     account_name: values.accountName,
                     ref_id: values.ref_id,
                 }),
-                ...(state.selectedOptionName === "Cray Balance Transfer" && {
+                ...(state.selectedOptionName === "Wallet Balance Transfer" && {
                     walletId: values.walletId,
                     accountName: values.accountName,
                 }),
@@ -548,14 +548,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         </>
     );
 
-    const renderCrayBalanceForm = () => (
+    const renderWalletBalanceForm = () => (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
             <Controller
                 name="walletId"
                 control={control}
                 render={({ field }) => (
                     <FormInput
-                        label="Cray Wallet ID"
+                        label="Wallet ID"
                         id="walletId"
                         type="text"
                         htmlFor="walletId"
@@ -796,8 +796,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             switch (state.selectedOptionName) {
                 case "Same Currency Transfer":
                     return renderSameCurrencyForm();
-                case "Cray Balance Transfer":
-                    return renderCrayBalanceForm();
+                case "Wallet Balance Transfer":
+                    return renderWalletBalanceForm();
                 case "Cross Currency Transfer":
                     return renderCrossCurrencyForm();
                 default:

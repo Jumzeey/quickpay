@@ -13,7 +13,7 @@ export function AuthFooter() {
                 </Link>
             </div>
             <p className="py-3 bg-[#F6F4F4] rounded-b mx-auto w-1/2">
-                Copyright © {new Date().getFullYear()} Cray.
+                Copyright © {new Date().getFullYear()}.
             </p>
         </div>
     )

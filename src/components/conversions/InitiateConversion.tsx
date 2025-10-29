@@ -55,7 +55,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                     targetAccountName: values.targetAccountName,
                     targetAccountNumber: values.targetAccountNumber,
                 }),
-                ...(state.selectedOptionName === "Cray Balance Conversion" && {
+                ...(state.selectedOptionName === "Wallet Balance Conversion" && {
                     walletId: values.walletId,
                 }),
             };

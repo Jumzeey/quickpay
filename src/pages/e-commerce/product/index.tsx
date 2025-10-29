@@ -209,7 +209,7 @@ const Product = () => {
 
   return (
     <Layout pageTitle="Products" icon="settlement-accounts">
-      <WebPageTitle title="All Products | Cray Merchant Portal" />
+      <WebPageTitle title="All Products | Merchant Portal" />
       <div className="">
         <h2 className="text-xl font-semibold">Manage Product</h2>
         <p className="text-sm pt-3 pb-5">Manage product within your company</p>

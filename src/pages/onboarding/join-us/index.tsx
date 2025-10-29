@@ -150,7 +150,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
-      <WebPageTitle title="Register | Cray Merchant Portal" />
+      <WebPageTitle title="Register | Merchant Portal" />
       <NoSSR>
         <div className="w-full max-w-2xl mx-auto">
           {/* Card Container */}
@@ -159,8 +159,8 @@ const RegisterPage = () => {
             <div className="px-8 pt-8 pb-4 bg-auth-header">
               <div className="flex items-center">
                 <Image
-                  src="/images/cray-logo.svg"
-                  alt="Cray"
+                  src="/images/logo-blue.svg"
+                  alt="Logo"
                   width={80}
                   height={32}
                   priority
@@ -335,7 +335,7 @@ const RegisterPage = () => {
                         I consent to the collection and processing of my personal data in line with data regulations as
                         described in the{' '}
                         <Link href="/privacy-policy" className="text-primary">
-                          Cray Privacy Policy
+                          Privacy Policy
                         </Link>.
                       </label>
                     </div>

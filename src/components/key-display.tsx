@@ -11,7 +11,7 @@ interface KeyDisplayProps {
 const KeyDisplay: React.FC<KeyDisplayProps> = ({ label, value, keyValue }) => {
     return (
         <div className="flex flex-col sm:flex-row items-center rounded-lg p-2 gap-2">
-            <div className="bg-[#D3D3D3] sarepayPrimary font-semibold rounded-lg px-3 py-2 min-w-40">
+            <div className="bg-[#D3D3D3] quickpayPrimary font-semibold rounded-lg px-3 py-2 min-w-40">
                 {label}
             </div>
             <div className="flex items-center gap-2 w-full">

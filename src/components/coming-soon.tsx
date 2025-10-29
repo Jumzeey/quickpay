@@ -16,7 +16,7 @@ const ComingSoon = () => {
       <div className="text-center">
         <h1 className="font-semibold text-3xl">Coming Soon!</h1>
         <p className="mt-5">
-          This feature is coming soon to Cray! Stay tuned and watch out for an
+          This feature is coming soon! Stay tuned and watch out for an
           email when we launch it!
         </p>
       </div>

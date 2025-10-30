@@ -18,6 +18,7 @@ import { ReferenceSearch } from "@/components/reference-search";
 import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import { usePaginatedStoreQuery } from "@/hooks/useOptimizedFetch";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import { getBanks } from "@/services/bank";
 import { Payout } from "@/services/payout";
 import useAuthentication from "@/stores/useAuthentication";
@@ -26,7 +27,7 @@ import useFilter from "@/stores/useFilter";
 import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { capitalizeFirstLetter, copyToClipboard, formatDate, formatDateTime2, Modules, notifyError, notifySuccess } from "@/util/utils";
+import { capitalizeFirstLetter, copyToClipboard, formatDate, formatDateTime2, Modules } from "@/util/utils";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -42,6 +43,7 @@ interface PayoutsProps {
 }
 
 const PayoutHistory = () => {
+  const { handleError, handleSuccess } = useApiResponse();
   const { selectedCurrency } = useCurrency();
   const [mounted, setMounted] = useState(false);
 
@@ -112,7 +114,7 @@ const PayoutHistory = () => {
       enabled: Boolean(mounted && selectedCurrency),
       onError: (error) => {
         console.error('❌ Failed to fetch payout history:', error);
-        notifyError(error.message);
+        handleError(error);
       },
       cacheTime: state.isInitiateTransferModalOpen ? 0 : 3000,
     }
@@ -266,7 +268,7 @@ const PayoutHistory = () => {
     //     downloadFile(result.export_link);
     //   }
     // } catch (error: any) {
-    //   notifyError(error.message);
+    //   handleError(error);
     // }
     try {
       // Show loading state
@@ -285,7 +287,7 @@ const PayoutHistory = () => {
       });
     } catch (error: any) {
       console.error("Failed to get account ID for export:", error);
-      notifyError("Failed to prepare export. Please try again.");
+      handleError(error, "Failed to prepare export. Please try again.");
       setIsExportModalOpen(false);
     }
   };
@@ -296,7 +298,7 @@ const PayoutHistory = () => {
 
   const handleRequery = async (reference: string) => {
     if (!reference) {
-      notifyError("Transaction reference is required for requery");
+      handleError({ message: "Transaction reference is required for requery" });
       return;
     }
 
@@ -305,7 +307,7 @@ const PayoutHistory = () => {
 
       if (response.success && response.data) {
         const transactionData = response.data.Transaction.data;
-        notifySuccess(`Requery successful! Status: ${transactionData.status}`);
+        handleSuccess({ message: `Requery successful! Status: ${transactionData.status}` });
 
         // Close the dropdown after successful requery
         setState(prevState => ({
@@ -317,7 +319,7 @@ const PayoutHistory = () => {
         await fetchPayoutHistory();
       }
     } catch (error: any) {
-      notifyError(error.message || "Failed to requery transaction");
+      handleError(error, "Failed to requery transaction");
     }
   };
 

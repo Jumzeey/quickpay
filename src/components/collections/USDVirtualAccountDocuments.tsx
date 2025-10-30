@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Button from '@/components/button';
 import FormSelect from '@/components/FormSelect';
 import Icon from '@/components/icon';
@@ -28,6 +28,17 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<UploadedDoc[]>([]);
 
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      files.forEach(file => {
+        if (file.uploadUrl) {
+          URL.revokeObjectURL(file.uploadUrl);
+        }
+      });
+    };
+  }, [files]);
+
   const documentOptions =
     type === 'individual'
       ? [
@@ -53,12 +64,49 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
 
   const handleFileSelection = (newFiles: FileList | null) => {
     if (!newFiles) return;
-    const validFiles = Array.from(newFiles).map(file => ({
-      id: uuid(),
-      file,
-      status: 'pending' as const,
-    }));
-    setFiles(prev => [...prev, ...validFiles]);
+    
+    // Validate file types
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
+    
+    const validFiles = Array.from(newFiles)
+      .filter(file => {
+        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+        const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension);
+        
+        if (!isValidType) {
+          notifyError(`File "${file.name}" is not a valid type. Only PDF, JPG, JPEG, and PNG files are allowed.`);
+          return false;
+        }
+        
+        // Check file size (10MB max)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        if (file.size > maxSize) {
+          notifyError(`File "${file.name}" is too large. Maximum size is 10MB.`);
+          return false;
+        }
+        
+        return true;
+      })
+      .map(file => ({
+        id: uuid(),
+        file,
+        status: 'pending' as const,
+      }));
+    
+    if (validFiles.length === 0) return;
+    
+    console.log('Adding new files:', validFiles);
+    setFiles(prev => {
+      const updated = [...prev, ...validFiles];
+      console.log('Updated files state:', updated);
+      return updated;
+    });
+    
+    // Reset the file input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) =>
@@ -73,11 +121,24 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
     setFiles(prev => prev.filter(f => f.id !== id));
 
   const handleFileUpload = async (fileObj: UploadedDoc) => {
+    // Validate that document type is selected
+    if (!fileObj.selectedType) {
+      notifyError('Please select a document type before uploading');
+      return;
+    }
+
     try {
+      // Create a blob URL for viewing the file
+      const blobUrl = URL.createObjectURL(fileObj.file);
+      
       setFiles(prev => {
         const updated = prev.map(f =>
           f.id === fileObj.id
-            ? { ...f, status: 'uploaded' as UploadedDoc['status'] }
+            ? { 
+                ...f, 
+                status: 'uploaded' as UploadedDoc['status'],
+                uploadUrl: blobUrl 
+              }
             : f
         );
 
@@ -93,6 +154,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
 
         return updated;
       });
+      notifySuccess('Document uploaded successfully');
     } catch (error: any) {
       console.error('Error marking file as uploaded:', error);
       notifyError('Failed to mark document as uploaded');
@@ -102,7 +164,27 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
   const handleViewFile = (url: string) => window.open(url, '_blank');
 
   const handleDeleteUploaded = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
+    setFiles(prev => {
+      // Find the file to revoke its blob URL
+      const fileToDelete = prev.find(f => f.id === id);
+      if (fileToDelete?.uploadUrl) {
+        URL.revokeObjectURL(fileToDelete.uploadUrl);
+      }
+      
+      const updated = prev.filter(f => f.id !== id);
+      
+      // Sync after deletion
+      onDocumentsUploaded(
+        updated
+          .filter(f => f.status === 'uploaded' && f.selectedType && f.file)
+          .map(f => ({
+            type: f.selectedType!,
+            file: f.file!,
+          }))
+      );
+      
+      return updated;
+    });
   };
 
   const uploadedFiles = files.filter(f => f.status === 'uploaded');
@@ -110,6 +192,10 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
     f =>
       f.status === 'pending' || f.status === 'uploading' || f.status === 'error'
   );
+  
+  console.log('All files:', files);
+  console.log('Pending files:', pendingFiles);
+  console.log('Uploaded files:', uploadedFiles);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 KB';
@@ -133,6 +219,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
           ref={fileInputRef}
           type='file'
           multiple
+          accept='.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png'
           className='hidden'
           onChange={e => handleFileSelection(e.target.files)}
         />
@@ -163,7 +250,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
       {/* Pending Uploads Section */}
       {pendingFiles.length > 0 && (
         <section>
-          <h3 className='text-sm mb-4'>Selected documents:</h3>
+          <h3 className='text-sm mb-4 font-semibold'>Documents to upload:</h3>
           <div className='flex flex-col gap-4 w-2/3'>
             {pendingFiles.map(fileObj => (
               <div
@@ -231,7 +318,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
                 <div className='flex justify-end mt-3'>
                   <button
                     className='flex items-center justify-center gap-1 text-white mt-3 text-[12px] px-3 py-1.5 rounded bg-primary hover:bg-primary-dark transition-all duration-200 disabled:opacity-60'
-                    disabled={fileObj.status === 'uploading'}
+                    disabled={fileObj.status === 'uploading' || !fileObj.selectedType}
                     aria-label='Upload Document'
                     onClick={() => handleFileUpload(fileObj)}
                   >
@@ -254,7 +341,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
       {/* Uploaded Documents Section */}
       {uploadedFiles.length > 0 && (
         <section>
-          <h3 className='text-sm mb-4'>Selected documents:</h3>
+          <h3 className='text-sm mb-4 font-semibold'>Uploaded documents:</h3>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-2'>
             {uploadedFiles.map(fileObj => {
               // determine label

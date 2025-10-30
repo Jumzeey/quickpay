@@ -23,7 +23,13 @@ const CurrencySwitcher = ({
   contentClassName = '',
   className = '',
 }: CurrencySwitcherProps) => {
-  const { selectedCurrency, setCurrency } = useCurrency();
+  const { 
+    selectedCurrency, 
+    setCurrency, 
+    activeCurrencies, 
+    isLoadingCurrencies, 
+    fetchActiveCurrencies 
+  } = useCurrency();
   const { modules } = useAuthentication();
 
   const allCurrencies = getAllCurrencies(modules);
@@ -54,12 +60,18 @@ const CurrencySwitcher = ({
 
   const selectedLabel = currencyNames[selectedCurrency] || selectedCurrency;
 
-  // Enhanced filtering: match code, label, or full name
+  // Fetch active currencies from store on mount
+  useEffect(() => {
+    fetchActiveCurrencies();
+  }, [fetchActiveCurrencies]);
+
+  // Enhanced filtering: match code, label, or full name AND only show active currencies
   const filteredCurrencies = Object.entries(currencyNames)
     .filter(
       ([code, fullName]) =>
-        fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        code.toLowerCase().includes(searchTerm.toLowerCase())
+        activeCurrencies.includes(code) &&
+        (fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        code.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .map(([value, label]) => ({ value, label }));
 
@@ -87,10 +99,11 @@ const CurrencySwitcher = ({
       {/* Selected Button */}
       <button
         type='button'
-        className={`flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm ${contentClassName}`}
-        onClick={() => setIsOpen(prev => !prev)}
+        className={`flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm ${contentClassName} ${isLoadingCurrencies ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => !isLoadingCurrencies && setIsOpen(prev => !prev)}
+        disabled={isLoadingCurrencies}
       >
-        <span>{selectedLabel}</span>
+        <span>{isLoadingCurrencies ? 'Loading...' : (selectedLabel || 'Select Currency')}</span>
         <Icon name='caretDown' />
       </button>
 
@@ -110,7 +123,11 @@ const CurrencySwitcher = ({
 
           {/* Scrollable Currency List */}
           <ul className='max-h-48 overflow-y-auto'>
-            {filteredCurrencies.length > 0 ? (
+            {isLoadingCurrencies ? (
+              <li className='px-4 py-3 text-sm text-grey-500'>
+                Loading currencies...
+              </li>
+            ) : filteredCurrencies.length > 0 ? (
               filteredCurrencies.map(option => (
                 <li
                   key={option.value}
@@ -124,7 +141,7 @@ const CurrencySwitcher = ({
               ))
             ) : (
               <li className='px-4 py-3 text-sm text-grey-500'>
-                No currencies found
+                No active currencies found
               </li>
             )}
           </ul>

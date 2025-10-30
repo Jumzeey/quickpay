@@ -6,8 +6,8 @@ import Loader from "@/components/loader";
 import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
 import { useFormValidation } from "@/hooks/useFormValidation";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import useAuthentication from "@/stores/useAuthentication";
-import { notifyError, notifySuccess } from "@/util/utils";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,6 +35,7 @@ const validationSchema = Yup.object().shape({
 const SignInPage: React.FC = () => {
   const router = useRouter();
   const { signIn } = useAuthentication();
+  const { handleError, handleSuccess } = useApiResponse();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -54,14 +55,14 @@ const SignInPage: React.FC = () => {
 
     try {
       const response = await signIn(values);
-      notifySuccess(response.message);
+      handleSuccess(response);
       localStorage.setItem("user-email", values.email);
       router.push({
         pathname: "/onboarding/otp",
         query: { source: "sign-in" },
       });
     } catch (error: any) {
-      notifyError(error.message);
+      handleError(error);
     } finally {
       setIsLoading(false);
     }

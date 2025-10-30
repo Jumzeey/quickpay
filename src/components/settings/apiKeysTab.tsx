@@ -2,12 +2,13 @@ import ActionButton from "@/components/action-button";
 import Icon from "@/components/icon";
 import Table from "@/components/table";
 import { useEffectFetch } from "@/hooks/useEffectFetch";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import {
   generateAccessKey,
   generateEncrytionKey,
   getAPICredentials,
 } from "@/services/settings";
-import { capitalizeFirstLetterOfEachWord, copyToClipboard, notifyError, notifySuccess } from "@/util/utils";
+import { capitalizeFirstLetterOfEachWord, copyToClipboard } from "@/util/utils";
 import { useState } from "react";
 import EmptyState from "../EmptyState";
 
@@ -23,6 +24,7 @@ interface APICredentials {
 const MASKED_KEY_VALUE = "xxxxxxxxxxxxxxxx";
 
 const ApiKeysTab = () => {
+  const { handleError, handleSuccess } = useApiResponse();
   const [keyLoading, setKeyLoading] = useState(false);
   const [encryptionLoading, setEncryptionLoading] = useState(false);
   const [apiCredentials, setApiCredentials] = useState<APICredentials>({
@@ -45,7 +47,7 @@ const ApiKeysTab = () => {
         setApiCredentials(response);
       },
       onError: (error) => {
-        notifyError(error.message);
+        handleError(error);
       }
     }
   );
@@ -59,9 +61,9 @@ const ApiKeysTab = () => {
       setKeyLoading(true);
       const response = await generateAccessKey();
       updateApiCredentials(response);
-      notifySuccess("New access keys generated successfully!");
+      handleSuccess({ message: "New access keys generated successfully!" });
     } catch (error: any) {
-      notifyError(error.message);
+      handleError(error);
     } finally {
       setKeyLoading(false);
     }
@@ -72,9 +74,9 @@ const ApiKeysTab = () => {
       setEncryptionLoading(true);
       const response = await generateEncrytionKey();
       updateApiCredentials(response);
-      notifySuccess("New encryption keys generated successfully!");
+      handleSuccess({ message: "New encryption keys generated successfully!" });
     } catch (error: any) {
-      notifyError(error.message);
+      handleError(error);
     } finally {
       setEncryptionLoading(false);
     }

@@ -14,7 +14,7 @@ export interface SupportedCountriesResponse {
   meta: any;
 }
 
-export async function getSupportedCountries(): Promise<SupportedCountry[]> {
+export async function getSupportedCountries(): Promise<SupportedCountriesResponse> {
   try {
     const response = await api.get(apiEndpoints.utilities.SUPPORTED_COUNTRIES);
     return response.data;

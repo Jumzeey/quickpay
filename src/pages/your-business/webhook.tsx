@@ -5,11 +5,11 @@ import Loader from "@/components/loader";
 import Switch from "@/components/Switch";
 import { useAsyncFetch } from "@/hooks/useAsyncFetch";
 import { useFormValidation } from "@/hooks/useFormValidation";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import {
   generateWebhookCredentials,
   updateWebhookCredentials,
 } from "@/services/webhook";
-import { notifyError, notifySuccess } from "@/util/utils";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
 import * as Yup from "yup";
@@ -30,6 +30,7 @@ const validationSchema = Yup.object().shape({
 });
 
 const Webhook = () => {
+  const { handleError, handleSuccess } = useApiResponse();
   const [isLoading, setIsLoading] = useState(false);
  
   const {
@@ -59,7 +60,7 @@ const Webhook = () => {
           enable_webhook: data.enable_webhook || false,
         });
       },
-      onError: (error) => notifyError(error.message),
+      onError: (error) => handleError(error),
     }
   });
 
@@ -73,7 +74,7 @@ const Webhook = () => {
       };
 
       const response = await updateWebhookCredentials(payload);
-      notifySuccess("Webhook details updated");
+      handleSuccess({ message: "Webhook details updated" });
 
       // Update form with payload
       const cleanUrl = payload.webhook_url?.replace(/^https?:\/\//, "");
@@ -82,7 +83,7 @@ const Webhook = () => {
         enable_webhook: payload.enable_webhook,
       });
     } catch (error: any) {
-      notifyError("Enter a valid redirect URL!");
+      handleError(error, "Enter a valid redirect URL!");
     } finally {
       setIsLoading(false);
     }

@@ -138,7 +138,12 @@ export async function createVirtualAccount(payload: FormData) {
   try {
     const response = await api.post(
       apiEndpoints.collections.REQUEST_VIRTUAL_ACCOUNT,
-      payload
+      payload,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
     );
     return response;
   } catch (error) {

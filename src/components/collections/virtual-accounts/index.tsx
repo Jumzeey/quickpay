@@ -9,6 +9,7 @@ import { ReferenceSearch } from '@/components/reference-search';
 import Table from '@/components/table';
 import TableSkeleton from '@/components/TableSkeleton';
 import { usePaginatedEffect } from '@/hooks/useEffectFetch';
+import { useApiResponse } from '@/hooks/useApiResponse';
 import { getVirtualAccounts } from '@/services/collections';
 import useClickEvent from '@/stores/useClickEvent';
 import useCollectionHistory from '@/stores/useCollectionHistory';
@@ -20,7 +21,6 @@ import {
   downloadFile,
   formatDate,
   formatDateTime2,
-  notifyError,
 } from '@/util/utils';
 import { useRouter } from 'next/router';
 import React, { useCallback, useState } from 'react';
@@ -52,6 +52,7 @@ interface AccountProps {
 }
 
 const VirtualAccounts = () => {
+  const { handleError } = useApiResponse();
   const { handleClick } = useClickEvent();
   const [searchInput, setSearchInput] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -118,7 +119,7 @@ const VirtualAccounts = () => {
       console.log(response);
       response?.export_link && downloadFile(response.export_link);
     } catch (error: any) {
-      notifyError(error.message);
+      handleError(error);
     }
   };
 

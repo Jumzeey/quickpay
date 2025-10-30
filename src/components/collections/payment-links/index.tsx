@@ -14,15 +14,14 @@ import Table from "@/components/table";
 import TableSkeleton from "@/components/TableSkeleton";
 import { SharedStateContext } from "@/context/sharedState";
 import { usePaginatedEffect } from "@/hooks/useEffectFetch";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import { disablePaymentLink, getPaymentLinks } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import { paymentLinksAnalytics } from "@/util/constants";
 import {
   capitalizeFirstLetterOfEachWord,
   copyToClipboard,
-  formatBalance,
-  notifyError,
-  notifySuccess
+  formatBalance
 } from "@/util/utils";
 import Link from "next/link";
 import { Fragment, useContext, useState } from "react";
@@ -46,6 +45,7 @@ type ModalType = "create" | "edit" | null;
 const columns = ["No.", "title", "currency", "amount", "link", "date Created", ""];
 
 const PaymentLinks = () => {
+  const { handleError, handleSuccess } = useApiResponse();
   const [isModalOpen, setIsModalOpen] = useState<ModalType>(null);
   const openModal = (type: ModalType) => setIsModalOpen(type);
   const closeModal = () => setIsModalOpen(null);
@@ -90,7 +90,7 @@ const PaymentLinks = () => {
         setPagination(pagination || null);
       },
       onError: (error) => {
-        notifyError(error.message);
+        handleError(error);
       }
     }
   );
@@ -131,11 +131,11 @@ const PaymentLinks = () => {
       const response = await disablePaymentLink(sharedState?.selectedItem?.id);
       closeDisableModal();
       // @ts-ignore
-      notifySuccess(response.message);
+      handleSuccess(response);
       await fetchPaymentLinks();
     } catch (error: any) {
       closeDisableModal();
-      notifyError(error.message);
+      handleError(error);
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }

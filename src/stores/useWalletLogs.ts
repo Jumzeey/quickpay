@@ -1,5 +1,4 @@
 import { getMerchantBalance, getWalletHistory } from '@/services/transaction';
-import { notifyError } from '@/util/utils';
 import { create } from 'zustand';
 import useCurrency, { CurrencyOption } from './useCurrency';
 
@@ -165,7 +164,7 @@ const useWalletLogs = create<WalletLogsState & { currentCurrency: CurrencyOption
       return { wallet };
     } catch (error: any) {
       console.error('Error fetching wallet history:', error);
-      notifyError("Failed to fetch wallet history.");
+      // Error handling moved to component level with useApiResponse hook
 
       // if the current account is not the same as previous, reset wallet logs
       const currencyChanged = previousCurrency !== get().currentCurrency;

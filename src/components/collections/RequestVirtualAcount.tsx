@@ -21,16 +21,15 @@ export const VIRTUAL_ACCOUNT_TYPES: { id: number; name: string }[] = [
   { id: 1, name: 'Onetime' },
   { id: 2, name: 'Permanent' },
 ];
-
 export const VIRTUAL_ACCOUNT_CURRENCIES: {
   value: string;
   label: string;
   disabled?: boolean;
 }[] = [
-  { value: 'NGN', label: '₦ Nigerian Naira (NGN)' },
-  { value: 'USD', label: '$ US Dollar (USD)' },
-  { value: 'EUR', label: '€ Euro (EUR)', disabled: true },
-];
+    { value: 'NGN', label: '₦ Nigerian Naira (NGN)' },
+    { value: 'USD', label: '$ US Dollar (USD)' },
+    { value: 'EUR', label: '€ Euro (EUR)', disabled: true },
+  ];
 
 interface AddAccountProps {
   isModalOpen: boolean;
@@ -181,7 +180,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       currentStep: 2,
     }));
   };
-  
+
   const handleOptionClick = (option: (typeof VIRTUAL_ACCOUNT_TYPES)[0]) => {
     if (option.name === 'Onetime') {
       notifyInfo('Onetime virtual accounts are not supported at the moment.');
@@ -193,6 +192,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       currentStep: 1,
       isLoading: false,
     }));
+    reset();
     reset();
   };
 
@@ -370,11 +370,10 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                   <li key={option.id}>
                     <button
                       type='button'
-                      className={`w-full flex items-center justify-between font-semibold text-sm text-black dark:text-white py-5 ${
-                        option.id !== VIRTUAL_ACCOUNT_TYPES.length
-                          ? 'border-b border-[#C4C4C452]'
-                          : ''
-                      }`}
+                      className={`w-full flex items-center justify-between font-semibold text-sm text-black dark:text-white py-5 ${option.id !== VIRTUAL_ACCOUNT_TYPES.length
+                        ? 'border-b border-[#C4C4C452]'
+                        : ''
+                        }`}
                       onClick={() => handleOptionClick(option)}
                     >
                       {option.name}
@@ -399,16 +398,14 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                       type='button'
                       disabled={!!currency.disabled}
                       className={`w-full flex items-center justify-between font-semibold text-sm 
-                      ${
-                        currency.disabled
+                      ${currency.disabled
                           ? 'text-gray-400 cursor-not-allowed'
                           : 'text-black dark:text-white cursor-pointer'
-                      }
-                      py-5 ${
-                        index !== VIRTUAL_ACCOUNT_CURRENCIES.length - 1
+                        }
+                      py-5 ${index !== VIRTUAL_ACCOUNT_CURRENCIES.length - 1
                           ? 'border-b border-[#C4C4C452]'
                           : ''
-                      }`}
+                        }`}
                       onClick={() =>
                         !currency.disabled &&
                         handleCurrencySelect(currency.value)

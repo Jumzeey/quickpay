@@ -42,7 +42,9 @@ const ProfileTab = () => {
       }
     }
   };
-  
+
+  console.log({ defaultCurrency });
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex items-center justify-between border-b border-[#C4C4C452] p-4">

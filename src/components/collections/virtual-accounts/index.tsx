@@ -1,22 +1,30 @@
-import ActionButton from "@/components/action-button";
-import RequestVirtualAccount from "@/components/collections/RequestVirtualAcount";
-import Dropdown from "@/components/Dropdown";
-import EmptyState from "@/components/EmptyState";
-import Filter from "@/components/Filter";
-import { FilterExport } from "@/components/filter-export";
-import Pagination from "@/components/pagination";
-import { ReferenceSearch } from "@/components/reference-search";
-import Table from "@/components/table";
-import TableSkeleton from "@/components/TableSkeleton";
-import { usePaginatedEffect } from "@/hooks/useEffectFetch";
-import { getVirtualAccounts } from "@/services/collections";
-import useClickEvent from "@/stores/useClickEvent";
-import useCollectionHistory from "@/stores/useCollectionHistory";
-import useFilter from "@/stores/useFilter";
-import debounce from "@/util/debounce";
-import { capitalizeFirstLetter, downloadFile, formatDate, formatDateTime2, notifyError } from "@/util/utils";
-import { useRouter } from "next/router";
-import React, { useCallback, useState } from "react";
+import ActionButton from '@/components/action-button';
+import RequestVirtualAccount from '@/components/collections/RequestVirtualAcount';
+import Dropdown from '@/components/Dropdown';
+import EmptyState from '@/components/EmptyState';
+import Filter from '@/components/Filter';
+import { FilterExport } from '@/components/filter-export';
+import Pagination from '@/components/pagination';
+import { ReferenceSearch } from '@/components/reference-search';
+import Table from '@/components/table';
+import TableSkeleton from '@/components/TableSkeleton';
+import { usePaginatedEffect } from '@/hooks/useEffectFetch';
+import { useApiResponse } from '@/hooks/useApiResponse';
+import { getVirtualAccounts } from '@/services/collections';
+import useClickEvent from '@/stores/useClickEvent';
+import useCollectionHistory from '@/stores/useCollectionHistory';
+import useFilter from '@/stores/useFilter';
+import useCurrency from '@/stores/useCurrency';
+import debounce from '@/util/debounce';
+import {
+  capitalizeFirstLetter,
+  downloadFile,
+  formatDate,
+  formatDateTime2,
+} from '@/util/utils';
+import { useRouter } from 'next/router';
+import React, { useCallback, useState } from 'react';
+import USDVirtualAccountView from '../USDVirualAccountView';
 
 interface VirtualAccounts {
   account_name: string;
@@ -39,16 +47,20 @@ interface AccountProps {
   };
   isLoading: boolean;
   showDisbursements: boolean;
+  virtualAccounts: VirtualAccounts[];
+  currentStep: string;
 }
 
 const VirtualAccounts = () => {
+  const { handleError } = useApiResponse();
   const { handleClick } = useClickEvent();
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInput] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+  const { selectedCurrency, setCurrency } = useCurrency();
   const [filter, setFilter] = useState({
     startDate: null,
     endDate: null,
@@ -57,6 +69,8 @@ const VirtualAccounts = () => {
     virtualAccountsHistory: { virtual_accounts: [] },
     isLoading: true,
     showDisbursements: false,
+    virtualAccounts: [],
+    currentStep: 'virtual-accounts', // default
   });
 
   const { showFilter, toggleFilter } = useFilter();
@@ -68,13 +82,20 @@ const VirtualAccounts = () => {
     getVirtualAccountsHistoryLoading,
   } = useCollectionHistory();
 
+  // Set NGN as default currency on mount if not already set
+  React.useEffect(() => {
+    if (!selectedCurrency) {
+      setCurrency('NGN');
+    }
+  });
+
   const columns = [
-    "No.",
-    "account name",
-    "account number",
-    "bank",
-    "type",
-    "created at",
+    'No.',
+    'account name',
+    'account number',
+    'bank',
+    'type',
+    'created at',
   ];
 
   const debouncedHandleParamsChange = useCallback(
@@ -86,16 +107,19 @@ const VirtualAccounts = () => {
 
   const handleParamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     debouncedHandleParamsChange(event.target.value);
-  };;
+  };
 
   const handleExport = async () => {
     try {
-      const response = await getVirtualAccounts({ export: true });
+      const response = await getVirtualAccounts({
+        export: true,
+        currency: selectedCurrency || 'NGN'
+      });
       // const response = await fetchVirtualAccounts({ export: true });
       console.log(response);
       response?.export_link && downloadFile(response.export_link);
     } catch (error: any) {
-      notifyError(error.message);
+      handleError(error);
     }
   };
 
@@ -111,92 +135,112 @@ const VirtualAccounts = () => {
     {
       page: currentPage,
       search: searchInput,
+      currency: selectedCurrency || 'NGN',
       ...(filter.startDate
         ? {
           start_date: formatDate(filter.startDate),
-          end_date: formatDate(filter.endDate)
+          end_date: formatDate(filter.endDate),
         }
         : {}),
     },
     {
-      onError: (error) => {
-        console.error("Failed to fetch virtual accounts history:", error);
-      }
+      onError: error => {
+        console.error('Failed to fetch virtual accounts history:', error);
+      },
     }
   );
 
+  const viewUSDAccounts = () => {
+    setState(prev => ({ ...prev, currentStep: 'usd-virtual-accounts' }));
+  };
+
+  const viewVirtualAccounts = () => {
+    setState(prev => ({ ...prev, currentStep: 'virtual-accounts' }));
+  };
+
   return (
     <>
-      {virtual_accounts?.length > 0 && (
-        <div className="mt-7">
-          <ActionButton
-            ariaLabel="Request a virtual account"
-            text="Request A Virtual Account"
-            iconName="plus"
-            onClick={openModal}
-          />
-
-          <div className="flex flex-col my-7 md:flex-row justify-between">
-            <ReferenceSearch
-              value={searchInput}
-              onClear={() => setSearchInput("")}
-              placeholder="Search by account number..."
-              handleParamsChange={handleParamsChange}
-            />
-
-            <FilterExport
-              handleExport={handleExport}
-              toggleFilter={toggleFilter}
-              showFilter={false}
-            />
-          </div>
-
-          <div className='relative flex justify-end mt-4 md:mt-0'>
-            <Dropdown onOpen={showFilter} onClose={toggleFilter}>
-              <Filter filterCallback={setFilter} />
-            </Dropdown>
-          </div>
-        </div>
-      )}
-
-      {getVirtualAccountsHistoryLoading ? (
-        <div className="mt-4">
-          <TableSkeleton singleButton />
-        </div>
-      ) : virtual_accounts?.length !== 0 ? (
+      {state.currentStep === 'virtual-accounts' && (
         <>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-[#C4C4C452] border-t-0 dark:border-gray-700">
-            <Table columns={columns} className="border-collapse w-full ">
-              {virtual_accounts?.map((item: any, index: number) => {
-                const [date, time] = formatDateTime2(item.created_at);
+          {virtual_accounts?.length > 0 && (
+            <div className='mt-7'>
+              <ActionButton
+                ariaLabel='Request Virtual Account'
+                text='Request Virtual Account'
+                iconName='plus'
+                onClick={openModal}
+              />
 
-                return (
-                  <tr
-                    key={index}
-                    className={`${index !== virtual_accounts.length - 1
-                      ? "[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700"
-                      : ""
-                      } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
-                  >
-                    <td className="text-sm px-5 py-6 font-medium text-gray-900 dark:text-gray-100">{index + 1}</td>
-                    <td className="text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100">
-                      {capitalizeFirstLetter(item.account_name || "N/A")}
-                    </td>
+              <div className='flex flex-col my-7 md:flex-row justify-between'>
+                <ReferenceSearch
+                  value={searchInput}
+                  onClear={() => setSearchInput('')}
+                  placeholder='Search by account number...'
+                  handleParamsChange={handleParamsChange}
+                />
 
-                    <td className="text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100">{item.account_number}</td>
-                    <td className="text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100">{item.bank}</td>
-                    <td className="text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100">{item.validity_type || 'N/A'}</td>
+                <FilterExport
+                  handleExport={handleExport}
+                  toggleFilter={toggleFilter}
+                  showFilter={false}
+                />
+              </div>
 
-                    <td className="text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100">
+              <div className='relative flex justify-end mt-4 md:mt-0'>
+                <Dropdown onOpen={showFilter} onClose={toggleFilter}>
+                  <Filter filterCallback={setFilter} />
+                </Dropdown>
+              </div>
+            </div>
+          )}
 
-                      <p className="text-[#090727] text-sm font-medium">
-                        {date}
+          {getVirtualAccountsHistoryLoading ? (
+            <div className='mt-4'>
+              <TableSkeleton singleButton />
+            </div>
+          ) : virtual_accounts?.length !== 0 ? (
+            <>
+              <div className='bg-white dark:bg-gray-800 rounded-lg border border-[#C4C4C452] border-t-0 dark:border-gray-700'>
+                <Table columns={columns} className='border-collapse w-full '>
+                  {virtual_accounts?.map((item: any, index: number) => {
+                    const [date, time] = formatDateTime2(item.created_at);
 
-                        <span className="ml-1 text-[#7F7F7F] text-xs">({time})</span>
-                      </p>
-                    </td>
+                    return (
+                      <tr
+                        key={index}
+                        className={`${index !== virtual_accounts.length - 1
+                            ? '[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700'
+                            : ''
+                          } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
+                      >
+                        <td className='text-sm px-5 py-6 font-medium text-gray-900 dark:text-gray-100'>
+                          {index + 1}
+                        </td>
+                        <td className='text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100'>
+                          {capitalizeFirstLetter(item.account_name || 'N/A')}
+                        </td>
 
-                    {/* <td
+                        <td className='text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100'>
+                          {item.account_number}
+                        </td>
+                        <td className='text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100'>
+                          {item.bank}
+                        </td>
+                        <td className='text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100'>
+                          {item.validity_type || 'N/A'}
+                        </td>
+
+                        <td className='text-sm pl-3 pr-5 py-6 font-medium text-gray-900 dark:text-gray-100'>
+                          <p className='text-[#090727] text-sm font-medium'>
+                            {date}
+
+                            <span className='ml-1 text-[#7F7F7F] text-xs'>
+                              ({time})
+                            </span>
+                          </p>
+                        </td>
+
+                        {/* <td
                     className="text-sm pl-3 pr-5 py-6 text-gray-900 dark:text-gray-100"
                     onClick={() => {
                       handleClick(item);
@@ -220,38 +264,48 @@ const VirtualAccounts = () => {
                       {item?.status === 1 ? 'Active' : 'Inactive'}
                     </div>
                   </td> */}
-                  </tr>
-                )
-              })}
-            </Table>
-          </div>
+                      </tr>
+                    );
+                  })}
+                </Table>
+              </div>
 
-          <Pagination
-            lastPage={lastPage}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
+              <Pagination
+                lastPage={lastPage}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </>
+          ) : (
+            <EmptyState
+              title={`No Virtual Accounts found for ${selectedCurrency || 'NGN'}`}
+              subTitle={`We couldn't find any virtual accounts in ${selectedCurrency || 'NGN'}. Try switching to a different currency or request a new account.`}
+              image='/images/virtual-acc-empty.svg'
+            >
+              <ActionButton
+                ariaLabel='Request an account'
+                text='Request an account'
+                iconName='plus'
+                onClick={openModal}
+              />
+            </EmptyState>
+          )}
+          <RequestVirtualAccount
+            isModalOpen={isModalOpen}
+            closeModal={closeModal}
+            fetchVirtualAccounts={fetchVirtualAccounts}
+            onUSDRouting={viewUSDAccounts}
           />
         </>
-      ) : (
-        <EmptyState
-          title="No Virtual Accounts found"
-          subTitle="We couldn't find any virtual accounts"
-          image="/images/virtual-acc-empty.svg"
-        >
-          <ActionButton
-            ariaLabel="Request an account"
-            text="Request an account"
-            iconName="plus"
-            onClick={openModal}
-          />
-        </EmptyState>
       )}
-      <RequestVirtualAccount
-        isModalOpen={isModalOpen}
-        closeModal={closeModal}
-        fetchVirtualAccounts={fetchVirtualAccounts}
-      />
+
+      {state.currentStep === 'usd-virtual-accounts' && (
+        <USDVirtualAccountView
+          onBack={viewVirtualAccounts}
+          virtualAccountType='Permanent'
+        />
+      )}
     </>
   );
 };

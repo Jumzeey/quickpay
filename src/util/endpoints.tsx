@@ -26,8 +26,9 @@ export const apiEndpoints = {
     GET_WALLET_EXPORT_STATUS: '/merchant/client/wallet-exports/:id/status',
 
     EXPORT_WALLET_HISTORY_TRANSACTIONS: '/merchant/client/get-wallet-logs',
-    GET_WALLET_HISTORY_EXPORT_STATUS: '/merchant/client/wallet-exports/:id/status',
- },
+    GET_WALLET_HISTORY_EXPORT_STATUS:
+      '/merchant/client/wallet-exports/:id/status',
+  },
   collections: {
     GET_COLLECTION_HISTORY: '/merchant/collections-history',
     GET_PAYMENT_LINKS: '/merchant/payment-links',
@@ -35,6 +36,7 @@ export const apiEndpoints = {
     UPDATE_PAYMENT_LINK: '/merchant/payment-links/update',
     GET_VIRTUAL_ACCOUNTS: '/merchant/virtual-accounts',
     REQUEST_VIRTUAL_ACCOUNT: '/merchant/virtual-accounts/store',
+    VERIFY_VIRTUAL_ACCOUNT_OTP: '/virtual-accounts/generate-wallet',
     REPUSH_NOTIFICATION: '/merchant/collections-history',
     GET_PAYMENT_MANDATES: '/merchant/mandates',
     CREATE_PAYMENT_MANDATE: '/merchant/mandates/store',
@@ -42,7 +44,8 @@ export const apiEndpoints = {
     REQUEST_REFUND: '/merchant/refunds/initiate',
     GET_SINGLE_REFUNDS: '/merchant/refunds',
     GET_REFUNDS: '/merchant/refunds',
-    GET_COLLECTION_GATEWAY_META: '/merchant/collections-history/:id/gateway-meta',
+    GET_COLLECTION_GATEWAY_META:
+      '/merchant/collections-history/:id/gateway-meta',
     EXPORT_COLLECTION_HISTORY_TRANSACTIONS: '/merchant/collections-history',
     GET_COLLECTION_EXPORT_STATUS: '/merchant/client/exports/:id/status',
   },
@@ -135,8 +138,11 @@ export const apiEndpoints = {
     LIST_SETTLEMENTS: '/merchant/settlements',
     GET_SETTLEMENT_DETAILS: '/merchant/settlements/:id',
     GET_DAILY_BREAKDOWN: '/merchant/settlements/daily-breakdown',
-    GET_SETTLEMENT_WINDOW_TRANSACTIONS: '/merchant/settlements/:id/window-transactions',
-    EXPORT_SETTLEMENT_WINDOW_TRANSACTIONS: '/merchant/settlements/:id/window-transactions',
-    GET_SETTLEMENT_EXPORT_STATUS: '/merchant/settlements/export-jobs/:id/status',
+    GET_SETTLEMENT_WINDOW_TRANSACTIONS:
+      '/merchant/settlements/:id/window-transactions',
+    EXPORT_SETTLEMENT_WINDOW_TRANSACTIONS:
+      '/merchant/settlements/:id/window-transactions',
+    GET_SETTLEMENT_EXPORT_STATUS:
+      '/merchant/settlements/export-jobs/:id/status',
   },
 };

@@ -13,6 +13,7 @@ import Pagination from "@/components/pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 import TransactionDetails from "@/components/transactionDetails";
 import { usePaginatedEffect } from "@/hooks/useEffectFetch";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import { getCollectionGatewayMeta, repushNotification } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import useCollectionHistory from "@/stores/useCollectionHistory";
@@ -20,7 +21,7 @@ import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { copyToClipboard, formatDate, notifyError, notifySuccess } from "@/util/utils";
+import { copyToClipboard, formatDate, notifyError } from "@/util/utils";
 import Link from "next/link";
 import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -35,6 +36,7 @@ interface CollectionsProps {
 }
 
 const CollectionHistory = () => {
+    const { handleError, handleSuccess } = useApiResponse();
     const { selectedItem, handleClick } = useClickEvent();
     const [searchInput, setSearchInput] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -232,7 +234,7 @@ const CollectionHistory = () => {
 
             toggleModal('viewTransactionMeta');
         } catch (error: any) {
-            notifyError(error.message);
+            handleError(error);
         } finally {
             setIsLoadingMeta(false);
         }
@@ -260,12 +262,12 @@ const CollectionHistory = () => {
         // try {
         //     const response = await getCollectionHistory({ export: true });
         //     if (!response || !response.export_link) {
-        //         notifyError("Export link is not available.");
+        //         handleError({ message: "Export link is not available." });
         //         return;
         //     }
         //     downloadFile(response.export_link);
         // } catch (error: any) {
-        //     notifyError(error.message);
+        //     handleError(error);
         // }
         try {
             // Show loading state
@@ -283,7 +285,7 @@ const CollectionHistory = () => {
             });
         } catch (error: any) {
             console.error("Failed to get account ID for export:", error);
-            notifyError("Failed to prepare export. Please try again.");
+            handleError(error, "Failed to prepare export. Please try again.");
             setIsExportModalOpen(false);
         }
     };
@@ -297,10 +299,10 @@ const CollectionHistory = () => {
             // @ts-ignore
             if (response?.message) {
                 // @ts-ignore
-                notifySuccess(response.message);
+                handleSuccess(response);
             }
         } catch (error: any) {
-            notifyError(error.message);
+            handleError(error);
         } finally {
             setState({ ...state, isLoading: false });
         }

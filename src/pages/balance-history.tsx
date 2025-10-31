@@ -13,6 +13,7 @@ import Layout from '@/components/layout';
 import Pagination from '@/components/pagination';
 import { ReferenceSearch } from '@/components/reference-search';
 import { usePaginatedStoreQuery } from '@/hooks/useOptimizedFetch';
+import { useApiResponse } from '@/hooks/useApiResponse';
 import useCurrency from '@/stores/useCurrency';
 import useFilter from '@/stores/useFilter';
 import useWalletLogs, { getAccountId } from '@/stores/useWalletLogs';
@@ -23,7 +24,6 @@ import {
   capitalizeFirstLetterOfEachWord,
   formatDate,
   formatDateTime2,
-  notifyError,
   replaceCurrencySymbol
 } from '@/util/utils';
 import { useCallback, useEffect, useState } from 'react';
@@ -40,6 +40,7 @@ const actionMap: Record<string, string> = {
 }
 
 const WalletHistory = () => {
+  const { handleError } = useApiResponse();
   const { selectedCurrency } = useCurrency();
   const {
     fetchWalletHistory,
@@ -174,7 +175,7 @@ const WalletHistory = () => {
       },
       onError: (error) => {
         console.error('❌ Failed to fetch wallet history:', error);
-        // notifyError(error.message);
+        handleError(error);
       },
       cacheTime: 0,
     }
@@ -221,7 +222,7 @@ const WalletHistory = () => {
     //     downloadFile(result.export_link);
     //   }
     // } catch (error: any) {
-    //   notifyError(error.message);
+    //   handleError(error);
     // }
 
     try {
@@ -244,7 +245,7 @@ const WalletHistory = () => {
       });
     } catch (error: any) {
       console.error("Failed to get account ID for export:", error);
-      notifyError("Failed to prepare export. Please try again.");
+      handleError(error, "Failed to prepare export. Please try again.");
       setIsExportModalOpen(false);
     }
   };

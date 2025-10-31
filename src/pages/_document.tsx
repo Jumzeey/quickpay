@@ -4,7 +4,19 @@ export default function Document() {
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   return (
     <Html lang="en">
-      <Head />
+      <Head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", "tt650evu2d");
+            `,
+          }}
+        />
+      </Head>
       <script src={`https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`} async />
       <link rel="icon" href="/favicon.svg" />
       <meta

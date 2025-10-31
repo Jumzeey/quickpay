@@ -5,6 +5,7 @@ import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import WebPageTitle from "@/components/WebPageTitle";
 import env from "@/config/env";
+import { EXTERNAL_URLS } from "@/constants";
 import useAuthentication from "@/stores/useAuthentication";
 import useLoadRecaptcha from "@/util/useLoadRecaptcha";
 import {
@@ -398,7 +399,7 @@ const RegisterPage: React.FC = () => {
                 >
                   I consent to the collection and processing of my personal data
                   in line with data regulations as described in the
-                  <Link href={`${publicUrl}/privacy-policy`} legacyBehavior>
+                  <Link href={EXTERNAL_URLS.PRIVACY_POLICY} legacyBehavior>
                     <a
                       target="_blank"
                       rel="noopener noreferrer"

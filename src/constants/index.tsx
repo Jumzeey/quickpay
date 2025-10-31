@@ -174,3 +174,9 @@ export const collections = [
   //   title: "Payment Mandate",
   // },
 ];
+
+// External Legal URLs
+export const EXTERNAL_URLS = {
+  PRIVACY_POLICY: "https://www.crayfinance.com/privacy-policy",
+  TERMS_OF_SERVICE: "https://www.crayfinance.com/terms-of-service",
+};

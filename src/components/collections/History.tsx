@@ -21,7 +21,7 @@ import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { copyToClipboard, formatDate } from "@/util/utils";
+import { copyToClipboard, formatDate, notifyError } from "@/util/utils";
 import Link from "next/link";
 import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";

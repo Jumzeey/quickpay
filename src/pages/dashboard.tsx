@@ -114,6 +114,8 @@ const Dashboard = () => {
           setAccounts(selectedCurrency, accountInfo);
         }
 
+        console.log({ total_collections, total_disbursements, selectedCurrency });
+
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -135,6 +137,8 @@ const Dashboard = () => {
       }
     }
   );
+
+  console.log(currencySymbols[selectedCurrency], currencySymbols, selectedCurrency)
 
   const { loading: isChartLoading } = useEffectFetch(
     async () => {

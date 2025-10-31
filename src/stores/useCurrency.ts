@@ -20,6 +20,7 @@ interface CurrencyState {
     activeCurrencies: string[];
     isLoadingCurrencies: boolean;
     setCurrency: (currency: CurrencyOption) => void;
+    setDefaultCurrency: (currency: CurrencyOption) => void;
     setAccounts: (currency: CurrencyOption, accounts: AccountInfo) => void;
     getAccountId: (currency: CurrencyOption, accountType?: 'main' | 'reserve') => string | null;
     getCurrencySymbol: () => string;

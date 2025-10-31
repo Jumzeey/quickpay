@@ -62,7 +62,7 @@ const PaymentLinkTransactions = () => {
   const [pagination, setPagination] = useState<any>(null);
 
   const {
-    // data,
+    data,
     loading: isLoading,
     // error,
   } = usePaginatedEffect(

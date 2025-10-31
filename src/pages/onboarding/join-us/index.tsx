@@ -6,6 +6,7 @@ import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
+import { EXTERNAL_URLS } from "@/constants";
 import { useFormValidation } from "@/hooks/useFormValidation";
 // import { SupportedCountry } from "@/services/authentication";
 import useAuthentication from "@/stores/useAuthentication";
@@ -334,7 +335,7 @@ const RegisterPage = () => {
                       <label htmlFor="agree_to_terms" className="text-sm font-medium text-[#7F7F7F] leading-snug">
                         I consent to the collection and processing of my personal data in line with data regulations as
                         described in the{' '}
-                        <Link href="/privacy-policy" className="text-primary">
+                        <Link href={EXTERNAL_URLS.PRIVACY_POLICY} target="_blank" rel="noopener noreferrer" className="text-primary">
                           Cray Privacy Policy
                         </Link>.
                       </label>

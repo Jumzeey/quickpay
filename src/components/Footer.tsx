@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import Icon from "./icon";
+import { EXTERNAL_URLS } from "@/constants";
+
 const Footer = () => {
   return (
     <footer className="bg-[url('/images/features-bg.svg')] bg-cover bg-no-repeat text-white">
@@ -67,11 +69,11 @@ const Footer = () => {
         <div>
           <ul className="text-white text-sm list-none leading-10 p-0 m-0">
             <li className="Poppins-Semibold pb-2">Legal</li>
-            <Link href="/privacy-policy">
+            <Link href={EXTERNAL_URLS.PRIVACY_POLICY} target="_blank" rel="noopener noreferrer">
               <li>Privacy Policy</li>
             </Link>
 
-            <Link href="/terms-and-conditions">
+            <Link href={EXTERNAL_URLS.TERMS_OF_SERVICE} target="_blank" rel="noopener noreferrer">
               <li>Terms & Conditions</li>
             </Link>
           </ul>

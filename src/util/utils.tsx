@@ -316,6 +316,27 @@ export const currencySymbols: Record<string, string> = {
   'TZS': 'TZS',
 };
 
+export const currencyFlags: Record<string, string> = {
+  'NGN': '🇳🇬',
+  'USD': '🇺🇸',
+  'GHS': '🇬🇭',
+  'EUR': '🇪🇺',
+  'GBP': '🇬🇧',
+  'KES': '🇰🇪',
+  'ZMW': '🇿🇲',
+  'TZS': '🇹🇿',
+  'TZX': '🇹🇿', // Alternative code for Tanzania
+};
+
+/**
+ * Get the country flag emoji for a given currency code
+ * @param currency - The currency code (e.g., 'NGN', 'USD')
+ * @returns The flag emoji or empty string if not found
+ */
+export const getCurrencyFlag = (currency: string): string => {
+  return currencyFlags[currency] || '';
+};
+
 export const replaceCurrencySymbol = (amount: string): string => {
   if (!amount) return amount;
 

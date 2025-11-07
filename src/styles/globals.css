@@ -77,9 +77,11 @@ body,
 .sarepayGreen {
   color: #17da7c;
 }
+
 .secondaryColor {
   color: #36a2eb;
 }
+
 .sarepayPrimary {
   color: #042468;
 }
@@ -99,6 +101,7 @@ body,
 
 .bg-auth-header {
   background-image: url("/images/mesh-gradient.png");
+  -webkit-backdrop-filter: blur(40px);
   backdrop-filter: blur(40px);
   background-color: #f6f4f433;
   background-size: cover;
@@ -187,6 +190,26 @@ body,
   font-size: 14px;
 }
 
+.appInput ::-webkit-input-placeholder {
+  color: #9a9ab0;
+  font-size: 12px;
+}
+
+.appInput ::-moz-placeholder {
+  color: #9a9ab0;
+  font-size: 12px;
+}
+
+.appInput :-ms-input-placeholder {
+  color: #9a9ab0;
+  font-size: 12px;
+}
+
+.appInput ::-ms-input-placeholder {
+  color: #9a9ab0;
+  font-size: 12px;
+}
+
 .appInput ::placeholder {
   color: #9a9ab0;
   font-size: 12px;
@@ -245,12 +268,15 @@ body,
 .class-0 {
   font-weight: 700;
 }
+
 .class-1 {
   font-weight: 300;
 }
+
 .class-2 {
   font-weight: 300;
 }
+
 .border-bottom {
   border: 1px solid #f5f8fa;
 }
@@ -289,6 +315,7 @@ body,
 .Poppins-Semibold {
   font-family: "Poppins-Semibold", sans-serif;
 }
+
 .testimonials-section {
   background-image: url("../../public/images/testimonials-bg.svg");
   background-size: contain;
@@ -330,6 +357,7 @@ body,
 .description input {
   text-transform: capitalize;
 }
+
 .customPassword {
   margin: 0;
   padding: 0;
@@ -353,4 +381,27 @@ body,
 .rdrDefinedRangesWrapper,
 .rdrDateDisplayWrapper {
   display: none;
+}
+
+/* Wallet scroll container styles */
+.wallet-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.wallet-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wallet-scroll-container::-webkit-scrollbar-thumb {
+  background: #C4C4C4;
+  border-radius: 4px;
+}
+
+.wallet-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #A0A0A0;
+}
+
+.wallet-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: #C4C4C4 transparent;
 }

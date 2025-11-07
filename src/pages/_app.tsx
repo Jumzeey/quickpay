@@ -11,6 +11,7 @@ import { Manrope } from "next/font/google";
 import { useEffect, useState } from "react";
 import { useIdleTimer } from 'react-idle-timer';
 import { Toaster } from "sonner";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -21,6 +22,18 @@ const manrope = Manrope({
 
 const timeout = 10 * 60 * 1000 // 10 minutes
 const promptBeforeIdle = 1 * 60 * 1000 // (1 minute)
+
+// Create a client for TanStack Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    },
+  },
+});
 
 export default function App({ Component, pageProps }: AppProps) {
   const { user } = useAuthentication() || {};
@@ -122,45 +135,47 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [tracker, user]);
 
   return (
-    <ThemeProvider>
-      <SharedState>
-        <main className={isClient ? `${manrope.variable} font-sans` : "font-sans"}>
-          <Toaster position="top-center" richColors />
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, maximum-scale=1"
-          />
-          <Component {...pageProps} />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <SharedState>
+          <main className={isClient ? `${manrope.variable} font-sans` : "font-sans"}>
+            <Toaster position="top-center" richColors />
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1, maximum-scale=1"
+            />
+            <Component {...pageProps} />
 
-          <Modal
-            isOpen={state === 'Prompted' && open && shouldLogout}
-            onClose={() => { }}
-            title="Session Timeout Warning"
-          >
-            <div className="p-4">
-              <p className="mb-4">
-                Your session will expire in {remaining} {seconds} due to inactivity.
-                Would you like to continue your session?
-              </p>
+            <Modal
+              isOpen={state === 'Prompted' && open && shouldLogout}
+              onClose={() => { }}
+              title="Session Timeout Warning"
+            >
+              <div className="p-4">
+                <p className="mb-4">
+                  Your session will expire in {remaining} {seconds} due to inactivity.
+                  Would you like to continue your session?
+                </p>
 
-              <div className="flex justify-end gap-3">
-                <Button
-                  text="Log Out Now"
-                  ariaLabel="Log out now"
-                  onClick={handleLogoutTimer}
-                  className="bg-gray-200 text-gray-800"
-                />
-                <Button
-                  text="Continue Session"
-                  ariaLabel="Continue session"
-                  onClick={handleStillHere}
-                  primary
-                />
+                <div className="flex justify-end gap-3">
+                  <Button
+                    text="Log Out Now"
+                    ariaLabel="Log out now"
+                    onClick={handleLogoutTimer}
+                    className="bg-gray-200 text-gray-800"
+                  />
+                  <Button
+                    text="Continue Session"
+                    ariaLabel="Continue session"
+                    onClick={handleStillHere}
+                    primary
+                  />
+                </div>
               </div>
-            </div>
-          </Modal>
-        </main>
-      </SharedState>
-    </ThemeProvider>
+            </Modal>
+          </main>
+        </SharedState>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

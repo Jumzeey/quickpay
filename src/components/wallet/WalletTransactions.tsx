@@ -11,7 +11,6 @@ import {
     capitalizeFirstLetterOfEachWord,
     formatDate
 } from '@/util/utils';
-import debounce from '@/util/debounce';
 import { ReferenceSearch } from '@/components/reference-search';
 import { FilterExport } from '@/components/filter-export';
 import Dropdown from '@/components/Dropdown';
@@ -68,15 +67,56 @@ const WalletTransactions = ({ selectedWallet, selectedCurrency }: WalletTransact
         setCurrentPage(1);
     }, [selectedWallet]);
 
-    // Filter transactions by search input
+    // Filter transactions by search input with improved regex matching
     const filteredTransactions = useMemo(() => {
-        if (!searchInput || !allTransactions.length) return allTransactions;
-        const searchLower = searchInput.toLowerCase();
-        return allTransactions.filter((transaction: any) =>
-            transaction.transaction_reference?.toLowerCase().includes(searchLower) ||
-            transaction.description?.toLowerCase().includes(searchLower) ||
-            transaction.customer_reference?.toLowerCase().includes(searchLower)
-        );
+        if (!searchInput || !searchInput.trim() || !allTransactions.length) {
+            return allTransactions;
+        }
+
+        // Clean and escape the search input for regex
+        const searchTerm = searchInput.trim().toLowerCase();
+        // Escape special regex characters but allow flexible matching
+        const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // Create a regex pattern that matches the search term anywhere in the string
+        let searchRegex: RegExp;
+        try {
+            searchRegex = new RegExp(escapedSearch, 'i'); // 'i' flag for case-insensitive
+        } catch (error) {
+            // Fallback to simple string matching if regex fails
+            return allTransactions.filter((transaction: any) => {
+                const searchLower = searchTerm.toLowerCase();
+                const ref = String(transaction?.transaction_reference || '').toLowerCase();
+                const desc = String(transaction?.description || '').toLowerCase();
+                const custRef = String(transaction?.customer_reference || '').toLowerCase();
+                const amount = String(transaction?.amount || '').toLowerCase();
+                const status = String(transaction?.status || '').toLowerCase();
+                const type = String(transaction?.transaction_type || '').toLowerCase();
+                
+                return ref.includes(searchLower) ||
+                       desc.includes(searchLower) ||
+                       custRef.includes(searchLower) ||
+                       amount.includes(searchLower) ||
+                       status.includes(searchLower) ||
+                       type.includes(searchLower);
+            });
+        }
+
+        // Search across multiple fields with regex
+        return allTransactions.filter((transaction: any) => {
+            // Get all searchable fields as strings, handling null/undefined
+            const fields = [
+                String(transaction?.transaction_reference || ''),
+                String(transaction?.description || ''),
+                String(transaction?.customer_reference || ''),
+                String(transaction?.amount || ''),
+                String(transaction?.status || ''),
+                String(transaction?.transaction_type || ''),
+            ];
+
+            // Check if any field matches the search regex
+            return fields.some(field => searchRegex.test(field));
+        });
     }, [allTransactions, searchInput]);
 
     // Apply date filter
@@ -121,16 +161,16 @@ const WalletTransactions = ({ selectedWallet, selectedCurrency }: WalletTransact
         setCurrentPage(1);
     };
 
-    const debouncedHandleParamsChange = useMemo(
-        () => debounce((value: string) => {
-            setSearchInput(value);
-            setCurrentPage(1);
-        }, 300),
-        []
-    );
-
     const handleParamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        debouncedHandleParamsChange(event.target.value);
+        const value = event.target.value;
+        // Update search input immediately for local filtering (no debounce needed)
+        setSearchInput(value);
+        setCurrentPage(1);
+    };
+
+    const handleClearSearch = () => {
+        setSearchInput('');
+        setCurrentPage(1);
     };
 
     const handlePageChange = (page: number) => {
@@ -259,7 +299,7 @@ const WalletTransactions = ({ selectedWallet, selectedCurrency }: WalletTransact
                     <div className="flex flex-col my-7 md:flex-row justify-between">
                         <ReferenceSearch
                             value={searchInput}
-                            onClear={() => setSearchInput('')}
+                            onClear={handleClearSearch}
                             handleParamsChange={handleParamsChange}
                         />
                         <FilterExport

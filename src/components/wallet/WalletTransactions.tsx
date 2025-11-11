@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useWalletTransactions } from '@/services/wallet';
 import DynamicTable from '@/components/DynamicTable';
 import EmptyState from '@/components/EmptyState';
@@ -57,6 +57,16 @@ const WalletTransactions = ({ selectedWallet, selectedCurrency }: WalletTransact
     const allTransactions = useMemo(() => {
         return (transactionsData as any)?.data?.wallet || [];
     }, [transactionsData]);
+
+    // Reset search and filter when wallet changes
+    useEffect(() => {
+        setSearchInput('');
+        setFilter({
+            startDate: null,
+            endDate: null,
+        });
+        setCurrentPage(1);
+    }, [selectedWallet]);
 
     // Filter transactions by search input
     const filteredTransactions = useMemo(() => {

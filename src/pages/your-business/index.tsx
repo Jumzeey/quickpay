@@ -29,8 +29,12 @@ const Business = () => {
                 description="Keep everything running smoothly with easy access to your business insights."
             />
 
-            <TabHeader tabs={tabs} />
+            {/* Tabs */}
+            <div className="mt-8">
+                <TabHeader tabs={tabs} />
+            </div>
 
+            {/* Tab Content */}
             <div className="mt-8">
                 {tab === "business-kyc" && <BusinessKYC />}
                 {tab === "webhooks" && <Webhooks />}

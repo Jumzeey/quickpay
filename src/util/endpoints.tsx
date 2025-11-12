@@ -15,6 +15,7 @@ export const apiEndpoints = {
   },
   transaction: {
     GET_BALANCE: '/merchant/client/get-balance',
+    GET_WALLETS: '/merchant/client/get-balance',
     GET_MERCHANT_BALANCE: '/merchant/dashboard/balance',
     GET_TRANSACTIONS: '/merchant/dashboard/transactions',
     GET_SETTLEMENT_ACCOUNTS: '/merchant/settlements/accounts',

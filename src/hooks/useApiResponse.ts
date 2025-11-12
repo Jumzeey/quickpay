@@ -27,28 +27,52 @@ export function useApiResponse() {
     // Handle validation errors from CustomHttpError payload
     if (error?.payload && typeof error.payload === 'object') {
       const errors = error.payload;
-      const errorList = Object.entries(errors).map(([field, message]) => {
-        const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        return `• ${fieldName}: ${message}`;
-      });
       
-      if (errorList.length > 0) {
-        console.error('Validation errors:', errors);
-        notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
-        return;
+      // Check if errors is an array
+      if (Array.isArray(errors)) {
+        // If it's an array, just show the first error or join them
+        const errorList = errors.filter(Boolean).map((msg, index) => `• ${msg}`);
+        
+        if (errorList.length > 0) {
+          console.error('Validation errors (array):', errors);
+          notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
+          return;
+        }
+      } else {
+        // If it's an object, format field names
+        const errorList = Object.entries(errors).map(([field, message]) => {
+          const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          return `• ${fieldName}: ${message}`;
+        });
+        
+        if (errorList.length > 0) {
+          console.error('Validation errors (object):', errors);
+          notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
+          return;
+        }
       }
     }
     
     // Handle errors in response.data.errors format
     if (error?.response?.data?.errors) {
       const errors = error.response.data.errors;
-      const errorList = Object.entries(errors).map(([field, message]) => {
-        const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        return `• ${fieldName}: ${message}`;
-      });
-      console.error('Validation errors:', errors);
-      notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
-      return;
+      
+      // Check if errors is an array
+      if (Array.isArray(errors)) {
+        const errorList = errors.filter(Boolean).map((msg, index) => `• ${msg}`);
+        console.error('Validation errors (array):', errors);
+        notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
+        return;
+      } else {
+        // If it's an object, format field names
+        const errorList = Object.entries(errors).map(([field, message]) => {
+          const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          return `• ${fieldName}: ${message}`;
+        });
+        console.error('Validation errors (object):', errors);
+        notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
+        return;
+      }
     }
     
     // Handle single error message

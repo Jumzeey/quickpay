@@ -48,7 +48,7 @@ interface Account {
 }
 
 interface MerchantBalanceResponse {
-  accounts: Account[];
+  accounts: Account[] | { message: string };
   [key: string]: any;
 }
 
@@ -96,7 +96,21 @@ export const getAccountId = async (currency: CurrencyOption): Promise<string> =>
     console.log(`No account found for ${currency}, fetching account info...`);
 
     const balanceResponse: MerchantBalanceResponse = await getMerchantBalance(currency);
-    const accounts = balanceResponse?.accounts || [];
+    
+    // Check if accounts is an array or an object with a message
+    const accounts = balanceResponse?.accounts;
+    
+    // If accounts is not an array or is empty, throw an error
+    if (!Array.isArray(accounts)) {
+      const errorMessage = typeof accounts === 'object' && 'message' in accounts
+        ? accounts.message 
+        : `No accounts found for currency: ${currency}`;
+      throw new Error(errorMessage);
+    }
+    
+    if (accounts.length === 0) {
+      throw new Error(`No accounts found for currency: ${currency}`);
+    }
 
     // Find main and reserve accounts
     const mainAccount = accounts.find((acc: Account) => acc.account_type === 'main');

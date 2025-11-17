@@ -287,7 +287,7 @@ const CollectionDetailsWrapper: React.FC<CollectionsProps> = ({
             <div className='p-6 sm:p-8 rounded-md'>
               <div className='flex justify-center text-center'>
                 <div className='flex flex-col items-center max-w-md w-full'>
-                  <h2 className='mt-2 text-2xl sm:text-3xl font-bold text-primary-blue'>
+                  <h2 className='mt-2 text-2xl sm:text-3xl font-bold text-primary'>
                     Request Refund
                   </h2>
                   <p className='text-sm sm:text-base text-gray-600 mt-3'>

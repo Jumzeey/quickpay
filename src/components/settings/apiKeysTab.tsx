@@ -121,7 +121,7 @@ const ApiKeysTab = () => {
           <div className="flex justify-center items-center py-20">
             <div className="flex flex-col items-center">
               <svg
-                className="animate-spin w-12 h-12 text-[#164988]"
+                className="animate-spin w-12 h-12 text-[#DC143C]"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -140,7 +140,7 @@ const ApiKeysTab = () => {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              <p className="text-[#164988] dark:text-blue-400 font-medium mt-4">
+              <p className="text-[#DC143C] dark:text-red-400 font-medium mt-4">
                 Fetching API Keys...
               </p>
             </div>
@@ -195,7 +195,7 @@ const ApiKeysTab = () => {
                         <Icon
                           name="copy3"
                           size="15"
-                          className="cursor-pointer text-[#7F7F7F] hover:text-[#164988] dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+                          className="cursor-pointer text-[#7F7F7F] hover:text-[#DC143C] dark:text-gray-400 dark:hover:text-red-400 transition-colors"
                           onClick={() => copyToClipboard(value)}
                         />
                       )}

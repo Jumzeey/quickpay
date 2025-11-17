@@ -56,7 +56,7 @@ const Navbar = ({
         <div className="h-auto flex flex-row px-3 md:px-6 py-4 md:py-3 items-center justify-between">
           <Link href="/dashboard">
             <Image
-              src={theme === "light" ? "/images/logo-blue.svg" : "/images/logo-blue.svg"}
+              src="/images/logo.png"
               alt="Logo"
               className="h-7 w-auto"
               width={83}
@@ -80,10 +80,10 @@ const Navbar = ({
 
           <div className="flex items-center gap-6">
             <div className="text-black dark:text-[#EFF7FE] font-medium text-sm gap-6 hidden md:flex items-center">
-              <Link href="https://docs.connectramp.com" target="_blank" className="hover:text-primary-blue dark:hover:text-blue-400">
+              <Link href="https://docs.connectramp.com" target="_blank" className="hover:text-primary dark:hover:text-red-400">
                 API Documentation
               </Link>
-              <Link href="#" className="hover:text-primary-blue dark:hover:text-blue-400">
+              <Link href="#" className="hover:text-primary dark:hover:text-red-400">
                 Integration Support
               </Link>
 
@@ -101,7 +101,7 @@ const Navbar = ({
 
             <div className="flex gap-2 items-center">
               <Link href="/settings" className="block">
-                <div className="relative w-[50px] h-[40px] overflow-hidden bg-[#005BB01A] rounded">
+                <div className="relative w-[50px] h-[40px] overflow-hidden bg-[#DC143C1A] rounded">
                   <Image
                     src={avatar ? avatar : "/images/dashboard/avatar2.svg"}
                     alt="Profile Picture"
@@ -128,7 +128,7 @@ const Navbar = ({
                   })
                 }
               >
-                <div className="flex flex-col text-[#005BB0]">
+                <div className="flex flex-col text-[#DC143C]">
                   {/* <span className="text-base font-semibold">
                     {capitalizeFirstLetter(business_name)}
                   </span> */}
@@ -136,7 +136,7 @@ const Navbar = ({
                     {capitalizeFirstLetterOfEachWord(firstname + " " + lastname)}
                   </span>
                 </div>
-                <Icon name="caretDown" className="text-[#005BB0]" />
+                <Icon name="caretDown" className="text-[#DC143C]" />
               </div>
             </div>
 
@@ -152,7 +152,7 @@ const Navbar = ({
                       href="/settings"
                       className="flex items-center gap-3 text-xs font-medium cursor-pointer hover:text-primary"
                     >
-                      <Icon name="settings2" className="flex" color="#164988" />
+                      <Icon name="settings2" className="flex" color="#DC143C" />
                       <span>Account Settings</span>
                     </Link>
                   </li>
@@ -161,7 +161,7 @@ const Navbar = ({
                       href="/activity-log"
                       className="flex items-center gap-3 text-xs font-medium cursor-pointer hover:text-primary"
                     >
-                      <Icon name="activityLog" className="flex" color="#164988" />
+                      <Icon name="activityLog" className="flex" color="#DC143C" />
                       <span>Activity Log</span>
                     </Link>
                   </li>
@@ -180,7 +180,7 @@ const Navbar = ({
               {theme === "dark" ? (
                 <Icon name="sun" className="size-6 text-[#EFF7FE]" />
               ) : (
-                <Icon name="moon" className="size-6 text-[#005BB0]" />
+                <Icon name="moon" className="size-6 text-[#DC143C]" />
               )}
             </button> */}
           </div>

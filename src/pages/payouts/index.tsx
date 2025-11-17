@@ -485,7 +485,7 @@ const PayoutHistory = () => {
                       toggleModal('isMoreActionsOpen')
                       setCurrentLog(row);
                     }}
-                    className="text-sm text-[#005BB0] font-medium w-[150px] h-12 bg-[#EFF7FE] flex items-center justify-center"
+                    className="text-sm text-[#DC143C] font-medium w-[150px] h-12 bg-[#EFF7FE] flex items-center justify-center"
                   >
                     More actions
 

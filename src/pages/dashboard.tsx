@@ -215,9 +215,9 @@ const Dashboard = () => {
           </p>
 
           <div className="flex items-center gap-1.5">
-            <Icon name="edit2" className="inline-block" />
+            <Icon name="edit2" className="inline-block" color="#DC143C" />
 
-            <Link href="/settings" className="text-left text-xs font-semibold text-[#005BB0]">
+            <Link href="/settings" className="text-left text-xs font-semibold text-[#DC143C]">
               Manage account
             </Link>
           </div>
@@ -323,7 +323,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="absolute w-[-webkit-fill-available] bg-[#005BB0] h-56 mx-10 top-2.5 rounded-[10px]">&nbsp;</div>
+          <div className="absolute w-[-webkit-fill-available] bg-[#DC143C] h-56 mx-10 top-2.5 rounded-[10px]">&nbsp;</div>
         </div>
 
         <div className="rounded-[10px] border border-[#C4C4C452] pl-6 pb-6 h-56 flex flex-col justify-end gap-8">

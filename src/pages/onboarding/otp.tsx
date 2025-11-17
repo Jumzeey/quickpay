@@ -113,7 +113,7 @@ const OtpPage = () => {
             <div className="px-8 pt-8 pb-4 bg-auth-header">
               <div className="flex items-center">
                 <Image
-                  src="/images/logo-blue.svg"
+                  src="/images/logo.png"
                   alt="Logo"
                   width={80}
                   height={32}
@@ -125,7 +125,7 @@ const OtpPage = () => {
 
             {/* OTP Form */}
             <div className="px-8 pb-8 mt-12">
-              <h2 className="text-lg font-extrabold text-[#184078] mb-2">
+              <h2 className="text-lg font-extrabold text-[#000000] mb-2">
                 Verify OTP
               </h2>
               <p className="text-sm text-[#00000080] font-medium mb-8">
@@ -190,7 +190,7 @@ const OtpPage = () => {
                     Back to{' '}
                     <Link
                       href="/onboarding/sign-in"
-                      className="hover:text-blue-700"
+                      className="hover:text-red-700"
                     >
                       Sign in
                     </Link>
@@ -206,7 +206,7 @@ const OtpPage = () => {
                 disabled={isDisabled || resendOtpLoading}
                 className={`text-sm font-medium ${isDisabled
                   ? 'text-[#7F7F7F] cursor-not-allowed'
-                  : 'text-primary hover:text-blue-700'
+                  : 'text-primary hover:text-red-700'
                   }`}
               >
                 {isDisabled

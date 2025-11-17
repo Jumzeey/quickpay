@@ -84,7 +84,7 @@ const SignInPage: React.FC = () => {
               <div className="px-8 pt-8 pb-4 bg-auth-header">
                 <div className="flex items-center">
                   <Image
-                    src="/images/logo-blue.svg"
+                    src="/images/logo.png"
                     alt="Logo"
                     width={80}
                     height={32}
@@ -96,7 +96,7 @@ const SignInPage: React.FC = () => {
 
               {/* Sign In Form */}
               <div className="px-8 pb-8 mt-12">
-                <h2 className="text-lg font-extrabold text-[#184078] mb-8">
+                <h2 className="text-lg font-extrabold text-[#000000] mb-8">
                   Sign in.
                 </h2>
 
@@ -135,7 +135,7 @@ const SignInPage: React.FC = () => {
                         <div className="flex justify-end">
                           <Link
                             href="/onboarding/forgot-password"
-                            className="text-[13px] font-semibold text-primary hover:text-blue-700"
+                            className="text-[13px] font-semibold text-primary hover:text-red-700"
                           >
                             Forgot your password?
                           </Link>
@@ -163,7 +163,7 @@ const SignInPage: React.FC = () => {
                   New user?
                   <Link
                     href="/onboarding/join-us"
-                    className="text-primary hover:text-blue-700 ml-1"
+                    className="text-primary hover:text-red-700 ml-1"
                   >
                     Create an account
                   </Link>

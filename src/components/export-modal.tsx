@@ -487,7 +487,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                     ranges={[selectionRange]}
                     direction="horizontal"
                     color="#000"
-                    rangeColors={["#164988"]}
+                    rangeColors={["#DC143C"]}
                     staticRanges={[]}
                 />
             </div>
@@ -662,7 +662,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 <>
                     <div className="flex items-center justify-center mb-6 h-52">
                         <Image
-                            src="/images/logo-blue.svg"
+                            src="/images/logo.png"
                             width={83}
                             height={40}
                             alt="Logo"
@@ -694,7 +694,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                             name="download"
                             width="60"
                             height="60"
-                            color="#005BB0"
+                            color="#DC143C"
                         />
                     </div>
 

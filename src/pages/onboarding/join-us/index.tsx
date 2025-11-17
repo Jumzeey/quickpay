@@ -159,7 +159,7 @@ const RegisterPage = () => {
             <div className="px-8 pt-8 pb-4 bg-auth-header">
               <div className="flex items-center">
                 <Image
-                  src="/images/logo-blue.svg"
+                  src="/images/logo.png"
                   alt="Logo"
                   width={80}
                   height={32}
@@ -172,7 +172,7 @@ const RegisterPage = () => {
             {/* Registration Form */}
             <div className="px-8 pb-8 mt-12">
               <div className="space-y-2 mb-8">
-                <h2 className="text-lg font-extrabold text-[#184078]">
+                <h2 className="text-lg font-extrabold text-[#000000]">
                   Create account
                 </h2>
                 <p className="text-sm font-semibold text-[#00000080]">
@@ -365,7 +365,7 @@ const RegisterPage = () => {
                 Already have an account?{" "}
                 <Link
                   href="/onboarding/sign-in"
-                  className="text-primary hover:text-blue-700 ml-1"
+                  className="text-primary hover:text-red-700 ml-1"
                 >
                   Sign in
                 </Link>

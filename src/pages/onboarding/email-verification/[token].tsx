@@ -28,7 +28,7 @@ const EmailVerificationPage = () => {
   return (
     <div className="flex flex-col justify-center items-center h-screen">
       <svg
-        className={`animate-spin mr-1 w-20 mt-px text-[#164988]`}
+        className={`animate-spin mr-1 w-20 mt-px text-[#DC143C]`}
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"

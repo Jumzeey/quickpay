@@ -11,7 +11,7 @@ export default function OnboardingSidebar() {
   const texts = [
     "<p>Join our leading-edge payment infrastructure solution designed to simplify and secure your financial transactions.</p>",
     "<p>Begin your journey in just three straightforward steps: <br/> Sign up, integrate seamlessly, and securely process payments. <br/> Join us and enjoy a seamless payment experience.</p>",
-    "<p>Don’t miss out! <br/> Join thousands of satisfied customers who trust Quickpay for their payment collection and payout needs. <br/> Sign up now!</p>",
+    "<p>Don't miss out! <br/> Join thousands of satisfied customers who trust Accelerex for their payment collection and payout needs. <br/> Sign up now!</p>",
   ];
 
   useEffect(() => {
@@ -27,8 +27,8 @@ export default function OnboardingSidebar() {
       <div className="pb-20">
         <Link href={`${publicUrl}/`}>
           <Image
-            src="/images/quickpay-logo.svg"
-            alt="quickpay-logo"
+            src="/images/logo.png"
+            alt="Accelerex Logo"
             width={127}
             height={29}
             priority

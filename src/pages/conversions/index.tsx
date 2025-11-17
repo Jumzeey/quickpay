@@ -153,7 +153,7 @@ const ConversionHistory = () => {
           <Button
             text="Initiate Conversion"
             ariaLabel="Initiate Conversion button"
-            className="!w-[151px] !h-10 bg-[#EFF7FE] text-[#005BB0] font-medium"
+            className="!w-[151px] !h-10 bg-[#EFF7FE] text-[#DC143C] font-medium"
             onClick={() => toggleModal('isInitiateConversionModalOpen')}
           />
         </div>

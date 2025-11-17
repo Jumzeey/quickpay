@@ -87,7 +87,7 @@ const CurrencySwitcher = ({
       {/* Selected Button */}
       <button
         type='button'
-        className={`flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm ${contentClassName}`}
+        className={`flex justify-between items-center w-full h-12 rounded px-4 bg-[#DC143C1A] text-[#DC143C] font-bold text-sm ${contentClassName}`}
         onClick={() => setIsOpen(prev => !prev)}
       >
         <span>{selectedLabel}</span>
@@ -115,8 +115,8 @@ const CurrencySwitcher = ({
                 <li
                   key={option.value}
                   onClick={() => handleChange(option.value as CurrencyOption)}
-                  className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${
-                    selectedCurrency === option.value ? 'bg-[#005BB00D]' : ''
+                  className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#DC143C1A] ${
+                    selectedCurrency === option.value ? 'bg-[#DC143C0D]' : ''
                   }`}
                 >
                   {option.label}

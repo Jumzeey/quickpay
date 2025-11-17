@@ -51,7 +51,7 @@ const Header = () => {
       <div className="flex justify-between items-center">
         <Link href="/">
           <Image
-            src="/images/logo-blue.svg"
+            src="/images/logo.png"
             width={169}
             height={42}
             alt="Logo"

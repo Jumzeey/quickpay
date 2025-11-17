@@ -81,7 +81,7 @@ body,
   color: #36a2eb;
 }
 .quickpayPrimary {
-  color: #042468;
+  color: #DC143C;
 }
 
 .quickpayGrey {
@@ -136,7 +136,7 @@ body,
   /* background: linear-gradient(0deg, rgba(24, 64, 120, 0.4), rgba(24, 64, 120, 0.4)),
     url(/images/auth-background.png); */
   /* opacity: 0.1; */
-  border-bottom: 5px solid #184078;
+  border-bottom: 5px solid #DC143C;
   /* 
   position: absolute;
   width: 1440px;
@@ -149,7 +149,7 @@ body,
 
 .bg-quickpay {
   background-image: url("/images/background-pattern.svg");
-  background-color: #042468;
+  background-color: #000000;
   min-height: 100vh;
 }
 
@@ -315,7 +315,7 @@ body,
   bottom: -2px;
   width: 0px;
   height: 1.5px;
-  background-color: #042468;
+  background-color: #DC143C;
   transition: width 0.3s ease-in-out;
 }
 

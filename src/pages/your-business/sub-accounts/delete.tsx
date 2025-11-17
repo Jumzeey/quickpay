@@ -50,7 +50,7 @@ const DeleteSubAccountModal: React.FC<DeleteSubAccountModalProps> = ({
                     <div className="text-center">
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Are you sure?</h2>
                         <p className="text-sm text-gray-600">
-                            You`re about to deactivate the sub account <span className="font-medium text-[#005BB0]">{activeSubAccount?.merchant_name}</span>.
+                            You`re about to deactivate the sub account <span className="font-medium text-[#DC143C]">{activeSubAccount?.merchant_name}</span>.
                             This action cannot be undone.
                         </p>
                     </div>

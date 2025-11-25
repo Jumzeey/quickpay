@@ -311,9 +311,10 @@ export const currencySymbols: Record<string, string> = {
   'GHS': '₵',
   'EUR': '€',
   'GBP': '£',
-  'KES': 'KSh',
+  'KES': 'KES',
   'ZMW': 'ZMW',
   'TZS': 'TZS',
+  'CHF': 'CHF',
 };
 
 export const currencyFlags: Record<string, string> = {

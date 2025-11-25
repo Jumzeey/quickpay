@@ -8,8 +8,9 @@ import useClickEvent from "@/stores/useClickEvent";
 import useConversion from "@/stores/useConversion";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
-import { downloadFile, formatAmount, formatDate, notifyError } from "@/util/utils";
-import React, { useCallback, useEffect, useState } from "react";
+import { downloadFile, formatAmount, formatDate, notifyError, currencySymbols } from "@/util/utils";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import "react-loading-skeleton/dist/skeleton.css";
 
 interface ConversionsProps {
@@ -38,6 +39,37 @@ const ConversionHistory = () => {
     getConversionHistoryLoading,
   } = useConversion();
 
+  // Transform API response to match table format
+  const transformedConversions = useMemo(() => {
+    if (!conversions || conversions.length === 0) return [];
+
+    return conversions.map((conversion: any) => {
+      // Parse meta field if it's a string
+      let meta: { currency?: string;[key: string]: any } = {};
+      try {
+        meta = typeof conversion.meta === 'string' ? JSON.parse(conversion.meta) : (conversion.meta || {});
+      } catch {
+        meta = {};
+      }
+
+      const metaTyped = meta as { currency?: string;[key: string]: any };
+
+      return {
+        ...conversion,
+        // Map API fields to table fields
+        reference: conversion.transaction_reference || conversion.reference || 'N/A',
+        timestamp: conversion.createdAt || conversion.created_at || conversion.timestamp,
+        source_currency: conversion.source_currency || metaTyped.currency || 'N/A',
+        destination_currency: conversion.destination_currency || 'N/A',
+        source_amount: conversion.source_amount || conversion.amount || '0',
+        destination_amount: conversion.destination_amount || conversion.converted_amount || 'N/A',
+        rate: conversion.rate || conversion.exchange_rate || 'N/A',
+        status: conversion.status || 'N/A',
+        channel: conversion.channel || 'N/A',
+      };
+    });
+  }, [conversions]);
+
   const { showFilter, toggleFilter } = useFilter();
 
   const [state, setState] = useState<ConversionsProps>({
@@ -61,30 +93,158 @@ const ConversionHistory = () => {
     setState({ ...state, showConversions: true });
   };
 
+  // Helper function to get currency display name
+  const getCurrencyDisplayName = (currencyCode: string): string => {
+    const currencyNameMap: Record<string, string> = {
+      NGN: 'Nigerian NGN',
+      USD: 'United States Dollar',
+      GHS: 'Ghanaian Cedi',
+      KES: 'Kenyan Shilling',
+      EUR: 'Euro',
+      GBP: 'British Pound Sterling',
+      CHF: 'Swiss Franc',
+      TZS: 'Tanzanian Shilling',
+      ZAR: 'South African Rand',
+      CAD: 'Canadian Dollar',
+      AUD: 'Australian Dollar',
+      INR: 'Indian Rupee',
+      CNY: 'Chinese Yuan',
+      JPY: 'Japanese Yen',
+      AED: 'UAE Dirham',
+      UGX: 'Ugandan Shilling',
+      XOF: 'West African CFA Franc',
+      XAF: 'Central African CFA Franc',
+    };
+    return currencyNameMap[currencyCode] || currencyCode;
+  };
+
+  // Helper function to format amount with conversion arrow
+  const formatConversionAmount = (row: any) => {
+    if (!row) return 'N/A';
+
+    const sourceCurrency = row.source_currency || '';
+    const destinationCurrency = row.destination_currency || '';
+    const sourceAmount = row.source_amount || row.amount || '0';
+    const destinationAmount = row.destination_amount || row.converted_amount || '0';
+
+    // Extract currency codes (handle both "NGN" and "Nigerian NGN" formats)
+    const sourceCode = sourceCurrency.split(' ').pop() || sourceCurrency;
+    const destCode = destinationCurrency.split(' ').pop() || destinationCurrency;
+
+    // Get currency symbols
+    const sourceSymbol = currencySymbols[sourceCode] || sourceCode;
+    const destSymbol = currencySymbols[destCode] || destCode;
+
+    // Format amounts
+    const formattedSource = formatAmount(`${sourceSymbol}${sourceAmount}`);
+    const formattedDest = formatAmount(`${destSymbol}${destinationAmount}`);
+
+    return (
+      <div className="flex items-center gap-2">
+        <span>{formattedSource}</span>
+        <Image
+          src="/images/conversion_arrow.svg"
+          alt="conversion arrow"
+          width={20}
+          height={20}
+          className="flex-shrink-0"
+        />
+        <span>{formattedDest}</span>
+      </div>
+    );
+  };
+
+  // Helper function to format transaction rate with conversion arrow
+  const formatConversionRate = (row: any) => {
+    if (!row) return 'N/A';
+
+    const sourceCurrency = row.source_currency || '';
+    const destinationCurrency = row.destination_currency || '';
+    const rate = row.rate || row.exchange_rate || '0';
+
+    // Extract currency codes
+    const sourceCode = sourceCurrency.split(' ').pop() || sourceCurrency;
+    const destCode = destinationCurrency.split(' ').pop() || destinationCurrency;
+
+    // Get currency symbols
+    const sourceSymbol = currencySymbols[sourceCode] || sourceCode;
+    const destSymbol = currencySymbols[destCode] || destCode;
+
+    // Format rate (typically shows 1 unit of source = X units of destination)
+    const formattedRate = formatAmount(`${destSymbol}${rate}`);
+
+    return (
+      <div className="flex items-center gap-2">
+        <span>{sourceSymbol}1.00</span>
+        <Image
+          src="/images/conversion_arrow.svg"
+          alt="conversion arrow"
+          width={20}
+          height={20}
+          className="flex-shrink-0"
+        />
+        <span>{formattedRate}</span>
+      </div>
+    );
+  };
+
+  // Helper function to format timestamp
+  const formatTimestamp = (timestamp: string | Date | null | undefined): string => {
+    if (!timestamp) return 'N/A';
+    try {
+      const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+      return formatDate(date);
+    } catch {
+      return String(timestamp);
+    }
+  };
+
   const columns = [{
-    key: 'source_wallet',
-    title: 'Source Wallet',
+    key: 'source_currency',
+    title: 'Source Currency',
+    render: (value: any, row: any) => {
+      const currencyCode = value?.split(' ').pop() || value || '';
+      return getCurrencyDisplayName(currencyCode);
+    },
   }, {
-    key: 'destination_wallet',
-    title: 'Destination Wallet',
+    key: 'destination_currency',
+    title: 'Destination Currency',
+    render: (value: any, row: any) => {
+      const currencyCode = value?.split(' ').pop() || value || '';
+      return getCurrencyDisplayName(currencyCode);
+    },
   }, {
     key: 'amount',
     title: 'Amount',
-      render: (value: any, row: any) => formatAmount(row?.amount) || 'N/A',
-
+    render: (value: any, row: any) => formatConversionAmount(row),
+  }, {
+    key: 'rate',
+    title: 'Transaction Rate',
+    render: (value: any, row: any) => formatConversionRate(row),
   }, {
     key: 'reference',
     title: 'Transaction Reference',
   }, {
     key: 'timestamp',
-    title: 'Timestamp',
+    title: 'Initiated Timestamp',
+    render: (value: any, row: any) => {
+      const timestamp = value || row.created_at || row.initiated_at || row.timestamp;
+      return formatTimestamp(timestamp);
+    },
   }, {
-    key: 'rate',
-    title: 'Transaction Rate',
+    key: 'sla_time',
+    title: 'SLA Time',
+    render: (value: any, row: any) => {
+      const slaTime = value || row.sla_time || row.sla || 'N/A';
+      return typeof slaTime === 'string' && slaTime.includes(':') ? slaTime : `${slaTime}:00`;
+    },
+  }, {
+    key: 'channel',
+    title: 'Channel',
   }];
 
-  const debouncedHandleParamsChange = useCallback(
-    debounce((value: string) => {
+  const debouncedHandleParamsChange = useMemo(
+    () => debounce((value: string) => {
       setSearchInput(value);
     }, 300),
     []
@@ -110,26 +270,26 @@ const ConversionHistory = () => {
   const totalPages = pagination?.last_page;
   const lastPage = pagination?.last_page;
 
-  // useEffect(() => {
-  //   fetchConversionHistory({
-  //     page: currentPage,
-  //     ...(searchInput ? { search: searchInput } : {}),
-  //     ...(statusFilter ? { status: statusFilter } : {}),
-  //     ...(filter.startDate
-  //       ? {
-  //         start_date: formatDate(filter.startDate),
-  //         end_date: formatDate(filter.endDate),
-  //       }
-  //       : {}),
-  //   });
-  // }, [
-  //   searchInput,
-  //   currentPage,
-  //   filter.endDate,
-  //   filter.startDate,
-  //   statusFilter,
-  //   fetchConversionHistory,
-  // ]);
+  useEffect(() => {
+    fetchConversionHistory({
+      page: currentPage,
+      ...(searchInput ? { search: searchInput } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
+      ...(filter.startDate && filter.endDate
+        ? {
+          start_date: formatDate(filter.startDate),
+          end_date: formatDate(filter.endDate),
+        }
+        : {}),
+    });
+  }, [
+    searchInput,
+    currentPage,
+    filter.endDate,
+    filter.startDate,
+    statusFilter,
+    fetchConversionHistory,
+  ]);
 
   const toggleModal = (name: string) => {
     setState(prevState => ({
@@ -167,9 +327,8 @@ const ConversionHistory = () => {
         ) : conversions?.length !== 0 ? ( */}
         <DynamicTable
           columns={columns}
-          // data={[]}
-          maxColumns={4}
-          data={conversions}
+          maxColumns={5}
+          data={transformedConversions}
         // copyId
         // copyField='Transaction Reference'
         // primaryBtnContent={

@@ -45,7 +45,7 @@ const DynamicTable: React.FC<BaseTableProps> = ({
   const { handleClick } = useClickEvent();
 
   const [statuses, setStatuses] = useState<Record<number, string>>(() =>
-    data.reduce((acc, row, index) => {
+    (data || []).reduce((acc, row, index) => {
       acc[index] = row.status ?? 'inactive';
       return acc;
     }, {} as Record<number, string>)
@@ -103,7 +103,7 @@ const DynamicTable: React.FC<BaseTableProps> = ({
         </thead>
 
         <tbody>
-          {data.map((row, rowIndex) => (
+          {(data || []).map((row, rowIndex) => (
             <Fragment key={rowIndex}>
               <tr
                 className={`border-b border-[#C4C4C452] transition-colors duration-300 

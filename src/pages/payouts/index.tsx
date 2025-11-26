@@ -14,6 +14,7 @@ import Pagination from "@/components/pagination";
 import InitiateTransfer from "@/components/payouts/InitiateTransfer";
 import RaiseDispute from "@/components/payouts/RaiseDispute";
 import RequestRefund from "@/components/payouts/RequestRefund";
+import ReceiptModal from "@/components/payouts/ReceiptModal";
 import { ReferenceSearch } from "@/components/reference-search";
 import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
@@ -60,6 +61,8 @@ const PayoutHistory = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [currentLog, setCurrentLog] = useState<Payout | null>(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null);
   const [state, setState] = useState<PayoutsProps>({
     isLoading: true,
     showFilterStatus: false,
@@ -292,8 +295,9 @@ const PayoutHistory = () => {
     }
   };
 
-  const handleDownload = async () => {
-    console.log('Approved');
+  const handleViewReceipt = (row: any) => {
+    setSelectedPayout(row);
+    setIsReceiptModalOpen(true);
   };
 
   const handleRequery = async (reference: string) => {
@@ -462,21 +466,10 @@ const PayoutHistory = () => {
               copyField='Transaction Reference'
               primaryBtnContent={(row: any) => (
                 <Button
-                  text={
-                    <>
-                      <span>Download receipt</span>
-                      <Image
-                        src='/images/download.svg'
-                        alt='download receipt'
-                        width={16}
-                        height={16}
-                        className='ml-2'
-                      />
-                    </>
-                  }
-                  ariaLabel="Download receipt button"
+                  text="View receipt"
+                  ariaLabel="View receipt button"
                   className="!w-[191px] !h-[48px] p-0"
-                  onClick={handleDownload}
+                  onClick={() => handleViewReceipt(row)}
                   primary
                 />
               )}
@@ -595,6 +588,12 @@ const PayoutHistory = () => {
           isModalOpen={state.isInitiateTransferModalOpen}
           closeModal={() => toggleModal('isInitiateTransferModalOpen')}
           fetchPayoutHistory={handleRefreshPayoutHistory}
+        />
+
+        <ReceiptModal
+          isOpen={isReceiptModalOpen}
+          onClose={() => setIsReceiptModalOpen(false)}
+          payout={selectedPayout}
         />
 
         {currentLog && (

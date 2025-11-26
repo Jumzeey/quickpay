@@ -615,7 +615,14 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                         className="openSansLight font-medium text-white mt-5 text-xs p-2 rounded w-full"
                         text={state.isSubmitting || isLoadingQuote ? <Loader /> : "Continue"}
                         ariaLabel="Continue"
-                        disabled={!formik.isValid || state.isSubmitting || state.isLoading || isLoadingQuote}
+                        disabled={
+                            !formik.isValid ||
+                            state.isSubmitting ||
+                            state.isLoading ||
+                            isLoadingQuote ||
+                            (sourceCurrency && destinationCurrency && sourceCurrency !== destinationCurrency &&
+                                (isLoadingRate || !rateData || (rateData as any).success !== true || !(rateData as any).data?.rate))
+                        }
                         primary
                         type="submit"
                     />

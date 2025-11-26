@@ -54,6 +54,16 @@ const ConversionHistory = () => {
 
       const metaTyped = meta as { currency?: string;[key: string]: any };
 
+      // Calculate destination amount if not provided
+      const sourceAmount = parseFloat(conversion.source_amount || conversion.amount || '0');
+      const conversionRate = parseFloat(conversion.conversion_rate || '0');
+      let destinationAmount = conversion.destination_amount || conversion.converted_amount;
+
+      if (!destinationAmount && conversionRate > 0 && sourceAmount > 0) {
+        // Calculate: destination = source / rate
+        destinationAmount = (sourceAmount / conversionRate).toFixed(2);
+      }
+
       return {
         ...conversion,
         // Map API fields to table fields
@@ -62,10 +72,19 @@ const ConversionHistory = () => {
         source_currency: conversion.source_currency || metaTyped.currency || 'N/A',
         destination_currency: conversion.destination_currency || 'N/A',
         source_amount: conversion.source_amount || conversion.amount || '0',
-        destination_amount: conversion.destination_amount || conversion.converted_amount || 'N/A',
-        rate: conversion.rate || conversion.exchange_rate || 'N/A',
+        destination_amount: destinationAmount || 'N/A',
+        rate: conversion.conversion_rate || conversion.rate || conversion.exchange_rate || 'N/A',
+        sla_time: conversion.sla_minutes || conversion.sla_time || conversion.sla || 'N/A',
         status: conversion.status || 'N/A',
         channel: conversion.channel || 'N/A',
+        settlement_type: conversion.settlement_type || 'N/A',
+        customer_reference: conversion.customer_reference || 'N/A',
+        processorReference: conversion.processorReference || 'N/A',
+        charge: conversion.charge || '0.00',
+        netAmount: conversion.netAmount || '0.00',
+        expectedAmount: conversion.expectedAmount || conversion.amount || '0.00',
+        // Keep meta for currency symbol lookup
+        meta: conversion.meta,
       };
     });
   }, [conversions]);
@@ -95,35 +114,29 @@ const ConversionHistory = () => {
 
   // Helper function to get currency display name
   const getCurrencyDisplayName = (currencyCode: string): string => {
-    const currencyNameMap: Record<string, string> = {
-      NGN: 'Nigerian NGN',
-      USD: 'United States Dollar',
-      GHS: 'Ghanaian Cedi',
-      KES: 'Kenyan Shilling',
-      EUR: 'Euro',
-      GBP: 'British Pound Sterling',
-      CHF: 'Swiss Franc',
-      TZS: 'Tanzanian Shilling',
-      ZAR: 'South African Rand',
-      CAD: 'Canadian Dollar',
-      AUD: 'Australian Dollar',
-      INR: 'Indian Rupee',
-      CNY: 'Chinese Yuan',
-      JPY: 'Japanese Yen',
-      AED: 'UAE Dirham',
-      UGX: 'Ugandan Shilling',
-      XOF: 'West African CFA Franc',
-      XAF: 'Central African CFA Franc',
-    };
-    return currencyNameMap[currencyCode] || currencyCode;
+    // Return just the currency code
+    return currencyCode || 'N/A';
   };
 
   // Helper function to format amount with conversion arrow
   const formatConversionAmount = (row: any) => {
     if (!row) return 'N/A';
 
-    const sourceCurrency = row.source_currency || '';
-    const destinationCurrency = row.destination_currency || '';
+    // Get source currency from meta if available
+    let sourceCurrency = row.source_currency || '';
+    let destinationCurrency = row.destination_currency || '';
+
+    // Parse meta to get currency if source_currency is not available
+    if (!sourceCurrency && row.meta) {
+      try {
+        const meta = typeof row.meta === 'string' ? JSON.parse(row.meta) : row.meta;
+        sourceCurrency = meta.currency || '';
+      } catch {
+        // If parsing fails, try to get from row.meta directly
+        sourceCurrency = row.meta?.currency || '';
+      }
+    }
+
     const sourceAmount = row.source_amount || row.amount || '0';
     const destinationAmount = row.destination_amount || row.converted_amount || '0';
 
@@ -131,13 +144,23 @@ const ConversionHistory = () => {
     const sourceCode = sourceCurrency.split(' ').pop() || sourceCurrency;
     const destCode = destinationCurrency.split(' ').pop() || destinationCurrency;
 
-    // Get currency symbols
+    // Get currency symbols from currencySymbols object
     const sourceSymbol = currencySymbols[sourceCode] || sourceCode;
-    const destSymbol = currencySymbols[destCode] || destCode;
 
-    // Format amounts
+    // If destination currency is missing, use a placeholder instead of currency code
+    let destSymbol = '—';
+    let formattedDest = destinationAmount;
+
+    if (destCode && destCode !== 'N/A' && destinationCurrency !== 'N/A') {
+      destSymbol = currencySymbols[destCode] || destCode;
+      formattedDest = formatAmount(`${destSymbol}${destinationAmount}`);
+    } else {
+      // Use placeholder when destination currency is missing
+      formattedDest = formatAmount(destinationAmount);
+    }
+
+    // Format source amount with proper currency symbol
     const formattedSource = formatAmount(`${sourceSymbol}${sourceAmount}`);
-    const formattedDest = formatAmount(`${destSymbol}${destinationAmount}`);
 
     return (
       <div className="flex items-center gap-2">
@@ -158,9 +181,21 @@ const ConversionHistory = () => {
   const formatConversionRate = (row: any) => {
     if (!row) return 'N/A';
 
-    const sourceCurrency = row.source_currency || '';
-    const destinationCurrency = row.destination_currency || '';
-    const rate = row.rate || row.exchange_rate || '0';
+    // Get source currency from meta if available
+    let sourceCurrency = row.source_currency || '';
+    let destinationCurrency = row.destination_currency || '';
+
+    // Parse meta to get currency if source_currency is not available
+    if (!sourceCurrency && row.meta) {
+      try {
+        const meta = typeof row.meta === 'string' ? JSON.parse(row.meta) : row.meta;
+        sourceCurrency = meta.currency || '';
+      } catch {
+        sourceCurrency = row.meta?.currency || '';
+      }
+    }
+
+    const rate = row.rate || row.exchange_rate || row.conversion_rate || '0';
 
     // Extract currency codes
     const sourceCode = sourceCurrency.split(' ').pop() || sourceCurrency;
@@ -170,12 +205,25 @@ const ConversionHistory = () => {
     const sourceSymbol = currencySymbols[sourceCode] || sourceCode;
     const destSymbol = currencySymbols[destCode] || destCode;
 
-    // Format rate (typically shows 1 unit of source = X units of destination)
-    const formattedRate = formatAmount(`${destSymbol}${rate}`);
+    // Left side: destination currency (1.00), Right side: source currency (rate)
+    // If destination currency is missing, show without symbol
+    let leftSide = '1.00';
+    if (destCode && destCode !== 'N/A' && destinationCurrency !== 'N/A') {
+      leftSide = `${destSymbol}1.00`;
+    }
+
+    // Right side: rate with source currency symbol
+    // If source currency is missing, show rate without currency symbol
+    let rightSide;
+    if (sourceCode && sourceCode !== 'N/A' && sourceCurrency !== 'N/A') {
+      rightSide = formatAmount(`${sourceSymbol}${rate}`);
+    } else {
+      rightSide = formatAmount(rate);
+    }
 
     return (
       <div className="flex items-center gap-2">
-        <span>{sourceSymbol}1.00</span>
+        <span>{leftSide}</span>
         <Image
           src="/images/conversion_arrow.svg"
           alt="conversion arrow"
@@ -183,17 +231,26 @@ const ConversionHistory = () => {
           height={20}
           className="flex-shrink-0"
         />
-        <span>{formattedRate}</span>
+        <span>{rightSide}</span>
       </div>
     );
   };
 
-  // Helper function to format timestamp
+  // Helper function to format timestamp with time
   const formatTimestamp = (timestamp: string | Date | null | undefined): string => {
     if (!timestamp) return 'N/A';
     try {
       const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-      return formatDate(date);
+      // Format as date and time
+      return new Date(date).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      });
     } catch {
       return String(timestamp);
     }
@@ -219,28 +276,68 @@ const ConversionHistory = () => {
     render: (value: any, row: any) => formatConversionAmount(row),
   }, {
     key: 'rate',
-    title: 'Transaction Rate',
+    title: 'Rate',
     render: (value: any, row: any) => formatConversionRate(row),
   }, {
     key: 'reference',
-    title: 'Transaction Reference',
+    title: 'Reference',
   }, {
     key: 'timestamp',
-    title: 'Initiated Timestamp',
+    title: 'Initiated At',
     render: (value: any, row: any) => {
-      const timestamp = value || row.created_at || row.initiated_at || row.timestamp;
+      const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
+      return formatTimestamp(timestamp);
+    },
+  }, {
+    key: 'converted_at',
+    title: 'Converted At',
+    render: (value: any, row: any) => {
+      const timestamp = row.updatedAt || row.updated_at || value || row.converted_at;
       return formatTimestamp(timestamp);
     },
   }, {
     key: 'sla_time',
     title: 'SLA Time',
     render: (value: any, row: any) => {
-      const slaTime = value || row.sla_time || row.sla || 'N/A';
-      return typeof slaTime === 'string' && slaTime.includes(':') ? slaTime : `${slaTime}:00`;
+      const slaTime = value || row.sla_minutes || row.sla_time || row.sla || 'N/A';
+      if (slaTime === 'N/A' || slaTime === null) return 'N/A';
+      // If it's a number (minutes), convert to time format
+      if (typeof slaTime === 'number') {
+        const hours = Math.floor(slaTime / 60);
+        const minutes = slaTime % 60;
+        return hours > 0 ? `${hours}:${minutes.toString().padStart(2, '0')}` : `${minutes}:00`;
+      }
+      // If it's already a string with colon, return as is
+      if (typeof slaTime === 'string' && slaTime.includes(':')) {
+        return slaTime;
+      }
+      // Otherwise format as minutes:00
+      return `${slaTime}:00`;
     },
   }, {
     key: 'channel',
     title: 'Channel',
+  }, {
+    key: 'settlement_type',
+    title: 'Settlement Type',
+  }, {
+    key: 'customer_reference',
+    title: 'Customer Reference',
+  }, {
+    key: 'processorReference',
+    title: 'Processor Reference',
+  }, {
+    key: 'charge',
+    title: 'Charge',
+    render: (value: any) => {
+      return value && value !== '0.00' ? formatAmount(value) : value || 'N/A';
+    },
+  }, {
+    key: 'netAmount',
+    title: 'Net Amount',
+    render: (value: any) => {
+      return value && value !== '0.00' ? formatAmount(value) : value || 'N/A';
+    },
   }];
 
   const debouncedHandleParamsChange = useMemo(

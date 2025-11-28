@@ -2,6 +2,8 @@ import Button from "@/components/button";
 import InitiateConversion from "@/components/conversions/InitiateConversion";
 import DynamicTable from "@/components/DynamicTable";
 import Layout from "@/components/layout";
+import Pagination from "@/components/pagination";
+import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import { getConversionHistory } from "@/services/conversions";
 import useClickEvent from "@/stores/useClickEvent";
@@ -9,7 +11,7 @@ import useConversion from "@/stores/useConversion";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
 import { downloadFile, formatAmount, formatDate, notifyError, currencySymbols } from "@/util/utils";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -256,24 +258,68 @@ const ConversionHistory = () => {
     }
   };
 
+  // Helper function to format source currency with amount
+  const formatSourceCurrencyWithAmount = (row: any) => {
+    if (!row) return 'N/A';
+
+    // Get source currency
+    let sourceCurrency = row.source_currency || '';
+    if (!sourceCurrency && row.meta) {
+      try {
+        const meta = typeof row.meta === 'string' ? JSON.parse(row.meta) : row.meta;
+        sourceCurrency = meta.currency || '';
+      } catch {
+        sourceCurrency = row.meta?.currency || '';
+      }
+    }
+
+    const sourceAmount = parseFloat(row.source_amount || row.amount || '0');
+    const sourceCode = sourceCurrency.split(' ').pop() || sourceCurrency || 'N/A';
+    const sourceSymbol = currencySymbols[sourceCode];
+
+    // Format amount with currency symbol if available
+    let formattedAmount;
+    if (sourceSymbol) {
+      formattedAmount = formatAmount(`${sourceSymbol}${sourceAmount}`);
+    } else {
+      // For currencies without symbols, format the number with commas
+      const formattedNumber = sourceAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      formattedAmount = formattedNumber;
+    }
+
+    return `${sourceCode} - ${formattedAmount}`;
+  };
+
+  // Helper function to format destination currency with amount
+  const formatDestinationCurrencyWithAmount = (row: any) => {
+    if (!row) return 'N/A';
+
+    const destinationCurrency = row.destination_currency || 'N/A';
+    const destinationAmount = parseFloat(row.destination_amount || row.converted_amount || '0');
+    const destCode = destinationCurrency.split(' ').pop() || destinationCurrency || 'N/A';
+    const destSymbol = currencySymbols[destCode];
+
+    // Format amount with currency symbol if available
+    let formattedAmount;
+    if (destSymbol) {
+      formattedAmount = formatAmount(`${destSymbol}${destinationAmount}`);
+    } else {
+      // For currencies without symbols, format the number with commas
+      const formattedNumber = destinationAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      formattedAmount = formattedNumber;
+    }
+
+    return `${destCode} - ${formattedAmount}`;
+  };
+
   const columns = [{
     key: 'source_currency',
-    title: 'Source Currency',
-    render: (value: any, row: any) => {
-      const currencyCode = value?.split(' ').pop() || value || '';
-      return getCurrencyDisplayName(currencyCode);
-    },
+    title: 'Source',
+    render: (value: any, row: any) => formatSourceCurrencyWithAmount(row),
   }, {
     key: 'destination_currency',
-    title: 'Destination Currency',
-    render: (value: any, row: any) => {
-      const currencyCode = value?.split(' ').pop() || value || '';
-      return getCurrencyDisplayName(currencyCode);
-    },
-  }, {
-    key: 'amount',
-    title: 'Amount',
-    render: (value: any, row: any) => formatConversionAmount(row),
+    title: 'Destination',
+    render: (value: any, row: any) => formatDestinationCurrencyWithAmount(row),
   }, {
     key: 'rate',
     title: 'Rate',
@@ -282,11 +328,10 @@ const ConversionHistory = () => {
     key: 'reference',
     title: 'Reference',
   }, {
-    key: 'timestamp',
-    title: 'Initiated At',
+    key: 'status',
+    title: 'Status',
     render: (value: any, row: any) => {
-      const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
-      return formatTimestamp(timestamp);
+      return row.status || value || 'N/A';
     },
   }, {
     key: 'converted_at',
@@ -321,22 +366,11 @@ const ConversionHistory = () => {
     key: 'settlement_type',
     title: 'Settlement Type',
   }, {
-    key: 'customer_reference',
-    title: 'Customer Reference',
-  }, {
-    key: 'processorReference',
-    title: 'Processor Reference',
-  }, {
-    key: 'charge',
-    title: 'Charge',
-    render: (value: any) => {
-      return value && value !== '0.00' ? formatAmount(value) : value || 'N/A';
-    },
-  }, {
-    key: 'netAmount',
-    title: 'Net Amount',
-    render: (value: any) => {
-      return value && value !== '0.00' ? formatAmount(value) : value || 'N/A';
+    key: 'timestamp',
+    title: 'Initiated At',
+    render: (value: any, row: any) => {
+      const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
+      return formatTimestamp(timestamp);
     },
   }];
 
@@ -366,6 +400,10 @@ const ConversionHistory = () => {
 
   const totalPages = pagination?.last_page;
   const lastPage = pagination?.last_page;
+  
+  // Calculate pageCount for row numbering: (currentPage - 1) * itemsPerPage
+  const itemsPerPage = pagination?.per_page || 10;
+  const pageCount = (currentPage - 1) * itemsPerPage;
 
   useEffect(() => {
     fetchConversionHistory({
@@ -417,119 +455,24 @@ const ConversionHistory = () => {
       </div>
 
       <div>
-        {/* {state.isLoading ? (
-          <Fragment>
-            <TableSkeleton />
-          </Fragment>
-        ) : conversions?.length !== 0 ? ( */}
-        <DynamicTable
-          columns={columns}
-          maxColumns={5}
-          data={transformedConversions}
-        // copyId
-        // copyField='Transaction Reference'
-        // primaryBtnContent={
-        //   <Button
-        //     text={
-        //       <>
-        //         <span>Download receipt</span>
-        //         <Image
-        //           src='/images/download.svg'
-        //           alt='download receipt'
-        //           width={16}
-        //           height={16}
-        //           className='ml-2'
-        //         />
-        //       </>
-        //     }
-        //     ariaLabel="Download receipt button"
-        //     className="!w-[191px] !h-[48px] p-0"
-        //     onClick={handleDownload}
-        //     primary
-        //   />
-        // }
-        // secondaryBtnContent={
-        //   <div className="relative block border border-[#EFF7FE] rounded-lg">
-        //     <button
-        //       onClick={() => toggleModal('isMoreActionsOpen')}
-        //       className="text-sm text-[#005BB0] font-medium w-[150px] h-12 bg-[#EFF7FE] flex items-center justify-center"
-        //     >
-        //       More actions
-
-        //       <Image
-        //         src='/images/arrow-left-down.svg'
-        //         alt='more actions'
-        //         width={16}
-        //         height={16}
-        //         className='ml-3'
-        //       />
-        //     </button>
-        //     <div
-        //       ref={menuRef}
-        //       className={`absolute left-0 top-full mt-1.5 w-60 bg-white border border-[#ececec] rounded-lg shadow-lg z-10 overflow-hidden animate-fadeIn ${state.isMoreActionsOpen ? 'block' : 'hidden'}`}
-        //     >
-        //       <div className="py-1">
-        //         <button
-        //           onClick={() => handleAction('requery')}
-        //           className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
-        //         >
-        //           <Image
-        //             src='/images/refresh-alt.svg'
-        //             alt='requery transaction'
-        //             width={16}
-        //             height={16}
-        //             className='ml-2'
-        //           />
-        //           <span className="text-[#090727]">Requery transaction</span>
-        //         </button>
-
-        //         <button
-        //           onClick={() => toggleModal('isRefundRequestModalOpen')}
-        //           className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
-        //         >
-        //           <Image
-        //             src='/images/request.svg'
-        //             alt='request refund'
-        //             width={16}
-        //             height={16}
-        //             className='ml-2'
-        //           />
-        //           <span className="text-[#090727]">Request refund</span>
-        //         </button>
-
-        //         <button
-        //           onClick={() => toggleModal('isRaiseDisputeModalOpen')}
-        //           className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
-        //         >
-        //           <Image
-        //             src='/images/alert.svg'
-        //             alt='raise dispute'
-        //             width={16}
-        //             height={16}
-        //             className='ml-2'
-        //           />
-        //           <span className="text-[#FD2727]">Raise dispute</span>
-        //         </button>
-        //       </div>
-        //     </div>
-        //   </div>
-        // }
-        />
-        {/* ) : (
-          <EmptyState
-            title="No Conversion Found"
-            subTitle="We couldn't find any Conversion for this account"
-            image="/images/dashboard/disbursement/disbursement-empty-state.svg"
-          >
-            <Button
-              text="Initiate Conversion"
-              ariaLabel="Initiate Conversion button"
-              className="!w-[191px] !h-[48px]"
-              onClick={() => toggleModal('isInitiateConversionModalOpen')}
-              primary
+        {getConversionHistoryLoading ? (
+          <TableSkeleton />
+        ) : (
+          <>
+            <DynamicTable
+              columns={columns}
+              maxColumns={5}
+              data={transformedConversions}
+              pageCount={pageCount}
             />
-          </EmptyState>
-        )} */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages || 1}
+              lastPage={lastPage || 1}
+              onPageChange={handlePageChange}
+            />
+          </>
+        )}
 
         <InitiateConversion
           isModalOpen={state.isInitiateConversionModalOpen}

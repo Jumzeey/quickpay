@@ -1,6 +1,7 @@
 import Button from "@/components/button";
 import Loader from "@/components/loader";
 import Modal from "@/components/modal";
+import Icon from "@/components/icon";
 import { getWalletBalances } from "@/services/transaction";
 import { useConversionRate } from "@/services/conversionRates";
 import { initiateConversion, getQuote } from "@/services/conversions";
@@ -59,6 +60,12 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
         converted_at?: string;
     } | null>(null);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
+    const [isDestinationDropdownOpen, setIsDestinationDropdownOpen] = useState(false);
+    const [sourceSearchTerm, setSourceSearchTerm] = useState('');
+    const [destinationSearchTerm, setDestinationSearchTerm] = useState('');
+    const sourceDropdownRef = useRef<HTMLDivElement>(null);
+    const destinationDropdownRef = useRef<HTMLDivElement>(null);
 
     // Fetch all available currencies with main account type
     useEffect(() => {
@@ -79,9 +86,11 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                 mainAccounts.forEach((account: any) => {
                     const currency = account.currency;
                     if (currency && !currencyMap.has(currency)) {
+                        const symbol = currencySymbols[currency] || '';
+                        const label = symbol ? `${symbol} ${currency}` : currency;
                         currencyMap.set(currency, {
                             value: currency,
-                            label: currency,
+                            label: label,
                             balance: formatBalance(parseFloat(account.available_balance), currency),
                         });
                     }
@@ -324,6 +333,37 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
         }
     }, [formik.values.amount, rateData]);
 
+    // Close dropdowns on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                sourceDropdownRef.current &&
+                !sourceDropdownRef.current.contains(event.target as Node)
+            ) {
+                setIsSourceDropdownOpen(false);
+            }
+            if (
+                destinationDropdownRef.current &&
+                !destinationDropdownRef.current.contains(event.target as Node)
+            ) {
+                setIsDestinationDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Filter currencies based on search term
+    const filteredSourceCurrencies = sourceCurrencies.filter((currency) =>
+        currency.label.toLowerCase().includes(sourceSearchTerm.toLowerCase()) ||
+        currency.value.toLowerCase().includes(sourceSearchTerm.toLowerCase())
+    );
+
+    const filteredDestinationCurrencies = destinationCurrencies.filter((currency) =>
+        currency.label.toLowerCase().includes(destinationSearchTerm.toLowerCase()) ||
+        currency.value.toLowerCase().includes(destinationSearchTerm.toLowerCase())
+    );
+
     const closeModalAndReset = () => {
         if (state.currentStep === 0 || state.currentStep === 4) {
             setSourceCurrency("");
@@ -333,6 +373,10 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
             setQuoteData(null);
             setTimeRemainingSeconds(null);
             setConversionResponse(null);
+            setIsSourceDropdownOpen(false);
+            setIsDestinationDropdownOpen(false);
+            setSourceSearchTerm('');
+            setDestinationSearchTerm('');
             return closeModal();
         }
 
@@ -508,24 +552,63 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                     <label className="text-sm text-black mb-1 font-medium">Source Wallet</label>
 
                     <div className="flex items-center gap-1 w-full border border-[#C4C4C43D] rounded p-2">
-                        <div className="grid grid-cols-1 text-primary w-[114px] border-r border-[#C4C4C43D]">
-                            <select
-                                className="col-start-1 row-start-1 w-28 h-12 appearance-none rounded bg-transparent py-2 px-4 tracking-wider text-xs text-[#005BB0] font-bold outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-                                aria-label="Select source currency"
-                                value={sourceCurrency}
-                                onChange={(e) => setSourceCurrency(e.target.value)}
+                        <div className="relative w-[114px] border-r border-[#C4C4C43D]" ref={sourceDropdownRef}>
+                            <button
+                                type="button"
+                                className="flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm"
+                                onClick={() => !isLoadingCurrencies && setIsSourceDropdownOpen(prev => !prev)}
                                 disabled={isLoadingCurrencies}
                             >
-                                {sourceCurrencies.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
+                                <span className="text-xs">
+                                    {isLoadingCurrencies 
+                                        ? 'Loading...' 
+                                        : (sourceCurrencies.find(c => c.value === sourceCurrency)?.label || sourceCurrency || 'Select')
+                                    }
+                                </span>
+                                <Icon name="caretDown" />
+                            </button>
 
-                            <svg className="pointer-events-none col-start-1 row-start-1 mr-5 size-5 self-center justify-self-end text-gray-500 sm:size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M9.99984 11.6667L6.6665 8.33337H13.3332L9.99984 11.6667Z" fill="#005BB0" />
-                            </svg>
+                            {isSourceDropdownOpen && (
+                                <div className="absolute z-50 mt-2 w-full bg-white text-black rounded-lg border border-grey-200 shadow-lg">
+                                    <div className="p-2 border-b border-grey-100">
+                                        <input
+                                            type="text"
+                                            placeholder="Search currency..."
+                                            value={sourceSearchTerm}
+                                            onChange={(e) => setSourceSearchTerm(e.target.value)}
+                                            className="w-full px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                    <ul className="max-h-48 overflow-y-auto">
+                                        {isLoadingCurrencies ? (
+                                            <li className="px-4 py-3 text-sm text-grey-500">
+                                                Loading currencies...
+                                            </li>
+                                        ) : filteredSourceCurrencies.length > 0 ? (
+                                            filteredSourceCurrencies.map((option) => (
+                                                <li
+                                                    key={option.value}
+                                                    onClick={() => {
+                                                        setSourceCurrency(option.value);
+                                                        setIsSourceDropdownOpen(false);
+                                                        setSourceSearchTerm('');
+                                                    }}
+                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${
+                                                        sourceCurrency === option.value ? 'bg-[#005BB00D]' : ''
+                                                    }`}
+                                                >
+                                                    {option.label}
+                                                </li>
+                                            ))
+                                        ) : (
+                                            <li className="px-4 py-3 text-sm text-grey-500">
+                                                No currencies found
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
 
                         <input
@@ -552,24 +635,65 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                 <div>
                     <label className="text-sm text-black mb-1 font-medium">Destination Wallet</label>
                     <div className="flex items-center gap-1 w-full border border-[#C4C4C43D] rounded p-2">
-                        <div className="grid grid-cols-1 text-[#005BB0] w-[114px] border-r border-[#C4C4C43D]">
-                            <select
-                                className="col-start-1 row-start-1 w-28 h-12 appearance-none rounded bg-transparent py-2 px-4 tracking-wider text-xs text-[#005BB0] font-bold outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-                                aria-label="Select destination currency"
-                                value={destinationCurrency}
-                                onChange={(e) => setDestinationCurrency(e.target.value)}
+                        <div className="relative w-[114px] border-r border-[#C4C4C43D]" ref={destinationDropdownRef}>
+                            <button
+                                type="button"
+                                className={`flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm ${
+                                    isLoadingCurrencies || !sourceCurrency ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                                onClick={() => !isLoadingCurrencies && sourceCurrency && setIsDestinationDropdownOpen(prev => !prev)}
                                 disabled={isLoadingCurrencies || !sourceCurrency}
                             >
-                                {destinationCurrencies.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
+                                <span className="text-xs">
+                                    {isLoadingCurrencies 
+                                        ? 'Loading...' 
+                                        : (destinationCurrencies.find(c => c.value === destinationCurrency)?.label || destinationCurrency || 'Select')
+                                    }
+                                </span>
+                                <Icon name="caretDown" />
+                            </button>
 
-                            <svg className="pointer-events-none col-start-1 row-start-1 mr-5 size-5 self-center justify-self-end text-gray-500 sm:size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M9.99984 11.6667L6.6665 8.33337H13.3332L9.99984 11.6667Z" fill="#005BB0" />
-                            </svg>
+                            {isDestinationDropdownOpen && (
+                                <div className="absolute z-50 mt-2 w-full bg-white text-black rounded-lg border border-grey-200 shadow-lg">
+                                    <div className="p-2 border-b border-grey-100">
+                                        <input
+                                            type="text"
+                                            placeholder="Search currency..."
+                                            value={destinationSearchTerm}
+                                            onChange={(e) => setDestinationSearchTerm(e.target.value)}
+                                            className="w-full px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                    <ul className="max-h-48 overflow-y-auto">
+                                        {isLoadingCurrencies ? (
+                                            <li className="px-4 py-3 text-sm text-grey-500">
+                                                Loading currencies...
+                                            </li>
+                                        ) : filteredDestinationCurrencies.length > 0 ? (
+                                            filteredDestinationCurrencies.map((option) => (
+                                                <li
+                                                    key={option.value}
+                                                    onClick={() => {
+                                                        setDestinationCurrency(option.value);
+                                                        setIsDestinationDropdownOpen(false);
+                                                        setDestinationSearchTerm('');
+                                                    }}
+                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${
+                                                        destinationCurrency === option.value ? 'bg-[#005BB00D]' : ''
+                                                    }`}
+                                                >
+                                                    {option.label}
+                                                </li>
+                                            ))
+                                        ) : (
+                                            <li className="px-4 py-3 text-sm text-grey-500">
+                                                No currencies found
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
 
                         <input

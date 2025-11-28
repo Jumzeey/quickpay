@@ -500,8 +500,8 @@ const PayoutHistory = () => {
                       {(row?.status?.toLowerCase() === 'pending') && (
                         <button
                           onClick={() => handleRequery(row?.reference)}
-                          disabled={requeryLoading}
-                          className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors disabled:opacity-50"
+                          disabled
+                          className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors opacity-50 cursor-not-allowed"
                         >
                           <Image
                             src='/images/refresh-alt.svg'
@@ -511,14 +511,15 @@ const PayoutHistory = () => {
                             className='ml-2'
                           />
                           <span className="text-[#090727]">
-                            {requeryLoading ? 'Requerying...' : 'Requery transaction'}
+                            Requery transaction
                           </span>
                         </button>
                       )}
 
                       <button
                         onClick={() => toggleModal('isRequestRefundModalOpen')}
-                        className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
+                        disabled
+                        className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors opacity-50 cursor-not-allowed"
                       >
                         <Image
                           src='/images/request.svg'
@@ -532,7 +533,8 @@ const PayoutHistory = () => {
 
                       <button
                         onClick={() => toggleModal('isRaiseDisputeModalOpen')}
-                        className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
+                        disabled
+                        className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors opacity-50 cursor-not-allowed"
                       >
                         <Image
                           src='/images/alert.svg'

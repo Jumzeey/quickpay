@@ -5,6 +5,7 @@ interface PayoutReceiptProps {
     payout: {
         id: number;
         reference: string;
+        customer_reference?: string;
         currency: string;
         currency_symbol: string;
         amount: string;
@@ -18,20 +19,20 @@ interface PayoutReceiptProps {
 }
 
 const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
-    // Format date from ISO string to "Sun 16/11/2025 9:47 PM" format
+    // Format date from ISO string to "Thurs Oct 2025 - 7:53 AM" format
     const formatReceiptDate = (dateString: string) => {
         const date = new Date(dateString);
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const dayName = days[date.getDay()];
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const monthName = months[date.getMonth()];
         const year = date.getFullYear();
         const hours = date.getHours();
         const minutes = String(date.getMinutes()).padStart(2, '0');
         const ampm = hours >= 12 ? 'PM' : 'AM';
         const displayHours = hours % 12 || 12;
 
-        return `${dayName} ${day}/${month}/${year} ${displayHours}:${minutes} ${ampm}`;
+        return `${dayName} ${monthName} ${year} - ${displayHours}:${minutes} ${ampm}`;
     };
 
     const receiptDate = payout.value_date
@@ -62,8 +63,8 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
             </div>
 
             {/* Transaction Reference */}
-            <div className="px-6 mb-6">
-                <p className="text-sm text-gray-900" style={{ fontSize: '14px', fontWeight: 700 }}>
+            <div className="px-6 mb-6 overflow-x-auto">
+                <p className="text-sm text-gray-900 whitespace-nowrap" style={{ fontSize: '14px', fontWeight: 700 }}>
                     Transaction Reference: <span style={{ fontWeight: 700 }}>{payout.reference}</span>
                 </p>
             </div>
@@ -98,18 +99,22 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
                     </div>
 
                     <div className="flex justify-between items-start">
-                        <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Provider Name:</span>
+                        <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Currency:</span>
                         <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>{payout.currency}</span>
                     </div>
 
-                    <div className="flex justify-between items-start">
-                        <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Transaction ID:</span>
-                        <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>{payout.id}</span>
-                    </div>
+                    {payout.customer_reference && (
+                        <div className="flex justify-between items-start">
+                            <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Customer Reference:</span>
+                            <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
+                                {payout.customer_reference}
+                            </span>
+                        </div>
+                    )}
 
                     {payout.recipient_account_number && (
                         <div className="flex justify-between items-start">
-                            <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Account Number:</span>
+                            <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Recipient Account Number:</span>
                             <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
                                 {payout.recipient_account_number}
                             </span>

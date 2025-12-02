@@ -52,12 +52,14 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
     const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number | null>(null);
     const [conversionResponse, setConversionResponse] = useState<{
         quote_id?: string;
+        conversion_reference?: string;
+        conversion_id?: number;
         debit_transaction_id?: number;
         credit_transaction_id?: number;
         settlement?: string;
         sla_minutes?: number;
         initiated_at?: string;
-        converted_at?: string;
+        estimated_completion_at?: string;
     } | null>(null);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
@@ -396,6 +398,25 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
         formik.resetForm();
     };
 
+    const formatTimestamp = (timestamp: string | Date | null | undefined): string => {
+        if (!timestamp) return 'N/A';
+        try {
+            const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+            // Format as date and time
+            return new Date(date).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+            });
+        } catch {
+            return String(timestamp);
+        }
+    };
+
     const renderStepContent = () => {
         // Show success modal
         if (state.currentStep === 4 && quoteData) {
@@ -405,7 +426,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
             const destinationAmount = sourceAmount / rate;
 
             return (
-                <div className="text-center space-y-6">
+                <div className="text-center space-y-6 max-h-[70vh] overflow-y-auto">
                     <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
                         <Image
                             src="/images/circle-check-full.svg"
@@ -444,7 +465,14 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Reference:</p>
                             <p className="text-base font-bold text-black">
-                                {conversionResponse?.quote_id || conversionResponse?.debit_transaction_id || 'n/a'}
+                                {conversionResponse?.conversion_reference || 'n/a'}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Quote ID:</p>
+                            <p className="text-base font-bold text-black">
+                                {conversionResponse?.quote_id || 'n/a'}
                             </p>
                         </div>
 
@@ -458,14 +486,14 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Initiated At:</p>
                             <p className="text-base font-bold text-black">
-                                {conversionResponse?.initiated_at || 'n/a'}
+                                {conversionResponse?.initiated_at ? formatTimestamp(conversionResponse.initiated_at) : 'n/a'}
                             </p>
                         </div>
 
                         <div>
-                            <p className="text-sm text-gray-500 mb-1">Converted At:</p>
+                            <p className="text-sm text-gray-500 mb-1">Estimated Conversion:</p>
                             <p className="text-base font-bold text-black">
-                                {conversionResponse?.converted_at || 'n/a'}
+                                {conversionResponse?.estimated_completion_at ? formatTimestamp(conversionResponse.estimated_completion_at) : 'n/a'}
                             </p>
                         </div>
                     </div>
@@ -535,8 +563,8 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                     <div className="w-full">
                         <Button
                             className="openSansLight font-medium text-white mt-5 text-xs p-2 rounded w-full"
-                            text={state.isSubmitting ? <Loader /> : "Initiate conversion"}
-                            ariaLabel="Initiate conversion"
+                            text={state.isSubmitting ? <Loader /> : "Continue"}
+                            ariaLabel="Continue"
                             disabled={state.isSubmitting}
                             primary
                             onClick={handleInitiateConversion}

@@ -70,6 +70,7 @@ const ConversionHistory = () => {
         ...conversion,
         // Map API fields to table fields
         reference: conversion.transaction_reference || conversion.reference || 'N/A',
+        quote_id: conversion.quote_id || 'N/A',
         timestamp: conversion.createdAt || conversion.created_at || conversion.timestamp,
         source_currency: conversion.source_currency || metaTyped.currency || 'N/A',
         destination_currency: conversion.destination_currency || 'N/A',
@@ -78,7 +79,7 @@ const ConversionHistory = () => {
         rate: conversion.conversion_rate || conversion.rate || conversion.exchange_rate || 'N/A',
         sla_time: conversion.sla_minutes || conversion.sla_time || conversion.sla || 'N/A',
         status: conversion.status || 'N/A',
-        channel: conversion.channel || 'N/A',
+        channel: conversion.credit_transaction?.channel || conversion.channel || 'N/A',
         settlement_type: conversion.settlement_type || 'N/A',
         customer_reference: conversion.customer_reference || 'N/A',
         processorReference: conversion.processorReference || 'N/A',
@@ -346,18 +347,18 @@ const ConversionHistory = () => {
     render: (value: any, row: any) => {
       const slaTime = value || row.sla_minutes || row.sla_time || row.sla || 'N/A';
       if (slaTime === 'N/A' || slaTime === null) return 'N/A';
-      // If it's a number (minutes), convert to time format
+      // If it's a number (minutes), display as minutes
       if (typeof slaTime === 'number') {
-        const hours = Math.floor(slaTime / 60);
-        const minutes = slaTime % 60;
-        return hours > 0 ? `${hours}:${minutes.toString().padStart(2, '0')}` : `${minutes}:00`;
+        return `${slaTime} minutes`;
       }
-      // If it's already a string with colon, return as is
+      // If it's already a string with colon, parse and convert to minutes
       if (typeof slaTime === 'string' && slaTime.includes(':')) {
-        return slaTime;
+        const [hours, minutes] = slaTime.split(':').map(Number);
+        const totalMinutes = (hours * 60) + minutes;
+        return `${totalMinutes} minutes`;
       }
-      // Otherwise format as minutes:00
-      return `${slaTime}:00`;
+      // Otherwise treat as minutes
+      return `${slaTime} minutes`;
     },
   }, {
     key: 'channel',
@@ -372,6 +373,9 @@ const ConversionHistory = () => {
       const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
       return formatTimestamp(timestamp);
     },
+  }, {
+    key: 'quote_id',
+    title: 'Quote ID',
   }];
 
   const debouncedHandleParamsChange = useMemo(

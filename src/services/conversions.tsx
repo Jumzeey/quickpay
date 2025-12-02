@@ -78,10 +78,14 @@ export interface InitiateConversionResponse {
   success: boolean;
   data: {
     quote_id: string;
+    conversion_reference: string;
+    conversion_id: number;
     debit_transaction_id: number;
     credit_transaction_id: number;
     settlement: string;
     sla_minutes: number;
+    initiated_at: string;
+    estimated_completion_at: string;
   };
   message: string;
 }

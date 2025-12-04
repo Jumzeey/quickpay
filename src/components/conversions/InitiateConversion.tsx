@@ -88,11 +88,9 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                 mainAccounts.forEach((account: any) => {
                     const currency = account.currency;
                     if (currency && !currencyMap.has(currency)) {
-                        const symbol = currencySymbols[currency] || '';
-                        const label = symbol ? `${symbol} ${currency}` : currency;
                         currencyMap.set(currency, {
                             value: currency,
-                            label: label,
+                            label: currency,
                             balance: formatBalance(parseFloat(account.available_balance), currency),
                         });
                     }

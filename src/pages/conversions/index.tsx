@@ -335,6 +335,13 @@ const ConversionHistory = () => {
       return row.status || value || 'N/A';
     },
   }, {
+    key: 'timestamp',
+    title: 'Initiated At',
+    render: (value: any, row: any) => {
+      const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
+      return formatTimestamp(timestamp);
+    },
+  }, {
     key: 'converted_at',
     title: 'Converted At',
     render: (value: any, row: any) => {
@@ -366,13 +373,6 @@ const ConversionHistory = () => {
   }, {
     key: 'settlement_type',
     title: 'Settlement Type',
-  }, {
-    key: 'timestamp',
-    title: 'Initiated At',
-    render: (value: any, row: any) => {
-      const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
-      return formatTimestamp(timestamp);
-    },
   }, {
     key: 'quote_id',
     title: 'Quote ID',
@@ -465,7 +465,7 @@ const ConversionHistory = () => {
           <>
             <DynamicTable
               columns={columns}
-              maxColumns={5}
+              maxColumns={6}
               data={transformedConversions}
               pageCount={pageCount}
             />

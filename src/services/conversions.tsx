@@ -55,9 +55,95 @@ export async function getConversionHistory(params?: object) {
       `${apiEndpoints.conversions.GET_CONVERSION_HISTORY}`,
       { params }
     );
-    return response.data;
+    // Handle new API response structure: { status, message, data: { conversions, pagination } }
+    if (response.data?.status && response.data?.data) {
+      return {
+        conversions: response.data.data.conversions || [],
+        pagination: response.data.data.pagination || {},
+      };
+    }
+    // Fallback for old structure
+    return response.data || { conversions: [], pagination: {} };
   } catch (error: any) {
     notifyError(error.message);
+    return { conversions: [], pagination: {} };
+  }
+}
+
+export interface InitiateConversionPayload {
+  quote_id: string;
+}
+
+export interface InitiateConversionResponse {
+  success: boolean;
+  data: {
+    quote_id: string;
+    conversion_reference: string;
+    conversion_id: number;
+    debit_transaction_id: number;
+    credit_transaction_id: number;
+    settlement: string;
+    sla_minutes: number;
+    initiated_at: string;
+    estimated_completion_at: string;
+  };
+  message: string;
+}
+
+export async function initiateConversion(payload: InitiateConversionPayload): Promise<InitiateConversionResponse> {
+  try {
+    const response = await api.post(
+      apiEndpoints.conversions.INITIATE_CONVERSION,
+      payload
+    ) as unknown as InitiateConversionResponse;
+    return response;
+  } catch (error: any) {
+    notifyError(error.message || 'Failed to initiate conversion');
+    throw error;
+  }
+}
+
+export interface GetQuotePayload {
+  source_currency: string;
+  destination_currency: string;
+  source_amount: number;
+}
+
+export interface GetQuoteResponse {
+  success: boolean;
+  data: {
+    quote_id: string;
+    conversion_rate: number;
+    expires_in_minutes: number;
+  };
+  message: string;
+}
+
+export async function getQuote(payload: GetQuotePayload): Promise<GetQuoteResponse> {
+  try {
+    const response = await api.post(
+      apiEndpoints.conversions.GET_QUOTE,
+      payload
+    ) as unknown as GetQuoteResponse;
+    return response;
+  } catch (error: any) {
+    notifyError(error.message || 'Failed to generate quote');
+    throw error;
+  }
+}
+
+export async function getConversionRate(sourceCurrency: string, destinationCurrency: string) {
+  try {
+    const response = await api.post(
+      apiEndpoints.conversions.GET_RATES,
+      {
+        source_currency: sourceCurrency,
+        destination_currency: destinationCurrency,
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw error;
   }
 }
 

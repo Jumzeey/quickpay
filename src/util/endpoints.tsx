@@ -51,8 +51,11 @@ export const apiEndpoints = {
     GET_COLLECTION_EXPORT_STATUS: '/merchant/client/exports/:id/status',
   },
   conversions: {
-    GET_CONVERSION_HISTORY: '/conversions/history',
+    GET_CONVERSION_HISTORY: '/merchant/conversions',
     GET_CONVERSION_EXPORT: '/conversions/export',
+    GET_RATES: '/merchant/rates',
+    GET_QUOTE: '/merchant/quote',
+    INITIATE_CONVERSION: '/merchant/conversions/convert',
     GET_COLLECTION_HISTORY: '/merchant/collections-history',
     GET_PAYMENT_LINKS: '/merchant/payment-links',
     CREATE_PAYMENT_LINK: '/merchant/payment-links/store',

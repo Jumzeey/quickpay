@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:wallet": "playwright test tests/wallet",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
@@ -24,7 +29,9 @@
     "date-fns": "^4.1.0",
     "formik": "^2.4.5",
     "framer-motion": "^11.1.7",
+    "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
+    "jspdf": "^3.0.4",
     "nanoevents": "^9.0.0",
     "next": "14.1.0",
     "react": "^18",
@@ -43,6 +50,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@types/country-list": "^2.1.4",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.16.5",

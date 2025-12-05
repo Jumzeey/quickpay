@@ -15,6 +15,11 @@ export const sidebarLinks = [
     title: "Payouts",
   },
   {
+    href: "/conversions",
+    icon: "conversions",
+    title: "Conversions",
+  },
+  {
     href: "/collections",
     icon: "collections",
     title: "Collections",

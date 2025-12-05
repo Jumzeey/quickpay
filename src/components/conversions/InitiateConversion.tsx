@@ -452,11 +452,13 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
 
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Rate:</p>
-                            <p className="text-xs font-bold mb-0.5">
-                                {currencySymbols[sourceCurrency] || sourceCurrency}{rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is equal to
-                            </p>
-                            <p className="text-lg font-extrabold">
-                                {formatBalance(1, destinationCurrency)} {destinationCurrency}
+                            <p className="text-base font-bold flex items-center gap-2">
+                                <span>
+                                    {currencySymbols[sourceCurrency] || sourceCurrency}{rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} =
+                                </span>
+                                <span>
+                                    {formatBalance(1, destinationCurrency)} {destinationCurrency}
+                                </span>
                             </p>
                         </div>
 
@@ -489,7 +491,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                         </div>
 
                         <div>
-                            <p className="text-sm text-gray-500 mb-1">Estimated Conversion:</p>
+                            <p className="text-sm text-gray-500 mb-1">Estimated Conversion Date:</p>
                             <p className="text-base font-bold text-black">
                                 {conversionResponse?.estimated_completion_at ? formatTimestamp(conversionResponse.estimated_completion_at) : 'n/a'}
                             </p>
@@ -740,14 +742,14 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                                 <span className="text-xs">Loading rate...</span>
                             </div>
                         ) : rateData && (rateData as any).success === true && (rateData as any).data?.rate ? (
-                            <>
-                                <p className="text-xs font-bold mb-0.5">
-                                    {currencySymbols[sourceCurrency] || sourceCurrency}{parseFloat((rateData as any).data.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is equal to
-                                </p>
-                                <p className="text-lg font-extrabold">
+                            <p className="text-base font-bold flex items-center gap-2">
+                                <span>
+                                    {currencySymbols[sourceCurrency] || sourceCurrency}{parseFloat((rateData as any).data.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} =
+                                </span>
+                                <span>
                                     {formatBalance(1, destinationCurrency)} {destinationCurrency}
-                                </p>
-                            </>
+                                </span>
+                            </p>
                         ) : rateData && (rateData as any).success === false ? (
                             <p className="text-xs text-[#7F7F7F]">
                                 {(rateData as any).message || 'Rate not available'}

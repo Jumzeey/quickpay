@@ -36,10 +36,10 @@ export function useConversionRate(
     }
 ) {
     const shouldFetch =
+        (options?.enabled ?? true) &&
         !!sourceCurrency &&
         !!destinationCurrency &&
-        sourceCurrency !== destinationCurrency &&
-        (options?.enabled !== false);
+        sourceCurrency !== destinationCurrency;
 
     const query = useQuery<ConversionRateResponse>({
         queryKey: ['conversion-rate', sourceCurrency, destinationCurrency],
@@ -55,8 +55,9 @@ export function useConversionRate(
             return response;
         },
         enabled: shouldFetch,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        gcTime: 10 * 60 * 1000, // 10 minutes
+        staleTime: 0, // Always consider data stale for real-time rates
+        gcTime: 0, // Don't cache at all
+        refetchOnMount: true, // Always refetch on mount
         refetchOnWindowFocus: false,
         retry: 1,
     });

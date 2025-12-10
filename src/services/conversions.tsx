@@ -311,3 +311,46 @@ export async function getSingleRefund(id: string) {
     }
   }
 }
+
+export interface RaiseConversionDisputePayload {
+  reason: string;
+  description: string;
+  attachment?: File;
+}
+
+export interface RaiseConversionDisputeResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
+export async function raiseConversionDispute(
+  conversionId: number,
+  payload: RaiseConversionDisputePayload
+): Promise<RaiseConversionDisputeResponse> {
+  try {
+    const formData = new FormData();
+    formData.append('reason', payload.reason);
+    formData.append('description', payload.description);
+    
+    // If attachment is provided, append the File object directly
+    if (payload.attachment) {
+      formData.append('attachment', payload.attachment);
+    }
+
+    const response = await api.post(
+      `${apiEndpoints.conversions.GET_CONVERSION_HISTORY}/${conversionId}/dispute`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    notifyError(error.message || 'Failed to raise dispute');
+    throw error;
+  }
+}

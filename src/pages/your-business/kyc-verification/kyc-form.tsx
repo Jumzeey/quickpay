@@ -192,7 +192,7 @@ const KYCForm = () => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full px-4 md:px-0">
       <div>
         <BusinessHeader isStarterBusiness={isStarterBusiness} />
 
@@ -201,7 +201,7 @@ const KYCForm = () => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-3 gap-6 justify-start mt-10 w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 justify-start mt-10 w-full">
         {businessType === "starter" ? (
           <>
             <div className="row-span-2 space-y-6">
@@ -305,7 +305,7 @@ const KYCForm = () => {
               />
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-1 md:col-span-2">
               <UploadComponent
                 className="min-h-[230px]"
                 onFileUpload={onFileUpload}
@@ -448,14 +448,16 @@ const KYCForm = () => {
           </>
         )}
 
-        <div className="flex justify-center mt-4 w-[28%] border-danger">
-          <Button
-            text={isLoading ? <Loader /> : "Submit"}
-            ariaLabel="Submit Button"
-            disabled={isLoading}
-            primary
-            type="submit"
-          />
+        <div className="flex justify-center mt-6 md:mt-4 w-full col-span-1 md:col-span-2 lg:col-span-3">
+          <div className="w-full md:w-auto md:min-w-[200px]">
+            <Button
+              text={isLoading ? <Loader /> : "Submit"}
+              ariaLabel="Submit Button"
+              disabled={isLoading}
+              primary
+              type="submit"
+            />
+          </div>
         </div>
       </form>
     </div>

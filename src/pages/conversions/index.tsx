@@ -90,6 +90,7 @@ const ConversionHistory = () => {
         charge: conversion.charge || '0.00',
         netAmount: conversion.netAmount || '0.00',
         expectedAmount: conversion.expectedAmount || conversion.amount || '0.00',
+        estimated_completion_at: conversion.estimated_completion_at || conversion.estimatedCompletionAt || null,
         // Keep meta for currency symbol lookup
         meta: conversion.meta,
       };
@@ -292,7 +293,7 @@ const ConversionHistory = () => {
       formattedAmount = formattedNumber;
     }
 
-    return `${sourceCode} - ${formattedAmount}`;
+    return formattedAmount;
   };
 
   // Helper function to format destination currency with amount
@@ -314,7 +315,7 @@ const ConversionHistory = () => {
       formattedAmount = formattedNumber;
     }
 
-    return `${destCode} - ${formattedAmount}`;
+    return formattedAmount;
   };
 
   const columns = [{
@@ -346,10 +347,10 @@ const ConversionHistory = () => {
       return formatTimestamp(timestamp);
     },
   }, {
-    key: 'converted_at',
-    title: 'Converted At',
+    key: 'estimated_completion_at',
+    title: 'Estimated Completion Time',
     render: (value: any, row: any) => {
-      const timestamp = row.updatedAt || row.updated_at || value || row.converted_at;
+      const timestamp = row.estimated_completion_at || row.estimatedCompletionAt || value;
       return formatTimestamp(timestamp);
     },
   }, {
@@ -408,7 +409,7 @@ const ConversionHistory = () => {
 
   const totalPages = pagination?.last_page;
   const lastPage = pagination?.last_page;
-  
+
   // Calculate pageCount for row numbering: (currentPage - 1) * itemsPerPage
   const itemsPerPage = pagination?.per_page || 10;
   const pageCount = (currentPage - 1) * itemsPerPage;

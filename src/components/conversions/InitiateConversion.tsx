@@ -69,6 +69,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
     const sourceDropdownRef = useRef<HTMLDivElement>(null);
     const destinationDropdownRef = useRef<HTMLDivElement>(null);
 
+
     // Fetch all available currencies with main account type
     useEffect(() => {
         if (!isModalOpen) return;
@@ -171,10 +172,13 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
         }
     }, [sourceCurrency, availableCurrencies, destinationCurrency]);
 
-    // Fetch conversion rate when both currencies are selected
+    // Fetch conversion rate when both currencies are selected (real-time, no caching)
     const { data: rateData, isLoading: isLoadingRate, isError: isRateError, error: rateError } = useConversionRate(
         sourceCurrency,
-        destinationCurrency
+        destinationCurrency,
+        {
+            enabled: isModalOpen && !!sourceCurrency && !!destinationCurrency && sourceCurrency !== destinationCurrency
+        }
     );
 
 
@@ -301,6 +305,25 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
         onSubmit: handleFormSubmit,
     });
 
+    // Reset form when modal opens
+    useEffect(() => {
+        if (isModalOpen) {
+            // Reset form and state when modal opens
+            formik.resetForm();
+            setCalculatedDestinationAmount("");
+            setQuoteData(null);
+            setTimeRemainingSeconds(null);
+            setConversionResponse(null);
+            setState({
+                selectedOptionName: "",
+                isLoading: false,
+                isSubmitting: false,
+                currentStep: 0,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isModalOpen]);
+
     // Calculate destination amount based on source amount and rate
     React.useEffect(() => {
         const sourceAmount = formik.values.amount;
@@ -313,13 +336,12 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                 const rate = parseFloat(rateDataTyped.data.rate);
 
                 if (!isNaN(sourceAmountNum) && !isNaN(rate) && sourceAmountNum > 0 && rate > 0) {
-                    // Rate represents how many source currency units = 1 destination currency unit
-                    // So we divide: destinationAmount = sourceAmount / rate
-                    const destinationAmount = sourceAmountNum / rate;
+                    // If source is USD, multiply by rate; otherwise divide
+                    const destinationAmount = sourceAmountNum * rate;
                     // Format the destination amount with commas
                     const formattedAmount = destinationAmount.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        minimumFractionDigits: 6,
+                        maximumFractionDigits: 6
                     });
                     setCalculatedDestinationAmount(formattedAmount);
                 } else {
@@ -331,7 +353,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
         } else {
             setCalculatedDestinationAmount("");
         }
-    }, [formik.values.amount, rateData]);
+    }, [formik.values.amount, rateData, sourceCurrency]);
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -366,6 +388,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
 
     const closeModalAndReset = () => {
         if (state.currentStep === 0 || state.currentStep === 4) {
+            // Reset all form state
             setSourceCurrency("");
             setDestinationCurrency("");
             setSourceBalance("");
@@ -377,12 +400,23 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
             setIsDestinationDropdownOpen(false);
             setSourceSearchTerm('');
             setDestinationSearchTerm('');
+            formik.resetForm();
+            setState({
+                selectedOptionName: "",
+                isLoading: false,
+                isSubmitting: false,
+                currentStep: 0,
+            });
             return closeModal();
         }
 
         // If on summary step (step 3), go back to step 0
         if (state.currentStep === 3) {
             setState((prev) => ({ ...prev, currentStep: 0 }));
+            formik.resetForm();
+            setCalculatedDestinationAmount("");
+            setQuoteData(null);
+            setTimeRemainingSeconds(null);
             return;
         }
 
@@ -421,7 +455,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
             const sourceAmount = parseFloat(removeCommasFromValue(formik.values.amount));
             const rateDataTyped = rateData as any;
             const rate = rateDataTyped?.data?.rate ? parseFloat(rateDataTyped.data.rate) : quoteData.conversion_rate;
-            const destinationAmount = sourceAmount / rate;
+            const destinationAmount = sourceAmount * rate;
 
             return (
                 <div className="text-center space-y-6 max-h-[70vh] overflow-y-auto">
@@ -452,11 +486,13 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
 
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Rate:</p>
-                            <p className="text-xs font-bold mb-0.5">
-                                {currencySymbols[sourceCurrency] || sourceCurrency}{rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is equal to
-                            </p>
-                            <p className="text-lg font-extrabold">
-                                {formatBalance(1, destinationCurrency)} {destinationCurrency}
+                            <p className="text-base font-bold flex items-center gap-2">
+                                <span>
+                                    {currencySymbols[sourceCurrency] || sourceCurrency} 1 =
+                                </span>
+                                <span>
+                                    {currencySymbols[destinationCurrency] || destinationCurrency} {rate.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
+                                </span>
                             </p>
                         </div>
 
@@ -489,7 +525,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                         </div>
 
                         <div>
-                            <p className="text-sm text-gray-500 mb-1">Estimated Conversion:</p>
+                            <p className="text-sm text-gray-500 mb-1">Estimated Conversion Date:</p>
                             <p className="text-base font-bold text-black">
                                 {conversionResponse?.estimated_completion_at ? formatTimestamp(conversionResponse.estimated_completion_at) : 'n/a'}
                             </p>
@@ -514,7 +550,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
             const sourceAmount = parseFloat(removeCommasFromValue(formik.values.amount));
             const rateDataTyped = rateData as any;
             const rate = rateDataTyped?.data?.rate ? parseFloat(rateDataTyped.data.rate) : quoteData.conversion_rate;
-            const destinationAmount = sourceAmount / rate;
+            const destinationAmount = sourceAmount * rate;
 
             return (
                 <div className="space-y-6">
@@ -586,8 +622,8 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                                 disabled={isLoadingCurrencies}
                             >
                                 <span className="text-xs">
-                                    {isLoadingCurrencies 
-                                        ? 'Loading...' 
+                                    {isLoadingCurrencies
+                                        ? 'Loading...'
                                         : (sourceCurrencies.find(c => c.value === sourceCurrency)?.label || sourceCurrency || 'Select')
                                     }
                                 </span>
@@ -620,9 +656,8 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                                                         setIsSourceDropdownOpen(false);
                                                         setSourceSearchTerm('');
                                                     }}
-                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${
-                                                        sourceCurrency === option.value ? 'bg-[#005BB00D]' : ''
-                                                    }`}
+                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${sourceCurrency === option.value ? 'bg-[#005BB00D]' : ''
+                                                        }`}
                                                 >
                                                     {option.label}
                                                 </li>
@@ -664,15 +699,14 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                         <div className="relative w-[114px] border-r border-[#C4C4C43D]" ref={destinationDropdownRef}>
                             <button
                                 type="button"
-                                className={`flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm ${
-                                    isLoadingCurrencies || !sourceCurrency ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
+                                className={`flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm ${isLoadingCurrencies || !sourceCurrency ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                                 onClick={() => !isLoadingCurrencies && sourceCurrency && setIsDestinationDropdownOpen(prev => !prev)}
                                 disabled={isLoadingCurrencies || !sourceCurrency}
                             >
                                 <span className="text-xs">
-                                    {isLoadingCurrencies 
-                                        ? 'Loading...' 
+                                    {isLoadingCurrencies
+                                        ? 'Loading...'
                                         : (destinationCurrencies.find(c => c.value === destinationCurrency)?.label || destinationCurrency || 'Select')
                                     }
                                 </span>
@@ -705,9 +739,8 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                                                         setIsDestinationDropdownOpen(false);
                                                         setDestinationSearchTerm('');
                                                     }}
-                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${
-                                                        destinationCurrency === option.value ? 'bg-[#005BB00D]' : ''
-                                                    }`}
+                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${destinationCurrency === option.value ? 'bg-[#005BB00D]' : ''
+                                                        }`}
                                                 >
                                                     {option.label}
                                                 </li>
@@ -740,14 +773,14 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                                 <span className="text-xs">Loading rate...</span>
                             </div>
                         ) : rateData && (rateData as any).success === true && (rateData as any).data?.rate ? (
-                            <>
-                                <p className="text-xs font-bold mb-0.5">
-                                    {currencySymbols[sourceCurrency] || sourceCurrency}{parseFloat((rateData as any).data.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is equal to
-                                </p>
-                                <p className="text-lg font-extrabold">
-                                    {formatBalance(1, destinationCurrency)} {destinationCurrency}
-                                </p>
-                            </>
+                            <p className="text-base font-bold flex items-center gap-2">
+                                <span>
+                                    {currencySymbols[sourceCurrency] || sourceCurrency} 1 =
+                                </span>
+                                <span>
+                                    {currencySymbols[destinationCurrency] || destinationCurrency} {parseFloat((rateData as any).data.rate).toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
+                                </span>
+                            </p>
                         ) : rateData && (rateData as any).success === false ? (
                             <p className="text-xs text-[#7F7F7F]">
                                 {(rateData as any).message || 'Rate not available'}

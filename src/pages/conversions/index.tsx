@@ -1,5 +1,6 @@
 import Button from "@/components/button";
 import InitiateConversion from "@/components/conversions/InitiateConversion";
+import RaiseDispute from "@/components/conversions/RaiseDispute";
 import DynamicTable from "@/components/DynamicTable";
 import Layout from "@/components/layout";
 import Pagination from "@/components/pagination";
@@ -11,7 +12,7 @@ import useConversion from "@/stores/useConversion";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
 import { downloadFile, formatAmount, formatDate, notifyError, currencySymbols } from "@/util/utils";
-import React, { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -34,6 +35,8 @@ const ConversionHistory = () => {
     startDate: null,
     endDate: null,
   });
+  const [currentConversion, setCurrentConversion] = useState<any>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const {
     fetchConversionHistory,
     conversions,
@@ -69,6 +72,7 @@ const ConversionHistory = () => {
       return {
         ...conversion,
         // Map API fields to table fields
+        id: conversion.id || conversion.conversion_id,
         reference: conversion.transaction_reference || conversion.reference || 'N/A',
         quote_id: conversion.quote_id || 'N/A',
         timestamp: conversion.createdAt || conversion.created_at || conversion.timestamp,
@@ -86,6 +90,7 @@ const ConversionHistory = () => {
         charge: conversion.charge || '0.00',
         netAmount: conversion.netAmount || '0.00',
         expectedAmount: conversion.expectedAmount || conversion.amount || '0.00',
+        estimated_completion_at: conversion.estimated_completion_at || conversion.estimatedCompletionAt || null,
         // Keep meta for currency symbol lookup
         meta: conversion.meta,
       };
@@ -288,7 +293,7 @@ const ConversionHistory = () => {
       formattedAmount = formattedNumber;
     }
 
-    return `${sourceCode} - ${formattedAmount}`;
+    return formattedAmount;
   };
 
   // Helper function to format destination currency with amount
@@ -310,7 +315,7 @@ const ConversionHistory = () => {
       formattedAmount = formattedNumber;
     }
 
-    return `${destCode} - ${formattedAmount}`;
+    return formattedAmount;
   };
 
   const columns = [{
@@ -335,10 +340,17 @@ const ConversionHistory = () => {
       return row.status || value || 'N/A';
     },
   }, {
-    key: 'converted_at',
-    title: 'Converted At',
+    key: 'timestamp',
+    title: 'Initiated At',
     render: (value: any, row: any) => {
-      const timestamp = row.updatedAt || row.updated_at || value || row.converted_at;
+      const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
+      return formatTimestamp(timestamp);
+    },
+  }, {
+    key: 'estimated_completion_at',
+    title: 'Estimated Completion Time',
+    render: (value: any, row: any) => {
+      const timestamp = row.estimated_completion_at || row.estimatedCompletionAt || value;
       return formatTimestamp(timestamp);
     },
   }, {
@@ -366,13 +378,6 @@ const ConversionHistory = () => {
   }, {
     key: 'settlement_type',
     title: 'Settlement Type',
-  }, {
-    key: 'timestamp',
-    title: 'Initiated At',
-    render: (value: any, row: any) => {
-      const timestamp = row.createdAt || row.created_at || value || row.initiated_at || row.timestamp;
-      return formatTimestamp(timestamp);
-    },
   }, {
     key: 'quote_id',
     title: 'Quote ID',
@@ -404,7 +409,7 @@ const ConversionHistory = () => {
 
   const totalPages = pagination?.last_page;
   const lastPage = pagination?.last_page;
-  
+
   // Calculate pageCount for row numbering: (currentPage - 1) * itemsPerPage
   const itemsPerPage = pagination?.per_page || 10;
   const pageCount = (currentPage - 1) * itemsPerPage;
@@ -437,6 +442,23 @@ const ConversionHistory = () => {
     }));
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setState(prev => ({
+          ...prev,
+          isMoreActionsOpen: false,
+        }));
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <Layout pageTitle="Conversions" icon="collection-history">
       <WebPageTitle title="Conversions | Cray Merchant Portal" />
@@ -465,9 +487,52 @@ const ConversionHistory = () => {
           <>
             <DynamicTable
               columns={columns}
-              maxColumns={5}
+              maxColumns={6}
               data={transformedConversions}
               pageCount={pageCount}
+              secondaryBtnContent={(row: any) => (
+                <div className="relative block border border-[#EFF7FE] rounded-lg">
+                  <button
+                    onClick={() => {
+                      toggleModal('isMoreActionsOpen');
+                      setCurrentConversion(row);
+                    }}
+                    className="text-sm text-[#005BB0] font-medium w-[150px] h-12 bg-[#EFF7FE] flex items-center justify-center"
+                  >
+                    More actions
+                    <Image
+                      src='/images/arrow-left-down.svg'
+                      alt='more actions'
+                      width={16}
+                      height={16}
+                      className='ml-3'
+                    />
+                  </button>
+                  <div
+                    ref={menuRef}
+                    className={`absolute left-0 top-full mt-1.5 w-60 bg-white border border-[#ececec] rounded-lg shadow-lg z-10 overflow-hidden animate-fadeIn ${state.isMoreActionsOpen && currentConversion?.id === row.id ? 'block' : 'hidden'}`}
+                  >
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          toggleModal('isRaiseDisputeModalOpen');
+                          toggleModal('isMoreActionsOpen');
+                        }}
+                        className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors hover:bg-gray-50"
+                      >
+                        <Image
+                          src='/images/alert.svg'
+                          alt='raise dispute'
+                          width={16}
+                          height={16}
+                          className='ml-2'
+                        />
+                        <span className="text-[#FD2727]">Raise dispute</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             />
             <Pagination
               currentPage={currentPage}
@@ -483,6 +548,15 @@ const ConversionHistory = () => {
           closeModal={() => toggleModal('isInitiateConversionModalOpen')}
           fetchConversionHistory={fetchConversionHistory}
         />
+
+        {currentConversion && (
+          <RaiseDispute
+            isModalOpen={state.isRaiseDisputeModalOpen}
+            closeModal={() => toggleModal('isRaiseDisputeModalOpen')}
+            fetchConversionHistory={fetchConversionHistory}
+            conversionId={currentConversion.id || currentConversion.conversion_id || null}
+          />
+        )}
       </div>
     </Layout>
   );

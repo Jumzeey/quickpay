@@ -1,17 +1,32 @@
-import { toast } from 'sonner';
+import { toast } from "@/components/ui/use-toast";
 
 export default class Notify {
-    static error(message, title = "Error") {
-        toast.error(message, title);
-    }
-    static success(message, title = "Success") {
-        toast.success(message, title);
-    }
-    static warning(message, title = "Warning") {
-        toast.warning(message, title);
-    }
-    static info(message, title = "Information") {
-        toast.info(message, title);
-    }
-
+  static error(message, title = "Error") {
+    toast({
+      title,
+      description: message,
+      variant: "destructive",
+    });
+  }
+  static success(message, title = "Success") {
+    toast({
+      title,
+      description: message,
+      variant: "default",
+    });
+  }
+  static warning(message, title = "Warning") {
+    toast({
+      title,
+      description: message,
+      variant: "default",
+    });
+  }
+  static info(message, title = "Information") {
+    toast({
+      title,
+      description: message,
+      variant: "default",
+    });
+  }
 }

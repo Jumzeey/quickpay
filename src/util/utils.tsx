@@ -1,8 +1,13 @@
 import { CurrencyOption } from '@/stores/useCurrency';
 import { format } from 'date-fns';
 import Cookies from 'js-cookie';
-import { toast } from 'sonner';
 import * as Yup from 'yup';
+import { type ClassValue, clsx } from 'clsx';
+import { toast } from "@/components/ui/use-toast";
+
+export function cn(...inputs: ClassValue[]) {
+  return clsx(inputs);
+}
 
 export const capitalizeFirstLetterOfEachWord = (sentence: string) => {
   if (!sentence) {
@@ -100,16 +105,28 @@ export const getStatusColor = (status: string) => {
   }
 };
 
-export const notifyInfo = (message: string) => {
-  return toast.info(message);
+export const notifyInfo = (message: string, title: string = "Information") => {
+  return toast({
+    title,
+    description: message,
+    variant: "default",
+  });
 };
 
-export const notifyError = (errorMessage: string) => {
-  return toast.error(errorMessage);
+export const notifyError = (errorMessage: string, title: string = "Error") => {
+  return toast({
+    title,
+    description: errorMessage,
+    variant: "destructive",
+  });
 };
 
-export const notifySuccess = (successMessage: string) => {
-  return toast.success(successMessage);
+export const notifySuccess = (successMessage: string, title: string = "Success") => {
+  return toast({
+    title,
+    description: successMessage,
+    variant: "default",
+  });
 };
 
 export const getToken = () => {

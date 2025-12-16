@@ -145,7 +145,7 @@ const VirtualAccounts = () => {
     },
     {
       onError: error => {
-        console.error('Failed to fetch virtual accounts history:', error);
+        handleError(error, 'Failed to fetch virtual accounts');
       },
     }
   );
@@ -209,8 +209,8 @@ const VirtualAccounts = () => {
                       <tr
                         key={index}
                         className={`${index !== virtual_accounts.length - 1
-                            ? '[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700'
-                            : ''
+                          ? '[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700'
+                          : ''
                           } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
                       >
                         <td className='text-sm px-5 py-6 font-medium text-gray-900 dark:text-gray-100'>

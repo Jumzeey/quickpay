@@ -6,6 +6,15 @@
 
 :root {
   --font-plus-jakarta: "Plus Jakarta Sans", sans-serif;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --ring-offset-background: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --muted: 210 40% 96.1%;
 }
 
 /* Utility class to ensure consistent font rendering */

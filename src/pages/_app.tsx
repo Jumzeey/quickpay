@@ -10,7 +10,7 @@ import type { AppProps } from "next/app";
 import { Manrope } from "next/font/google";
 import { useEffect, useState } from "react";
 import { useIdleTimer } from 'react-idle-timer';
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const manrope = Manrope({
@@ -139,7 +139,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <ThemeProvider>
         <SharedState>
           <main className={isClient ? `${manrope.variable} font-sans` : "font-sans"}>
-            <Toaster position="top-center" richColors />
+            <Toaster />
             <meta
               name="viewport"
               content="width=device-width, initial-scale=1, maximum-scale=1"

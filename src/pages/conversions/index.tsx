@@ -185,6 +185,22 @@ const ConversionHistory = () => {
     );
   };
 
+  // Helper function to format rate number (preserves decimal precision, only adds commas to integer part)
+  const formatRateNumber = (rate: string | number): string => {
+    const numRate = typeof rate === 'string' ? parseFloat(rate.replace(/,/g, '')) : rate;
+    if (isNaN(numRate)) return '0';
+
+    // Convert to string to preserve decimal places
+    const rateStr = numRate.toString();
+    const [integerPart, decimalPart] = rateStr.split('.');
+
+    // Add commas only to the integer part (before decimal point)
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // Return with decimal part if it exists
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  };
+
   // Helper function to format transaction rate with conversion arrow
   const formatConversionRate = (row: any) => {
     if (!row) return 'N/A';
@@ -221,12 +237,13 @@ const ConversionHistory = () => {
     }
 
     // Right side: rate with source currency symbol
-    // If source currency is missing, show rate without currency symbol
+    // Format rate properly without breaking decimal places
     let rightSide;
+    const formattedRate = formatRateNumber(rate);
     if (sourceCode && sourceCode !== 'N/A' && sourceCurrency !== 'N/A') {
-      rightSide = formatAmount(`${sourceSymbol}${rate}`);
+      rightSide = `${sourceSymbol}${formattedRate}`;
     } else {
-      rightSide = formatAmount(rate);
+      rightSide = formattedRate;
     }
 
     return (

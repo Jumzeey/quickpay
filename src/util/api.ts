@@ -1,9 +1,9 @@
-import env from '@/config/env';
-import useNetworkLoaderStore from '@/stores/useNetworkLoaderStore';
-import Axios from 'axios';
-import router from 'next/router';
-import { CustomHttpError } from './errors/CustomHttpError';
-import { notifyError } from './utils';
+import env from "@/config/env";
+import useNetworkLoaderStore from "@/stores/useNetworkLoaderStore";
+import Axios from "axios";
+import router from "next/router";
+import { CustomHttpError } from "./errors/CustomHttpError";
+// Removed notifyError import to prevent duplicate toasts - hooks will handle it
 
 const { baseUrl, altUrl, secretKey } = env;
 
@@ -11,13 +11,20 @@ const api = Axios.create({
   baseURL: baseUrl,
   withCredentials: false,
   headers: {
-    Accept: 'application/json',
-    ...(process.env.NODE_ENV === 'development' ? { 'dev-mode': 'true' } : {}),
+    Accept: "application/json",
+    ...(process.env.NODE_ENV === "development" ? { "dev-mode": "true" } : {}),
   },
 });
 api.interceptors.request.use(
   function (config) {
     showLoadingBar();
+
+    // Ensure Accept header is always set - force it to be set
+    if (!config.headers) {
+      config.headers = {} as any;
+    }
+    // Always set Accept header, even if it exists
+    config.headers.Accept = "application/json";
 
     return config;
   },
@@ -31,7 +38,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   function (response) {
     hideLoadingBar();
-    if (response.data?.status === 'error') {
+    if (response.data?.status === "error") {
       if (
         response.data?.errors &&
         Object.values(response.data?.errors).length
@@ -60,35 +67,33 @@ api.interceptors.response.use(
     if (!err.response) {
       return Promise.reject(
         new CustomHttpError(
-          'Error occurred while sending the request, please check your internet settings',
+          "Error occurred while sending the request, please check your internet settings",
           {
             statusCode: 0,
             responseText:
-              'Error occurred while sending the request, please check your internet settings',
+              "Error occurred while sending the request, please check your internet settings",
           }
         )
       );
     }
 
     const { status, data } = err.response;
-    if (status === 401 && data?.data?.error_code === 'kyc_01') {
-      notifyError('Kyc not verified');
-      router.push('/your-business?tab=business-kyc');
+    if (status === 401 && data?.data?.error_code === "kyc_01") {
+      // Don't show toast here - let the hook handle it to avoid duplicates
+      router.push("/your-business?tab=business-kyc");
       return {
         success: false,
-        message: 'Kyc not verified',
+        message: "Kyc not verified",
       };
     }
 
-    if (status === 401 && data?.data?.error_code === 'virtual_account_01') {
-      notifyError(
-        'Upgrade to KYC for registered businesses to access a virtual account.'
-      );
-      router.push('/your-business?tab=business-kyc');
+    if (status === 401 && data?.data?.error_code === "virtual_account_01") {
+      // Don't show toast here - let the hook handle it to avoid duplicates
+      router.push("/your-business?tab=business-kyc");
       return {
         success: false,
         message:
-          'Upgrade to KYC for registered businesses to access a virtual account.',
+          "Upgrade to KYC for registered businesses to access a virtual account.",
       };
     }
 
@@ -109,10 +114,25 @@ api.interceptors.response.use(
     //   };
     // }
 
+    // Handle 404 errors with generic message
+    if (status === 404) {
+      const errorMessage = "Failed, try again later.";
+      return Promise.reject(
+        new CustomHttpError(errorMessage, {
+          statusCode: status,
+          responseText: errorMessage,
+          payload: {
+            originalError: err.response.data,
+            timestamp: new Date().toISOString(),
+          },
+        })
+      );
+    }
+
+    // Handle 500+ errors with generic message
     if (status >= 500) {
-      const errorMessage =
-        'Something went wrong on our end. Please try again later.';
-      notifyError(errorMessage);
+      const errorMessage = "Failed, try again later.";
+      // Don't show toast here - let the hook handle it to avoid duplicates
       return Promise.reject(
         new CustomHttpError(errorMessage, {
           statusCode: status,
@@ -138,9 +158,9 @@ api.interceptors.response.use(
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     return Promise.reject(
-      new CustomHttpError('Error occurred while sending the request', {
+      new CustomHttpError("Error occurred while sending the request", {
         statusCode: err.response.status,
-        responseText: 'Error occurred while sending the request',
+        responseText: "Error occurred while sending the request",
       })
     );
   }
@@ -158,7 +178,7 @@ export const virtualAccountApi = Axios.create({
   baseURL: altUrl,
   withCredentials: false,
   headers: {
-    'api-key': secretKey,
+    "api-key": secretKey,
   },
 });
 

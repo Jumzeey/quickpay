@@ -2,6 +2,7 @@ import Button from "@/components/button";
 import InitiateConversion from "@/components/conversions/InitiateConversion";
 import RaiseDispute from "@/components/conversions/RaiseDispute";
 import DynamicTable from "@/components/DynamicTable";
+import EmptyState from "@/components/EmptyState";
 import Layout from "@/components/layout";
 import Pagination from "@/components/pagination";
 import TableSkeleton from "@/components/TableSkeleton";
@@ -500,6 +501,12 @@ const ConversionHistory = () => {
       <div>
         {getConversionHistoryLoading ? (
           <TableSkeleton />
+        ) : transformedConversions.length === 0 ? (
+          <EmptyState
+            title="No conversions found"
+            subTitle="We couldn't find any conversions for your account"
+            image="/images/collections.svg"
+          />
         ) : (
           <>
             <DynamicTable

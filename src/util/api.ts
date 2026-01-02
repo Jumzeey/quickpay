@@ -1,9 +1,11 @@
 import env from "@/config/env";
 import useNetworkLoaderStore from "@/stores/useNetworkLoaderStore";
+import useKyc from "@/stores/useKyc";
+import { KycStatus } from "@/types/kyc";
+import { notifyError } from "@/util/utils";
 import Axios from "axios";
 import router from "next/router";
 import { CustomHttpError } from "./errors/CustomHttpError";
-// Removed notifyError import to prevent duplicate toasts - hooks will handle it
 
 const { baseUrl, altUrl, secretKey } = env;
 
@@ -88,12 +90,30 @@ api.interceptors.response.use(
     }
 
     if (status === 401 && data?.data?.error_code === "virtual_account_01") {
-      // Don't show toast here - let the hook handle it to avoid duplicates
+      // Get KYC status to show appropriate message
+      const { userKyc } = useKyc.getState();
+      const kycStatus = userKyc?.status as KycStatus | string;
+
+      let errorMessage =
+        "Upgrade to KYC for registered businesses to access a virtual account.";
+
+      if (kycStatus === KycStatus.PENDING) {
+        errorMessage =
+          "You can't access virtual account until your KYC is approved.";
+      } else if (kycStatus === KycStatus.RE_SUBMITTED) {
+        errorMessage =
+          "You can't access virtual account until your KYC is approved. Please wait for review.";
+      } else if (kycStatus === KycStatus.UNVERIFIED) {
+        errorMessage = "You need to submit KYC to access virtual account.";
+      } else if (kycStatus === KycStatus.REJECTED) {
+        errorMessage = "You need to resubmit KYC to access virtual account.";
+      }
+
+      notifyError(errorMessage, "KYC Verification Required");
       router.push("/your-business?tab=business-kyc");
       return {
         success: false,
-        message:
-          "Upgrade to KYC for registered businesses to access a virtual account.",
+        message: errorMessage,
       };
     }
 

@@ -4,23 +4,12 @@ import env from "@/config/env";
 import { useAsyncFetch } from "@/hooks/useAsyncFetch";
 import { getKyc } from "@/services/kyc";
 import useAuthentication from "@/stores/useAuthentication";
+import { KycStatus, Field, UserKyc } from "@/types/kyc";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import KYCForm from "./kyc-form";
-
-interface Field {
-  key: string;
-  value: string;
-}
-
-interface UserKyc {
-  created_at: string;
-  status: string;
-  comment?: string;
-  fields: Field[];
-}
 
 interface DocumentLinkProps {
   document: string;
@@ -60,11 +49,24 @@ const BusinessKYC = () => {
     key: 'kyc-details',
     fn: async () => {
       const response = await getKyc();
-      return response.data?.[0][0];
+      const data = response.data;
+
+      // Handle new account structure: { data: { status: "Pending" } }
+      if (data && typeof data === 'object' && !Array.isArray(data) && 'status' in data && !('fields' in data)) {
+        return {
+          status: data.status,
+          fields: [],
+          created_at: null
+        };
+      }
+
+      // Handle existing account structure: { data: [[{ fields: [...], status: ... }]] }
+      return data?.[0]?.[0] || null;
     }
   });
 
   const getField = (key: string): string => {
+    console.log("userKyc", userKyc);
     return userKyc?.fields?.find((field: Field) => field.key.trim() === key)?.value || "N/A";
   };
 
@@ -73,13 +75,35 @@ const BusinessKYC = () => {
   };
 
   const canSubmitNewDocument = (): boolean => {
-    return (userKyc.status === 'Approved' && isStarterBusiness()) ||
-      userKyc.status === 'Rejected';
+    if (!userKyc) return false;
+    const status = userKyc.status as KycStatus | string;
+    return (status === KycStatus.APPROVED && isStarterBusiness()) ||
+      status === KycStatus.REJECTED;
   };
 
   if (getKycLoading) return <CardSkeleton />;
 
-  if (!userKyc || Object.keys(userKyc).length === 0 || userKyc?.fields?.length === 0) {
+  // Show form if no KYC data at all
+  if (!userKyc || Object.keys(userKyc).length === 0) {
+    return <KYCForm />
+  }
+
+  const status = userKyc.status as KycStatus | string;
+
+  // Show form if status is Unverified or Rejected
+  if (status === KycStatus.UNVERIFIED || status === KycStatus.REJECTED) {
+    return <KYCForm />
+  }
+
+  // Show status display for Approved, Pending, or Re-Submitted
+  // (even if there are no fields yet, these statuses indicate submission is in progress or complete)
+  // For any other status, if there are no fields, show form as fallback
+  if (
+    status !== KycStatus.APPROVED &&
+    status !== KycStatus.PENDING &&
+    status !== KycStatus.RE_SUBMITTED &&
+    (!userKyc?.fields || userKyc?.fields?.length === 0)
+  ) {
     return <KYCForm />
   }
 

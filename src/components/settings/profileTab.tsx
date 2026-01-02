@@ -3,6 +3,8 @@ import Icon from "@/components/icon";
 import { updateProfileImage } from "@/services/settings";
 import useAuthentication from "@/stores/useAuthentication";
 import useCurrency from "@/stores/useCurrency";
+import useKyc from "@/stores/useKyc";
+import { KycStatus } from "@/types/kyc";
 import { capitalizeFirstLetter, copyToClipboard, notifyError } from "@/util/utils";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -10,6 +12,7 @@ import { useRef, useState } from "react";
 const ProfileTab = () => {
   const { defaultCurrency, getCurrencyFlag } = useCurrency();
   const { user = {}, setUser } = useAuthentication();
+  const { userKyc } = useKyc();
   const [updatingImage, setUpdatingImage] = useState(false);
   const [avatar, setAvatar] = useState(user?.avatar || null);
   const [imageError, setImageError] = useState(false);
@@ -95,7 +98,21 @@ const ProfileTab = () => {
             ariaLabel="Upgrade to business account"
             text="Upgrade to business account"
             className="!h-10 !px-4 !font-medium"
-            onClick={() => window.location.href = "/your-business?tab=upgrade-account"}
+            onClick={() => {
+              // Check KYC status before allowing upgrade
+              const kycStatus = userKyc?.status as KycStatus | string;
+
+              if (kycStatus !== KycStatus.APPROVED) {
+                notifyError(
+                  "Please have your account approved before you can upgrade to a business account.",
+                  "Account Approval Required"
+                );
+                return;
+              }
+
+              // Only navigate if KYC is approved
+              window.location.href = "/your-business?tab=upgrade-account";
+            }}
           />
         )}
       </div>

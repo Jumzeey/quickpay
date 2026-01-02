@@ -2,6 +2,8 @@ import ActionButton from '@/components/action-button';
 import { useAsyncFetch } from '@/hooks/useAsyncFetch';
 import { getKyc } from '@/services/kyc';
 import useAuthentication from '@/stores/useAuthentication';
+import { KycStatus } from '@/types/kyc';
+import { notifyError } from '@/util/utils';
 import { useRouter } from 'next/router';
 
 type BusinessHeaderProps = {
@@ -16,7 +18,19 @@ const BusinessHeader = ({ isStarterBusiness }: BusinessHeaderProps) => {
         key: 'kyc-details',
         fn: async () => {
             const response = await getKyc();
-            return response.data?.[0][0] || {};
+            const data = response.data;
+
+            // Handle new account structure: { data: { status: "Pending" } }
+            if (data && typeof data === 'object' && !Array.isArray(data) && 'status' in data && !('fields' in data)) {
+                return {
+                    status: data.status,
+                    fields: [],
+                    created_at: null
+                };
+            }
+
+            // Handle existing account structure: { data: [[{ fields: [...], status: ... }]] }
+            return data?.[0]?.[0] || {};
         }
     });
 
@@ -24,6 +38,18 @@ const BusinessHeader = ({ isStarterBusiness }: BusinessHeaderProps) => {
     const statusColor = kycStatus === 'Approved' ? 'text-primary' : 'text-danger';
 
     const handleUpgradeAccount = () => {
+        // Check KYC status before allowing upgrade
+        const currentKycStatus = kycData?.status as KycStatus | string;
+
+        if (currentKycStatus !== KycStatus.APPROVED) {
+            notifyError(
+                "Please have your account approved before you can upgrade to a business account.",
+                "Account Approval Required"
+            );
+            return;
+        }
+
+        // Only navigate if KYC is approved
         router.push('/your-business?tab=upgrade-account');
     };
 

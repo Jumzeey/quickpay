@@ -24,6 +24,7 @@ import {
 } from '@/util/utils';
 import { useRouter } from 'next/router';
 import React, { useCallback, useState } from 'react';
+import useKyc from '@/stores/useKyc';
 import USDVirtualAccountView from '../USDVirualAccountView';
 
 interface VirtualAccounts {
@@ -119,6 +120,25 @@ const VirtualAccounts = () => {
       console.log(response);
       response?.export_link && downloadFile(response.export_link);
     } catch (error: any) {
+      // Check if error is about Accept header (which indicates KYC not submitted)
+      const errorMessage = error?.message || error?.responseText || '';
+      if (errorMessage.includes("Accept") && errorMessage.includes("application/json")) {
+        try {
+          // Check KYC status
+          const { getKyc } = useKyc.getState();
+          const { userKyc } = await getKyc();
+
+          // If KYC status is "Pending", redirect to your-business page
+          if (userKyc?.status === "Pending" || !userKyc?.fields || userKyc?.fields?.length === 0) {
+            router.push("/your-business");
+            return;
+          }
+        } catch (kycError) {
+          // If getKyc fails, still redirect to your-business page
+          router.push("/your-business");
+          return;
+        }
+      }
       handleError(error);
     }
   };

@@ -12,7 +12,11 @@ import {
   VirtualAccountFormValues,
 } from "@/services/collections";
 import { Pagination } from "@/stores/useWalletLogs";
+import useKyc from "@/stores/useKyc";
+import { KycStatus } from "@/types/kyc";
+import { notifyError } from "@/util/utils";
 import { create } from "zustand";
+import router from "next/router";
 
 export interface VirtualAccount {
   id: string;
@@ -154,7 +158,44 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
         pagination: pagination || initialState.pagination,
       }));
       return { virtual_accounts };
-    } catch (error) {
+    } catch (error: any) {
+      // Check if error is about Accept header (which indicates KYC not submitted)
+      const errorMessage = error?.message || error?.responseText || "";
+      if (
+        errorMessage.includes("Accept") &&
+        errorMessage.includes("application/json")
+      ) {
+        try {
+          // Check KYC status
+          const { getKyc } = useKyc.getState();
+          const { userKyc } = await getKyc();
+
+          // If KYC status is "Pending", "Unverified", or "Rejected", redirect to your-business page
+          const status = userKyc?.status as KycStatus | string;
+          if (
+            status === KycStatus.PENDING ||
+            status === KycStatus.UNVERIFIED ||
+            status === KycStatus.REJECTED ||
+            !userKyc?.fields ||
+            userKyc?.fields?.length === 0
+          ) {
+            notifyError(
+              "Please complete your KYC verification to access virtual accounts. You will be redirected to complete your business verification.",
+              "KYC Verification Required"
+            );
+            router.push("/your-business");
+            return { virtual_accounts: [] };
+          }
+        } catch (kycError) {
+          // If getKyc fails, still redirect to your-business page
+          notifyError(
+            "Please complete your KYC verification to access virtual accounts. You will be redirected to complete your business verification.",
+            "KYC Verification Required"
+          );
+          router.push("/your-business");
+          return { virtual_accounts: [] };
+        }
+      }
       // Error will be handled by the onError callback in the component
       throw error;
     } finally {

@@ -10,7 +10,7 @@ import useKyc from "@/stores/useKyc";
 import { documentTypes } from "@/util/constants";
 import { notifyError, notifySuccess } from "@/util/utils";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Controller } from "react-hook-form";
 import * as Yup from "yup";
 
@@ -61,8 +61,20 @@ const registeredSchema = Yup.object().shape({
 
 const KYCForm = () => {
   const router = useRouter();
-  const { createKyc } = useKyc();
+  const { createKyc, getKyc } = useKyc();
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchKyc = async () => {
+      try {
+        const result = await getKyc();
+        console.log("get kyc", result);
+      } catch (error) {
+        console.error("Error fetching KYC:", error);
+      }
+    };
+    fetchKyc();
+  }, [getKyc]);
 
   const validationSchema = Yup.lazy(values => {
     return values.business_type === "starter"
@@ -106,6 +118,14 @@ const KYCForm = () => {
 
   const businessType = watch("business_type");
   const isStarterBusiness = businessType === "starter";
+
+  // Watch file upload fields to pass to UploadComponent
+  const idFile = watch("id_file");
+  const proofOfAddress = watch("proof_of_address");
+  const documentFile = watch("document_file");
+  const documentBeneficiaryFile = watch("document_beneficiary_file");
+  const cacDocuments = watch("cac_documents");
+  const companyBusinessStatus = watch("company_business_status");
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -302,6 +322,7 @@ const KYCForm = () => {
                 name="proof_of_address"
                 text="Proof of Address (e.g Utility Bill)"
                 folderName="kyc"
+                value={proofOfAddress}
               />
             </div>
 
@@ -313,6 +334,7 @@ const KYCForm = () => {
                 name="id_file"
                 text="Upload ID FILE"
                 folderName="kyc"
+                value={idFile}
               />
             </div>
           </>
@@ -342,6 +364,7 @@ const KYCForm = () => {
                 text="Document Upload"
                 folderName="kyc"
                 className="min-h-[230px]"
+                value={documentFile}
               />
             </div>
 
@@ -369,6 +392,7 @@ const KYCForm = () => {
                 text="Document Upload (Ultimate Beneficial Owner)"
                 folderName="kyc"
                 className="min-h-[230px]"
+                value={documentBeneficiaryFile}
               />
             </div>
 
@@ -393,6 +417,7 @@ const KYCForm = () => {
               name="proof_of_address"
               text="Proof Of Business Address (e.g Utility Bill)"
               folderName="kyc"
+              value={proofOfAddress}
             />
 
 
@@ -403,6 +428,7 @@ const KYCForm = () => {
               name="cac_documents"
               text="Company Registration Certificate"
               folderName="kyc"
+              value={cacDocuments}
             />
             <UploadComponent
               className="min-h-[260px]"
@@ -411,6 +437,7 @@ const KYCForm = () => {
               name="company_business_status"
               text="MEMART or its equivalent"
               folderName="kyc"
+              value={companyBusinessStatus}
             />
 
             <div className="space-y-6">

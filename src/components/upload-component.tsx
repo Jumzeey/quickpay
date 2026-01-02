@@ -163,7 +163,7 @@ import Icon from "@/components/icon";
 import { uploadFile } from "@/services/kyc";
 import { notifyError } from "@/util/utils";
 import Image from "next/image";
-import React, { ChangeEvent, useRef, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Spinner } from "./Spinner";
 
 interface DocumentWithType {
@@ -183,6 +183,7 @@ interface UploadComponentProps {
   setMandateFile?: (value: File) => void;
   className?: string;
   showPreview?: boolean;
+  value?: string; // Server URL for existing uploaded file
 
   // New props for multiple file handling
   multiple?: boolean;
@@ -204,6 +205,7 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   documents = [],
   setDocuments,
   maxFiles = 10,
+  value, // Server URL for existing uploaded file
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -211,8 +213,30 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedServerUrl, setUploadedServerUrl] = useState<string | null>(value || null);
 
   const [isUploading, setIsUploading] = useState(false);
+
+  // Update uploadedServerUrl when value prop changes
+  useEffect(() => {
+    if (value) {
+      setUploadedServerUrl(value);
+      // Extract filename from URL if possible
+      try {
+        const urlParts = value.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        if (fileName && fileName.includes('.')) {
+          setUploadedFileName(decodeURIComponent(fileName));
+        }
+      } catch (e) {
+        // Ignore errors in filename extraction
+      }
+    } else if (!previewUrl) {
+      // Clear server URL if value is cleared and no preview URL
+      setUploadedServerUrl(null);
+      setUploadedFileName(null);
+    }
+  }, [value, previewUrl]);
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -317,13 +341,20 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
           formData.append("folder", folderName);
 
           const response = await uploadFile(formData);
-          onFileUpload && onFileUpload(response.data.file, name);
+          const serverUrl = response.data.file;
+          // Store server URL for preview
+          setUploadedServerUrl(serverUrl);
+          // Revoke blob URL since we now have server URL
+          URL.revokeObjectURL(fileUrl);
+          setPreviewUrl(null);
+          onFileUpload && onFileUpload(serverUrl, name);
         } catch (error: any) {
           notifyError(error.message);
           URL.revokeObjectURL(fileUrl);
           setPreviewUrl(null);
           setUploadedFile(null);
           setUploadedFileName(null);
+          setUploadedServerUrl(null);
         } finally {
           setIsUploading(false);
         }
@@ -345,9 +376,12 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
     setPreviewUrl(null);
     setUploadedFile(null);
     setUploadedFileName(null);
+    setUploadedServerUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    // Clear the form value
+    onFileUpload && onFileUpload("", name);
   };
 
   const handleRemoveDocument = (documentId: string) => {
@@ -414,21 +448,65 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
         )}
 
         {/* Legacy single file display */}
-        {!multiple && uploadedFileName && (
-          <p className="mt-4 text-xs text-center text-primary font-semibold">
-            Uploaded file: {uploadedFileName}
-          </p>
-        )}
-
-        {!multiple && previewUrl && (
-          <div className="mt-4 relative">
-            <Image src={previewUrl} alt={"Preview"} width={100} height={100} className="rounded" />
-            <button
-              onClick={handleDelete}
-              className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 cursor-pointer text-white hover:bg-red-600"
-            >
-              <Icon name="close" className="w-3 h-3" />
-            </button>
+        {!multiple && (uploadedFileName || uploadedServerUrl) && (
+          <div className="mt-4 w-full">
+            {uploadedFileName && (
+              <p className="text-xs text-center text-primary font-semibold mb-2">
+                Uploaded file: {uploadedFileName}
+              </p>
+            )}
+            {/* {(previewUrl || uploadedServerUrl) && (
+              <div className="relative flex items-center justify-center">
+                {(() => {
+                  const displayUrl = uploadedServerUrl || previewUrl;
+                  if (!displayUrl) return null;
+                  
+                  // Check if it's a PDF by file type, filename, or URL
+                  const isPdf = uploadedFile?.type === 'application/pdf' ||
+                                displayUrl.toLowerCase().includes('.pdf') || 
+                                uploadedFileName?.toLowerCase().endsWith('.pdf') ||
+                                (uploadedFile && uploadedFile.name.toLowerCase().endsWith('.pdf'));
+                  
+                  if (isPdf) {
+                    return (
+                      <div className="flex flex-col items-center gap-2">
+                        <Icon name="file-pdf" className="w-16 h-16 text-red-500" />
+                        <a
+                          href={displayUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary underline hover:text-primary/80"
+                        >
+                          Preview PDF
+                        </a>
+                      </div>
+                    );
+                  }
+                  
+                  // For images, try to display them
+                  // If it fails, we'll show a link to view the file
+                  return (
+                    <div className="relative">
+                      <Image 
+                        src={displayUrl} 
+                        alt={"Preview"} 
+                        width={200} 
+                        height={200} 
+                        className="rounded max-w-full max-h-48 object-contain" 
+                        unoptimized={!!previewUrl || displayUrl.startsWith('http')} // Don't optimize blob URLs or external URLs
+                      />
+                    </div>
+                  );
+                })()}
+                <button
+                  onClick={handleDelete}
+                  className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 cursor-pointer text-white hover:bg-red-600 z-10"
+                  type="button"
+                >
+                  <Icon name="close" className="w-3 h-3" />
+                </button>
+              </div>
+            )} */}
           </div>
         )}
       </div>

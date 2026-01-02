@@ -52,6 +52,18 @@ export function useWallets() {
 }
 
 /**
+ * Helper function to validate if an account_id is a real UUID (not a fallback like "main_NGN")
+ */
+function isValidAccountId(accountId: string | undefined): boolean {
+    if (!accountId || !accountId.trim()) return false;
+    
+    // Real account_ids are UUIDs (contain dashes and are longer)
+    // Fallback account_ids like "main_NGN" or "reserve_USD" don't contain dashes
+    // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    return accountId.includes('-') && accountId.length > 20;
+}
+
+/**
  * Hook to fetch wallet transactions
  */
 export function useWalletTransactions(
@@ -68,6 +80,9 @@ export function useWalletTransactions(
         enabled?: boolean;
     }
 ) {
+    // Validate account_id - only fetch if it's a real UUID, not a fallback
+    const isValidId = isValidAccountId(params?.account_id);
+    
     return useApiQuery<WalletTransactionsResponse>({
         endpoint: apiEndpoints.transaction.GET_WALLET_HISTORY,
         params,
@@ -75,7 +90,8 @@ export function useWalletTransactions(
         staleTime: 1 * 60 * 1000, // 1 minute - transactions refresh more frequently
         gcTime: 3 * 60 * 1000, // 3 minutes (formerly cacheTime)
         showErrorToast: true,
-        enabled: options?.enabled !== false && !!params?.account_id, // Only fetch when account_id is provided
+        // Only fetch when account_id is provided AND it's a valid UUID (not a fallback)
+        enabled: options?.enabled !== false && isValidId,
     });
 }
 

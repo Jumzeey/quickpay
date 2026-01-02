@@ -1,8 +1,4 @@
-import {
-  createKyc,
-  getKyc,
-  getKycMethods,
-} from "@/services/kyc";
+import { createKyc, getKyc, getKycMethods } from "@/services/kyc";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -35,7 +31,7 @@ const useKyc = create<KycState>()(
           ...state,
           createKycLoading: true,
         }));
-        const { data, message } = await createKyc(payload) as any;
+        const { data, message } = (await createKyc(payload)) as any;
         set((state) => ({
           ...state,
           message,
@@ -46,16 +42,41 @@ const useKyc = create<KycState>()(
       getKyc: async () => {
         set((state) => ({
           ...state,
-          getKycLoading: true
+          getKycLoading: true,
         }));
         try {
           const { data } = await getKyc();
+
+          // Handle new account structure: { data: { status: "Pending" } }
+          if (
+            data &&
+            typeof data === "object" &&
+            !Array.isArray(data) &&
+            "status" in data &&
+            !("fields" in data)
+          ) {
+            const userKyc = {
+              status: data.status,
+              fields: [],
+              created_at: null,
+            };
+            set((state) => ({
+              ...state,
+              userKyc,
+            }));
+            return {
+              userKyc,
+            };
+          }
+
+          // Handle existing account structure: { data: [[{ fields: [...], status: ... }]] }
+          const userKyc = data?.[0]?.[0] || null;
           set((state) => ({
             ...state,
-            userKyc: data?.[0][0],
+            userKyc,
           }));
           return {
-            userKyc: data?.[0][0]
+            userKyc,
           };
         } finally {
           set((state) => ({
@@ -67,7 +88,7 @@ const useKyc = create<KycState>()(
       setKycLoading: async (value) => {
         set((state) => ({
           ...state,
-          getKycLoading: value
+          getKycLoading: value,
         }));
       },
       getKycMethods: async () => {
@@ -75,14 +96,14 @@ const useKyc = create<KycState>()(
           ...state,
           getKycMethodsLoading: true,
         }));
-        const { data, message } = await getKycMethods() as any;
+        const { data, message } = (await getKycMethods()) as any;
         set((state) => ({
           ...state,
           getKycMethodsLoading: false,
         }));
         return {
           data,
-          message
+          message,
         };
       },
     }),

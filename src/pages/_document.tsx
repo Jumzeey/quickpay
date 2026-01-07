@@ -5,6 +5,13 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+        {/* <link rel="icon" type="image/x-icon" href="/favicon.ico" /> */}
+        <meta
+          property="og:title"
+          content="Manage your business, create virtual accounts and payment links"
+          key="title"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -16,14 +23,8 @@ export default function Document() {
             `,
           }}
         />
+        <script src={`https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`} async />
       </Head>
-      <script src={`https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`} async />
-      <link rel="icon" href="/favicon.svg" />
-      <meta
-        property="og:title"
-        content="Manage your business, create virtual accounts and payment links"
-        key="title"
-      />
       <body className="font-sans">
         <Main />
         <NextScript />

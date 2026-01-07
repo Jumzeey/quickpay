@@ -184,4 +184,5 @@ export const collections = [
 export const EXTERNAL_URLS = {
   PRIVACY_POLICY: "https://www.crayfinance.com/privacy-policy",
   TERMS_OF_SERVICE: "https://www.crayfinance.com/terms-of-service",
+  SOLUTIONS: "https://www.crayfinance.com/solutions",
 };

@@ -2,6 +2,10 @@ import { Head, Html, Main, NextScript } from "next/document";
 
 export default function Document() {
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  const recaptchaUrl = recaptchaSiteKey
+    ? `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`
+    : 'https://www.google.com/recaptcha/api.js';
+
   return (
     <Html lang="en">
       <Head>
@@ -23,7 +27,7 @@ export default function Document() {
             `,
           }}
         />
-        <script src={`https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`} async />
+        <script src={recaptchaUrl} async />
       </Head>
       <body className="font-sans">
         <Main />

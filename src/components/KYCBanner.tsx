@@ -2,6 +2,7 @@ import { useAsyncFetch } from '@/hooks/useAsyncFetch';
 import { getKyc } from '@/services/kyc';
 import { KycStatus, UserKyc } from '@/types/kyc';
 import { EXTERNAL_URLS } from '@/constants';
+import { cn } from '@/util/utils';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import Icon from '@/components/icon';
@@ -38,8 +39,17 @@ const KYCBanner = () => {
     if (kycStatus === KycStatus.APPROVED) {
         if (isDismissed) return null;
 
+        const approvedBannerClasses = cn(
+            'w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)]',
+            'border-t border-b',
+            'bg-[#D1FAE5] dark:bg-[#064E3B]',
+            'border-[#10B981] dark:border-[#34D399]',
+            'text-[#065F46] dark:text-[#A7F3D0]',
+            'py-4 mb-6 -mt-8 -ml-5 md:-ml-7'
+        );
+
         return (
-            <div className={`w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)] border-t border-b bg-[#D1FAE5] dark:bg-[#064E3B] border-[#10B981] dark:border-[#34D399] text-[#065F46] dark:text-[#A7F3D0] py-4 mb-6 -mt-8 -ml-5 md:-ml-7`}>
+            <div className={approvedBannerClasses}>
                 <div className="px-5 md:px-7">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                         <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -132,10 +142,24 @@ const KYCBanner = () => {
         return "Your KYC verification was rejected. Please review and resubmit your KYC information.";
     };
 
+    const bannerClasses = cn(
+        'w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)]',
+        'border-t border-b',
+        theme.bg,
+        theme.border,
+        theme.text,
+        'py-4 mb-6 -mt-8 -ml-5 md:-ml-7'
+    );
+
+    const contentWrapperClasses = cn(
+        'flex flex-col gap-3 sm:gap-4',
+        !isPending && 'sm:flex-row sm:items-center sm:justify-between'
+    );
+
     return (
-        <div className={`w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)] border-t border-b ${theme.bg} ${theme.border} ${theme.text} py-4 mb-6 -mt-8 -ml-5 md:-ml-7`}>
+        <div className={bannerClasses}>
             <div className="px-5 md:px-7">
-                <div className={`flex flex-col ${!isPending ? 'sm:flex-row sm:items-center sm:justify-between' : ''} gap-3 sm:gap-4`}>
+                <div className={contentWrapperClasses}>
                     <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm sm:text-base">
                             {getTitle()}
@@ -148,7 +172,12 @@ const KYCBanner = () => {
                         {isPending && (
                             <button
                                 onClick={handlePrimaryAction}
-                                className={`px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-200 whitespace-nowrap w-full sm:w-auto ${theme.button}`}
+                                className={cn(
+                                    'px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold',
+                                    'transition-colors duration-200 whitespace-nowrap',
+                                    'w-full sm:w-auto',
+                                    theme.button
+                                )}
                                 aria-label="View submitted KYC details"
                             >
                                 View submitted details
@@ -158,14 +187,24 @@ const KYCBanner = () => {
                             <>
                                 <button
                                     onClick={handlePrimaryAction}
-                                    className={`px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-200 whitespace-nowrap w-full sm:w-auto ${theme.button}`}
+                                    className={cn(
+                                        'px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold',
+                                        'transition-colors duration-200 whitespace-nowrap',
+                                        'w-full sm:w-auto',
+                                        theme.button
+                                    )}
                                     aria-label="Complete KYC verification"
                                 >
                                     Complete KYC
                                 </button>
                                 <button
                                     onClick={handleSecondaryAction}
-                                    className={`px-4 sm:px-6 py-2.5 rounded-md text-sm font-medium transition-colors duration-200 whitespace-nowrap w-full sm:w-auto ${theme.secondaryButton}`}
+                                    className={cn(
+                                        'px-4 sm:px-6 py-2.5 rounded-md text-sm font-medium',
+                                        'transition-colors duration-200 whitespace-nowrap',
+                                        'w-full sm:w-auto',
+                                        theme.secondaryButton
+                                    )}
                                     aria-label="Learn more about KYC"
                                 >
                                     Learn more
@@ -175,7 +214,12 @@ const KYCBanner = () => {
                         {isRejected && (
                             <button
                                 onClick={handlePrimaryAction}
-                                className={`px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-200 whitespace-nowrap w-full sm:w-auto ${theme.button}`}
+                                className={cn(
+                                    'px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold',
+                                    'transition-colors duration-200 whitespace-nowrap',
+                                    'w-full sm:w-auto',
+                                    theme.button
+                                )}
                                 aria-label="Fix and resubmit KYC"
                             >
                                 Fix & Resubmit

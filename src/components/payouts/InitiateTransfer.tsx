@@ -113,7 +113,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     .required("Account number is required")
                     .test("account-number-length", "Account number must be 10 digits for NGN or 12 digits for GHS", function (value): boolean {
                         if (!value) return false;
-                        const isNGN: boolean = watch("currency") === "NGN";
+                        const currentCurrency = this.parent?.currency;
+                        const isNGN: boolean = currentCurrency === "NGN";
                         return isNGN ? value.length === 10 : value.length === 12;
                     })
                     .matches(/^\d+$/, "Account number must contain only digits"),

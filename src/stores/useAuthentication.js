@@ -4,6 +4,7 @@ import { getAllCurrencies } from "@/util/utils";
 import Cookies from "js-cookie";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import useCurrency from "@/stores/useCurrency";
 
 const accessGet = globalThis.localStorage?.getItem('auth');
 const accessGetParse = accessGet ? JSON?.parse(accessGet) : null;
@@ -154,10 +155,8 @@ const useAuthentication = create(
 
         const allCurrencies = getAllCurrencies(data.modules);
         if (allCurrencies.length > 0) {
-          import("@/stores/useCurrency").then(({ default: useCurrency }) => {
-            useCurrency.getState().setCurrency(allCurrencies[0].value);
-            useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
-          });
+          useCurrency.getState().setCurrency(allCurrencies[0].value);
+          useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
         }
 
         set((state) => ({

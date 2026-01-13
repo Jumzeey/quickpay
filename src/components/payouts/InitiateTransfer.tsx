@@ -1,5 +1,4 @@
 import Button from "@/components/button";
-import { walletCurrencies } from "@/components/CurrencySwitcher";
 import FormInput from "@/components/FormInput";
 import FormPhoneInput from "@/components/FormPhoneInput";
 import FormSelect from "@/components/FormSelect";
@@ -11,6 +10,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 import { getBanks, performNameCheck } from "@/services/bank";
 import { BankResponse } from "@/services/payout";
 import usePayout from "@/stores/usePayout";
+import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
 import { notifyError, notifySuccess, removeCommasFromValue } from "@/util/utils";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
@@ -48,6 +48,52 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     }
     const [state, setState] = useState<TransferState>(initialState);
     const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
+    const { selectedCurrency, activeCurrencies, fetchActiveCurrencies } = useCurrency();
+
+    // Currency names mapping (same as CurrencySwitcher)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const currencyNames: Record<string, string> = {
+        NGN: '₦ NGN',
+        USD: '$ USD',
+        GHS: '₵ GHS',
+        KES: 'KES',
+        TZS: 'TZS',
+        ZAR: 'ZAR',
+        GBP: '£ GBP',
+        EUR: '€ EUR',
+        CAD: 'CAD',
+        AUD: 'AUD',
+        INR: 'INR',
+        CNY: 'CNY',
+        JPY: 'JPY',
+        AED: 'AED',
+        UGX: 'UGX',
+        XOF: 'XOF',
+        XAF: 'XAF',
+    };
+
+    // Generate currency options from active currencies
+    const currencyOptions = useMemo(() => {
+        return activeCurrencies
+            .map((code) => ({
+                value: code as CurrencyOption,
+                label: currencyNames[code] || code,
+            }));
+    }, [activeCurrencies, currencyNames]);
+
+    // Fetch active currencies on mount
+    useEffect(() => {
+        fetchActiveCurrencies();
+    }, [fetchActiveCurrencies]);
+
+    // Get default currency (use selectedCurrency, fallback to first available or NGN)
+    const defaultCurrency = useMemo(() => {
+        if (selectedCurrency && activeCurrencies.includes(selectedCurrency)) {
+            return selectedCurrency;
+        }
+        const firstAvailable = activeCurrencies[0];
+        return (firstAvailable as CurrencyOption) || 'NGN';
+    }, [selectedCurrency, activeCurrencies]);
 
     const validationSchema = useMemo(() => {
         const baseAmountValidation = Yup.string()
@@ -67,7 +113,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     .required("Account number is required")
                     .test("account-number-length", "Account number must be 10 digits for NGN or 12 digits for GHS", function (value): boolean {
                         if (!value) return false;
-                        const isNGN: boolean = watch("currency") === "NGN";
+                        const currentCurrency = this.parent?.currency;
+                        const isNGN: boolean = currentCurrency === "NGN";
                         return isNGN ? value.length === 10 : value.length === 12;
                     })
                     .matches(/^\d+$/, "Account number must contain only digits"),
@@ -141,7 +188,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     } = useFormValidation<TransferFormValues & { otp: string }>(validationSchema, {
         defaultValues: {
             amount: "",
-            currency: "NGN",
+            currency: defaultCurrency,
             bank: "",
             ref_id: "",
             accountNumber: "",
@@ -221,7 +268,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         if (validateCheck) {
             nameCheck();
         }
-        
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountNumber, currency, selectedBank]);
 
@@ -291,7 +338,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     const resetForm = () => {
         reset({
             amount: "",
-            currency: "NGN",
+            currency: defaultCurrency,
             bank: "",
             accountNumber: "",
             accountName: "",
@@ -371,11 +418,11 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         htmlFor="currency"
                         label="Select Currency"
                         placeholder="Select Currency"
-                        options={walletCurrencies.filter(c => c.value !== "USD")}
+                        options={currencyOptions}
                         error={errors.currency?.message}
                         touched={!!errors.currency}
                         {...field}
-                        value={field.value || "NGN"}
+                        value={field.value || defaultCurrency}
                     />
                 )}
             />

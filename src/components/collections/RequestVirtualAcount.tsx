@@ -530,6 +530,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                       options={[
                                         { value: 'Wema', label: 'Wema' },
                                         { value: 'monnify', label: 'Monnify' },
+                                        { value: 'Bloc', label: 'Bloc' },
                                       ]}
                                       {...field}
                                     />

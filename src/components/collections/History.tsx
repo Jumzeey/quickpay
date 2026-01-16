@@ -21,7 +21,7 @@ import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { copyToClipboard, formatDate, notifyError } from "@/util/utils";
+import { copyToClipboard, formatDate, notifyError, formatAmount, formatBalance } from "@/util/utils";
 import Link from "next/link";
 import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -55,6 +55,37 @@ const CollectionHistory = () => {
     const { selectedCurrency } = useCurrency();
     const { showFilter, toggleFilter } = useFilter();
 
+    // Helper function to format amounts with commas
+    const formatAmountValue = (value: any, currency?: string): string => {
+        if (!value || value === 'N/A') return 'N/A';
+
+        // If it's already a formatted string with currency symbol, extract and format
+        if (typeof value === 'string' && /^[₦$€£¥]/.test(value.trim())) {
+            const currencySymbol = value.trim().charAt(0);
+            const numberPart = value.trim().slice(1).replace(/,/g, '').trim();
+            const numValue = parseFloat(numberPart);
+
+            if (!isNaN(numValue) && isFinite(numValue)) {
+                // Format with commas and ensure 2 decimal places
+                const formatted = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${currencySymbol}${formatted}`;
+            }
+        }
+
+        // If it's a number, use formatBalance
+        if (typeof value === 'number') {
+            return formatBalance(value, currency || selectedCurrency);
+        }
+
+        // If it's a string that looks like a number, try to format it
+        const numValue = parseFloat(value.toString().replace(/[^0-9.-]/g, ''));
+        if (!isNaN(numValue) && isFinite(numValue)) {
+            return formatBalance(numValue, currency || selectedCurrency);
+        }
+
+        return value;
+    };
+
     const [state, setState] = useState<CollectionsProps>({
         collectionHistory: [],
         isLoading: true,
@@ -82,7 +113,7 @@ const CollectionHistory = () => {
     }, {
         key: 'amount',
         title: 'Amount',
-        render: (value: any, row: any) => row?.amount || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.amount, row?.currency),
     }, {
         key: 'channel',
         title: 'Transaction Type',
@@ -102,15 +133,15 @@ const CollectionHistory = () => {
     }, {
         key: 'processing_fee',
         title: 'Processing Fee',
-        render: (value: any, row: any) => row?.processing_fee || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.processing_fee, row?.currency),
     }, {
         key: 'net_amount',
         title: 'Net Amount',
-        render: (value: any, row: any) => row?.net_amount || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.net_amount, row?.currency),
     }, {
         key: 'converted_amount',
         title: 'Converted Amount',
-        render: (value: any, row: any) => row?.converted_amount || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.converted_amount, row?.currency),
     }, {
         key: 'rate',
         title: 'Rate',
@@ -118,7 +149,7 @@ const CollectionHistory = () => {
     }, {
         key: 'refunded',
         title: 'Refunded Value',
-        render: (value: any, row: any) => row?.refunded || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.refunded, row?.currency),
     }, {
         key: 'value_date',
         title: 'Value Date',

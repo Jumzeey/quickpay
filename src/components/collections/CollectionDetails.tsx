@@ -10,6 +10,7 @@ interface CollectionProps {
   key5?: string;
   value5?: string;
 }
+
 const CollectionDetails = ({
   key1,
   value1,
@@ -23,30 +24,36 @@ const CollectionDetails = ({
   value5,
 }: CollectionProps) => {
   return (
-    <div>
+    <div className="min-w-0 max-w-xs">
       <div className="flex flex-col gap-y-2 pb-7">
         <span className="text-xs text-grey-300 font-semibold">{key1}</span>
-        <span className="text-sm font-medium">{value1}</span>
+        <span className="text-sm font-medium break-words">{value1}</span>
       </div>
 
       <div className="flex flex-col gap-y-2 pb-7">
         <span className="text-xs text-grey-300 font-semibold">{key2}</span>
-        <span className="text-sm font-medium">{value2}</span>
+        <span className="text-sm font-medium break-words">{value2}</span>
       </div>
 
       <div className="flex flex-col gap-y-2 pb-7">
         <span className="text-xs text-grey-300 font-semibold">{key3}</span>
-        <span className="text-sm font-medium">{value3}</span>
+        <span className="text-sm font-medium truncate max-w-full" title={value3}>
+          {value3}
+        </span>
       </div>
 
       <div className="flex flex-col gap-y-2 pb-7">
         <span className="text-xs text-grey-300 font-semibold">{key4}</span>
-        <span className="text-sm font-medium">{value4}</span>
+        <span className="text-sm font-medium truncate max-w-full" title={value4}>
+          {value4}
+        </span>
       </div>
 
       <div className="flex flex-col gap-y-2">
         <span className="text-xs text-grey-300 font-semibold">{key5}</span>
-        <span className="text-sm font-medium">{value5}</span>
+        <span className="text-sm font-medium truncate max-w-full" title={value5}>
+          {value5}
+        </span>
       </div>
     </div>
   );

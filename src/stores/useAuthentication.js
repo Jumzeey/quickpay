@@ -155,8 +155,8 @@ const useAuthentication = create(
 
         const allCurrencies = getAllCurrencies(data.modules);
         if (allCurrencies.length > 0) {
-          useCurrency.getState().setCurrency(allCurrencies[0].value);
-          useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
+            useCurrency.getState().setCurrency(allCurrencies[0].value);
+            useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
         }
 
         set((state) => ({

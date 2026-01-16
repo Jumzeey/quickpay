@@ -268,7 +268,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         if (validateCheck) {
             nameCheck();
         }
-
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountNumber, currency, selectedBank]);
 

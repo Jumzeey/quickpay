@@ -8,10 +8,10 @@ import Modal from "@/components/modal";
 import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { getBanks, performNameCheck } from "@/services/bank";
-import { BankResponse } from "@/services/payout";
+import { BankResponse, getPayoutOptions } from "@/services/payout";
 import usePayout from "@/stores/usePayout";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
-import { notifyError, notifySuccess, removeCommasFromValue } from "@/util/utils";
+import { notifyError, notifySuccess, removeCommasFromValue, uuid } from "@/util/utils";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
@@ -45,6 +45,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         isSubmitting: false,
         currentStep: 0,
         banks: [],
+        payoutOptions: null,
     }
     const [state, setState] = useState<TransferState>(initialState);
     const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
@@ -72,9 +73,10 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         XAF: 'XAF',
     };
 
-    // Generate currency options from active currencies
+    // Generate currency options from active currencies, excluding USD
     const currencyOptions = useMemo(() => {
         return activeCurrencies
+            .filter((code) => code !== 'USD') // Hide USD from payout currency list
             .map((code) => ({
                 value: code as CurrencyOption,
                 label: currencyNames[code] || code,
@@ -106,21 +108,60 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
         if (state.selectedOptionName === "Same Currency Transfer") {
             return Yup.object().shape({
-                // currency: Yup.string().required("Please select a currency"),
-                bank: Yup.string().required("Please select a bank"),
-                ref_id: Yup.string().required("Please validate your account details"),
+                channel: Yup.string().required("Please select a channel"),
+                bank: Yup.string().when("channel", {
+                    is: "bank",
+                    then: (schema) => schema.required("Please select a bank"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                network: Yup.string().when("channel", {
+                    is: "momo",
+                    then: (schema) => schema.required("Please select a network"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                ref_id: Yup.string().when("channel", {
+                    is: "bank",
+                    then: (schema) => schema.required("Please validate your account details"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
                 accountNumber: Yup.string()
-                    .required("Account number is required")
-                    .test("account-number-length", "Account number must be 10 digits for NGN or 12 digits for GHS", function (value): boolean {
-                        if (!value) return false;
-                        const currentCurrency = this.parent?.currency;
-                        const isNGN: boolean = currentCurrency === "NGN";
-                        return isNGN ? value.length === 10 : value.length === 12;
-                    })
-                    .matches(/^\d+$/, "Account number must contain only digits"),
-                accountName: Yup.string().required("Account name is required"),
+                    .when("channel", {
+                        is: "bank",
+                        then: (schema) => schema
+                            .required("Account number is required")
+                            .test("account-number-length", "Account number must be 10 digits for NGN or 12 digits for GHS", function (value): boolean {
+                                if (!value) return false;
+                                const currentCurrency = this.parent?.currency;
+                                const isNGN: boolean = currentCurrency === "NGN";
+                                return isNGN ? value.length === 10 : value.length === 12;
+                            })
+                            .matches(/^\d+$/, "Account number must contain only digits"),
+                        otherwise: (schema) => schema
+                            .when("channel", {
+                                is: "momo",
+                                then: (schema) => schema
+                                    .required("Phone number is required")
+                                    .test("phone-number-length", "Please enter a valid phone number", function (value): boolean {
+                                        if (!value) return false;
+                                        // Remove any formatting characters
+                                        const cleanValue = value.replace(/[^\d]/g, '');
+                                        return cleanValue.length >= 8 && cleanValue.length <= 15;
+                                    }),
+                                otherwise: (schema) => schema.notRequired(),
+                            }),
+                    }),
+                accountName: Yup.string()
+                    .when("channel", {
+                        is: "bank",
+                        then: (schema) => schema.required("Account name is required"),
+                        otherwise: (schema) => schema.when("channel", {
+                            is: "momo",
+                            then: (schema) => schema.required("Account name is required"),
+                            otherwise: (schema) => schema.notRequired(),
+                        }),
+                    }),
                 amount: baseAmountValidation,
-                narration: Yup.string()
+                narration: Yup.string(),
             });
         }
 
@@ -189,7 +230,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         defaultValues: {
             amount: "",
             currency: defaultCurrency,
+            channel: undefined,
             bank: "",
+            network: "",
             ref_id: "",
             accountNumber: "",
             accountName: "",
@@ -204,40 +247,128 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         mode: 'onChange'
     });
 
-    const currency = watch("currency");
+    const watchedCurrency = watch("currency");
+    const currency = watchedCurrency || defaultCurrency;
     const accountNumber = watch("accountNumber");
     const selectedBank = watch("bank");
+    const selectedChannel = watch("channel");
 
-    const { data: banks, loading: banksLoading } = useEffectFetch(
+    // Track previous currency to detect actual changes
+    const prevCurrencyRef = React.useRef<string | undefined>(undefined);
+
+    // Determine the currency to use - always fallback to defaultCurrency
+    const effectiveCurrency = React.useMemo(() => {
+        return watchedCurrency || defaultCurrency;
+    }, [watchedCurrency, defaultCurrency]);
+
+    // Only fetch payout options when on Same Currency Transfer step
+    const shouldFetchOptions = state.selectedOptionName === "Same Currency Transfer" && !!effectiveCurrency;
+
+    // Fetch payout options instead of banks
+    const { data: payoutOptionsData, loading: payoutOptionsLoading } = useEffectFetch(
         async () => {
-            const response: BankResponse[] = await getBanks(
-                { countryCode: currency === "GHS" ? "GH" : undefined }
-            );
-            return response;
+            if (!shouldFetchOptions || !effectiveCurrency) return null;
+            try {
+                const response = await getPayoutOptions(effectiveCurrency);
+                // Handle null response (no payout options available for currency)
+                if (!response) {
+                    return null;
+                }
+                // response is { status, message, data: { payout_options: { channels: [...] } } }
+                // So we access response.data.payout_options.channels[0]
+                const channelData = response?.data?.payout_options?.channels?.[0] || null;
+                console.log('Payout options response:', response);
+                console.log('Channel data:', channelData);
+                return channelData;
+            } catch (error) {
+                // If error indicates no options available, return null instead of throwing
+                console.warn('Error fetching payout options:', error);
+                return null;
+            }
         },
-        [currency],
+        [effectiveCurrency, shouldFetchOptions],
         {
-            onSuccess: (response) => {
-                setState(prev => ({
-                    ...prev,
-                    banks: response
-                }));
+            onSuccess: (channelData) => {
+                console.log('onSuccess channelData:', channelData);
+                if (channelData) {
+                    const payoutOpts = {
+                        supportsBank: channelData.supportsBank || false,
+                        supportsMomo: channelData.supportsMomo || false,
+                        banks: channelData.banks || [],
+                        networks: channelData.networks || [],
+                    };
+                    console.log('Setting payoutOptions:', payoutOpts);
+                    setState(prev => ({
+                        ...prev,
+                        payoutOptions: payoutOpts
+                    }));
+                } else {
+                    // No payout options available for this currency
+                    setState(prev => ({
+                        ...prev,
+                        payoutOptions: null
+                    }));
+                }
+
+                // Only reset channel when currency actually changes (not on initial load)
+                if (prevCurrencyRef.current !== undefined && prevCurrencyRef.current !== effectiveCurrency) {
+                    setValue("channel", undefined);
+                    setValue("bank", "");
+                    setValue("network", "");
+                    setValue("accountNumber", "");
+                    setValue("accountName", "");
+                    setValue("ref_id", "");
+                }
+                prevCurrencyRef.current = effectiveCurrency;
             },
             onError: (error) => {
-                notifyError(error.message);
+                console.error('Error fetching payout options:', error);
+                // Don't show error toast if it's just "no options available" - that's expected for some currencies
+                const errorMessage = error?.message || error?.responseText || '';
+                if (!errorMessage.includes('No available payout option') &&
+                    !errorMessage.includes('Failed to retrieve payout options')) {
+                    notifyError(errorMessage || 'Error fetching payout options');
+                }
+                setState(prev => ({
+                    ...prev,
+                    payoutOptions: null
+                }));
             }
         }
     );
 
     const bankOptions = useMemo(() => {
-        if (!banks || banks.length === 0) {
+        if (!state.payoutOptions?.banks || state.payoutOptions.banks.length === 0) {
             return [];
         }
-        return (banks || []).map((bank: BankResponse) => ({
-            value: bank.institutionCode,
-            label: bank.institutionName,
+        return (state.payoutOptions.banks || []).map((bank: any) => ({
+            value: bank.institutionCode || bank.bank_code,
+            label: bank.institutionName || bank.bank_name,
         }));
-    }, [banks]);
+    }, [state.payoutOptions?.banks]);
+
+    const networkOptions = useMemo(() => {
+        if (!state.payoutOptions?.networks || state.payoutOptions.networks.length === 0) {
+            return [];
+        }
+        return (state.payoutOptions.networks || []).map((network: any) => ({
+            value: network.name.toLowerCase(),
+            label: network.name,
+        }));
+    }, [state.payoutOptions?.networks]);
+
+    const channelOptions = useMemo(() => {
+        const options = [];
+        console.log('Computing channelOptions, state.payoutOptions:', state.payoutOptions);
+        if (state.payoutOptions?.supportsBank) {
+            options.push({ value: 'bank', label: 'Bank' });
+        }
+        if (state.payoutOptions?.supportsMomo) {
+            options.push({ value: 'momo', label: 'Mobile Money' });
+        }
+        console.log('channelOptions result:', options);
+        return options;
+    }, [state.payoutOptions]);
 
     const nameCheck = async () => {
         const payload = {
@@ -259,6 +390,11 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     };
 
     useEffect(() => {
+        // Only validate account name if bank channel is selected
+        if (selectedChannel !== "bank") {
+            return;
+        }
+
         // check if currency is NGN then check account name and selected bank
         // if currency is GHS then check phone number == 12 and selected bank
         const validateCheck =
@@ -268,9 +404,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         if (validateCheck) {
             nameCheck();
         }
-        
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accountNumber, currency, selectedBank]);
+    }, [accountNumber, currency, selectedBank, selectedChannel]);
 
     const handleFormSubmit = async (values: TransferFormValues & { otp: string }) => {
         setState((prev) => ({ ...prev, isSubmitting: true }));
@@ -299,28 +435,44 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             }
 
             // Handle initial transfer submission
-            if (!values.ref_id && state.selectedOptionName === "Same Currency Transfer") {
+            // Only require ref_id validation for bank transfers
+            if (state.selectedOptionName === "Same Currency Transfer" && values.channel === "bank" && !values.ref_id) {
                 return;
             }
 
-            const payload = {
+            const payload: any = {
                 amount: removeCommasFromValue(values.amount),
                 ...(state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 2 && {
                     targetAccountName: values.targetAccountName,
                     targetAccountNumber: values.targetAccountNumber,
                 }),
-                ...(state.selectedOptionName === "Same Currency Transfer" && {
+                ...(state.selectedOptionName === "Same Currency Transfer" && values.channel === "bank" && {
                     currency: values.currency,
                     bank_code: values.bank,
                     account_number: values.accountNumber,
                     account_name: values.accountName,
                     ref_id: values.ref_id,
                 }),
+                ...(state.selectedOptionName === "Same Currency Transfer" && values.channel === "momo" && {
+                    currency: values.currency,
+                    account_number: values.accountNumber, // phone number for mobile money
+                    customer_reference: uuid(), // Generate random UUID for customer reference
+                    receipient_info: {
+                        account_number: values.accountNumber, // phone number for mobile money
+                        account_name: values.accountName,
+                        bank_code: values.network || "",
+                    },
+                }),
                 ...(state.selectedOptionName === "Cray Balance Transfer" && {
                     walletId: values.walletId,
                     accountName: values.accountName,
                 }),
             };
+
+            // Add narration if present and currency is GHS
+            if (values.narration && currency === "GHS") {
+                payload.narration = values.narration;
+            }
 
             const response = await initiateInterBankPayout(payload);
             if (response?.message) {
@@ -339,7 +491,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         reset({
             amount: "",
             currency: defaultCurrency,
+            channel: undefined,
             bank: "",
+            network: "",
             accountNumber: "",
             accountName: "",
             walletId: "",
@@ -407,119 +561,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         </ul>
     );
 
-    const renderSameCurrencyForm = () => (
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-            <Controller
-                name="currency"
-                control={control}
-                render={({ field }) => (
-                    <FormSelect
-                        id="currency"
-                        htmlFor="currency"
-                        label="Select Currency"
-                        placeholder="Select Currency"
-                        options={currencyOptions}
-                        error={errors.currency?.message}
-                        touched={!!errors.currency}
-                        {...field}
-                        value={field.value || defaultCurrency}
-                    />
-                )}
-            />
-
-            <Controller
-                name="bank"
-                control={control}
-                render={({ field }) => (
-                    <FormSelectSearch
-                        id="bank"
-                        htmlFor="bank"
-                        label="Select Bank"
-                        isLoading={banksLoading}
-                        loadingText="Loading banks..."
-                        placeholder={banksLoading ? "Loading banks..." : "Search banks..."}
-                        options={bankOptions}
-                        error={errors.bank?.message}
-                        touched={!!errors.bank}
-                        disabled={banksLoading}
-                        {...field}
-                    />
-                )}
-            />
-
-            {/* check if currency is NGN */}
-            {watch('currency') == null || watch('currency') === 'NGN' ? (
-                renderNGNForm()
-            ) : (
-                renderGHSForm()
-            )}
-
-            <Controller
-                name="accountName"
-                control={control}
-                render={({ field }) => (
-                    <FormInput
-                        label="Account Name"
-                        id="accountName"
-                        type="text"
-                        htmlFor="accountName"
-                        error={errors.accountName?.message}
-                        touched={!!errors.accountName}
-                        readOnly
-                        disabled
-                        {...field}
-                    />
-                )}
-            />
-
-            <Controller
-                name="amount"
-                control={control}
-                render={({ field }) => (
-                    <FormInput
-                        label="Amount"
-                        id="amount"
-                        type="text"
-                        htmlFor="amount"
-                        error={errors.amount?.message}
-                        touched={!!errors.amount}
-                        numberOnly
-                        {...field}
-                    />
-                )}
-            />
-
-            {currency === "GHS" ? (
-                <Controller
-                    name="narration"
-                    control={control}
-                    render={({ field }) => (
-                        <FormInput
-                            label="Narration"
-                            id="narration"
-                            type="text"
-                            htmlFor="narration"
-                            error={errors.narration?.message}
-                            touched={!!errors.narration}
-                            {...field}
-                        />
-                    )}
-                />
-            ) : null}
-
-            <div className="pt-10 w-52">
-                <Button
-                    className="openSansLight text-white text-lg p-2 rounded w-full"
-                    text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
-                    ariaLabel="Initiate Transfer"
-                    disabled={state.isSubmitting || state.isLoading}
-                    primary
-                    type="submit"
-                />
-            </div>
-        </form>
-    );
-
     const renderNGNForm = () => (
         <>
             <Controller
@@ -545,55 +586,236 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
     const renderGHSForm = () => (
         <>
-            {/* <Controller
-                name="mobileProvider"
-                control={control}
-                render={({ field }) => (
-                    <FormSelect
-                        id="mobileProvider"
-                        htmlFor="mobileProvider"
-                        label="Mobile Money Provider"
-                        placeholder="Select Provider"
-                        options={MOBILE_MONEY_PROVIDERS}
-                        error={errors.mobileProvider?.message}
-                        touched={!!errors.mobileProvider}
-                        {...field}
-                        onChange={(value) => {
-                            field.onChange(value);
-                            // When provider changes, validate if phone number exists
-                            if (getValues('phoneNumber')) {
-                                handlePhoneNumberValidation(String(value), getValues('phoneNumber'));
-                            }
-                        }}
-                    />
-                )}
-            /> */}
-
             <Controller
                 name="accountNumber"
                 control={control}
                 render={({ field }) => (
-                    <FormPhoneInput
-                        label="Phone Number"
+                    <FormInput
+                        label="Account Number"
                         id="accountNumber"
+                        type="text"
                         htmlFor="accountNumber"
+                        isLoading={state.isLoading}
+                        loadingText="Loading details..."
                         error={errors.accountNumber?.message}
                         touched={!!errors.accountNumber}
-                        country="gh"
-                        onlyCountries={["gh", 'tz']}
                         {...field}
-                    // onChange={(value) => {
-                    //     field.onChange(value);
-                    //     // Validate when phone number changes if provider is selected
-                    //     if (getValues('mobileProvider')) {
-                    //         handlePhoneNumberValidation(getValues('mobileProvider'), value);
-                    //     }
-                    // }}
                     />
                 )}
             />
         </>
     );
+
+    const renderSameCurrencyForm = () => {
+        const currentChannel = watch("channel");
+
+        return (
+            <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+                <Controller
+                    name="currency"
+                    control={control}
+                    render={({ field }) => (
+                        <FormSelect
+                            id="currency"
+                            htmlFor="currency"
+                            label="Select Currency"
+                            placeholder="Select Currency"
+                            options={currencyOptions}
+                            error={errors.currency?.message}
+                            touched={!!errors.currency}
+                            {...field}
+                            value={field.value || defaultCurrency}
+                        />
+                    )}
+                />
+
+                <Controller
+                    name="channel"
+                    control={control}
+                    render={({ field }) => (
+                        <FormSelect
+                            id="channel"
+                            htmlFor="channel"
+                            label="Select Channel"
+                            placeholder={payoutOptionsLoading ? "Loading channels..." : channelOptions.length > 0 ? "Select Channel" : "No channels available"}
+                            options={channelOptions}
+                            error={errors.channel?.message}
+                            touched={!!errors.channel}
+                            isLoading={payoutOptionsLoading}
+                            disabled={payoutOptionsLoading || channelOptions.length === 0}
+                            {...field}
+                            onChange={(value) => {
+                                field.onChange(value);
+                                // Reset dependent fields when channel changes
+                                setValue("bank", "");
+                                setValue("network", "");
+                                setValue("accountNumber", "");
+                                setValue("accountName", "");
+                                setValue("ref_id", "");
+                            }}
+                        />
+                    )}
+                />
+
+                {currentChannel === "bank" && (
+                    <Controller
+                        name="bank"
+                        control={control}
+                        render={({ field }) => (
+                            <FormSelectSearch
+                                id="bank"
+                                htmlFor="bank"
+                                label="Select Bank"
+                                isLoading={payoutOptionsLoading}
+                                loadingText="Loading banks..."
+                                placeholder={payoutOptionsLoading ? "Loading banks..." : "Search banks..."}
+                                options={bankOptions}
+                                error={errors.bank?.message}
+                                touched={!!errors.bank}
+                                disabled={payoutOptionsLoading}
+                                {...field}
+                            />
+                        )}
+                    />
+                )}
+
+                {currentChannel === "momo" && (
+                    <Controller
+                        name="network"
+                        control={control}
+                        render={({ field }) => (
+                            <FormSelect
+                                id="network"
+                                htmlFor="network"
+                                label="Select Network"
+                                placeholder="Select Network"
+                                options={networkOptions}
+                                error={errors.network?.message}
+                                touched={!!errors.network}
+                                disabled={payoutOptionsLoading}
+                                {...field}
+                                onChange={(value) => {
+                                    field.onChange(value);
+                                    // Reset account number when network changes
+                                    setValue("accountNumber", "");
+                                }}
+                            />
+                        )}
+                    />
+                )}
+
+                {/* Account Number field - always visible, different behavior based on channel */}
+                {currentChannel === "bank" ? (
+                    watch('currency') == null || watch('currency') === 'NGN' ? (
+                        renderNGNForm()
+                    ) : (
+                        renderGHSForm()
+                    )
+                ) : currentChannel === "momo" ? (
+                    <Controller
+                        name="accountNumber"
+                        control={control}
+                        render={({ field }) => (
+                            <FormPhoneInput
+                                label="Phone Number"
+                                id="accountNumber"
+                                htmlFor="accountNumber"
+                                error={errors.accountNumber?.message}
+                                touched={!!errors.accountNumber}
+                                country={currency === "GHS" ? "gh" : currency === "TZS" ? "tz" : undefined}
+                                onlyCountries={currency === "GHS" ? ["gh"] : currency === "TZS" ? ["tz"] : undefined}
+                                {...field}
+                            />
+                        )}
+                    />
+                ) : (
+                    // Default/fallback - show account number field
+                    <Controller
+                        name="accountNumber"
+                        control={control}
+                        render={({ field }) => (
+                            <FormInput
+                                label="Account Number"
+                                id="accountNumber"
+                                type="text"
+                                htmlFor="accountNumber"
+                                isLoading={state.isLoading && currentChannel === "bank"}
+                                loadingText="Loading details..."
+                                error={errors.accountNumber?.message}
+                                touched={!!errors.accountNumber}
+                                {...field}
+                            />
+                        )}
+                    />
+                )}
+
+                {/* Account Name - always visible, read-only for bank, editable for momo */}
+                <Controller
+                    name="accountName"
+                    control={control}
+                    render={({ field }) => (
+                        <FormInput
+                            label="Account Name"
+                            id="accountName"
+                            type="text"
+                            htmlFor="accountName"
+                            error={errors.accountName?.message}
+                            touched={!!errors.accountName}
+                            readOnly={currentChannel === "bank"}
+                            disabled={currentChannel === "bank"}
+                            {...field}
+                        />
+                    )}
+                />
+
+                <Controller
+                    name="amount"
+                    control={control}
+                    render={({ field }) => (
+                        <FormInput
+                            label="Amount"
+                            id="amount"
+                            type="text"
+                            htmlFor="amount"
+                            error={errors.amount?.message}
+                            touched={!!errors.amount}
+                            numberOnly
+                            {...field}
+                        />
+                    )}
+                />
+
+                {currency === "GHS" ? (
+                    <Controller
+                        name="narration"
+                        control={control}
+                        render={({ field }) => (
+                            <FormInput
+                                label="Narration"
+                                id="narration"
+                                type="text"
+                                htmlFor="narration"
+                                error={errors.narration?.message}
+                                touched={!!errors.narration}
+                                {...field}
+                            />
+                        )}
+                    />
+                ) : null}
+
+                <div className="pt-10 w-52">
+                    <Button
+                        className="openSansLight text-white text-lg p-2 rounded w-full"
+                        text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
+                        ariaLabel="Initiate Transfer"
+                        disabled={state.isSubmitting || state.isLoading || !currentChannel}
+                        primary
+                        type="submit"
+                    />
+                </div>
+            </form>
+        );
+    };
 
     const renderCrayBalanceForm = () => (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">

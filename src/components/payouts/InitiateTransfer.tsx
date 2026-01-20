@@ -73,9 +73,10 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         XAF: 'XAF',
     };
 
-    // Generate currency options from active currencies
+    // Generate currency options from active currencies, excluding USD
     const currencyOptions = useMemo(() => {
         return activeCurrencies
+            .filter((code) => code !== 'USD') // Hide USD from payout currency list
             .map((code) => ({
                 value: code as CurrencyOption,
                 label: currencyNames[code] || code,

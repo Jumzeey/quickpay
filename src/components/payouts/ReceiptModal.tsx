@@ -21,7 +21,7 @@ interface ReceiptModalProps {
         recipient_account_name?: string;
         recipient_bank?: string;
         channel?: string;
-        session_id?: string;
+        session_id?: string | null;
         customer_reference?: string;
     } | null;
 }

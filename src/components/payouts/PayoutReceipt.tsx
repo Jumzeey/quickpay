@@ -13,8 +13,10 @@ interface PayoutReceiptProps {
         created_at: string;
         value_date?: string;
         recipient_account_number?: string;
+        recipient_account_name?: string;
         recipient_bank?: string;
         channel?: string;
+        session_id?: string;
     };
 }
 
@@ -117,6 +119,24 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
                             <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Recipient Account Number:</span>
                             <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
                                 {payout.recipient_account_number}
+                            </span>
+                        </div>
+                    )}
+
+                    {payout.recipient_account_name && (
+                        <div className="flex justify-between items-start">
+                            <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Recipient Account Name:</span>
+                            <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
+                                {payout.recipient_account_name}
+                            </span>
+                        </div>
+                    )}
+
+                    {payout.session_id && (
+                        <div className="flex justify-between items-start">
+                            <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Session ID:</span>
+                            <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
+                                {payout.session_id}
                             </span>
                         </div>
                     )}

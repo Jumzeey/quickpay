@@ -1,4 +1,4 @@
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label } from '@headlessui/react'
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Field, Label, ComboboxButton } from '@headlessui/react'
 import { forwardRef, SelectHTMLAttributes, useState } from 'react'
 
 type FormSelectSearchProps = {
@@ -54,6 +54,7 @@ const FormSelectSearch = forwardRef<HTMLInputElement, FormSelectSearchProps>(
         const handleSelectionChange = (option: { value: string; label: string } | null) => {
             if (onChange && option) {
                 onChange(option.value);
+                setQuery(''); // Clear query after selection
             }
         };
 
@@ -99,61 +100,77 @@ const FormSelectSearch = forwardRef<HTMLInputElement, FormSelectSearchProps>(
                         onClose={() => setQuery('')}
                         disabled={disabled}
                     >
-                        <div className="relative">
-                            <ComboboxInput
-                                ref={ref}
-                                id={id}
-                                name={name}
-                                className={`h-[60px] w-full rounded px-3 border ${
-                                    hasError ? "border-danger" : "border-[#C4C4C43D]"
-                                } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                                displayValue={(option: { value: string; label: string } | null) => 
-                                    option ? option.label : ''
-                                }
-                                onChange={handleInputChange}
-                                onBlur={onBlur}
-                                placeholder={placeholder || "Type to search..."}
-                                disabled={disabled}
-                                autoComplete="off"
-                            />
+                        {({ open }) => (
+                            <>
+                                <div className="relative">
+                                    <ComboboxInput
+                                        ref={ref}
+                                        id={id}
+                                        name={name}
+                                        className={`h-[60px] w-full rounded px-3 border pr-10 ${
+                                            hasError ? "border-danger" : "border-[#C4C4C43D]"
+                                        } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                        displayValue={(option: { value: string; label: string } | null) => 
+                                            option ? option.label : query || ''
+                                        }
+                                        onChange={handleInputChange}
+                                        onFocus={() => {
+                                            // Clear query on focus to show all options
+                                            if (!query) {
+                                                setQuery('');
+                                            }
+                                        }}
+                                        onClick={() => {
+                                            // Ensure dropdown opens on click even without typing
+                                            if (ref && typeof ref !== 'function' && ref.current) {
+                                                ref.current.focus();
+                                            }
+                                        }}
+                                        onBlur={onBlur}
+                                        placeholder={placeholder || "Type to search..."}
+                                        disabled={disabled}
+                                        autoComplete="off"
+                                    />
+                                    
+                                    {/* Clickable button to open dropdown */}
+                                    <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </ComboboxButton>
 
-                            {/* Loading indicator */}
-                            {isLoading && (
-                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                                    {/* Loading indicator */}
+                                    {isLoading && (
+                                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
 
-                            {/* Dropdown arrow */}
-                            {!isLoading && (
-                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            )}
-                        </div>
-
-                        <ComboboxOptions 
-                            anchor="bottom" 
-                            className="w-[var(--input-width)] bg-white border border-[#C4C4C43D] mt-2 rounded shadow-lg max-h-60 overflow-auto z-50 empty:invisible"
-                        >
-                            {filteredOptions.length === 0 && query !== '' ? (
-                                <div className="px-3 py-2 text-sm text-gray-500">
-                                    No {name} found matching `{query}`
-                                </div>
-                            ) : (
-                                filteredOptions.map((option, index) => (
-                                    <ComboboxOption
-                                        key={index}
-                                        value={option}
-                                        className="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 data-[focus]:bg-blue-100 data-[selected]:bg-blue-500"
+                                {open && (
+                                    <ComboboxOptions 
+                                        anchor="bottom" 
+                                        className="w-[var(--input-width)] bg-white border border-[#C4C4C43D] mt-2 rounded shadow-lg max-h-60 overflow-auto z-50"
                                     >
-                                        {option.label}
-                                    </ComboboxOption>
-                                ))
-                            )}
-                        </ComboboxOptions>
+                                        {filteredOptions.length === 0 && query !== '' ? (
+                                            <div className="px-3 py-2 text-sm text-gray-500">
+                                                No {name} found matching `{query}`
+                                            </div>
+                                        ) : (
+                                            filteredOptions.map((option, index) => (
+                                                <ComboboxOption
+                                                    key={index}
+                                                    value={option}
+                                                    className="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 data-[focus]:bg-blue-100 data-[selected]:bg-blue-500"
+                                                >
+                                                    {option.label}
+                                                </ComboboxOption>
+                                            ))
+                                        )}
+                                    </ComboboxOptions>
+                                )}
+                            </>
+                        )}
                     </Combobox>
                 </Field>
 

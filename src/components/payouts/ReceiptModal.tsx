@@ -18,8 +18,11 @@ interface ReceiptModalProps {
         created_at: string;
         value_date?: string;
         recipient_account_number?: string;
+        recipient_account_name?: string;
         recipient_bank?: string;
         channel?: string;
+        session_id?: string;
+        customer_reference?: string;
     } | null;
 }
 

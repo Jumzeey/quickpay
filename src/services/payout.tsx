@@ -31,7 +31,7 @@ export interface Payout {
   currency_symbol: string;
   amount: string;
   processing_fee: string;
-  session_id: null;
+  session_id: string | null;
   net_amount: string;
   balance_before: string;
   current_balance: string;
@@ -74,6 +74,38 @@ export interface BankResponse {
   institutionName: string;
   category: number;
   categoryCode: string;
+}
+
+export interface PayoutOptionBank {
+  bank_name: string;
+  short_code: string;
+  bank_code: string;
+  institutionCode: string;
+  institutionName: string;
+}
+
+export interface PayoutOptionNetwork {
+  name: string;
+}
+
+export interface PayoutOptionChannel {
+  name: string;
+  supportsBank: boolean;
+  supportsMomo: boolean;
+  banks: PayoutOptionBank[];
+  networks: PayoutOptionNetwork[];
+}
+
+export interface PayoutOptionsResponse {
+  status?: boolean;
+  message?: string;
+  data: {
+    payout_options: {
+      currency: string;
+      countryCode: string;
+      channels: PayoutOptionChannel[];
+    };
+  };
 }
 
 export interface RequeryPayoutResponse {
@@ -177,6 +209,35 @@ export async function getBankList(): Promise<{ banks: Array<{ name: string; code
       }))
     };
   } catch (error) {
+    throw error;
+  }
+}
+
+export async function getPayoutOptions(currency: string): Promise<PayoutOptionsResponse | null> {
+  try {
+    // API interceptor already returns response.data, so response here is the unwrapped data
+    // which is { status, message, data: { payout_options: {...} } }
+    const response: any = await api.get(
+      apiEndpoints.utilities.GET_PAYOUT_OPTIONS,
+      { params: { currency: currency.toLowerCase() } }
+    );
+
+    // Handle case where API returns status: false (no payout options available)
+    if (response?.status === false) {
+      // Return null to indicate no options are available (not an error)
+      return null;
+    }
+
+    return response as PayoutOptionsResponse;
+  } catch (error) {
+    // If it's a CustomHttpError with the specific message, treat it as no options available
+    if (error && typeof error === 'object' && 'message' in error) {
+      const errorMessage = (error as any).message || '';
+      if (errorMessage.includes('No available payout option') ||
+        errorMessage.includes('Failed to retrieve payout options')) {
+        return null;
+      }
+    }
     throw error;
   }
 }

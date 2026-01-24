@@ -267,3 +267,53 @@ export async function raiseDispute(payload: RaiseDisputePayload): Promise<Payout
 }
 
 export const addPayout = addInterBankPayout;
+
+export interface BulkPayoutPayload {
+  file: File;
+  currency: string;
+}
+
+export interface BulkPayoutResponse {
+  status: boolean;
+  message: string;
+  data?: any;
+}
+
+export async function initiateBulkPayout(payload: BulkPayoutPayload): Promise<BulkPayoutResponse> {
+  try {
+    const formData = new FormData();
+    formData.append('file', payload.file);
+    formData.append('currency', payload.currency);
+
+    const response = await api.post(
+      `${apiEndpoints.payouts.INITIATE_BULK_PAYOUT}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    // @ts-ignore
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export interface CompleteBulkPayoutPayload {
+  otp: string;
+}
+
+export async function completeBulkPayout(payload: CompleteBulkPayoutPayload): Promise<BulkPayoutResponse> {
+  try {
+    const response = await api.post(
+      `${apiEndpoints.payouts.COMPLETE_BULK_PAYOUT}`,
+      payload
+    );
+    // @ts-ignore
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}

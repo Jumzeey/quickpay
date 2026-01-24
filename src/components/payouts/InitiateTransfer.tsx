@@ -19,6 +19,7 @@ import PinInput from "react-pin-input";
 import * as Yup from "yup";
 import { TRANSFER_OPTIONS } from "./constants";
 import { TransferFormValues, TransferState } from "./types";
+import BulkPayout from "./BulkPayout";
 
 interface InitiateTransferProps {
     isModalOpen: boolean;
@@ -48,6 +49,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         payoutOptions: null,
     }
     const [state, setState] = useState<TransferState>(initialState);
+    const [isBulkPayoutModalOpen, setIsBulkPayoutModalOpen] = useState(false);
     const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
     const { selectedCurrency, activeCurrencies, fetchActiveCurrencies } = useCurrency();
 
@@ -527,6 +529,12 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     };
 
     const handleOptionClick = (option: typeof TRANSFER_OPTIONS[0]) => {
+        // If Bulk Payout is selected, open BulkPayout modal instead
+        if (option.name === 'Bulk Payout') {
+            setIsBulkPayoutModalOpen(true);
+            return;
+        }
+
         setState((prev) => ({
             ...prev,
             selectedOptionName: option.name,
@@ -1087,14 +1095,22 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     };
 
     return (
-        <Modal
-            isOpen={isModalOpen}
-            onClose={closeModalAndReset}
-            title={getModalTitle()}
-            className={state.currentStep === 1 && state.selectedOptionName === "Cross Currency Transfer" ? "max-w-lg" : ""}
-        >
-            <div className="mt-5">{renderStepContent()}</div>
-        </Modal>
+        <>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModalAndReset}
+                title={getModalTitle()}
+                className={state.currentStep === 1 && state.selectedOptionName === "Cross Currency Transfer" ? "max-w-lg" : ""}
+            >
+                <div className="mt-5">{renderStepContent()}</div>
+            </Modal>
+
+            <BulkPayout
+                isModalOpen={isBulkPayoutModalOpen}
+                closeModal={() => setIsBulkPayoutModalOpen(false)}
+                fetchPayoutHistory={fetchPayoutHistory}
+            />
+        </>
     );
 };
 

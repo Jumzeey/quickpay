@@ -40,16 +40,20 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   function (response) {
     hideLoadingBar();
-    if (response.data?.status === "error") {
+    // Handle error responses (status === "error" or status === false)
+    if (response.data?.status === "error" || response.data?.status === false) {
       if (
         response.data?.errors &&
         Object.values(response.data?.errors).length
       ) {
-        const errors = Object.values(response.data?.errors);
+        // Extract first error message from nested structure
+        const errors = response.data.errors;
+        const firstError = Object.values(errors).flat()[0];
+        
         return Promise.reject(
-          new CustomHttpError(errors[0], {
+          new CustomHttpError(firstError || response.data?.message || "Request validation failed!", {
             statusCode: 400,
-            responseText: errors[0],
+            responseText: firstError || response.data?.message || "Request validation failed!",
             payload: response.data?.errors,
           })
         );

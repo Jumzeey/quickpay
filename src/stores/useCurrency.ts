@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getSupportedCountries } from '@/services/authentication';
 
-export type CurrencyOption = "NGN" | "USD" | "GHS" | "TZX" | "KES" | "ZMW" | "EUR" | "GBP";
+export type CurrencyOption = "NGN" | "USD" | "GHS" | "TZS" | "KES" | "ZMW" | "EUR" | "GBP" | "XOF" | "TZX";
 
 interface AccountInfo {
     main_account_id: string;
@@ -25,7 +25,7 @@ interface CurrencyState {
     getAccountId: (currency: CurrencyOption, accountType?: 'main' | 'reserve') => string | null;
     getCurrencySymbol: () => string;
     getCurrencyFlag: (type?: "selected" | "default") => string;
-    fetchActiveCurrencies: () => Promise<void>;
+    fetchActiveCurrencies: (forceRefresh?: boolean) => Promise<void>;
 }
 
 const useCurrency = create<CurrencyState>()(
@@ -99,10 +99,10 @@ const useCurrency = create<CurrencyState>()(
                 }
             },
 
-            fetchActiveCurrencies: async () => {
+            fetchActiveCurrencies: async (forceRefresh = false) => {
                 const { activeCurrencies } = get();
-                // Only fetch if not already loaded
-                if (activeCurrencies.length > 0) return;
+                // Only fetch if not already loaded or if force refresh is requested
+                if (activeCurrencies.length > 0 && !forceRefresh) return;
 
                 set({ isLoadingCurrencies: true });
                 try {
@@ -116,7 +116,7 @@ const useCurrency = create<CurrencyState>()(
                     console.error('Failed to fetch active currencies:', error);
                     // Fallback to default currencies
                     set({ 
-                        activeCurrencies: ['NGN', 'USD', 'GHS', 'KES', 'TZS', 'XOF'],
+                        activeCurrencies: ['NGN', 'USD', 'GHS', 'KES', 'TZS', 'XOF', 'ZMW'],
                         isLoadingCurrencies: false 
                     });
                 }

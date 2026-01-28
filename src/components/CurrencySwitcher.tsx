@@ -56,6 +56,7 @@ export const walletCurrencies = [
       KES: 'Kenyan Shilling (KES)',
       TZS: 'Tanzanian Shilling (TZS)',
       ZAR: 'South African Rand (ZAR)',
+      ZMW: 'Zambian Kwacha (ZMW)',
       GBP: 'British Pound Sterling (GBP)',
       EUR: 'Euro (EUR)',
       CAD: 'Canadian Dollar (CAD)',

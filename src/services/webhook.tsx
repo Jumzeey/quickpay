@@ -6,12 +6,20 @@ interface WEBHOOK_TYPE {
     enable_webhook: boolean;
 }
 
+interface WebhookApiResponse {
+    status: boolean;
+    message: string;
+    data: WEBHOOK_TYPE;
+}
+
 export async function generateWebhookCredentials(): Promise<WEBHOOK_TYPE> {
     try {
-        const response = await api.get<WEBHOOK_TYPE>(
+        const response = await api.get<WebhookApiResponse>(
             apiEndpoints.webhooks.GET_WEBHOOK
-        );
-        return response.data;
+        ) as unknown as WebhookApiResponse;
+        // API returns { status, message, data: { enable_webhook, webhook_url } }
+        // The interceptor returns response.data, so response is WebhookApiResponse
+        return response.data || { webhook_url: "", enable_webhook: false };
     } catch (error) {
         throw error;
     }
@@ -19,8 +27,11 @@ export async function generateWebhookCredentials(): Promise<WEBHOOK_TYPE> {
 
 export async function updateWebhookCredentials(payload: WEBHOOK_TYPE): Promise<WEBHOOK_TYPE> {
     try {
-        const response = await api.post<WEBHOOK_TYPE>(apiEndpoints.webhooks.UPDATE_WEBHOOK, payload);
-        return response.data;
+        const response = await api.post<WebhookApiResponse>(apiEndpoints.webhooks.UPDATE_WEBHOOK, payload) as unknown as WebhookApiResponse;
+        // API returns { status, message, data: { enable_webhook, webhook_url } }
+        // The interceptor returns response.data, so response is WebhookApiResponse
+        const webhookData: WEBHOOK_TYPE = response.data || payload;
+        return webhookData;
     } catch (error) {
         throw error;
     }

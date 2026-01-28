@@ -62,6 +62,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         KES: 'KES',
         TZS: 'TZS',
         ZAR: 'ZAR',
+        ZMW: 'ZMW',
         GBP: '£ GBP',
         EUR: '€ EUR',
         CAD: 'CAD',

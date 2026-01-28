@@ -121,7 +121,7 @@ export interface RequeryPayoutResponse {
       recipient_account_number: string;
       processor_reference: string;
       merchant_reference: string;
-    };
+    } | null;
     message: string;
   };
 }

@@ -310,17 +310,35 @@ const PayoutHistory = () => {
       const response = await requeryPayout(reference);
 
       if (response.success && response.data) {
-        const transactionData = response.data.Transaction.data;
-        handleSuccess({ message: `Requery successful! Status: ${transactionData.status}` });
+        const transaction = response.data.Transaction;
+        
+        // Check if the transaction requery was successful
+        if (transaction.success && transaction.data) {
+          const transactionData = transaction.data;
+          handleSuccess({ message: `Requery successful! Status: ${transactionData.status}` });
 
-        // Close the dropdown after successful requery
-        setState(prevState => ({
-          ...prevState,
-          isMoreActionsOpen: false,
-        }));
+          // Close the dropdown after successful requery
+          setState(prevState => ({
+            ...prevState,
+            isMoreActionsOpen: false,
+          }));
 
-        await invalidatePayoutHistory();
-        await fetchPayoutHistory();
+          await invalidatePayoutHistory();
+          await fetchPayoutHistory();
+        } else {
+          // Transaction requery failed - show the actual error message
+          const errorMessage = transaction.message || "Transaction requery failed";
+          handleError({ 
+            message: errorMessage,
+            responseText: errorMessage
+          });
+
+          // Close the dropdown
+          setState(prevState => ({
+            ...prevState,
+            isMoreActionsOpen: false,
+          }));
+        }
       }
     } catch (error: any) {
       handleError(error, "Failed to requery transaction");
@@ -500,8 +518,8 @@ const PayoutHistory = () => {
                       {(row?.status?.toLowerCase() === 'pending') && (
                         <button
                           onClick={() => handleRequery(row?.reference)}
-                          disabled
-                          className="font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors opacity-50 cursor-not-allowed"
+                          disabled={requeryLoading}
+                          className={`font-semibold text-sm w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors ${requeryLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
                         >
                           <Image
                             src='/images/refresh-alt.svg'

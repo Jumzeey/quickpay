@@ -48,6 +48,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             KES: 'KES',
             TZS: 'TZS',
             ZAR: 'ZAR',
+            ZMW: 'ZMW',
             GBP: '£ GBP',
             EUR: '€ EUR',
             CAD: 'CAD',

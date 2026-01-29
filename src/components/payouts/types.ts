@@ -4,6 +4,7 @@ export interface TransferFormValues {
     currency?: string;
     channel?: 'bank' | 'momo';
     bank: string;
+    bank_code?: string; // For NGN at top level
     network?: string;
     accountNumber: string;
     accountName: string;
@@ -15,6 +16,17 @@ export interface TransferFormValues {
     mobileProvider: string;
     phoneNumber: string;
     narration: string;
+    // New currency-based fields
+    recipient_name?: string; // For NGN, KES, XOF
+    countryCode?: string; // For ZMW, GHS
+    // Sender info fields
+    sender_name?: string;
+    sender_phone?: string;
+    sender_email?: string;
+    // Recipient info fields (for receipient_info object)
+    recipient_account_name?: string; // For GHS, KES, XOF
+    recipient_bank_name?: string; // For KES
+    recipient_bank_code?: string; // For GHS, KES
 }
 
 export type TransferType = 'Same Currency Transfer' | 'Cray Balance Transfer' | 'Cross Currency Transfer' | 'Mobile Money' | 'Bulk Payout';

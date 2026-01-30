@@ -110,7 +110,13 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                         name={name}
                         onChange={handleChange}
                         onKeyDown={handleNumberInput}
-                        className={`h-[60px] w-full rounded px-3 border ${hasError ? "border-danger" : "border-[#C4C4C43D]"}`}
+                        className={`h-[60px] w-full rounded px-3 border transition-colors ${
+                            hasError 
+                                ? "border-danger" 
+                                : props.disabled 
+                                    ? "border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF] cursor-not-allowed" 
+                                    : "border-[#C4C4C43D] hover:border-[#005BB0]/30 focus:border-[#005BB0] focus:outline-none focus:ring-2 focus:ring-[#005BB0]/20"
+                        }`}
                         {...props}
                     />
 

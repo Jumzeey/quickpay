@@ -39,15 +39,14 @@ export function useApiResponse() {
           return;
         }
       } else {
-        // If it's an object, format field names
-        const errorList = Object.entries(errors).map(([field, message]) => {
-          const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          return `• ${fieldName}: ${message}`;
-        });
+        // If it's an object, extract the first error message
+        // Handle both string messages and array of messages
+        const firstError = Object.values(errors).flat().find(msg => msg && typeof msg === 'string');
         
-        if (errorList.length > 0) {
+        if (firstError) {
           console.error('Validation errors (object):', errors);
-          notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
+          // Show just the error message without field name
+          notifyError(firstError);
           return;
         }
       }
@@ -64,14 +63,16 @@ export function useApiResponse() {
         notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
         return;
       } else {
-        // If it's an object, format field names
-        const errorList = Object.entries(errors).map(([field, message]) => {
-          const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          return `• ${fieldName}: ${message}`;
-        });
-        console.error('Validation errors (object):', errors);
-        notifyError(`Please fix the following errors:\n${errorList.join('\n')}`);
-        return;
+        // If it's an object, extract the first error message
+        // Handle both string messages and array of messages
+        const firstError = Object.values(errors).flat().find(msg => msg && typeof msg === 'string');
+        
+        if (firstError) {
+          console.error('Validation errors (object):', errors);
+          // Show just the error message without field name
+          notifyError(firstError);
+          return;
+        }
       }
     }
     

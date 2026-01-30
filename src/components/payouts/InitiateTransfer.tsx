@@ -19,6 +19,7 @@ import PinInput from "react-pin-input";
 import * as Yup from "yup";
 import { TRANSFER_OPTIONS } from "./constants";
 import { TransferFormValues, TransferState } from "./types";
+import BulkPayout from "./BulkPayout";
 
 interface InitiateTransferProps {
     isModalOpen: boolean;
@@ -34,6 +35,18 @@ const MOBILE_MONEY_PROVIDERS = [
     { value: 'vodafone', label: 'Vodafone' }
 ];
 
+// Currency to country code mapping
+const getCountryCode = (currency: string): string => {
+    const currencyToCountry: Record<string, string> = {
+        'NGN': 'NG',
+        'GHS': 'GH',
+        'KES': 'KE',
+        'ZMW': 'ZM',
+        'XOF': 'SN', // Senegal (West African CFA franc)
+    };
+    return currencyToCountry[currency] || '';
+};
+
 const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     isModalOpen,
     closeModal,
@@ -48,6 +61,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         payoutOptions: null,
     }
     const [state, setState] = useState<TransferState>(initialState);
+    const [isBulkPayoutModalOpen, setIsBulkPayoutModalOpen] = useState(false);
     const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
     const { selectedCurrency, activeCurrencies, fetchActiveCurrencies } = useCurrency();
 
@@ -60,6 +74,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         KES: 'KES',
         TZS: 'TZS',
         ZAR: 'ZAR',
+        ZMW: 'ZMW',
         GBP: '£ GBP',
         EUR: '€ EUR',
         CAD: 'CAD',
@@ -107,61 +122,115 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             });
 
         if (state.selectedOptionName === "Same Currency Transfer") {
+            // Currency-based validation
             return Yup.object().shape({
-                channel: Yup.string().required("Please select a channel"),
-                bank: Yup.string().when("channel", {
-                    is: "bank",
-                    then: (schema) => schema.required("Please select a bank"),
+                currency: Yup.string().required("Currency is required"),
+                amount: baseAmountValidation,
+                narration: Yup.string().required("Narration is required"),
+                // Currency-specific validations
+                accountNumber: Yup.string()
+                    .required("Account number is required")
+                    .test("account-number-format", "Invalid account number format", function (value): boolean {
+                        if (!value) return false;
+                        const currentCurrency = this.parent?.currency;
+                        const currentChannel = this.parent?.channel;
+                        const cleanValue = value.replace(/[^\d]/g, '');
+
+                        // ZMW: phone number format
+                        if (currentCurrency === "ZMW") {
+                            return cleanValue.length >= 9 && cleanValue.length <= 15;
+                        }
+                        // GHS: 10 digits for bank, 12 digits for momo/network
+                        if (currentCurrency === "GHS") {
+                            if (currentChannel === "bank") {
+                                return cleanValue.length === 10;
+                            } else if (currentChannel === "momo") {
+                                return cleanValue.length === 12;
+                            }
+                            // If no channel selected yet, allow both
+                            return cleanValue.length === 10 || cleanValue.length === 12;
+                        }
+                        // NGN: 10 digits
+                        if (currentCurrency === "NGN") {
+                            return cleanValue.length === 10;
+                        }
+                        // KES: phone number format
+                        if (currentCurrency === "KES") {
+                            return cleanValue.length >= 9 && cleanValue.length <= 15;
+                        }
+                        // XOF: phone number format
+                        if (currentCurrency === "XOF") {
+                            return cleanValue.length >= 9 && cleanValue.length <= 15;
+                        }
+                        // TZS: phone number format
+                        if (currentCurrency === "TZS") {
+                            return cleanValue.length >= 9 && cleanValue.length <= 15;
+                        }
+                        return true;
+                    }),
+                // Channel selection for GHS, KES, TZS, and XOF
+                channel: Yup.string().when("currency", {
+                    is: (val: string) => ["GHS", "KES", "TZS", "XOF"].includes(val),
+                    then: (schema) => schema.required("Please select a channel"),
                     otherwise: (schema) => schema.notRequired(),
                 }),
-                network: Yup.string().when("channel", {
-                    is: "momo",
-                    then: (schema) => schema.required("Please select a network"),
+                // Bank code for NGN and GHS bank channel
+                bank_code: Yup.string().when(["currency", "channel"], {
+                    is: (currency: string, channel: string) =>
+                        currency === "NGN" || (currency === "GHS" && channel === "bank"),
+                    then: (schema) => schema.required("Bank code is required"),
                     otherwise: (schema) => schema.notRequired(),
                 }),
-                ref_id: Yup.string().when("channel", {
-                    is: "bank",
+                // Network for GHS, KES, and XOF momo channel
+                network: Yup.string().when(["currency", "channel"], {
+                    is: (currency: string, channel: string) =>
+                        (currency === "GHS" || currency === "KES" || currency === "XOF") && channel === "momo",
+                    then: (schema) => schema.required("Network is required"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                ref_id: Yup.string().when("currency", {
+                    is: "NGN",
                     then: (schema) => schema.required("Please validate your account details"),
                     otherwise: (schema) => schema.notRequired(),
                 }),
-                accountNumber: Yup.string()
-                    .when("channel", {
-                        is: "bank",
-                        then: (schema) => schema
-                            .required("Account number is required")
-                            .test("account-number-length", "Account number must be 10 digits for NGN or 12 digits for GHS", function (value): boolean {
-                                if (!value) return false;
-                                const currentCurrency = this.parent?.currency;
-                                const isNGN: boolean = currentCurrency === "NGN";
-                                return isNGN ? value.length === 10 : value.length === 12;
-                            })
-                            .matches(/^\d+$/, "Account number must contain only digits"),
-                        otherwise: (schema) => schema
-                            .when("channel", {
-                                is: "momo",
-                                then: (schema) => schema
-                                    .required("Phone number is required")
-                                    .test("phone-number-length", "Please enter a valid phone number", function (value): boolean {
-                                        if (!value) return false;
-                                        // Remove any formatting characters
-                                        const cleanValue = value.replace(/[^\d]/g, '');
-                                        return cleanValue.length >= 8 && cleanValue.length <= 15;
-                                    }),
-                                otherwise: (schema) => schema.notRequired(),
-                            }),
-                    }),
+                recipient_name: Yup.string().when("currency", {
+                    is: (val: string) => ["KES", "XOF"].includes(val), // NGN uses accountName instead
+                    then: (schema) => schema.required("Recipient name is required"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                // Sender info - required for GHS, NGN, KES, XOF
+                sender_name: Yup.string().when("currency", {
+                    is: (val: string) => ["GHS", "NGN", "KES", "XOF"].includes(val),
+                    then: (schema) => schema.required("Sender name is required"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                sender_phone: Yup.string().when("currency", {
+                    is: (val: string) => ["NGN", "KES", "XOF"].includes(val),
+                    then: (schema) => schema.notRequired(), // Optional for NGN, KES, XOF
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                sender_email: Yup.string().when("currency", {
+                    is: (val: string) => ["NGN", "KES", "XOF"].includes(val),
+                    then: (schema) => schema.email("Invalid email format").notRequired(),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                // Recipient info fields
+                recipient_account_name: Yup.string().when("currency", {
+                    is: "GHS", // KES and XOF use recipient_name instead
+                    then: (schema) => schema.required("Recipient account name is required"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                // KES uses network name for both bank_name and bank_code, so no separate fields needed
+                // Account name - auto-filled for NGN and GHS bank channel, not required for GHS momo/KES/XOF/TZS/ZMW
                 accountName: Yup.string()
-                    .when("channel", {
-                        is: "bank",
-                        then: (schema) => schema.required("Account name is required"),
-                        otherwise: (schema) => schema.when("channel", {
-                            is: "momo",
-                            then: (schema) => schema.required("Account name is required"),
-                            otherwise: (schema) => schema.notRequired(),
-                        }),
+                    .when(["currency", "channel"], {
+                        is: (currency: string, channel: string) =>
+                            currency === "NGN" ||
+                            currency === "GHS" || // GHS: auto-filled for bank, not needed for momo
+                            ["KES", "XOF", "TZS", "ZMW"].includes(currency),
+                        then: (schema) => schema.notRequired(), // Auto-filled or not needed
+                        otherwise: (schema) => schema.required("Account name is required"),
                     }),
-                amount: baseAmountValidation,
-                narration: Yup.string(),
             });
         }
 
@@ -232,6 +301,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             currency: defaultCurrency,
             channel: undefined,
             bank: "",
+            bank_code: "",
             network: "",
             ref_id: "",
             accountNumber: "",
@@ -243,6 +313,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             mobileProvider: "mtn",
             phoneNumber: "",
             narration: "",
+            recipient_name: "",
+            countryCode: "",
+            sender_name: "",
+            sender_phone: "",
+            sender_email: "",
+            recipient_account_name: "",
+            recipient_bank_name: "",
+            recipient_bank_code: "",
         },
         mode: 'onChange'
     });
@@ -251,6 +329,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     const currency = watchedCurrency || defaultCurrency;
     const accountNumber = watch("accountNumber");
     const selectedBank = watch("bank");
+    const selectedBankCode = watch("bank_code");
     const selectedChannel = watch("channel");
 
     // Track previous currency to detect actual changes
@@ -342,8 +421,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             return [];
         }
         return (state.payoutOptions.banks || []).map((bank: any) => ({
-            value: bank.institutionCode || bank.bank_code,
-            label: bank.institutionName || bank.bank_name,
+            value: bank.bank_code || bank.institutionCode || bank.short_code,
+            label: bank.bank_name || bank.institutionName,
         }));
     }, [state.payoutOptions?.banks]);
 
@@ -352,7 +431,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             return [];
         }
         return (state.payoutOptions.networks || []).map((network: any) => ({
-            value: network.name.toLowerCase(),
+            value: network.name, // Network name is used as bank_code in payload
             label: network.name,
         }));
     }, [state.payoutOptions?.networks]);
@@ -372,7 +451,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
     const nameCheck = async () => {
         const payload = {
-            bank_code: selectedBank,
+            bank_code: selectedBankCode || selectedBank,
             account_number: accountNumber,
             // if country is gh then pass country_code
             ...(currency === "GHS" && { country_code: "GH" })
@@ -382,6 +461,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             const { account_name, ref_id } = await performNameCheck(payload);
             setValue("accountName", account_name);
             setValue("ref_id", ref_id);
+            // For NGN, accountName is used for both account name and recipient_name in payload
+            // No need to set recipient_name separately
         } catch (error: any) {
             notifyError(error.message);
         } finally {
@@ -390,25 +471,27 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     };
 
     useEffect(() => {
-        // Only validate account name if bank channel is selected
-        if (selectedChannel !== "bank") {
+        // Validate account name for NGN and GHS bank channel with bank_code
+        if (currency === 'NGN' && selectedBankCode && accountNumber.length === 10) {
+            nameCheck();
             return;
         }
 
-        // check if currency is NGN then check account name and selected bank
-        // if currency is GHS then check phone number == 12 and selected bank
-        const validateCheck =
-            (currency === 'NGN' && accountNumber.length === 10) ||
-            (currency === 'GHS' && accountNumber.length === 12) && selectedBank;
-
-        if (validateCheck) {
+        // For GHS bank channel, validate when account number is 10 digits and bank_code is selected
+        if (currency === 'GHS' && selectedChannel === 'bank' && selectedBankCode && accountNumber.length === 10) {
             nameCheck();
+            return;
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accountNumber, currency, selectedBank, selectedChannel]);
+    }, [accountNumber, currency, selectedBankCode, selectedChannel]);
 
     const handleFormSubmit = async (values: TransferFormValues & { otp: string }) => {
+        console.log('🚀 Form submitted with values:', values);
+        console.log('📋 Current state:', state);
+        console.log('💰 Currency:', currency);
+        console.log('✅ Form errors:', errors);
+
         setState((prev) => ({ ...prev, isSubmitting: true }));
 
         if (state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 1) {
@@ -435,46 +518,217 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             }
 
             // Handle initial transfer submission
-            // Only require ref_id validation for bank transfers
-            if (state.selectedOptionName === "Same Currency Transfer" && values.channel === "bank" && !values.ref_id) {
+            // For NGN, require ref_id validation
+            if (state.selectedOptionName === "Same Currency Transfer" && currency === "NGN" && !values.ref_id) {
+                console.warn('⚠️ NGN payout requires ref_id validation');
+                setState((prev) => ({ ...prev, isSubmitting: false }));
                 return;
             }
 
-            const payload: any = {
-                amount: removeCommasFromValue(values.amount),
-                ...(state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 2 && {
+            let payload: any = {};
+
+            if (state.selectedOptionName === "Same Currency Transfer") {
+                // Base fields for all currencies
+                payload = {
+                    customer_reference: uuid(),
+                    account_number: values.accountNumber,
+                    amount: removeCommasFromValue(values.amount),
+                    narration: values.narration || "Payout",
+                    currency: values.currency,
+                };
+
+                // Currency-specific payload structures
+                if (currency === "ZMW") {
+                    payload = {
+                        ...payload,
+                        countryCode: getCountryCode(currency),
+                        receipient_info: {
+                            account_number: values.accountNumber,
+                        },
+                    };
+                } else if (currency === "GHS") {
+                    // GHS can be bank (10 digits) or momo (12 digits)
+                    // For bank: use bank_code from bank selection
+                    // For momo: use network name as bank_code
+                    const bankCode = values.channel === "bank"
+                        ? values.bank_code
+                        : values.network; // Network name is used as bank_code
+
+                    const recipientAccountName = values.recipient_account_name || values.accountName || "";
+                    const senderName = values.sender_name || "";
+
+                    console.log('🇬🇭 Building GHS payload:', {
+                        channel: values.channel,
+                        bankCode,
+                        recipientAccountName,
+                        senderName,
+                        accountNumber: values.accountNumber
+                    });
+
+                    payload = {
+                        ...payload,
+                        countryCode: getCountryCode(currency), // "GH"
+                        receipient_info: {
+                            account_name: recipientAccountName,
+                            account_number: values.accountNumber,
+                            bank_code: bankCode || "",
+                        },
+                        sender_info: {
+                            name: senderName,
+                        },
+                    };
+
+                    console.log('🇬🇭 GHS payload built:', JSON.stringify(payload, null, 2));
+                } else if (currency === "NGN") {
+                    payload = {
+                        ...payload,
+                        bank_code: values.bank_code || values.bank,
+                        recipient_name: values.accountName, // Use accountName for recipient_name
+                        ref_id: values.ref_id,
+                        sender_info: {
+                            name: values.sender_name || "",
+                            ...(values.sender_phone && { phone: values.sender_phone }),
+                            ...(values.sender_email && { email: values.sender_email }),
+                        },
+                    };
+                } else if (currency === "KES") {
+                    // Use recipient_name for both top-level recipient_name and receipient_info.account_name
+                    // Network name is used for both bank_name and bank_code
+                    const recipientName = values.recipient_name || "";
+                    const networkName = values.network || ""; // Network name used for both bank_name and bank_code
+                    payload = {
+                        ...payload,
+                        recipient_name: recipientName,
+                        sender_info: {
+                            name: values.sender_name || "",
+                            phone: values.sender_phone || "", // Optional
+                            email: values.sender_email || "", // Optional
+                        },
+                        receipient_info: {
+                            account_number: values.accountNumber,
+                            account_name: recipientName, // Same as recipient_name
+                            bank_name: networkName, // Network name
+                            bank_code: networkName.toLowerCase(), // Network name (lowercase) as bank_code
+                        },
+                        currency: "KES",
+                    };
+                } else if (currency === "TZS") {
+                    // TZS requires channel selection
+                    payload = {
+                        ...payload,
+                        // Add TZS-specific fields based on channel if needed
+                    };
+                } else if (currency === "XOF") {
+                    // Use recipient_name for both top-level recipient_name and receipient_info.account_name
+                    const recipientName = values.recipient_name || "";
+                    payload = {
+                        ...payload,
+                        recipient_name: recipientName,
+                        sender_info: {
+                            name: values.sender_name || "",
+                            phone: values.sender_phone || "", // Optional
+                            email: values.sender_email || "", // Optional
+                        },
+                        receipient_info: {
+                            account_number: values.accountNumber,
+                            account_name: recipientName, // Same as recipient_name
+                            // bank_name and bank_code removed for XOF
+                        },
+                        currency: "XOF",
+                    };
+                }
+            } else if (state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 2) {
+                payload = {
+                    amount: removeCommasFromValue(values.amount),
                     targetAccountName: values.targetAccountName,
                     targetAccountNumber: values.targetAccountNumber,
-                }),
-                ...(state.selectedOptionName === "Same Currency Transfer" && values.channel === "bank" && {
-                    currency: values.currency,
-                    bank_code: values.bank,
-                    account_number: values.accountNumber,
-                    account_name: values.accountName,
-                    ref_id: values.ref_id,
-                }),
-                ...(state.selectedOptionName === "Same Currency Transfer" && values.channel === "momo" && {
-                    currency: values.currency,
-                    account_number: values.accountNumber, // phone number for mobile money
-                    customer_reference: uuid(), // Generate random UUID for customer reference
-                    receipient_info: {
-                        account_number: values.accountNumber, // phone number for mobile money
-                        account_name: values.accountName,
-                        bank_code: values.network || "",
-                    },
-                }),
-                ...(state.selectedOptionName === "Cray Balance Transfer" && {
+                };
+            } else if (state.selectedOptionName === "Cray Balance Transfer") {
+                payload = {
                     walletId: values.walletId,
                     accountName: values.accountName,
-                }),
-            };
+                };
+            }
 
-            // Add narration if present and currency is GHS
-            if (values.narration && currency === "GHS") {
-                payload.narration = values.narration;
+            console.log('📦 Final payload:', payload);
+            console.log('🌐 Calling initiateInterBankPayout with payload:', JSON.stringify(payload, null, 2));
+
+            // Check if payload is empty or missing required fields
+            if (!payload || Object.keys(payload).length === 0) {
+                console.error('❌ Payload is empty! Cannot proceed with API call.');
+                notifyError('Invalid form data. Please check all required fields are filled.');
+                setState((prev) => ({ ...prev, isSubmitting: false }));
+                return;
+            }
+
+            // Check if required base fields are present
+            if (!payload.account_number || !payload.amount || !payload.currency) {
+                console.error('❌ Payload missing required base fields:', {
+                    account_number: payload.account_number,
+                    amount: payload.amount,
+                    currency: payload.currency
+                });
+                notifyError('Missing required fields. Please fill in all required information.');
+                setState((prev) => ({ ...prev, isSubmitting: false }));
+                return;
+            }
+
+            // GHS-specific validation - ensure all required fields are present
+            if (currency === "GHS") {
+                if (!values.channel) {
+                    console.error('❌ GHS requires channel selection');
+                    notifyError('Please select a channel (Bank or Mobile Money)');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
+                if (values.channel === "bank" && !values.bank_code) {
+                    console.error('❌ GHS bank channel requires bank_code');
+                    notifyError('Please select a bank');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
+                if (values.channel === "momo" && !values.network) {
+                    console.error('❌ GHS momo channel requires network');
+                    notifyError('Please select a network');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
+                if (!values.recipient_account_name && !values.accountName) {
+                    console.error('❌ GHS requires recipient account name');
+                    notifyError('Recipient account name is required');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
+                if (!values.sender_name) {
+                    console.error('❌ GHS requires sender name');
+                    notifyError('Sender name is required');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
+
+                // Verify GHS payload structure matches expected format
+                if (!payload.receipient_info || !payload.receipient_info.account_name) {
+                    console.error('❌ GHS payload missing receipient_info.account_name');
+                    notifyError('Recipient account name is required');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
+                if (!payload.receipient_info.bank_code) {
+                    console.error('❌ GHS payload missing receipient_info.bank_code');
+                    notifyError('Bank/Network code is required');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
+                if (!payload.sender_info || !payload.sender_info.name) {
+                    console.error('❌ GHS payload missing sender_info.name');
+                    notifyError('Sender name is required');
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
             }
 
             const response = await initiateInterBankPayout(payload);
+            console.log('📥 API Response:', response);
             if (response?.message) {
                 notifySuccess(response?.message);
                 // Move to OTP step
@@ -493,7 +747,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             currency: defaultCurrency,
             channel: undefined,
             bank: "",
+            bank_code: "",
             network: "",
+            ref_id: "",
             accountNumber: "",
             accountName: "",
             walletId: "",
@@ -503,6 +759,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             mobileProvider: "mtn",
             phoneNumber: "",
             narration: "",
+            recipient_name: "",
+            countryCode: "",
+            sender_name: "",
+            sender_phone: "",
+            sender_email: "",
+            recipient_account_name: "",
+            recipient_bank_name: "",
+            recipient_bank_code: "",
         });
     };
 
@@ -527,6 +791,12 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     };
 
     const handleOptionClick = (option: typeof TRANSFER_OPTIONS[0]) => {
+        // If Bulk Payout is selected, open BulkPayout modal instead
+        if (option.name === 'Bulk Payout') {
+            setIsBulkPayoutModalOpen(true);
+            return;
+        }
+
         setState((prev) => ({
             ...prev,
             selectedOptionName: option.name,
@@ -607,10 +877,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     );
 
     const renderSameCurrencyForm = () => {
-        const currentChannel = watch("channel");
-
         return (
-            <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(handleFormSubmit, (errors) => {
+                console.error('❌ Form validation errors preventing submission:', errors);
+                console.error('📋 Current form values:', getValues());
+                console.error('💰 Selected currency:', currency);
+                console.error('📊 Form state:', { isValid, errors });
+            })} className="space-y-5">
+                {/* Currency Selection */}
                 <Controller
                     name="currency"
                     control={control}
@@ -625,93 +899,281 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                             touched={!!errors.currency}
                             {...field}
                             value={field.value || defaultCurrency}
-                        />
-                    )}
-                />
-
-                <Controller
-                    name="channel"
-                    control={control}
-                    render={({ field }) => (
-                        <FormSelect
-                            id="channel"
-                            htmlFor="channel"
-                            label="Select Channel"
-                            placeholder={payoutOptionsLoading ? "Loading channels..." : channelOptions.length > 0 ? "Select Channel" : "No channels available"}
-                            options={channelOptions}
-                            error={errors.channel?.message}
-                            touched={!!errors.channel}
-                            isLoading={payoutOptionsLoading}
-                            disabled={payoutOptionsLoading || channelOptions.length === 0}
-                            {...field}
                             onChange={(value) => {
                                 field.onChange(value);
-                                // Reset dependent fields when channel changes
+                                // Reset all fields when currency changes
+                                setValue("channel", undefined);
                                 setValue("bank", "");
+                                setValue("bank_code", "");
                                 setValue("network", "");
                                 setValue("accountNumber", "");
                                 setValue("accountName", "");
                                 setValue("ref_id", "");
+                                setValue("recipient_name", "");
+                                setValue("sender_name", "");
+                                setValue("sender_phone", "");
+                                setValue("sender_email", "");
+                                setValue("recipient_account_name", "");
+                                setValue("recipient_bank_code", "");
+                                setValue("recipient_bank_name", "");
                             }}
                         />
                     )}
                 />
 
-                {currentChannel === "bank" && (
-                    <Controller
-                        name="bank"
-                        control={control}
-                        render={({ field }) => (
-                            <FormSelectSearch
-                                id="bank"
-                                htmlFor="bank"
-                                label="Select Bank"
-                                isLoading={payoutOptionsLoading}
-                                loadingText="Loading banks..."
-                                placeholder={payoutOptionsLoading ? "Loading banks..." : "Search banks..."}
-                                options={bankOptions}
-                                error={errors.bank?.message}
-                                touched={!!errors.bank}
-                                disabled={payoutOptionsLoading}
-                                {...field}
-                            />
-                        )}
-                    />
+                {/* NGN Specific Fields */}
+                {currency === "NGN" && (
+                    <>
+                        <Controller
+                            name="bank_code"
+                            control={control}
+                            render={({ field }) => (
+                                <FormSelectSearch
+                                    id="bank_code"
+                                    htmlFor="bank_code"
+                                    label="Select Bank"
+                                    isLoading={payoutOptionsLoading}
+                                    loadingText="Loading banks..."
+                                    placeholder={payoutOptionsLoading ? "Loading banks..." : "Search banks..."}
+                                    options={bankOptions}
+                                    error={errors.bank_code?.message}
+                                    touched={!!errors.bank_code}
+                                    disabled={payoutOptionsLoading}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="accountNumber"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Account Number"
+                                    id="accountNumber"
+                                    type="text"
+                                    htmlFor="accountNumber"
+                                    isLoading={state.isLoading}
+                                    loadingText="Loading details..."
+                                    maxLength={10}
+                                    error={errors.accountNumber?.message}
+                                    touched={!!errors.accountNumber}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="accountName"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Account Name"
+                                    id="accountName"
+                                    type="text"
+                                    htmlFor="accountName"
+                                    error={errors.accountName?.message}
+                                    touched={!!errors.accountName}
+                                    readOnly
+                                    disabled
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_name"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Name"
+                                    id="sender_name"
+                                    type="text"
+                                    htmlFor="sender_name"
+                                    error={errors.sender_name?.message}
+                                    touched={!!errors.sender_name}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_phone"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Phone (Optional)"
+                                    id="sender_phone"
+                                    type="text"
+                                    htmlFor="sender_phone"
+                                    error={errors.sender_phone?.message}
+                                    touched={!!errors.sender_phone}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_email"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Email (Optional)"
+                                    id="sender_email"
+                                    type="email"
+                                    htmlFor="sender_email"
+                                    error={errors.sender_email?.message}
+                                    touched={!!errors.sender_email}
+                                    {...field}
+                                />
+                            )}
+                        />
+                    </>
                 )}
 
-                {currentChannel === "momo" && (
-                    <Controller
-                        name="network"
-                        control={control}
-                        render={({ field }) => (
-                            <FormSelect
-                                id="network"
-                                htmlFor="network"
-                                label="Select Network"
-                                placeholder="Select Network"
-                                options={networkOptions}
-                                error={errors.network?.message}
-                                touched={!!errors.network}
-                                disabled={payoutOptionsLoading}
-                                {...field}
-                                onChange={(value) => {
-                                    field.onChange(value);
-                                    // Reset account number when network changes
-                                    setValue("accountNumber", "");
-                                }}
+                {/* GHS Specific Fields */}
+                {currency === "GHS" && (
+                    <>
+                        <Controller
+                            name="channel"
+                            control={control}
+                            render={({ field }) => (
+                                <FormSelect
+                                    id="channel"
+                                    htmlFor="channel"
+                                    label="Select Channel"
+                                    placeholder={payoutOptionsLoading ? "Loading channels..." : channelOptions.length > 0 ? "Select Channel" : "No channels available"}
+                                    options={channelOptions}
+                                    error={errors.channel?.message}
+                                    touched={!!errors.channel}
+                                    isLoading={payoutOptionsLoading}
+                                    disabled={payoutOptionsLoading || channelOptions.length === 0}
+                                    {...field}
+                                    onChange={(value) => {
+                                        field.onChange(value);
+                                        // Reset dependent fields when channel changes
+                                        setValue("bank_code", "");
+                                        setValue("network", "");
+                                        setValue("accountNumber", "");
+                                        setValue("accountName", "");
+                                        setValue("recipient_account_name", "");
+                                    }}
+                                />
+                            )}
+                        />
+
+                        {watch("channel") === "bank" && (
+                            <Controller
+                                name="bank_code"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormSelectSearch
+                                        id="bank_code"
+                                        htmlFor="bank_code"
+                                        label="Select Bank"
+                                        isLoading={payoutOptionsLoading}
+                                        loadingText="Loading banks..."
+                                        placeholder={payoutOptionsLoading ? "Loading banks..." : "Search banks..."}
+                                        options={bankOptions}
+                                        error={errors.bank_code?.message}
+                                        touched={!!errors.bank_code}
+                                        disabled={payoutOptionsLoading}
+                                        {...field}
+                                    />
+                                )}
                             />
                         )}
-                    />
+
+                        {watch("channel") === "momo" && (
+                            <Controller
+                                name="network"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormSelect
+                                        id="network"
+                                        htmlFor="network"
+                                        label="Select Network"
+                                        placeholder="Select Network"
+                                        options={networkOptions}
+                                        error={errors.network?.message}
+                                        touched={!!errors.network}
+                                        disabled={payoutOptionsLoading}
+                                        {...field}
+                                    />
+                                )}
+                            />
+                        )}
+
+                        <Controller
+                            name="accountNumber"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Account Number"
+                                    id="accountNumber"
+                                    type="text"
+                                    htmlFor="accountNumber"
+                                    maxLength={watch("channel") === "bank" ? 10 : 12}
+                                    isLoading={state.isLoading && watch("channel") === "bank"}
+                                    loadingText="Loading details..."
+                                    error={errors.accountNumber?.message}
+                                    touched={!!errors.accountNumber}
+                                    {...field}
+                                />
+                            )}
+                        />
+
+                        {watch("channel") === "bank" && (
+                            <Controller
+                                name="accountName"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormInput
+                                        label="Account Name"
+                                        id="accountName"
+                                        type="text"
+                                        htmlFor="accountName"
+                                        error={errors.accountName?.message}
+                                        touched={!!errors.accountName}
+                                        readOnly
+                                        disabled
+                                        {...field}
+                                    />
+                                )}
+                            />
+                        )}
+
+                        <Controller
+                            name="recipient_account_name"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Recipient Account Name"
+                                    id="recipient_account_name"
+                                    type="text"
+                                    htmlFor="recipient_account_name"
+                                    error={errors.recipient_account_name?.message}
+                                    touched={!!errors.recipient_account_name}
+                                    {...field}
+                                />
+                            )}
+                        />
+
+                        <Controller
+                            name="sender_name"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Name"
+                                    id="sender_name"
+                                    type="text"
+                                    htmlFor="sender_name"
+                                    error={errors.sender_name?.message}
+                                    touched={!!errors.sender_name}
+                                    {...field}
+                                />
+                            )}
+                        />
+                    </>
                 )}
 
-                {/* Account Number field - always visible, different behavior based on channel */}
-                {currentChannel === "bank" ? (
-                    watch('currency') == null || watch('currency') === 'NGN' ? (
-                        renderNGNForm()
-                    ) : (
-                        renderGHSForm()
-                    )
-                ) : currentChannel === "momo" ? (
+                {/* ZMW Specific Fields */}
+                {currency === "ZMW" && (
                     <Controller
                         name="accountNumber"
                         control={control}
@@ -722,52 +1184,312 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                                 htmlFor="accountNumber"
                                 error={errors.accountNumber?.message}
                                 touched={!!errors.accountNumber}
-                                country={currency === "GHS" ? "gh" : currency === "TZS" ? "tz" : undefined}
-                                onlyCountries={currency === "GHS" ? ["gh"] : currency === "TZS" ? ["tz"] : undefined}
-                                {...field}
-                            />
-                        )}
-                    />
-                ) : (
-                    // Default/fallback - show account number field
-                    <Controller
-                        name="accountNumber"
-                        control={control}
-                        render={({ field }) => (
-                            <FormInput
-                                label="Account Number"
-                                id="accountNumber"
-                                type="text"
-                                htmlFor="accountNumber"
-                                isLoading={state.isLoading && currentChannel === "bank"}
-                                loadingText="Loading details..."
-                                error={errors.accountNumber?.message}
-                                touched={!!errors.accountNumber}
+                                country="zm"
+                                onlyCountries={["zm"]}
                                 {...field}
                             />
                         )}
                     />
                 )}
 
-                {/* Account Name - always visible, read-only for bank, editable for momo */}
-                <Controller
-                    name="accountName"
-                    control={control}
-                    render={({ field }) => (
-                        <FormInput
-                            label="Account Name"
-                            id="accountName"
-                            type="text"
-                            htmlFor="accountName"
-                            error={errors.accountName?.message}
-                            touched={!!errors.accountName}
-                            readOnly={currentChannel === "bank"}
-                            disabled={currentChannel === "bank"}
-                            {...field}
+                {/* KES Specific Fields */}
+                {currency === "KES" && (
+                    <>
+                        <Controller
+                            name="channel"
+                            control={control}
+                            render={({ field }) => (
+                                <FormSelect
+                                    id="channel"
+                                    htmlFor="channel"
+                                    label="Select Channel"
+                                    placeholder={payoutOptionsLoading ? "Loading channels..." : channelOptions.length > 0 ? "Select Channel" : "No channels available"}
+                                    options={channelOptions}
+                                    error={errors.channel?.message}
+                                    touched={!!errors.channel}
+                                    isLoading={payoutOptionsLoading}
+                                    disabled={payoutOptionsLoading || channelOptions.length === 0}
+                                    {...field}
+                                    onChange={(value) => {
+                                        field.onChange(value);
+                                        // Reset dependent fields when channel changes
+                                        setValue("network", "");
+                                        setValue("accountNumber", "");
+                                    }}
+                                />
+                            )}
                         />
-                    )}
-                />
 
+                        {watch("channel") === "momo" && (
+                            <Controller
+                                name="network"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormSelect
+                                        id="network"
+                                        htmlFor="network"
+                                        label="Select Network"
+                                        placeholder="Select Network"
+                                        options={networkOptions}
+                                        error={errors.network?.message}
+                                        touched={!!errors.network}
+                                        disabled={payoutOptionsLoading}
+                                        {...field}
+                                    />
+                                )}
+                            />
+                        )}
+
+                        <Controller
+                            name="accountNumber"
+                            control={control}
+                            render={({ field }) => (
+                                <FormPhoneInput
+                                    label="Phone Number"
+                                    id="accountNumber"
+                                    htmlFor="accountNumber"
+                                    error={errors.accountNumber?.message}
+                                    touched={!!errors.accountNumber}
+                                    country="ke"
+                                    onlyCountries={["ke"]}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="recipient_name"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Recipient Name"
+                                    id="recipient_name"
+                                    type="text"
+                                    htmlFor="recipient_name"
+                                    error={errors.recipient_name?.message}
+                                    touched={!!errors.recipient_name}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_name"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Name"
+                                    id="sender_name"
+                                    type="text"
+                                    htmlFor="sender_name"
+                                    error={errors.sender_name?.message}
+                                    touched={!!errors.sender_name}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_phone"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Phone (Optional)"
+                                    id="sender_phone"
+                                    type="text"
+                                    htmlFor="sender_phone"
+                                    error={errors.sender_phone?.message}
+                                    touched={!!errors.sender_phone}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_email"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Email (Optional)"
+                                    id="sender_email"
+                                    type="email"
+                                    htmlFor="sender_email"
+                                    error={errors.sender_email?.message}
+                                    touched={!!errors.sender_email}
+                                    {...field}
+                                />
+                            )}
+                        />
+                    </>
+                )}
+
+                {/* TZS Specific Fields */}
+                {currency === "TZS" && (
+                    <>
+                        <Controller
+                            name="channel"
+                            control={control}
+                            render={({ field }) => (
+                                <FormSelect
+                                    id="channel"
+                                    htmlFor="channel"
+                                    label="Select Channel"
+                                    placeholder={payoutOptionsLoading ? "Loading channels..." : channelOptions.length > 0 ? "Select Channel" : "No channels available"}
+                                    options={channelOptions}
+                                    error={errors.channel?.message}
+                                    touched={!!errors.channel}
+                                    isLoading={payoutOptionsLoading}
+                                    disabled={payoutOptionsLoading || channelOptions.length === 0}
+                                    {...field}
+                                    onChange={(value) => {
+                                        field.onChange(value);
+                                        // Reset dependent fields when channel changes
+                                        setValue("accountNumber", "");
+                                    }}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="accountNumber"
+                            control={control}
+                            render={({ field }) => (
+                                <FormPhoneInput
+                                    label="Account Number"
+                                    id="accountNumber"
+                                    htmlFor="accountNumber"
+                                    error={errors.accountNumber?.message}
+                                    touched={!!errors.accountNumber}
+                                    country="tz"
+                                    onlyCountries={["tz"]}
+                                    {...field}
+                                />
+                            )}
+                        />
+                    </>
+                )}
+
+                {/* XOF Specific Fields */}
+                {currency === "XOF" && (
+                    <>
+                        <Controller
+                            name="channel"
+                            control={control}
+                            render={({ field }) => (
+                                <FormSelect
+                                    id="channel"
+                                    htmlFor="channel"
+                                    label="Select Channel"
+                                    placeholder={payoutOptionsLoading ? "Loading channels..." : channelOptions.length > 0 ? "Select Channel" : "No channels available"}
+                                    options={channelOptions}
+                                    error={errors.channel?.message}
+                                    touched={!!errors.channel}
+                                    isLoading={payoutOptionsLoading}
+                                    disabled={payoutOptionsLoading || channelOptions.length === 0}
+                                    {...field}
+                                    onChange={(value) => {
+                                        field.onChange(value);
+                                        // Reset dependent fields when channel changes
+                                        setValue("network", "");
+                                        setValue("accountNumber", "");
+                                    }}
+                                />
+                            )}
+                        />
+
+                        {watch("channel") === "momo" && (
+                            <Controller
+                                name="network"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormSelect
+                                        id="network"
+                                        htmlFor="network"
+                                        label="Select Network"
+                                        placeholder="Select Network"
+                                        options={networkOptions}
+                                        error={errors.network?.message}
+                                        touched={!!errors.network}
+                                        disabled={payoutOptionsLoading}
+                                        {...field}
+                                    />
+                                )}
+                            />
+                        )}
+
+                        <Controller
+                            name="accountNumber"
+                            control={control}
+                            render={({ field }) => (
+                                <FormPhoneInput
+                                    label="Phone Number"
+                                    id="accountNumber"
+                                    htmlFor="accountNumber"
+                                    error={errors.accountNumber?.message}
+                                    touched={!!errors.accountNumber}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="recipient_name"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Recipient Name"
+                                    id="recipient_name"
+                                    type="text"
+                                    htmlFor="recipient_name"
+                                    error={errors.recipient_name?.message}
+                                    touched={!!errors.recipient_name}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_name"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Name"
+                                    id="sender_name"
+                                    type="text"
+                                    htmlFor="sender_name"
+                                    error={errors.sender_name?.message}
+                                    touched={!!errors.sender_name}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_phone"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Phone (Optional)"
+                                    id="sender_phone"
+                                    type="text"
+                                    htmlFor="sender_phone"
+                                    error={errors.sender_phone?.message}
+                                    touched={!!errors.sender_phone}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="sender_email"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Sender Email (Optional)"
+                                    id="sender_email"
+                                    type="email"
+                                    htmlFor="sender_email"
+                                    error={errors.sender_email?.message}
+                                    touched={!!errors.sender_email}
+                                    {...field}
+                                />
+                            )}
+                        />
+                    </>
+                )}
+
+                {/* Common Fields - Amount and Narration */}
                 <Controller
                     name="amount"
                     control={control}
@@ -785,30 +1507,34 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     )}
                 />
 
-                {currency === "GHS" ? (
-                    <Controller
-                        name="narration"
-                        control={control}
-                        render={({ field }) => (
-                            <FormInput
-                                label="Narration"
-                                id="narration"
-                                type="text"
-                                htmlFor="narration"
-                                error={errors.narration?.message}
-                                touched={!!errors.narration}
-                                {...field}
-                            />
-                        )}
-                    />
-                ) : null}
+                <Controller
+                    name="narration"
+                    control={control}
+                    render={({ field }) => (
+                        <FormInput
+                            label="Narration"
+                            id="narration"
+                            type="text"
+                            htmlFor="narration"
+                            error={errors.narration?.message}
+                            touched={!!errors.narration}
+                            {...field}
+                        />
+                    )}
+                />
 
                 <div className="pt-10 w-52">
                     <Button
                         className="openSansLight text-white text-lg p-2 rounded w-full"
                         text={state.isSubmitting ? <Loader /> : "Initiate Transfer"}
                         ariaLabel="Initiate Transfer"
-                        disabled={state.isSubmitting || state.isLoading || !currentChannel}
+                        disabled={
+                            state.isSubmitting ||
+                            state.isLoading ||
+                            !currency ||
+                            // Disable if channel is required but not selected or not available
+                            (["GHS", "KES", "TZS", "XOF"].includes(currency) && (!selectedChannel || channelOptions.length === 0))
+                        }
                         primary
                         type="submit"
                     />
@@ -1087,14 +1813,22 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     };
 
     return (
-        <Modal
-            isOpen={isModalOpen}
-            onClose={closeModalAndReset}
-            title={getModalTitle()}
-            className={state.currentStep === 1 && state.selectedOptionName === "Cross Currency Transfer" ? "max-w-lg" : ""}
-        >
-            <div className="mt-5">{renderStepContent()}</div>
-        </Modal>
+        <>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModalAndReset}
+                title={getModalTitle()}
+                className={state.currentStep === 1 && state.selectedOptionName === "Cross Currency Transfer" ? "max-w-lg" : ""}
+            >
+                <div className="mt-5">{renderStepContent()}</div>
+            </Modal>
+
+            <BulkPayout
+                isModalOpen={isBulkPayoutModalOpen}
+                closeModal={() => setIsBulkPayoutModalOpen(false)}
+                fetchPayoutHistory={fetchPayoutHistory}
+            />
+        </>
     );
 };
 

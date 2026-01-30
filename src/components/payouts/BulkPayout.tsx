@@ -6,6 +6,8 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 import { initiateBulkPayout, completeBulkPayout } from "@/services/payout";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
 import { notifyError, notifySuccess } from "@/util/utils";
+import { extractFileHeaders, BULK_PAYOUT_MAPPING_KEYS, buildMappingHeaders, getFilePreview, BulkPayoutMappingKey } from "@/util/fileHeaders";
+import Icon from "@/components/icon";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Controller } from "react-hook-form";
 import PinInput from "react-pin-input";
@@ -33,8 +35,22 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isExtractingHeaders, setIsExtractingHeaders] = useState(false);
     const [currentStep, setCurrentStep] = useState(0); // 0: file upload, 1: OTP verification
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [fileHeaders, setFileHeaders] = useState<string[]>([]);
+    const [headerMapping, setHeaderMapping] = useState<Record<BulkPayoutMappingKey, string>>({
+        acct_no: "",
+        bank: "",
+        amnt: "",
+        acct_name: "",
+    });
+    const [openMappingKey, setOpenMappingKey] = useState<BulkPayoutMappingKey | null>(null);
+    const [mappingSearchTerm, setMappingSearchTerm] = useState("");
+    const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+    const [previewRows, setPreviewRows] = useState<Record<string, string>[]>([]);
+    const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+    const mappingDropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { activeCurrencies, fetchActiveCurrencies } = useCurrency();
 
@@ -137,7 +153,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         }
     }, [defaultCurrency, setValue]);
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             // Validate file type
@@ -164,6 +180,38 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
             setSelectedFile(file);
             setValue('file', file, { shouldValidate: true });
+
+            // Extract headers from the file
+            setIsExtractingHeaders(true);
+            try {
+                const headers = await extractFileHeaders(file);
+                setFileHeaders(headers);
+                // Auto-map headers if they match common patterns
+                const autoMapping: Record<BulkPayoutMappingKey, string> = {
+                    acct_no: "",
+                    bank: "",
+                    amnt: "",
+                    acct_name: "",
+                };
+                headers.forEach((header) => {
+                    const lowerHeader = header.toLowerCase().replace(/[_\s]/g, "");
+                    if (lowerHeader.includes("acct") && lowerHeader.includes("no") || lowerHeader.includes("accountnumber") || lowerHeader.includes("accountno")) {
+                        if (!autoMapping.acct_no) autoMapping.acct_no = header;
+                    } else if (lowerHeader.includes("bank") || lowerHeader.includes("bankname") || lowerHeader.includes("bankname")) {
+                        if (!autoMapping.bank) autoMapping.bank = header;
+                    } else if (lowerHeader.includes("amnt") || lowerHeader.includes("amount") || lowerHeader.includes("amt")) {
+                        if (!autoMapping.amnt) autoMapping.amnt = header;
+                    } else if (lowerHeader.includes("acct") && lowerHeader.includes("name") || lowerHeader.includes("accountname") || lowerHeader.includes("accountname")) {
+                        if (!autoMapping.acct_name) autoMapping.acct_name = header;
+                    }
+                });
+                setHeaderMapping(autoMapping);
+            } catch (error: any) {
+                notifyError(error?.message || "Failed to extract file headers");
+                setFileHeaders([]);
+            } finally {
+                setIsExtractingHeaders(false);
+            }
         }
     };
 
@@ -201,11 +249,32 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
     const handleRemoveFile = () => {
         setSelectedFile(null);
+        setFileHeaders([]);
+        setHeaderMapping({
+            acct_no: "",
+            bank: "",
+            amnt: "",
+            acct_name: "",
+        });
         setValue('file', null, { shouldValidate: true });
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
     };
+
+    // Close mapping dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (openMappingKey === null) return;
+            const ref = mappingDropdownRefs.current[openMappingKey];
+            if (ref && !ref.contains(event.target as Node)) {
+                setOpenMappingKey(null);
+                setMappingSearchTerm("");
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [openMappingKey]);
 
     const onSubmit = async (values: BulkPayoutFormValues) => {
         // Handle OTP verification step
@@ -229,22 +298,49 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             return;
         }
 
-        // Handle file upload step
+        // Handle file upload step: show confirmation modal with preview (do not call API yet)
         if (!values.file) {
             notifyError("Please select a file");
             return;
         }
 
+        const allMapped = BULK_PAYOUT_MAPPING_KEYS.every(({ key }) => headerMapping[key]?.trim());
+        if (!allMapped) {
+            notifyError("Please map all required columns to your file headers");
+            return;
+        }
+
+        setIsLoadingPreview(true);
+        try {
+            const { rows } = await getFilePreview(values.file, 10);
+            setPreviewRows(rows);
+            setShowConfirmationModal(true);
+        } catch (err: any) {
+            notifyError(err?.message || "Failed to load file preview");
+        } finally {
+            setIsLoadingPreview(false);
+        }
+    };
+
+    const handleConfirmBulkPayout = async () => {
+        const file = watch("file");
+        const currency = watch("currency");
+        if (!file) {
+            notifyError("Please select a file");
+            return;
+        }
+        const mappingHeaders = buildMappingHeaders(headerMapping);
         setIsLoading(true);
         try {
             const response = await initiateBulkPayout({
-                file: values.file,
-                currency: values.currency,
+                file,
+                currency,
+                mapping_headers: mappingHeaders,
             });
-
             if (response?.status || response?.message) {
-                notifySuccess(response?.message || 'Bulk payout initiated. Please enter OTP to complete.');
-                setCurrentStep(1); // Move to OTP verification step
+                notifySuccess(response?.message || "Bulk payout initiated. Please enter OTP to complete.");
+                setShowConfirmationModal(false);
+                setCurrentStep(1);
             }
         } catch (error: any) {
             notifyError(error?.message || "Failed to initiate bulk payout");
@@ -256,6 +352,15 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     const handleClose = () => {
         reset();
         setSelectedFile(null);
+        setFileHeaders([]);
+        setHeaderMapping({
+            acct_no: "",
+            bank: "",
+            amnt: "",
+            acct_name: "",
+        });
+        setShowConfirmationModal(false);
+        setPreviewRows([]);
         setCurrentStep(0);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -332,6 +437,9 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
     const renderFileUploadStep = () => (
         <form onSubmit={handleSubmit(onSubmit)} className="mt-5">
+            <p className="text-sm text-gray-500 mb-5">
+                Choose currency, upload your file, then map columns to the required fields.
+            </p>
             <div className="space-y-6">
                 {/* Currency Selection */}
                 <div>
@@ -340,12 +448,13 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         control={control}
                         render={({ field }) => (
                             <FormSelect
-                                label="Currency"
+                                label="Select currency"
                                 id="currency"
                                 htmlFor="currency"
                                 options={currencyOptions}
                                 error={errors.currency?.message}
                                 touched={!!errors.currency}
+                                placeholder="Select currency"
                                 {...field}
                                 value={field.value || defaultCurrency}
                             />
@@ -357,7 +466,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Upload Excel File
+                            Upload File
                         </label>
                         <a
                             href="/files/bulk_payout_template.xlsx"
@@ -381,9 +490,9 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         </a>
                     </div>
                     <div
-                        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${errors.file
-                            ? 'border-red-500 bg-red-50'
-                            : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                        className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${errors.file
+                            ? 'border-red-400 bg-red-50/50'
+                            : 'border-primary/40 bg-[#005BB008] hover:border-primary/60 hover:bg-[#005BB00D]'
                             }`}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
@@ -399,19 +508,23 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         {selectedFile ? (
                             <div className="space-y-2">
                                 <div className="flex items-center justify-center">
-                                    <svg
-                                        className="w-12 h-12 text-green-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                        />
-                                    </svg>
+                                    {isExtractingHeaders ? (
+                                        <Loader />
+                                    ) : (
+                                        <svg
+                                            className="w-11 h-11 text-primary"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                            />
+                                        </svg>
+                                    )}
                                 </div>
                                 <p className="text-sm font-medium text-gray-700">
                                     {selectedFile.name}
@@ -419,27 +532,32 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                 <p className="text-xs text-gray-500">
                                     {(selectedFile.size / 1024).toFixed(2)} KB
                                 </p>
+                                {isExtractingHeaders && (
+                                    <p className="text-xs text-gray-500">
+                                        Extracting headers...
+                                    </p>
+                                )}
                                 <button
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleRemoveFile();
                                     }}
-                                    className="text-sm text-red-600 hover:text-red-800 mt-2"
+                                    className="text-sm text-primary hover:text-primary/80 font-medium mt-2"
                                 >
                                     Remove
                                 </button>
                             </div>
                         ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 <div className="flex items-center justify-center">
-                                    <Upload className="w-10 h-10 text-gray-400" strokeWidth={1.5} />
+                                    <Upload className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
                                 </div>
                                 <p className="text-sm text-gray-600">
                                     Click to upload or drag and drop
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                    Excel or CSV files only
+                                    CSV or Excel (.xlsx, .xls) — max 10MB
                                 </p>
                             </div>
                         )}
@@ -451,6 +569,105 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                     )}
                 </div>
 
+                {/* Header Mapping Section - CurrencySwitcher-style dropdowns */}
+                {fileHeaders.length > 0 && (
+                    <div className="space-y-4 pt-5 border-t border-gray-200">
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-800 mb-1">
+                                Map your file columns
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                                Match each required field to a column from your file.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {BULK_PAYOUT_MAPPING_KEYS.map((mappingKey) => {
+                                const headerOptions = fileHeaders.map((header) => ({
+                                    value: header,
+                                    label: header,
+                                }));
+                                const selectedValue = headerMapping[mappingKey.key];
+                                const selectedLabel = selectedValue || "Select column...";
+                                const isOpen = openMappingKey === mappingKey.key;
+                                const filteredOptions = isOpen && mappingSearchTerm.trim()
+                                    ? headerOptions.filter(
+                                        (opt) =>
+                                            opt.label.toLowerCase().includes(mappingSearchTerm.toLowerCase())
+                                    )
+                                    : headerOptions;
+
+                                return (
+                                    <div
+                                        key={mappingKey.key}
+                                        className="space-y-1.5 relative"
+                                        ref={(el) => {
+                                            mappingDropdownRefs.current[mappingKey.key] = el;
+                                        }}
+                                    >
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            {mappingKey.label} <span className="text-red-500">*</span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            className="flex justify-between items-center w-full h-12 rounded-lg px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm border border-[#005BB040] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                            onClick={() => {
+                                                setOpenMappingKey((prev) =>
+                                                    prev === mappingKey.key ? null : mappingKey.key
+                                                );
+                                                setMappingSearchTerm("");
+                                            }}
+                                        >
+                                            <span className="truncate">
+                                                {selectedValue ? selectedLabel : "Select column..."}
+                                            </span>
+                                            <Icon name="caretDown" />
+                                        </button>
+                                        {isOpen && (
+                                            <div className="absolute z-50 mt-2 w-full bg-white text-black rounded-lg border border-gray-200 shadow-lg">
+                                                <div className="p-2 border-b border-gray-100">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search column..."
+                                                        value={mappingSearchTerm}
+                                                        onChange={(e) => setMappingSearchTerm(e.target.value)}
+                                                        className="w-full px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary rounded"
+                                                    />
+                                                </div>
+                                                <ul className="max-h-48 overflow-y-auto">
+                                                    {filteredOptions.length > 0 ? (
+                                                        filteredOptions.map((option) => (
+                                                            <li
+                                                                key={option.value}
+                                                                onClick={() => {
+                                                                    setHeaderMapping((prev) => ({
+                                                                        ...prev,
+                                                                        [mappingKey.key]: option.value,
+                                                                    }));
+                                                                    setOpenMappingKey(null);
+                                                                    setMappingSearchTerm("");
+                                                                }}
+                                                                className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${
+                                                                    selectedValue === option.value ? "bg-[#005BB00D]" : ""
+                                                                }`}
+                                                            >
+                                                                {option.label}
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <li className="px-4 py-3 text-sm text-gray-500">
+                                                            No matching column
+                                                        </li>
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Submit Button */}
                 <div className="flex gap-4 pt-4">
                     <Button
@@ -459,15 +676,20 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         ariaLabel="Cancel"
                         onClick={handleClose}
                         className="flex-1"
-                        disabled={isLoading}
+                        disabled={isLoading || isLoadingPreview}
                         plain
                     />
                     <Button
                         type="submit"
-                        text={isLoading ? <Loader /> : "Process Bulk Payout"}
+                        text={isLoadingPreview ? <Loader /> : "Process Bulk Payout"}
                         ariaLabel="Process Bulk Payout"
                         className="flex-1"
-                        disabled={isLoading || !selectedFile}
+                        disabled={
+                            isLoading ||
+                            isLoadingPreview ||
+                            !selectedFile ||
+                            !BULK_PAYOUT_MAPPING_KEYS.every(({ key }) => headerMapping[key]?.trim())
+                        }
                         primary
                     />
                 </div>
@@ -475,20 +697,106 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         </form>
     );
 
+    const renderConfirmationModal = () => {
+        const currency = watch("currency");
+        return (
+            <Modal
+                isOpen={showConfirmationModal}
+                onClose={() => setShowConfirmationModal(false)}
+                title="Confirm bulk payout"
+                className="max-w-2xl"
+            >
+                <div className="mt-4 space-y-4">
+                    <p className="text-sm text-gray-600">
+                        Please confirm the data below. Only the first 10 rows are shown. After you confirm, you will receive an OTP to complete the payout.
+                    </p>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
+                        <span className="text-sm font-medium text-gray-700">Currency: </span>
+                        <span className="text-sm text-gray-800">{currency}</span>
+                    </div>
+                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead className="bg-[#005BB01A]">
+                                <tr>
+                                    {BULK_PAYOUT_MAPPING_KEYS.map(({ label }) => (
+                                        <th
+                                            key={label}
+                                            className="px-4 py-3 text-left font-semibold text-[#005BB0]"
+                                        >
+                                            {label}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 bg-white">
+                                {previewRows.length === 0 ? (
+                                    <tr>
+                                        <td
+                                            colSpan={BULK_PAYOUT_MAPPING_KEYS.length}
+                                            className="px-4 py-6 text-center text-gray-500"
+                                        >
+                                            No rows to display
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    previewRows.map((row, rowIdx) => (
+                                        <tr key={rowIdx} className="hover:bg-gray-50">
+                                            {BULK_PAYOUT_MAPPING_KEYS.map(({ key }) => (
+                                                <td key={key} className="px-4 py-2.5 text-gray-800">
+                                                    {row[headerMapping[key]] ?? "—"}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        Showing up to 10 rows. Full file will be processed on confirm.
+                    </p>
+                    <div className="flex gap-4 pt-4">
+                        <Button
+                            type="button"
+                            text="Back"
+                            ariaLabel="Back"
+                            onClick={() => setShowConfirmationModal(false)}
+                            className="flex-1"
+                            disabled={isLoading}
+                            plain
+                        />
+                        <Button
+                            type="button"
+                            text={isLoading ? <Loader /> : "Confirm"}
+                            ariaLabel="Confirm bulk payout"
+                            className="flex-1"
+                            disabled={isLoading}
+                            primary
+                            onClick={handleConfirmBulkPayout}
+                        />
+                    </div>
+                </div>
+            </Modal>
+        );
+    };
+
     const getModalTitle = () => {
         if (currentStep === 1) return "Verify Bulk Payout";
         return "Bulk Payout";
     };
 
     return (
-        <Modal
-            isOpen={isModalOpen}
-            onClose={handleClose}
-            title={getModalTitle()}
-            className="max-w-lg"
-        >
-            {currentStep === 0 ? renderFileUploadStep() : renderOtpVerificationStep()}
-        </Modal>
+        <>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={handleClose}
+                title={getModalTitle()}
+                className="max-w-lg"
+            >
+                {currentStep === 0 ? renderFileUploadStep() : renderOtpVerificationStep()}
+            </Modal>
+            {renderConfirmationModal()}
+        </>
     );
 };
 

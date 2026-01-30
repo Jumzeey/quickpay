@@ -268,9 +268,15 @@ export async function raiseDispute(payload: RaiseDisputePayload): Promise<Payout
 
 export const addPayout = addInterBankPayout;
 
+/**
+ * Key = column header from the uploaded file (e.g. act_num, bank_name).
+ * Value = backend expected field name (e.g. account_number, bank_name).
+ * Sent as mapping_headers[<key>] = value in form-data.
+ */
 export interface BulkPayoutPayload {
   file: File;
   currency: string;
+  mapping_headers: Record<string, string>;
 }
 
 export interface BulkPayoutResponse {
@@ -284,6 +290,9 @@ export async function initiateBulkPayout(payload: BulkPayoutPayload): Promise<Bu
     const formData = new FormData();
     formData.append('file', payload.file);
     formData.append('currency', payload.currency);
+    Object.entries(payload.mapping_headers).forEach(([key, value]) => {
+      formData.append(`mapping_headers[${key}]`, value);
+    });
 
     const response = await api.post(
       `${apiEndpoints.payouts.INITIATE_BULK_PAYOUT}`,

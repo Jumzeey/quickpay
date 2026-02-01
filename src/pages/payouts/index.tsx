@@ -425,7 +425,7 @@ const PayoutHistory = () => {
             onClick={() => toggleModal('isInitiateTransferModalOpen')}
           />
           <ActionButton
-            text="Initiate Bulk Payout"
+            text="Bulk Payout"
             ariaLabel="Bulk Payout button"
             className="w-1/2 md:w-full"
             onClick={() => toggleModal('isBulkPayoutModalOpen')}

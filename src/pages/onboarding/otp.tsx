@@ -7,8 +7,11 @@ import { notifyError, notifySuccess } from "@/util/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PinInput from "react-pin-input";
+
+const EMAIL_OTP_LENGTH = 8;
+const TOTP_LENGTH = 6;
 
 const OtpPage = () => {
   const router = useRouter();
@@ -18,9 +21,13 @@ const OtpPage = () => {
   const [isDisabled, setIsDisabled] = useState(true);
   const [countdown, setCountdown] = useState(60);
   const { source } = router.query;
-  const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference } = useAuthentication();
+  const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference, allowed_methods = [] } = useAuthentication();
 
-  const OTP_LENGTH = 8;
+  const canUseTotp = useMemo(() => allowed_methods.includes("totp"), [allowed_methods]);
+  const showTotpSwitch = canUseTotp;
+  const [useTotp, setUseTotp] = useState(false);
+  const effectiveMode = useTotp && canUseTotp ? "totp" : "email_otp";
+  const pinLength = effectiveMode === "totp" ? TOTP_LENGTH : EMAIL_OTP_LENGTH;
 
   const userEmail = typeof window !== "undefined" ? localStorage?.getItem("user-email") : "";
 
@@ -58,19 +65,18 @@ const OtpPage = () => {
   }, [startCountdown]);
 
   const handleSubmit = async (code?: string) => {
-    const otpCode = code || otp;
-    if (!otpCode || (otpCode.length !== OTP_LENGTH)) {
-      console.log("Invalid OTP length", otpCode);
-      notifyError(`Please enter a valid ${OTP_LENGTH}-digit OTP`);
+    const codeValue = code || otp;
+    if (!codeValue || codeValue.length !== pinLength) {
+      notifyError(`Please enter a valid ${pinLength}-digit ${effectiveMode === "totp" ? "code" : "OTP"}`);
       return;
     }
 
     setVerifyOtpLoading(true);
     try {
-      const payload = {
-        verify_reference,
-        otp: otpCode
-      };
+      const payload =
+        effectiveMode === "totp"
+          ? { verify_reference, totp: codeValue }
+          : { verify_reference, otp: codeValue };
 
       if (source === "sign-in") {
         await verifyOtp(payload);
@@ -126,24 +132,41 @@ const OtpPage = () => {
             {/* OTP Form */}
             <div className="px-8 pb-8 mt-12">
               <h2 className="text-lg font-extrabold text-[#184078] mb-2">
-                Verify OTP
+                {effectiveMode === "totp" ? "Authenticator code" : "Verify OTP"}
               </h2>
-              <p className="text-sm text-[#00000080] font-medium mb-8">
-                We sent an OTP to{' '}
-                <span className="font-medium text-primary">({userEmail})</span>
+              <p className="text-sm text-[#00000080] font-medium mb-4">
+                {effectiveMode === "totp"
+                  ? "Enter the 6-digit code from your authenticator app."
+                  : <>We sent an OTP to{' '}<span className="font-medium text-primary">({userEmail})</span></>}
               </p>
+
+              {showTotpSwitch && (
+                <div className="mb-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseTotp((prev) => !prev);
+                      setOtp("");
+                    }}
+                    className="text-sm font-medium text-primary hover:text-blue-700"
+                  >
+                    {useTotp ? "Use email OTP instead" : "Use authenticator app instead"}
+                  </button>
+                </div>
+              )}
 
               <div className="space-y-6">
                 <div className="flex flex-col items-center">
                   <PinInput
-                    length={OTP_LENGTH}
+                    key={effectiveMode}
+                    length={pinLength}
                     initialValue=""
                     type="numeric"
                     inputMode="number"
                     focus
                     onChange={(value) => {
                       setOtp(value);
-                      if (value.length === OTP_LENGTH) {
+                      if (value.length === pinLength) {
                         setTimeout(() => handleSubmit(value), 100);
                       }
                     }}
@@ -158,7 +181,7 @@ const OtpPage = () => {
                       justifyContent: 'center'
                     }}
                     inputStyle={{
-                      width: '49.33px',
+                      width: pinLength === 6 ? '44px' : '49.33px',
                       height: '50px',
                       border: '1.5px solid #C4C4C43D',
                       borderRadius: '5px',
@@ -179,8 +202,8 @@ const OtpPage = () => {
                     <Button
                       onClick={() => handleSubmit()}
                       className="w-full py-2.5 text-sm font-medium rounded"
-                      text={verifyOtpLoading ? "Verifying..." : "Verify OTP"}
-                      ariaLabel="Verify OTP Button"
+                      text={verifyOtpLoading ? "Verifying..." : effectiveMode === "totp" ? "Verify" : "Verify OTP"}
+                      ariaLabel={effectiveMode === "totp" ? "Verify code" : "Verify OTP Button"}
                       disabled={verifyOtpLoading}
                       primary
                     />
@@ -199,23 +222,25 @@ const OtpPage = () => {
               </div>
             </div>
 
-            {/* Back to Sign In */}
-            <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
-              <button
-                onClick={handleResendOtp}
-                disabled={isDisabled || resendOtpLoading}
-                className={`text-sm font-medium ${isDisabled
-                  ? 'text-[#7F7F7F] cursor-not-allowed'
-                  : 'text-primary hover:text-blue-700'
-                  }`}
-              >
-                {isDisabled
-                  ? `Resend code  in ${countdown}s`
-                  : resendOtpLoading
-                    ? 'Sending...'
-                    : 'Resend OTP'}
-              </button>
-            </div>
+            {/* Resend OTP - only for email OTP (not when using TOTP); always show for forgot-password */}
+            {(source !== "sign-in" || effectiveMode === "email_otp") && (
+              <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
+                <button
+                  onClick={handleResendOtp}
+                  disabled={isDisabled || resendOtpLoading}
+                  className={`text-sm font-medium ${isDisabled
+                    ? 'text-[#7F7F7F] cursor-not-allowed'
+                    : 'text-primary hover:text-blue-700'
+                    }`}
+                >
+                  {isDisabled
+                    ? `Resend code in ${countdown}s`
+                    : resendOtpLoading
+                      ? 'Sending...'
+                      : 'Resend OTP'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Footer */}

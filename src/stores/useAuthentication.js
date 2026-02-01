@@ -20,6 +20,7 @@ const initialState = {
   newPasswordLoading: false,
   forgotPasswordLoading: false,
   forgotPasswordOtpLoading: false,
+  allowed_methods: [],
 };
 
 api.defaults.headers.common.Authorization = `Bearer ${initialState.accessToken}`;
@@ -46,12 +47,24 @@ const useAuthentication = create(
           ...state,
           signInLoading: true,
         }));
-        const { data, message } = await signIn(payload);
+        const response = await signIn(payload);
+        const { data, message } = response;
+        // When OTP/TOTP is required, API returns verify_reference + allowed_methods (no token)
+        if (data?.verify_reference && !data?.token) {
+          set((state) => ({
+            ...state,
+            verify_reference: data.verify_reference,
+            allowed_methods: data.allowed_methods || ["email_otp"],
+            signInLoading: false,
+          }));
+          return { verify_reference: data.verify_reference, allowed_methods: data.allowed_methods || ["email_otp"], message };
+        }
         set((state) => ({
           ...state,
           user: data.user,
           accessToken: data.token,
           verify_reference: data.verify_reference,
+          allowed_methods: [],
           signInLoading: false,
         }));
         return { verify_reference: data.verify_reference, message };

@@ -102,6 +102,13 @@ export const apiEndpoints = {
     GET_WEBHOOK: '/merchant/webhook',
     UPDATE_WEBHOOK: '/merchant/webhook/store',
   },
+  security: {
+    GET_2FA_STATUS: '/merchant/security/2fa',
+    SETUP_2FA: '/merchant/security/2fa/setup',
+    CONFIRM_2FA: '/merchant/security/2fa/confirm',
+    REGENERATE_RECOVERY_CODES: '/merchant/security/2fa/recovery-codes/regenerate',
+    DISABLE_2FA: '/merchant/security/2fa/disable',
+  },
   settings: {
     GET_API_CREDENTIALS: '/api-credentials',
     GET_ROLES: '/merchant/roles',

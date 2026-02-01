@@ -113,3 +113,53 @@ export async function verifyEmail(token: any) {
     throw error;
   }
 }
+
+export async function get2faStatus() {
+  try {
+    const response = await api.get(apiEndpoints.security.GET_2FA_STATUS);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function setup2fa() {
+  try {
+    const response = await api.post(apiEndpoints.security.SETUP_2FA, {
+      method: "totp",
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function confirm2fa(payload: { totp: string }) {
+  try {
+    const response = await api.post(apiEndpoints.security.CONFIRM_2FA, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function regenerateRecoveryCodes(payload: { totp: string }) {
+  try {
+    const response = await api.post(
+      apiEndpoints.security.REGENERATE_RECOVERY_CODES,
+      payload
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function disable2fa(payload: { totp: string }) {
+  try {
+    const response = await api.post(apiEndpoints.security.DISABLE_2FA, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}

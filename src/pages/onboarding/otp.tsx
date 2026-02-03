@@ -24,7 +24,6 @@ const OtpPage = () => {
   const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference, allowed_methods = [] } = useAuthentication();
 
   const canUseTotp = useMemo(() => allowed_methods.includes("totp"), [allowed_methods]);
-  const showTotpSwitch = canUseTotp;
   const [useTotp, setUseTotp] = useState(false);
   const effectiveMode = useTotp && canUseTotp ? "totp" : "email_otp";
   const pinLength = effectiveMode === "totp" ? TOTP_LENGTH : EMAIL_OTP_LENGTH;
@@ -140,7 +139,7 @@ const OtpPage = () => {
                   : <>We sent an OTP to{' '}<span className="font-medium text-primary">({userEmail})</span></>}
               </p>
 
-              {showTotpSwitch && (
+              {canUseTotp && (
                 <div className="mb-6">
                   <button
                     type="button"

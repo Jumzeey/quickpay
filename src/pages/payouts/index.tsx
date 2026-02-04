@@ -12,6 +12,7 @@ import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
 import Pagination from "@/components/pagination";
 import InitiateTransfer from "@/components/payouts/InitiateTransfer";
+import BulkPayout from "@/components/payouts/BulkPayout";
 import RaiseDispute from "@/components/payouts/RaiseDispute";
 import RequestRefund from "@/components/payouts/RequestRefund";
 import ReceiptModal from "@/components/payouts/ReceiptModal";
@@ -67,6 +68,7 @@ const PayoutHistory = () => {
     isLoading: true,
     showFilterStatus: false,
     isInitiateTransferModalOpen: false,
+    isBulkPayoutModalOpen: false,
     isRequestRefundModalOpen: false,
     isRaiseDisputeModalOpen: false,
     isMoreActionsOpen: false,
@@ -422,6 +424,12 @@ const PayoutHistory = () => {
             className="w-1/2 md:w-full"
             onClick={() => toggleModal('isInitiateTransferModalOpen')}
           />
+          <ActionButton
+            text="Bulk Payout"
+            ariaLabel="Bulk Payout button"
+            className="w-1/2 md:w-full"
+            onClick={() => toggleModal('isBulkPayoutModalOpen')}
+          />
 
           <div className="w-1/2 h-14">
             <CurrencySwitcher
@@ -596,17 +604,30 @@ const PayoutHistory = () => {
             subTitle="We couldn't find any Payout for this account"
             image="/images/dashboard/disbursement/disbursement-empty-state.svg"
           >
-            <ActionButton
-              text="Initiate Payout"
-              ariaLabel="Initiate Payout button"
-              onClick={() => toggleModal('isInitiateTransferModalOpen')}
-            />
+            <div className="flex gap-4 justify-center">
+              <ActionButton
+                text="Initiate Payout"
+                ariaLabel="Initiate Payout button"
+                onClick={() => toggleModal('isInitiateTransferModalOpen')}
+              />
+              <ActionButton
+                text="Bulk Payout"
+                ariaLabel="Bulk Payout button"
+                onClick={() => toggleModal('isBulkPayoutModalOpen')}
+              />
+            </div>
           </EmptyState>
         )}
 
         <InitiateTransfer
           isModalOpen={state.isInitiateTransferModalOpen}
           closeModal={() => toggleModal('isInitiateTransferModalOpen')}
+          fetchPayoutHistory={handleRefreshPayoutHistory}
+        />
+
+        <BulkPayout
+          isModalOpen={state.isBulkPayoutModalOpen}
+          closeModal={() => toggleModal('isBulkPayoutModalOpen')}
           fetchPayoutHistory={handleRefreshPayoutHistory}
         />
 

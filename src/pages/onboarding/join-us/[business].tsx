@@ -104,8 +104,12 @@ const RegisterPage: React.FC = () => {
       business_type: params?.business,
     },
     validationSchema: Yup.object().shape({
-      firstname: Yup.string().required("First Name is required!"),
-      lastname: Yup.string().required("Last Name is required!"),
+      firstname: Yup.string()
+        .required("First Name is required!")
+        .matches(/^[a-zA-Z\s\-']+$/, "First name can only contain letters"),
+      lastname: Yup.string()
+        .required("Last Name is required!")
+        .matches(/^[a-zA-Z\s\-']+$/, "Last name can only contain letters"),
       phone: Yup.string().required("Phone number is required!"),
       // bvn: Yup.string()
       //   .required("BVN is required!")

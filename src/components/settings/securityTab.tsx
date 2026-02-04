@@ -10,6 +10,8 @@ import {
   confirm2fa as confirm2faApi,
   regenerateRecoveryCodes as regenerateRecoveryCodesApi,
   disable2fa as disable2faApi,
+  enableEmailOtp as enableEmailOtpApi,
+  sendEmailOtpFor2fa as sendEmailOtpFor2faApi,
 } from "@/services/authentication";
 import { notifyError, notifySuccess, passwordValidation } from "@/util/utils";
 import { useCallback, useEffect, useState } from "react";
@@ -54,9 +56,12 @@ const SecurityTab = () => {
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
   const [totpModalOpen, setTotpModalOpen] = useState(false);
-  const [totpModalAction, setTotpModalAction] = useState<"disable" | "regenerate" | null>(null);
+  const [totpModalAction, setTotpModalAction] = useState<"disable" | "regenerate" | "enable_email_otp" | null>(null);
+  const [totpModalMethod, setTotpModalMethod] = useState<"totp" | "email">("totp");
   const [totpModalCode, setTotpModalCode] = useState("");
   const [totpModalLoading, setTotpModalLoading] = useState(false);
+  const [emailOtpCountdown, setEmailOtpCountdown] = useState(0);
+  const [emailOtpSending, setEmailOtpSending] = useState(false);
 
   const fetch2faStatus = useCallback(async () => {
     try {
@@ -154,22 +159,37 @@ const SecurityTab = () => {
     fetch2faStatus();
   };
 
-  const openTotpModal = (action: "disable" | "regenerate") => {
+  const openTotpModal = (action: "disable" | "regenerate" | "enable_email_otp") => {
     setTotpModalAction(action);
+    setTotpModalMethod(action === "enable_email_otp" ? "totp" : "totp");
     setTotpModalCode("");
+    setEmailOtpCountdown(0);
     setTotpModalOpen(true);
   };
 
   const closeTotpModal = () => {
     setTotpModalOpen(false);
     setTotpModalAction(null);
+    setTotpModalMethod("totp");
     setTotpModalCode("");
     setTotpModalLoading(false);
+    setEmailOtpCountdown(0);
   };
 
+  useEffect(() => {
+    if (emailOtpCountdown <= 0) return;
+    const t = setInterval(() => setEmailOtpCountdown((c) => (c <= 1 ? 0 : c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [emailOtpCountdown]);
+
   const handleTotpModalConfirm = async () => {
-    if (!totpModalCode || totpModalCode.length !== 6) {
-      notifyError("Please enter the 6-digit code from your authenticator app.");
+    const isEnableEmail = totpModalAction === "enable_email_otp";
+    const useEmail = isEnableEmail && totpModalMethod === "email";
+    const requiredLen = useEmail ? 8 : 6;
+    if (!totpModalCode || totpModalCode.length !== requiredLen) {
+      notifyError(useEmail
+        ? "Please enter the 8-digit code from your email."
+        : "Please enter the 6-digit code from your authenticator app.");
       return;
     }
     if (!totpModalAction) return;
@@ -178,6 +198,12 @@ const SecurityTab = () => {
       if (totpModalAction === "disable") {
         const response = await disable2faApi({ totp: totpModalCode });
         notifySuccess((response as { message?: string }).message ?? "Two-factor authentication disabled");
+        closeTotpModal();
+        await fetch2faStatus();
+      } else if (totpModalAction === "enable_email_otp") {
+        const payload = useEmail ? { otp: totpModalCode } : { totp: totpModalCode };
+        const response = await enableEmailOtpApi(payload);
+        notifySuccess((response as { message?: string }).message ?? "Email OTP enabled");
         closeTotpModal();
         await fetch2faStatus();
       } else {
@@ -194,6 +220,19 @@ const SecurityTab = () => {
     }
   };
 
+  const handleSendEmailOtpForModal = async () => {
+    try {
+      setEmailOtpSending(true);
+      await sendEmailOtpFor2faApi();
+      setEmailOtpCountdown(60);
+      notifySuccess("Verification code sent to your email.");
+    } catch (error: any) {
+      notifyError(error.message ?? "Failed to send code.");
+    } finally {
+      setEmailOtpSending(false);
+    }
+  };
+
   const handleDisable2fa = () => openTotpModal("disable");
   const handleRegenerateRecoveryCodes = () => openTotpModal("regenerate");
 
@@ -201,277 +240,337 @@ const SecurityTab = () => {
     <div>
       <div className="flex flex-col space-y-4">
         {/* Change Password */}
-      <div className="flex items-center border-b border-[#C4C4C452] p-4">
-        <div className="text-left gap-2">
-          <h3 className="text-base md:text-lg font-semibold text-[#090727]">Change Password</h3>
-          <p className="text-[13px] text-[#7F7F7F] font-medium">
-            We&apos;ll send a confirmation to your email address <em className="font-semibold">{user?.email}</em>
-          </p>
-        </div>
-      </div>
-
-      <div className="p-4">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-6 my-4">
-            <div className="w-full md:w-1/2">
-              <FormInput
-                label="New Password"
-                id="password"
-                type="password"
-                htmlFor="password"
-                error={errors.password?.message}
-                touched={touchedFields.password}
-                {...register("password")}
-              />
-            </div>
-
-            <div className="w-full md:w-1/2">
-              <FormInput
-                label="Confirm Password"
-                id="password_confirmation"
-                type="password"
-                htmlFor="password_confirmation"
-                error={errors.password_confirmation?.message}
-                touched={touchedFields.password_confirmation}
-                {...register("password_confirmation")}
-              />
-            </div>
-          </div>
-
-          <div className="w-[183px] mt-14">
-            <Button
-              className="w-full"
-              text={isLoading ? <Loader /> : "Update Password"}
-              ariaLabel="Update Password Button"
-              disabled={isLoading}
-              primary
-              type="submit"
-            />
-          </div>
-        </form>
-      </div>
-
-      {/* Two-Factor Authentication */}
-      <div className="border-t border-[#C4C4C452]">
         <div className="flex items-center border-b border-[#C4C4C452] p-4">
-          <div className="text-left">
-            <h3 className="text-base md:text-lg font-semibold text-[#090727]">Two-Factor Authentication</h3>
-            <p className="text-[13px] text-[#7F7F7F] font-medium mt-1">
-              Add an extra layer of security by using an authenticator app. You can scan the QR code or enter the secret manually.
+          <div className="text-left gap-2">
+            <h3 className="text-base md:text-lg font-semibold text-[#090727]">Change Password</h3>
+            <p className="text-[13px] text-[#7F7F7F] font-medium">
+              We&apos;ll send a confirmation to your email address <em className="font-semibold">{user?.email}</em>
             </p>
           </div>
         </div>
 
         <div className="p-4">
-          {twoFaStep === null && (
-            <div className="flex flex-col gap-3">
-              {twoFaStatusLoading ? (
-                <div className="h-10 w-[183px] rounded bg-[#E5E7EB] animate-pulse" aria-hidden />
-              ) : twoFaStatus?.totp_enabled ? (
-                <div className="flex flex-col items-start max-w-md">
-                  <div className="flex justify-start mb-6">
-                    <div className="flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28">
-                      <svg
-                        className="w-12 h-12 sm:w-14 sm:h-14"
-                        viewBox="0 0 64 64"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden
-                      >
-                        <path
-                          d="M32 8L12 18v10c0 12.15 7.93 23.35 20 27 12.07-3.65 20-14.85 20-27V18L32 8z"
-                          fill="#005BB0"
-                          fillOpacity="0.2"
-                          stroke="#005BB0"
-                          strokeWidth="2"
-                          strokeLinejoin="round"
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-6 my-4">
+              <div className="w-full md:w-1/2">
+                <FormInput
+                  label="New Password"
+                  id="password"
+                  type="password"
+                  htmlFor="password"
+                  error={errors.password?.message}
+                  touched={touchedFields.password}
+                  {...register("password")}
+                />
+              </div>
+
+              <div className="w-full md:w-1/2">
+                <FormInput
+                  label="Confirm Password"
+                  id="password_confirmation"
+                  type="password"
+                  htmlFor="password_confirmation"
+                  error={errors.password_confirmation?.message}
+                  touched={touchedFields.password_confirmation}
+                  {...register("password_confirmation")}
+                />
+              </div>
+            </div>
+
+            <div className="w-[183px] mt-14">
+              <Button
+                className="w-full"
+                text={isLoading ? <Loader /> : "Update Password"}
+                ariaLabel="Update Password Button"
+                disabled={isLoading}
+                primary
+                type="submit"
+              />
+            </div>
+          </form>
+        </div>
+
+        {/* Two-Factor Authentication */}
+        <div className="border-t border-[#C4C4C452]">
+          <div className="flex items-center border-b border-[#C4C4C452] p-4">
+            <div className="text-left">
+              <h3 className="text-base md:text-lg font-semibold text-[#090727]">Two-Factor Authentication</h3>
+              <p className="text-[13px] text-[#7F7F7F] font-medium mt-1">
+                Add an extra layer of security by using an authenticator app. You can scan the QR code or enter the secret manually.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4">
+            {twoFaStep === null && (
+              <div className="flex flex-col gap-3">
+                {twoFaStatusLoading ? (
+                  <div className="h-10 w-[183px] rounded bg-[#E5E7EB] animate-pulse" aria-hidden />
+                ) : twoFaStatus?.totp_enabled ? (
+                  <div className="flex flex-col items-start max-w-md">
+                    <div className="flex justify-start mb-6">
+                      <div className="flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28">
+                        <svg
+                          className="w-12 h-12 sm:w-14 sm:h-14"
+                          viewBox="0 0 64 64"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden
+                        >
+                          <path
+                            d="M32 8L12 18v10c0 12.15 7.93 23.35 20 27 12.07-3.65 20-14.85 20-27V18L32 8z"
+                            fill="#005BB0"
+                            fillOpacity="0.2"
+                            stroke="#005BB0"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M24 32l8 8 16-16"
+                            stroke="#005BB0"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <h4 className="text-base sm:text-lg font-semibold text-[#090727] text-left mb-1.5">
+                      You’re protected
+                    </h4>
+                    <p className="text-sm text-[#7F7F7F] font-medium text-left mb-6 max-w-[280px] leading-relaxed">
+                      Authenticator app (TOTP) is enabled for your account.
+                    </p>
+
+                    {/* Email OTP toggle - allow switching back to email OTP when 2FA is on */}
+                    <div className="flex items-center gap-4 mb-8 flex-wrap">
+                      <span className="text-sm font-medium text-[#090727]">Email OTP</span>
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={twoFaStatus.email_otp_enabled ?? false}
+                          onChange={(e) => {
+                            if (e.target.checked) openTotpModal("enable_email_otp");
+                          }}
+                          className="sr-only peer"
+                          aria-label="Toggle email OTP"
                         />
-                        <path
-                          d="M24 32l8 8 16-16"
-                          stroke="#005BB0"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        <div className="w-11 h-6 bg-[#E5E7EB] peer-checked:bg-[#005BB0] rounded-full peer transition-colors shrink-0" />
+                        <div className="absolute left-1 top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-sm border border-[#C4C4C452] transition-transform peer-checked:translate-x-5 pointer-events-none shrink-0" />
+                      </label>
+                      {!twoFaStatus.email_otp_enabled && (
+                        <span className="text-sm text-[#7F7F7F]">Off — turn on to use email OTP at sign-in</span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-row flex-nowrap gap-3 justify-start items-center w-full">
+                      <Button
+                        className="!w-auto min-w-[130px] sm:min-w-[140px] h-10 px-5 rounded-lg bg-[#E5E7EB] text-[#374151] hover:bg-[#D1D5DB] transition-colors font-medium"
+                        text="Disable 2FA"
+                        ariaLabel="Disable 2FA"
+                        onClick={handleDisable2fa}
+                      />
+                      {twoFaStatus.has_recovery_codes && (
+                        <Button
+                          className="!w-auto min-w-[130px] sm:min-w-[180px] h-10 px-5 rounded-lg font-medium"
+                          text="Regenerate recovery codes"
+                          ariaLabel="Regenerate recovery codes"
+                          primary
+                          onClick={handleRegenerateRecoveryCodes}
                         />
-                      </svg>
+                      )}
                     </div>
                   </div>
-                  <h4 className="text-base sm:text-lg font-semibold text-[#090727] text-left mb-1.5">
-                    You’re protected
-                  </h4>
-                  <p className="text-sm text-[#7F7F7F] font-medium text-left mb-8 max-w-[280px] leading-relaxed">
-                    Authenticator app (TOTP) is enabled for your account.
-                  </p>
-                  <div className="flex flex-row flex-nowrap gap-3 justify-start items-center w-full">
+                ) : (
+                  <div className="w-[183px]">
                     <Button
-                      className="!w-auto min-w-[130px] sm:min-w-[140px] h-10 px-5 rounded-lg bg-[#E5E7EB] text-[#374151] hover:bg-[#D1D5DB] transition-colors font-medium"
-                      text="Disable 2FA"
-                      ariaLabel="Disable 2FA"
-                      onClick={handleDisable2fa}
+                      className="w-full"
+                      text={twoFaLoading ? <Loader /> : "Set up 2FA"}
+                      ariaLabel="Set up 2FA"
+                      disabled={twoFaLoading}
+                      primary
+                      onClick={handleSetup2fa}
                     />
-                    {twoFaStatus.has_recovery_codes && (
-                      <Button
-                        className="!w-auto min-w-[130px] sm:min-w-[180px] h-10 px-5 rounded-lg font-medium"
-                        text="Regenerate recovery codes"
-                        ariaLabel="Regenerate recovery codes"
-                        primary
-                        onClick={handleRegenerateRecoveryCodes}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {twoFaStep === "setup" && twoFaSetupData && (
+              <div className="space-y-6 max-w-md">
+                <p className="text-sm text-[#7F7F7F] font-medium">
+                  Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.) or enter the secret key manually.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-6 items-start">
+                  <div className="flex-shrink-0 bg-white border border-[#C4C4C452] rounded-lg p-3">
+                    {twoFaSetupData.qr_code_inline ? (
+                      <img
+                        src={twoFaSetupData.qr_code_inline}
+                        alt="QR code for 2FA"
+                        className="w-40 h-40"
+                      />
+                    ) : (
+                      <img
+                        src={twoFaSetupData.qr_code_url}
+                        alt="QR code for 2FA"
+                        className="w-40 h-40"
                       />
                     )}
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-[#090727] mb-1">Secret key</p>
+                    <code className="block text-sm font-mono bg-[#F9FAFB] border border-[#C4C4C452] rounded px-3 py-2 text-[#090727] break-all">
+                      {twoFaSetupData.secret}
+                    </code>
+                    <p className="text-[13px] text-[#7F7F7F] font-medium mt-4 mb-2">
+                      Enter the 6-digit code from your app to confirm setup.
+                    </p>
+                    <div className="w-full min-w-0 [&>div]:!flex [&>div]:!flex-nowrap [&>div]:!gap-1 sm:[&>div]:!gap-2 [&>div]:!w-full [&_input]:!min-w-0 [&_input]:!flex-1 [&_input]:!max-w-[44px]">
+                      <PinInput
+                        key={twoFaSetupData.secret}
+                        length={6}
+                        initialValue=""
+                        type="numeric"
+                        inputMode="number"
+                        onChange={(value) => setTwoFaTotp(value)}
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          flexWrap: "nowrap",
+                          width: "100%",
+                        }}
+                        inputStyle={{
+                          width: "100%",
+                          minWidth: 0,
+                          height: "48px",
+                          border: "1.5px solid #C4C4C43D",
+                          borderRadius: "5px",
+                          fontSize: "clamp(14px, 4vw, 16px)",
+                          color: "#111827",
+                        }}
+                        inputFocusStyle={{
+                          border: "2px solid #005BB0",
+                          outline: "none",
+                        }}
+                        regexCriteria={/^[0-9]*$/}
+                      />
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                      <Button
+                        text={twoFaLoading ? <Loader /> : "Confirm"}
+                        ariaLabel="Confirm 2FA"
+                        disabled={twoFaLoading || twoFaTotp.length !== 6}
+                        primary
+                        onClick={handleConfirm2fa}
+                      />
+                      <Button
+                        text="Cancel"
+                        ariaLabel="Cancel 2FA setup"
+                        onClick={reset2faFlow}
+                      />
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <div className="w-[183px]">
+              </div>
+            )}
+
+            {twoFaStep === "recovery" && recoveryCodes.length > 0 && (
+              <div className="space-y-4 max-w-md">
+                <p className="text-sm text-[#7F7F7F] font-medium">
+                  Save these recovery codes in a secure place. Each code can only be used once if you lose access to your authenticator app.
+                </p>
+                <div className="bg-[#F9FAFB] border border-[#C4C4C452] rounded-lg p-4">
+                  <ul className="grid grid-cols-2 gap-2 font-mono text-sm text-[#090727]">
+                    {recoveryCodes.map((code, i) => (
+                      <li key={i}>{code}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex gap-3">
                   <Button
-                    className="w-full"
-                    text={twoFaLoading ? <Loader /> : "Set up 2FA"}
-                    ariaLabel="Set up 2FA"
-                    disabled={twoFaLoading}
+                    text="Copy codes"
+                    ariaLabel="Copy recovery codes"
                     primary
-                    onClick={handleSetup2fa}
+                    onClick={copyRecoveryCodes}
+                  />
+                  <Button
+                    className="bg-[#E5E7EB] text-[#374151] hover:bg-[#D1D5DB]"
+                    text="Done"
+                    ariaLabel="Done"
+                    onClick={reset2faFlow}
                   />
                 </div>
-              )}
-            </div>
-          )}
-
-          {twoFaStep === "setup" && twoFaSetupData && (
-            <div className="space-y-6 max-w-md">
-              <p className="text-sm text-[#7F7F7F] font-medium">
-                Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.) or enter the secret key manually.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-6 items-start">
-                <div className="flex-shrink-0 bg-white border border-[#C4C4C452] rounded-lg p-3">
-                  {twoFaSetupData.qr_code_inline ? (
-                    <img
-                      src={twoFaSetupData.qr_code_inline}
-                      alt="QR code for 2FA"
-                      className="w-40 h-40"
-                    />
-                  ) : (
-                    <img
-                      src={twoFaSetupData.qr_code_url}
-                      alt="QR code for 2FA"
-                      className="w-40 h-40"
-                    />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[#090727] mb-1">Secret key</p>
-                  <code className="block text-sm font-mono bg-[#F9FAFB] border border-[#C4C4C452] rounded px-3 py-2 text-[#090727] break-all">
-                    {twoFaSetupData.secret}
-                  </code>
-                  <p className="text-[13px] text-[#7F7F7F] font-medium mt-4 mb-2">
-                    Enter the 6-digit code from your app to confirm setup.
-                  </p>
-                  <div className="w-full min-w-0 [&>div]:!flex [&>div]:!flex-nowrap [&>div]:!gap-1 sm:[&>div]:!gap-2 [&>div]:!w-full [&_input]:!min-w-0 [&_input]:!flex-1 [&_input]:!max-w-[44px]">
-                    <PinInput
-                      key={twoFaSetupData.secret}
-                      length={6}
-                      initialValue=""
-                      type="numeric"
-                      inputMode="number"
-                      onChange={(value) => setTwoFaTotp(value)}
-                      style={{
-                        display: "flex",
-                        gap: "8px",
-                        flexWrap: "nowrap",
-                        width: "100%",
-                      }}
-                      inputStyle={{
-                        width: "100%",
-                        minWidth: 0,
-                        height: "48px",
-                        border: "1.5px solid #C4C4C43D",
-                        borderRadius: "5px",
-                        fontSize: "clamp(14px, 4vw, 16px)",
-                        color: "#111827",
-                      }}
-                      inputFocusStyle={{
-                        border: "2px solid #005BB0",
-                        outline: "none",
-                      }}
-                      regexCriteria={/^[0-9]*$/}
-                    />
-                  </div>
-                  <div className="flex gap-3 mt-4">
-                    <Button
-                      text={twoFaLoading ? <Loader /> : "Confirm"}
-                      ariaLabel="Confirm 2FA"
-                      disabled={twoFaLoading || twoFaTotp.length !== 6}
-                      primary
-                      onClick={handleConfirm2fa}
-                    />
-                    <Button
-                      text="Cancel"
-                      ariaLabel="Cancel 2FA setup"
-                      onClick={reset2faFlow}
-                    />
-                  </div>
-                </div>
               </div>
-            </div>
-          )}
-
-          {twoFaStep === "recovery" && recoveryCodes.length > 0 && (
-            <div className="space-y-4 max-w-md">
-              <p className="text-sm text-[#7F7F7F] font-medium">
-                Save these recovery codes in a secure place. Each code can only be used once if you lose access to your authenticator app.
-              </p>
-              <div className="bg-[#F9FAFB] border border-[#C4C4C452] rounded-lg p-4">
-                <ul className="grid grid-cols-2 gap-2 font-mono text-sm text-[#090727]">
-                  {recoveryCodes.map((code, i) => (
-                    <li key={i}>{code}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  text="Copy codes"
-                  ariaLabel="Copy recovery codes"
-                  primary
-                  onClick={copyRecoveryCodes}
-                />
-                <Button
-                  className="bg-[#E5E7EB] text-[#374151] hover:bg-[#D1D5DB]"
-                  text="Done"
-                  ariaLabel="Done"
-                  onClick={reset2faFlow}
-                />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
       </div>
 
       {/* TOTP confirmation modal - outside space-y-4 to avoid extra top margin */}
       <Modal
         isOpen={totpModalOpen}
-        title="Enter your authenticator code"
+        title={
+          totpModalAction === "enable_email_otp"
+            ? "Enable email OTP"
+            : "Enter your authenticator code"
+        }
         onClose={closeTotpModal}
       >
         <div className="space-y-6 pt-2">
+          {totpModalAction === "enable_email_otp" && (
+            <div className="flex gap-2 p-1 bg-[#F3F4F6] dark:bg-gray-700 rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => { setTotpModalMethod("totp"); setTotpModalCode(""); }}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${totpModalMethod === "totp" ? "bg-white dark:bg-gray-600 text-[#090727] dark:text-white shadow-sm" : "text-[#7F7F7F] dark:text-gray-300 hover:text-[#090727]"}`}
+              >
+                Authenticator
+              </button>
+              <button
+                type="button"
+                onClick={() => { setTotpModalMethod("email"); setTotpModalCode(""); }}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${totpModalMethod === "email" ? "bg-white dark:bg-gray-600 text-[#090727] dark:text-white shadow-sm" : "text-[#7F7F7F] dark:text-gray-300 hover:text-[#090727]"}`}
+              >
+                Email
+              </button>
+            </div>
+          )}
           <p className="text-sm text-[#7F7F7F] font-medium">
-            Enter the 6-digit code from your authenticator app to continue.
+            {totpModalAction === "enable_email_otp"
+              ? totpModalMethod === "email"
+                ? "We’ll send an 8-digit code to your email. Enter it below to confirm. Your sign-in verification will change to email OTP."
+                : "Enter your 6-digit authenticator code to confirm. Your sign-in verification will change to email OTP—you’ll receive codes by email instead of your app."
+              : "Enter the 6-digit code from your authenticator app to continue."}
           </p>
-          <div className="w-full min-w-[280px] [&>div]:!flex [&>div]:!flex-nowrap [&>div]:!gap-2 [&_input]:!w-[44px] [&_input]:!min-w-[44px] [&_input]:!flex-none">
+          {totpModalAction === "enable_email_otp" && totpModalMethod === "email" && (
+            <div className="flex flex-col gap-2">
+              <Button
+                className="!w-auto"
+                text={emailOtpSending ? <Loader /> : emailOtpCountdown > 0 ? `Resend code in ${emailOtpCountdown}s` : "Send code to email"}
+                ariaLabel="Send code to email"
+                disabled={emailOtpSending || emailOtpCountdown > 0}
+                primary={emailOtpCountdown === 0 && !emailOtpSending}
+                onClick={handleSendEmailOtpForModal}
+              />
+            </div>
+          )}
+          <div className={`w-full min-w-[280px] [&>div]:!flex [&>div]:!flex-nowrap [&>div]:!gap-2 [&_input]:!flex-none ${totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? "[&_input]:!w-[36px] [&_input]:!min-w-[36px]" : "[&_input]:!w-[44px] [&_input]:!min-w-[44px]"}`}>
             <PinInput
-              key={totpModalOpen ? "open" : "closed"}
-              length={6}
+              key={totpModalOpen && totpModalAction === "enable_email_otp" ? `open-${totpModalMethod}` : totpModalOpen ? "open" : "closed"}
+              length={totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? 8 : 6}
               initialValue=""
               type="numeric"
               inputMode="number"
               onChange={(value) => setTotpModalCode(value)}
               style={{
                 display: "flex",
-                gap: "8px",
+                gap: "6px",
                 flexWrap: "nowrap",
                 width: "100%",
               }}
               inputStyle={{
-                width: "44px",
-                minWidth: "44px",
+                width: totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? "36px" : "44px",
+                minWidth: totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? "36px" : "44px",
                 height: "48px",
                 border: "1.5px solid #C4C4C43D",
                 borderRadius: "5px",
@@ -497,7 +596,10 @@ const SecurityTab = () => {
               text={totpModalLoading ? <Loader /> : "Confirm"}
               ariaLabel="Confirm"
               primary
-              disabled={totpModalLoading || totpModalCode.length !== 6}
+              disabled={
+                totpModalLoading ||
+                (totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? totpModalCode.length !== 8 : totpModalCode.length !== 6)
+              }
               onClick={handleTotpModalConfirm}
             />
           </div>

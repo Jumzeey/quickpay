@@ -108,6 +108,8 @@ export const apiEndpoints = {
     CONFIRM_2FA: '/merchant/security/2fa/confirm',
     REGENERATE_RECOVERY_CODES: '/merchant/security/2fa/recovery-codes/regenerate',
     DISABLE_2FA: '/merchant/security/2fa/disable',
+    ENABLE_EMAIL_OTP: '/merchant/security/2fa/email/enable',
+    SEND_EMAIL_OTP_FOR_2FA: '/merchant/security/2fa/email/send-otp',
   },
   settings: {
     GET_API_CREDENTIALS: '/api-credentials',

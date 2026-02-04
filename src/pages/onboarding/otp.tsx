@@ -24,11 +24,9 @@ const OtpPage = () => {
   const [isDisabled, setIsDisabled] = useState(true);
   const [countdown, setCountdown] = useState(60);
   const { source } = router.query;
-  const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference /* , allowed_methods = [] */ } = useAuthentication();
+  const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference, allowed_methods = [] } = useAuthentication();
 
-  // OTP type check disabled for now – email OTP is default regardless of allowed_methods
-  // const isTotp = allowed_methods.includes("totp");
-  const isTotp = false;
+  const isTotp = allowed_methods.includes("totp");
   const pinLength = isTotp ? TOTP_LENGTH : EMAIL_OTP_LENGTH;
 
   const userEmail = typeof window !== "undefined" ? localStorage?.getItem("user-email") : "";

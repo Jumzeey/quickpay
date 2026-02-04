@@ -7,7 +7,7 @@ import { notifyError, notifySuccess } from "@/util/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PinInput from "react-pin-input";
 
 const EMAIL_OTP_LENGTH = 8;
@@ -23,11 +23,8 @@ const OtpPage = () => {
   const { source } = router.query;
   const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference, allowed_methods = [] } = useAuthentication();
 
-  const canUseTotp = useMemo(() => allowed_methods.includes("totp"), [allowed_methods]);
-  const showTotpSwitch = canUseTotp;
-  const [useTotp, setUseTotp] = useState(false);
-  const effectiveMode = useTotp && canUseTotp ? "totp" : "email_otp";
-  const pinLength = effectiveMode === "totp" ? TOTP_LENGTH : EMAIL_OTP_LENGTH;
+  const isTotp = allowed_methods.includes("totp");
+  const pinLength = isTotp ? TOTP_LENGTH : EMAIL_OTP_LENGTH;
 
   const userEmail = typeof window !== "undefined" ? localStorage?.getItem("user-email") : "";
 
@@ -67,16 +64,13 @@ const OtpPage = () => {
   const handleSubmit = async (code?: string) => {
     const codeValue = code || otp;
     if (!codeValue || codeValue.length !== pinLength) {
-      notifyError(`Please enter a valid ${pinLength}-digit ${effectiveMode === "totp" ? "code" : "OTP"}`);
+      notifyError(`Please enter a valid ${pinLength}-digit ${isTotp ? "code" : "OTP"}`);
       return;
     }
 
     setVerifyOtpLoading(true);
     try {
-      const payload =
-        effectiveMode === "totp"
-          ? { verify_reference, totp: codeValue }
-          : { verify_reference, otp: codeValue };
+      const payload = { verify_reference, otp: codeValue };
 
       if (source === "sign-in") {
         await verifyOtp(payload);
@@ -129,36 +123,21 @@ const OtpPage = () => {
               </div>
             </div>
 
-            {/* OTP Form */}
+            {/* OTP Form - method determined by allowed_methods only (email_otp = 8 digits, totp = 6 digits) */}
             <div className="px-8 pb-8 mt-12">
               <h2 className="text-lg font-extrabold text-[#184078] mb-2">
-                {effectiveMode === "totp" ? "Authenticator code" : "Verify OTP"}
+                {isTotp ? "Authenticator code" : "Verify OTP"}
               </h2>
               <p className="text-sm text-[#00000080] font-medium mb-4">
-                {effectiveMode === "totp"
+                {isTotp
                   ? "Enter the 6-digit code from your authenticator app."
                   : <>We sent an OTP to{' '}<span className="font-medium text-primary">({userEmail})</span></>}
               </p>
 
-              {showTotpSwitch && (
-                <div className="mb-6">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUseTotp((prev) => !prev);
-                      setOtp("");
-                    }}
-                    className="text-sm font-medium text-primary hover:text-blue-700"
-                  >
-                    {useTotp ? "Use email OTP instead" : "Use authenticator app instead"}
-                  </button>
-                </div>
-              )}
-
               <div className="space-y-6">
                 <div className="flex flex-col items-center">
                   <PinInput
-                    key={effectiveMode}
+                    key={isTotp ? "totp" : "email_otp"}
                     length={pinLength}
                     initialValue=""
                     type="numeric"
@@ -202,8 +181,8 @@ const OtpPage = () => {
                     <Button
                       onClick={() => handleSubmit()}
                       className="w-full py-2.5 text-sm font-medium rounded"
-                      text={verifyOtpLoading ? "Verifying..." : effectiveMode === "totp" ? "Verify" : "Verify OTP"}
-                      ariaLabel={effectiveMode === "totp" ? "Verify code" : "Verify OTP Button"}
+                      text={verifyOtpLoading ? "Verifying..." : isTotp ? "Verify" : "Verify OTP"}
+                      ariaLabel={isTotp ? "Verify code" : "Verify OTP Button"}
                       disabled={verifyOtpLoading}
                       primary
                     />
@@ -222,8 +201,8 @@ const OtpPage = () => {
               </div>
             </div>
 
-            {/* Resend OTP - only for email OTP (not when using TOTP); always show for forgot-password */}
-            {(source !== "sign-in" || effectiveMode === "email_otp") && (
+            {/* Resend OTP - only for email OTP; always show for forgot-password */}
+            {(source !== "sign-in" || !isTotp) && (
               <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
                 <button
                   onClick={handleResendOtp}

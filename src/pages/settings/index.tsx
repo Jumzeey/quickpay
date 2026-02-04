@@ -83,10 +83,10 @@ const Settings = () => {
         description="Secure your account, manage your business profile, configure API keys, and control user access—all in one place."
       />
 
-      <div className="mt-8 flex flex-col lg:flex-row gap-8 lg:gap-10">
-        {/* Vertical sidebar */}
+      <div className="mt-8 flex flex-col lg:flex-row gap-8 lg:gap-10 h-[calc(100vh-10rem)] min-h-[480px]">
+        {/* Vertical sidebar - fixed, no scroll */}
         <nav
-          className="flex-shrink-0 w-full lg:w-56 xl:w-64"
+          className="flex-shrink-0 w-full lg:w-56 xl:w-64 lg:self-start lg:sticky lg:top-8"
           aria-label="Settings sections"
         >
           <ul className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 lg:border-r border-[#E5E7EB] lg:pr-6">
@@ -118,9 +118,9 @@ const Settings = () => {
           </ul>
         </nav>
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0">
-          <div className="mb-6">
+        {/* Main content - heading fixed, only this area scrolls */}
+        <main className="flex-1 min-w-0 min-h-0 flex flex-col">
+          <div className="flex-shrink-0 mb-6">
             <h2 className="text-base font-semibold text-[#090727]">
               {activeSection.title}
             </h2>
@@ -130,7 +130,7 @@ const Settings = () => {
               </p>
             )}
           </div>
-          <div className="border border-[#C4C4C452] rounded-lg overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto border border-[#C4C4C452] rounded-lg">
             {activeSection.id === "manage-users" || activeSection.id === "ip-whitelist" ? (
               <div className="p-4">
                 <ActiveContent />

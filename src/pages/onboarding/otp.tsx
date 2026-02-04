@@ -12,18 +12,23 @@ import PinInput from "react-pin-input";
 
 const EMAIL_OTP_LENGTH = 8;
 const TOTP_LENGTH = 6;
+const RECOVERY_CODE_LENGTH = 10;
 
 const OtpPage = () => {
   const router = useRouter();
   const [otp, setOtp] = useState("");
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [resendOtpLoading, setResendOtpLoading] = useState(false);
   const [verifyOtpLoading, setVerifyOtpLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [countdown, setCountdown] = useState(60);
   const { source } = router.query;
-  const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference, allowed_methods = [] } = useAuthentication();
+  const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference /* , allowed_methods = [] */ } = useAuthentication();
 
-  const isTotp = allowed_methods.includes("totp");
+  // OTP type check disabled for now – email OTP is default regardless of allowed_methods
+  // const isTotp = allowed_methods.includes("totp");
+  const isTotp = false;
   const pinLength = isTotp ? TOTP_LENGTH : EMAIL_OTP_LENGTH;
 
   const userEmail = typeof window !== "undefined" ? localStorage?.getItem("user-email") : "";
@@ -62,15 +67,23 @@ const OtpPage = () => {
   }, [startCountdown]);
 
   const handleSubmit = async (code?: string) => {
-    const codeValue = code || otp;
-    if (!codeValue || codeValue.length !== pinLength) {
+    const codeValue = code ?? (useRecoveryCode ? recoveryCode : otp);
+    const isRecovery = isTotp && useRecoveryCode;
+
+    if (isRecovery) {
+      const trimmed = codeValue.trim().toUpperCase();
+      if (trimmed.length !== RECOVERY_CODE_LENGTH || !/^[A-Z0-9]+$/.test(trimmed)) {
+        notifyError("Please enter a valid 10-character recovery code.");
+        return;
+      }
+    } else if (!codeValue || codeValue.length !== pinLength) {
       notifyError(`Please enter a valid ${pinLength}-digit ${isTotp ? "code" : "OTP"}`);
       return;
     }
 
     setVerifyOtpLoading(true);
     try {
-      const payload = { verify_reference, otp: codeValue };
+      const payload = { verify_reference, otp: isRecovery ? codeValue.trim().toUpperCase() : codeValue };
 
       if (source === "sign-in") {
         await verifyOtp(payload);
@@ -86,6 +99,8 @@ const OtpPage = () => {
       setVerifyOtpLoading(false);
     }
   };
+
+  const handleSubmitRecoveryCode = () => handleSubmit();
 
   const handleResendOtp = async () => {
     if (isDisabled) return;
@@ -123,81 +138,140 @@ const OtpPage = () => {
               </div>
             </div>
 
-            {/* OTP Form - method determined by allowed_methods only (email_otp = 8 digits, totp = 6 digits) */}
+            {/* OTP Form - method determined by allowed_methods (email_otp = 8 digits, totp = 6 digits or backup code) */}
             <div className="px-8 pb-8 mt-12">
               <h2 className="text-lg font-extrabold text-[#184078] mb-2">
-                {isTotp ? "Authenticator code" : "Verify OTP"}
+                {isTotp
+                  ? useRecoveryCode
+                    ? "Enter recovery code"
+                    : "Authenticator code"
+                  : "Verify OTP"}
               </h2>
               <p className="text-sm text-[#00000080] font-medium mb-4">
                 {isTotp
-                  ? "Enter the 6-digit code from your authenticator app."
+                  ? useRecoveryCode
+                    ? "Enter one of the 10-character recovery codes you saved when you set up 2FA."
+                    : "Enter the 6-digit code from your authenticator app."
                   : <>We sent an OTP to{' '}<span className="font-medium text-primary">({userEmail})</span></>}
               </p>
 
+              {isTotp && (
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseRecoveryCode((prev) => !prev);
+                      setOtp("");
+                      setRecoveryCode("");
+                    }}
+                    className="text-sm font-medium text-primary hover:text-blue-700"
+                  >
+                    {useRecoveryCode ? "Use authenticator code" : "Use a backup code"}
+                  </button>
+                </div>
+              )}
+
               <div className="space-y-6">
-                <div className="flex flex-col items-center">
-                  <PinInput
-                    key={isTotp ? "totp" : "email_otp"}
-                    length={pinLength}
-                    initialValue=""
-                    type="numeric"
-                    inputMode="number"
-                    focus
-                    onChange={(value) => {
-                      setOtp(value);
-                      if (value.length === pinLength) {
-                        setTimeout(() => handleSubmit(value), 100);
-                      }
-                    }}
-                    onComplete={(value) => {
-                      setOtp(value);
-                      setTimeout(() => handleSubmit(value), 100);
-                    }}
-                    style={{
-                      display: 'flex',
-                      gap: '8px',
-                      flexWrap: 'wrap',
-                      justifyContent: 'center'
-                    }}
-                    inputStyle={{
-                      width: pinLength === 6 ? '44px' : '49.33px',
-                      height: '50px',
-                      border: '1.5px solid #C4C4C43D',
-                      borderRadius: '5px',
-                      fontSize: '16px',
-                      color: '#111827',
-                    }}
-                    inputFocusStyle={{
-                      border: '2px solid #2563EB',
-                      outline: 'none'
-                    }}
-                    autoSelect={true}
-                    regexCriteria={/^[0-9]*$/}
-                  />
-                </div>
-
-                <div className="pt-5 flex items-center justify-between">
-                  <div className="w-1/2">
-                    <Button
-                      onClick={() => handleSubmit()}
-                      className="w-full py-2.5 text-sm font-medium rounded"
-                      text={verifyOtpLoading ? "Verifying..." : isTotp ? "Verify" : "Verify OTP"}
-                      ariaLabel={isTotp ? "Verify code" : "Verify OTP Button"}
-                      disabled={verifyOtpLoading}
-                      primary
-                    />
-                  </div>
-
-                  <p className="text-sm text-[#090727] font-medium underline cursor-pointer">
-                    Back to{' '}
-                    <Link
-                      href="/onboarding/sign-in"
-                      className="hover:text-blue-700"
-                    >
-                      Sign in
-                    </Link>
-                  </p>
-                </div>
+                {isTotp && useRecoveryCode ? (
+                  <>
+                    <div className="flex flex-col">
+                      <label htmlFor="recovery-code" className="sr-only">
+                        Recovery code
+                      </label>
+                      <input
+                        id="recovery-code"
+                        type="text"
+                        inputMode="text"
+                        autoComplete="one-time-code"
+                        maxLength={RECOVERY_CODE_LENGTH}
+                        value={recoveryCode}
+                        onChange={(e) => setRecoveryCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                        onKeyDown={(e) => e.key === "Enter" && handleSubmitRecoveryCode()}
+                        placeholder="e.g. WO1EBITAQJ"
+                        className="w-full max-w-[280px] mx-auto h-12 px-4 border border-[#C4C4C43D] rounded-lg text-center font-mono text-lg tracking-widest text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                    <div className="pt-5 flex items-center justify-between">
+                      <div className="w-1/2">
+                        <Button
+                          onClick={handleSubmitRecoveryCode}
+                          className="w-full py-2.5 text-sm font-medium rounded"
+                          text={verifyOtpLoading ? "Verifying..." : "Verify"}
+                          ariaLabel="Verify recovery code"
+                          disabled={verifyOtpLoading || recoveryCode.length !== RECOVERY_CODE_LENGTH}
+                          primary
+                        />
+                      </div>
+                      <p className="text-sm text-[#090727] font-medium underline cursor-pointer">
+                        Back to{' '}
+                        <Link href="/onboarding/sign-in" className="hover:text-blue-700">
+                          Sign in
+                        </Link>
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <PinInput
+                        key={isTotp ? "totp" : "email_otp"}
+                        length={pinLength}
+                        initialValue=""
+                        type="numeric"
+                        inputMode="number"
+                        focus
+                        onChange={(value) => {
+                          setOtp(value);
+                          if (value.length === pinLength) {
+                            setTimeout(() => handleSubmit(value), 100);
+                          }
+                        }}
+                        onComplete={(value) => {
+                          setOtp(value);
+                          setTimeout(() => handleSubmit(value), 100);
+                        }}
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          flexWrap: 'wrap',
+                          justifyContent: 'center'
+                        }}
+                        inputStyle={{
+                          width: pinLength === 6 ? '44px' : '49.33px',
+                          height: '50px',
+                          border: '1.5px solid #C4C4C43D',
+                          borderRadius: '5px',
+                          fontSize: '16px',
+                          color: '#111827',
+                        }}
+                        inputFocusStyle={{
+                          border: '2px solid #2563EB',
+                          outline: 'none'
+                        }}
+                        autoSelect={true}
+                        regexCriteria={/^[0-9]*$/}
+                      />
+                    </div>
+                    <div className="pt-5 flex items-center justify-between">
+                      <div className="w-1/2">
+                        <Button
+                          onClick={() => handleSubmit()}
+                          className="w-full py-2.5 text-sm font-medium rounded"
+                          text={verifyOtpLoading ? "Verifying..." : isTotp ? "Verify" : "Verify OTP"}
+                          ariaLabel={isTotp ? "Verify code" : "Verify OTP Button"}
+                          disabled={verifyOtpLoading}
+                          primary
+                        />
+                      </div>
+                      <p className="text-sm text-[#090727] font-medium underline cursor-pointer">
+                        Back to{' '}
+                        <Link href="/onboarding/sign-in" className="hover:text-blue-700">
+                          Sign in
+                        </Link>
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

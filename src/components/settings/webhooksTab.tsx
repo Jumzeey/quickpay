@@ -1,5 +1,9 @@
 import Webhook from "@/pages/your-business/webhook";
 
+/**
+ * Settings Webhooks tab. Uses the same GET /merchant/webhook API and Webhook component
+ * as Your Business > Webhooks, so data is consistent in both places.
+ */
 const WebhooksTab = () => {
     return (
         <div className="flex flex-col">

@@ -21,6 +21,7 @@ export interface InterbankPayoutPayload {
   bank_code: string;
   account_number: string;
   account_name: string;
+  otp?: string;
 }
 
 export interface Payout {
@@ -277,6 +278,7 @@ export interface BulkPayoutPayload {
   file: File;
   currency: string;
   mapping_headers: Record<string, string>;
+  otp?: string;
 }
 
 export interface BulkPayoutResponse {
@@ -293,6 +295,9 @@ export async function initiateBulkPayout(payload: BulkPayoutPayload): Promise<Bu
     Object.entries(payload.mapping_headers).forEach(([key, value]) => {
       formData.append(`mapping_headers[${key}]`, value);
     });
+    if (payload.otp) {
+      formData.append('otp', payload.otp);
+    }
 
     const response = await api.post(
       `${apiEndpoints.payouts.INITIATE_BULK_PAYOUT}`,
@@ -310,15 +315,28 @@ export async function initiateBulkPayout(payload: BulkPayoutPayload): Promise<Bu
   }
 }
 
+export async function getBulkPayoutStatus(bulk_payout_id: number): Promise<BulkPayoutResponse> {
+  try {
+    const response = await api.get(
+      `${apiEndpoints.payouts.GET_BULK_PAYOUT_STATUS}/${bulk_payout_id}`
+    );
+    // @ts-ignore
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export interface CompleteBulkPayoutPayload {
+  bulk_payout_id: number;
   otp: string;
 }
 
 export async function completeBulkPayout(payload: CompleteBulkPayoutPayload): Promise<BulkPayoutResponse> {
   try {
     const response = await api.post(
-      `${apiEndpoints.payouts.COMPLETE_BULK_PAYOUT}`,
-      payload
+      `${apiEndpoints.payouts.COMPLETE_BULK_PAYOUT}/${payload.bulk_payout_id}`,
+      { otp: payload.otp }
     );
     // @ts-ignore
     return response;

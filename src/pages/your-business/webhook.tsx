@@ -2,17 +2,22 @@ import Button from "@/components/button";
 import CardSkeleton from "@/components/card-skeleton";
 import FormInput from "@/components/FormInput";
 import Loader from "@/components/loader";
+import Modal from "@/components/modal";
 import { Switch } from "@/components/ui/switch";
-import { useAsyncFetch } from "@/hooks/useAsyncFetch";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { useApiResponse } from "@/hooks/useApiResponse";
 import {
   generateWebhookCredentials,
   updateWebhookCredentials,
 } from "@/services/webhook";
-import { useState, useMemo } from "react";
+import useAuthentication from "@/stores/useAuthentication";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Controller, useWatch } from "react-hook-form";
+import PinInput from "react-pin-input";
 import * as Yup from "yup";
+
+const TOTP_LENGTH = 6;
+const RECOVERY_CODE_LENGTH = 10;
 
 interface FormValues {
   webhook_url: string;
@@ -22,8 +27,15 @@ interface FormValues {
 const Webhook = () => {
   const { handleError, handleSuccess } = useApiResponse();
   const [isLoading, setIsLoading] = useState(false);
+  const { totp_enabled } = useAuthentication();
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [recoveryCodeValue, setRecoveryCodeValue] = useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const [pendingValues, setPendingValues] = useState<FormValues | null>(null);
+  const [otpModalLoading, setOtpModalLoading] = useState(false);
 
-  // Create validation schema that conditionally requires URL only when toggle is on
+  // OTP is collected in the modal, not in the form — do not add otp to schema or Submit would never run
   const validationSchema = useMemo(() => {
     return Yup.object().shape({
       webhook_url: Yup.string()
@@ -41,13 +53,13 @@ const Webhook = () => {
       enable_webhook: Yup.boolean(),
     });
   }, []);
- 
+
   const {
     control,
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isValid },
+    formState: { errors, isValid, isDirty },
   } = useFormValidation<FormValues>(validationSchema, {
     defaultValues: {
       webhook_url: "",
@@ -73,52 +85,100 @@ const Webhook = () => {
   // - Enabled when toggle is on (user can type when toggle is on)
   const isInputDisabled = !enableWebhook;
 
-  const { data, loading: webhookLoading } = useAsyncFetch({
-    key: 'webhook-credentials',
-    fn: async () => {
-      const response = await generateWebhookCredentials();
-      return response || {};
-    },
-    options: {
-      onSuccess: (data) => {
-        const cleanUrl = data.webhook_url?.replace(/^https?:\/\//, "");
+  const saveButtonLabel = webhookUrl?.trim() ? "Update" : "Save";
+
+  const [webhookLoading, setWebhookLoading] = useState(true);
+  const hasFetchedRef = useRef(false);
+
+  // Single fetch when the tab is visited (Your Business or Settings); ref prevents duplicate calls
+  useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
+    setWebhookLoading(true);
+    generateWebhookCredentials()
+      .then((data) => {
+        const cleanUrl = data.webhook_url?.replace(/^https?:\/\//, "") ?? "";
         reset({
-          webhook_url: cleanUrl || "",
-          enable_webhook: data.enable_webhook || false,
+          webhook_url: cleanUrl,
+          enable_webhook: data.enable_webhook ?? false,
         });
-      },
-      onError: (error) => handleError(error),
-    }
-  });
+      })
+      .catch((error) => handleError(error))
+      .finally(() => setWebhookLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: fetch once on mount only
+  }, []);
+
+  const submitWithPayload = async (values: FormValues, otp?: string) => {
+    const webhookUrl = values.enable_webhook && values.webhook_url?.trim()
+      ? `https://${values.webhook_url.trim()}`
+      : "";
+    const payload: { webhook_url: string; enable_webhook: boolean; otp?: string } = {
+      webhook_url: webhookUrl,
+      enable_webhook: values.enable_webhook,
+    };
+    if (otp?.trim()) payload.otp = otp.trim();
+    const response = await updateWebhookCredentials(payload);
+    handleSuccess({ message: "Webhook details updated" });
+    const cleanUrl = response.webhook_url?.replace(/^https?:\/\//, "") || "";
+    reset({
+      webhook_url: cleanUrl,
+      enable_webhook: response.enable_webhook || false,
+    });
+    return response;
+  };
 
   const onSubmit = async (values: FormValues) => {
+    if (totp_enabled) {
+      setPendingValues(values);
+      setOtpValue("");
+      setRecoveryCodeValue("");
+      setUseRecoveryCode(false);
+      setOtpModalOpen(true);
+      return;
+    }
     setIsLoading(true);
     try {
-      // If toggle is off, send empty string for webhook_url
-      // If toggle is on, send the URL with https:// prefix
-      const webhookUrl = values.enable_webhook && values.webhook_url?.trim() 
-        ? `https://${values.webhook_url.trim()}` 
-        : "";
-      
-      const payload = {
-        webhook_url: webhookUrl,
-        enable_webhook: values.enable_webhook,
-      };
-
-      const response = await updateWebhookCredentials(payload);
-      handleSuccess({ message: "Webhook details updated" });
-
-      // Update form with response data
-      const cleanUrl = response.webhook_url?.replace(/^https?:\/\//, "") || "";
-      reset({
-        webhook_url: cleanUrl,
-        enable_webhook: response.enable_webhook || false,
-      });
+      await submitWithPayload(values);
     } catch (error: any) {
       handleError(error, "Failed to update webhook details!");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getOtpCodeForSubmit = (): string | null => {
+    if (useRecoveryCode) {
+      const trimmed = recoveryCodeValue.trim().toUpperCase();
+      return trimmed.length === RECOVERY_CODE_LENGTH && /^[A-Z0-9]+$/.test(trimmed) ? trimmed : null;
+    }
+    return otpValue.length === TOTP_LENGTH ? otpValue : null;
+  };
+
+  const onOtpModalConfirm = async () => {
+    const code = getOtpCodeForSubmit();
+    if (!pendingValues || !code) return;
+    setOtpModalLoading(true);
+    try {
+      await submitWithPayload(pendingValues, code);
+      setOtpModalOpen(false);
+      setPendingValues(null);
+      setOtpValue("");
+      setRecoveryCodeValue("");
+      setUseRecoveryCode(false);
+    } catch (error: any) {
+      handleError(error, "Failed to update webhook details!");
+    } finally {
+      setOtpModalLoading(false);
+    }
+  };
+
+  const closeOtpModal = () => {
+    setOtpModalOpen(false);
+    setPendingValues(null);
+    setOtpValue("");
+    setRecoveryCodeValue("");
+    setUseRecoveryCode(false);
   };
 
   return (
@@ -130,7 +190,7 @@ const Webhook = () => {
           <p className="text-[#7F7F7F] font-medium text-sm mb-4">
             Setup your custom Webhook URL
           </p>
-            
+
           <Controller
             name="webhook_url"
             control={control}
@@ -152,12 +212,12 @@ const Webhook = () => {
                       render={({ field }) => (
                         <Switch
                           checked={field.value}
+                          disabled={field.value}
                           onCheckedChange={(checked) => {
+                            // Once webhook is enabled, it cannot be disabled—only updated
+                            if (field.value && !checked) return;
                             field.onChange(checked);
-                            // Clear URL when toggle is turned off
-                            if (!checked) {
-                              setValue("webhook_url", "");
-                            }
+                            if (!checked) setValue("webhook_url", "");
                           }}
                         />
                       )}
@@ -175,14 +235,120 @@ const Webhook = () => {
           <div className="pt-2">
             <Button
               type="submit"
-              text={isLoading ? <Loader /> : "Save"}
+              text={isLoading ? <Loader /> : saveButtonLabel}
               className="w-full sm:w-[28%]"
-              ariaLabel="Set Webhook"
-              disabled={isLoading}
+              ariaLabel={saveButtonLabel === "Update" ? "Update webhook" : "Set webhook"}
+              disabled={isLoading || !enableWebhook || !isDirty || (enableWebhook && !webhookUrl?.trim())}
               primary
             />
           </div>
         </form>
+      )}
+
+      {totp_enabled && (
+        <Modal
+          isOpen={otpModalOpen}
+          title={useRecoveryCode ? "Enter recovery code" : "Enter authenticator code"}
+          onClose={closeOtpModal}
+        >
+          <div className="space-y-4 px-4 pb-4">
+            <p className="text-sm text-[#7F7F7F]">
+              {useRecoveryCode
+                ? "Enter one of the 10-character recovery codes you saved when you set up 2FA."
+                : "Enter the 6-digit code from your authenticator app to save webhook settings."}
+            </p>
+            <div className="mb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseRecoveryCode((prev) => !prev);
+                  setOtpValue("");
+                  setRecoveryCodeValue("");
+                }}
+                className="text-sm font-medium text-primary hover:text-blue-700"
+              >
+                {useRecoveryCode ? "Use authenticator code" : "Use a backup code"}
+              </button>
+            </div>
+            {useRecoveryCode ? (
+              <div className="flex flex-col">
+                <label htmlFor="webhook-recovery-code" className="text-sm font-medium text-[#111827] mb-1">
+                  Recovery code
+                </label>
+                <input
+                  id="webhook-recovery-code"
+                  type="text"
+                  inputMode="text"
+                  autoComplete="one-time-code"
+                  maxLength={RECOVERY_CODE_LENGTH}
+                  value={recoveryCodeValue}
+                  onChange={(e) =>
+                    setRecoveryCodeValue(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && onOtpModalConfirm()}
+                  placeholder="e.g. WO1EBITAQJ"
+                  className="w-full h-11 px-3 border border-[#C4C4C43D] rounded-lg text-center font-mono text-base tracking-widest text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-[#111827] mb-2 block">
+                  Authenticator code
+                </label>
+                <div className="flex justify-center">
+                  <PinInput
+                    length={TOTP_LENGTH}
+                    initialValue=""
+                    type="numeric"
+                    inputMode="number"
+                    focus
+                    onChange={(value) => setOtpValue(value)}
+                    onComplete={(value) => setOtpValue(value)}
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                      justifyContent: "center",
+                    }}
+                    inputStyle={{
+                      width: "44px",
+                      height: "50px",
+                      border: "1.5px solid #C4C4C43D",
+                      borderRadius: "5px",
+                      fontSize: "16px",
+                      color: "#111827",
+                    }}
+                    inputFocusStyle={{
+                      border: "2px solid #2563EB",
+                      outline: "none",
+                    }}
+                    autoSelect
+                    regexCriteria={/^[0-9]*$/}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3 justify-end pt-4">
+              <Button
+                type="button"
+                text="Cancel"
+                ariaLabel="Cancel"
+                onClick={closeOtpModal}
+                className="min-w-[100px]"
+                plain
+              />
+              <Button
+                type="button"
+                text={otpModalLoading ? <Loader /> : (pendingValues?.webhook_url?.trim() ? "Update" : "Save")}
+                ariaLabel={pendingValues?.webhook_url?.trim() ? "Update webhook" : "Save webhook"}
+                primary
+                disabled={otpModalLoading || !getOtpCodeForSubmit()}
+                onClick={onOtpModalConfirm}
+                className="min-w-[100px]"
+              />
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

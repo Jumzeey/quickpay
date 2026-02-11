@@ -9,14 +9,13 @@ import {
   setup2fa as setup2faApi,
   confirm2fa as confirm2faApi,
   regenerateRecoveryCodes as regenerateRecoveryCodesApi,
-  disable2fa as disable2faApi,
-  enableEmailOtp as enableEmailOtpApi,
   sendEmailOtpFor2fa as sendEmailOtpFor2faApi,
 } from "@/services/authentication";
 import { notifyError, notifySuccess, passwordValidation } from "@/util/utils";
 import { useCallback, useEffect, useState } from "react";
 import * as Yup from "yup";
 import PinInput from "react-pin-input";
+import { Info } from "lucide-react";
 
 type FormValues = {
   password: string;
@@ -56,12 +55,14 @@ const SecurityTab = () => {
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
   const [totpModalOpen, setTotpModalOpen] = useState(false);
-  const [totpModalAction, setTotpModalAction] = useState<"disable" | "regenerate" | "enable_email_otp" | null>(null);
-  const [totpModalMethod, setTotpModalMethod] = useState<"totp" | "email">("totp");
+  const [totpModalAction, setTotpModalAction] = useState<"regenerate" | null>(null);
   const [totpModalCode, setTotpModalCode] = useState("");
   const [totpModalLoading, setTotpModalLoading] = useState(false);
-  const [emailOtpCountdown, setEmailOtpCountdown] = useState(0);
-  const [emailOtpSending, setEmailOtpSending] = useState(false);
+  const totpModalMethod = "totp" as const;
+  const setTotpModalMethod = () => { };
+  const emailOtpCountdown = 0;
+  const emailOtpSending = false;
+  const handleSendEmailOtpForModal = () => { };
 
   const fetch2faStatus = useCallback(async () => {
     try {
@@ -159,60 +160,32 @@ const SecurityTab = () => {
     fetch2faStatus();
   };
 
-  const openTotpModal = (action: "disable" | "regenerate" | "enable_email_otp") => {
+  const openTotpModal = (action: "regenerate") => {
     setTotpModalAction(action);
-    setTotpModalMethod(action === "enable_email_otp" ? "totp" : "totp");
     setTotpModalCode("");
-    setEmailOtpCountdown(0);
     setTotpModalOpen(true);
   };
 
   const closeTotpModal = () => {
     setTotpModalOpen(false);
     setTotpModalAction(null);
-    setTotpModalMethod("totp");
     setTotpModalCode("");
     setTotpModalLoading(false);
-    setEmailOtpCountdown(0);
   };
 
-  useEffect(() => {
-    if (emailOtpCountdown <= 0) return;
-    const t = setInterval(() => setEmailOtpCountdown((c) => (c <= 1 ? 0 : c - 1)), 1000);
-    return () => clearInterval(t);
-  }, [emailOtpCountdown]);
-
   const handleTotpModalConfirm = async () => {
-    const isEnableEmail = totpModalAction === "enable_email_otp";
-    const useEmail = isEnableEmail && totpModalMethod === "email";
-    const requiredLen = useEmail ? 8 : 6;
-    if (!totpModalCode || totpModalCode.length !== requiredLen) {
-      notifyError(useEmail
-        ? "Please enter the 8-digit code from your email."
-        : "Please enter the 6-digit code from your authenticator app.");
+    if (!totpModalCode || totpModalCode.length !== 6) {
+      notifyError("Please enter the 6-digit code from your authenticator app.");
       return;
     }
-    if (!totpModalAction) return;
+    if (totpModalAction !== "regenerate") return;
     try {
       setTotpModalLoading(true);
-      if (totpModalAction === "disable") {
-        const response = await disable2faApi({ totp: totpModalCode });
-        notifySuccess((response as { message?: string }).message ?? "Two-factor authentication disabled");
-        closeTotpModal();
-        await fetch2faStatus();
-      } else if (totpModalAction === "enable_email_otp") {
-        const payload = useEmail ? { otp: totpModalCode } : { totp: totpModalCode };
-        const response = await enableEmailOtpApi(payload);
-        notifySuccess((response as { message?: string }).message ?? "Email OTP enabled");
-        closeTotpModal();
-        await fetch2faStatus();
-      } else {
-        const response = await regenerateRecoveryCodesApi({ totp: totpModalCode });
-        setRecoveryCodes((response as { data?: { recovery_codes?: string[] } }).data?.recovery_codes || []);
-        setTwoFaStep("recovery");
-        notifySuccess((response as { message?: string }).message ?? "Recovery codes regenerated");
-        closeTotpModal();
-      }
+      const response = await regenerateRecoveryCodesApi({ totp: totpModalCode });
+      setRecoveryCodes((response as { data?: { recovery_codes?: string[] } }).data?.recovery_codes || []);
+      setTwoFaStep("recovery");
+      notifySuccess((response as { message?: string }).message ?? "Recovery codes regenerated");
+      closeTotpModal();
     } catch (error: any) {
       notifyError(error.message);
     } finally {
@@ -220,20 +193,6 @@ const SecurityTab = () => {
     }
   };
 
-  const handleSendEmailOtpForModal = async () => {
-    try {
-      setEmailOtpSending(true);
-      await sendEmailOtpFor2faApi();
-      setEmailOtpCountdown(60);
-      notifySuccess("Verification code sent to your email.");
-    } catch (error: any) {
-      notifyError(error.message ?? "Failed to send code.");
-    } finally {
-      setEmailOtpSending(false);
-    }
-  };
-
-  const handleDisable2fa = () => openTotpModal("disable");
   const handleRegenerateRecoveryCodes = () => openTotpModal("regenerate");
 
   return (
@@ -293,8 +252,25 @@ const SecurityTab = () => {
         {/* Two-Factor Authentication */}
         <div className="border-t border-[#C4C4C452]">
           <div className="flex items-center border-b border-[#C4C4C452] p-4">
-            <div className="text-left">
-              <h3 className="text-base md:text-lg font-semibold text-[#090727]">Two-Factor Authentication</h3>
+            <div className="text-left flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base md:text-lg font-semibold text-[#090727]">Two-Factor Authentication</h3>
+                <span
+                  className="group relative flex-shrink-0 inline-flex cursor-help text-[#7F7F7F] hover:text-[#090727] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005BB0] rounded-full"
+                  title="Once you enable 2FA, you won't be able to switch back to email-based authentication."
+                  tabIndex={0}
+                  aria-describedby="2fa-info-tooltip"
+                >
+                  <Info className="w-4 h-4" aria-hidden />
+                  <span
+                    id="2fa-info-tooltip"
+                    role="tooltip"
+                    className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 w-64 text-left text-xs font-medium text-[#090727] bg-[#F3F4F6] border border-[#E5E7EB] rounded-lg shadow-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-visible:opacity-100 group-focus-visible:visible transition-opacity z-10"
+                  >
+                    Once you enable 2FA, you won&apos;t be able to switch back to email-based authentication.
+                  </span>
+                </span>
+              </div>
               <p className="text-[13px] text-[#7F7F7F] font-medium mt-1">
                 Add an extra layer of security by using an authenticator app. You can scan the QR code or enter the secret manually.
               </p>
@@ -342,35 +318,12 @@ const SecurityTab = () => {
                       Authenticator app (TOTP) is enabled for your account.
                     </p>
 
-                    {/* Email OTP toggle - allow switching back to email OTP when 2FA is on */}
-                    <div className="flex items-center gap-4 mb-8 flex-wrap">
-                      <span className="text-sm font-medium text-[#090727]">Email OTP</span>
-                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={twoFaStatus.email_otp_enabled ?? false}
-                          onChange={(e) => {
-                            if (e.target.checked) openTotpModal("enable_email_otp");
-                          }}
-                          className="sr-only peer"
-                          aria-label="Toggle email OTP"
-                        />
-                        <div className="w-11 h-6 bg-[#E5E7EB] peer-checked:bg-[#005BB0] rounded-full peer transition-colors shrink-0" />
-                        <div className="absolute left-1 top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-sm border border-[#C4C4C452] transition-transform peer-checked:translate-x-5 pointer-events-none shrink-0" />
-                      </label>
-                      {!twoFaStatus.email_otp_enabled && (
-                        <span className="text-sm text-[#7F7F7F]">Off — turn on to use email OTP at sign-in</span>
-                      )}
-                    </div>
+                    <p className="text-sm text-[#7F7F7F] font-medium text-left mb-6 max-w-[320px] leading-relaxed">
+                      Google Authenticator cannot be disabled. Please contact support if you need to reset your 2FA.
+                    </p>
 
-                    <div className="flex flex-row flex-nowrap gap-3 justify-start items-center w-full">
-                      <Button
-                        className="!w-auto min-w-[130px] sm:min-w-[140px] h-10 px-5 rounded-lg bg-[#E5E7EB] text-[#374151] hover:bg-[#D1D5DB] transition-colors font-medium"
-                        text="Disable 2FA"
-                        ariaLabel="Disable 2FA"
-                        onClick={handleDisable2fa}
-                      />
-                      {twoFaStatus.has_recovery_codes && (
+                    {twoFaStatus.has_recovery_codes && (
+                      <div className="flex flex-row flex-nowrap gap-3 justify-start items-center w-full">
                         <Button
                           className="!w-auto min-w-[130px] sm:min-w-[180px] h-10 px-5 rounded-lg font-medium"
                           text="Regenerate recovery codes"
@@ -378,8 +331,8 @@ const SecurityTab = () => {
                           primary
                           onClick={handleRegenerateRecoveryCodes}
                         />
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="w-[183px]">
@@ -509,55 +462,21 @@ const SecurityTab = () => {
       {/* TOTP confirmation modal - outside space-y-4 to avoid extra top margin */}
       <Modal
         isOpen={totpModalOpen}
-        title={
-          totpModalAction === "enable_email_otp"
-            ? "Enable email OTP"
-            : "Enter your authenticator code"
-        }
+        title="Enter your authenticator code"
         onClose={closeTotpModal}
       >
         <div className="space-y-6 pt-2">
-          {totpModalAction === "enable_email_otp" && (
-            <div className="flex gap-2 p-1 bg-[#F3F4F6] dark:bg-gray-700 rounded-lg w-fit">
-              <button
-                type="button"
-                onClick={() => { setTotpModalMethod("totp"); setTotpModalCode(""); }}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${totpModalMethod === "totp" ? "bg-white dark:bg-gray-600 text-[#090727] dark:text-white shadow-sm" : "text-[#7F7F7F] dark:text-gray-300 hover:text-[#090727]"}`}
-              >
-                Authenticator
-              </button>
-              <button
-                type="button"
-                onClick={() => { setTotpModalMethod("email"); setTotpModalCode(""); }}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${totpModalMethod === "email" ? "bg-white dark:bg-gray-600 text-[#090727] dark:text-white shadow-sm" : "text-[#7F7F7F] dark:text-gray-300 hover:text-[#090727]"}`}
-              >
-                Email
-              </button>
-            </div>
-          )}
           <p className="text-sm text-[#7F7F7F] font-medium">
-            {totpModalAction === "enable_email_otp"
-              ? totpModalMethod === "email"
+            {(totpModalAction as string | null) === "enable_email_otp"
+              ? (totpModalMethod as string) === "email"
                 ? "We’ll send an 8-digit code to your email. Enter it below to confirm. Your sign-in verification will change to email OTP."
                 : "Enter your 6-digit authenticator code to confirm. Your sign-in verification will change to email OTP—you’ll receive codes by email instead of your app."
               : "Enter the 6-digit code from your authenticator app to continue."}
           </p>
-          {totpModalAction === "enable_email_otp" && totpModalMethod === "email" && (
-            <div className="flex flex-col gap-2">
-              <Button
-                className="!w-auto"
-                text={emailOtpSending ? <Loader /> : emailOtpCountdown > 0 ? `Resend code in ${emailOtpCountdown}s` : "Send code to email"}
-                ariaLabel="Send code to email"
-                disabled={emailOtpSending || emailOtpCountdown > 0}
-                primary={emailOtpCountdown === 0 && !emailOtpSending}
-                onClick={handleSendEmailOtpForModal}
-              />
-            </div>
-          )}
-          <div className={`w-full min-w-[280px] [&>div]:!flex [&>div]:!flex-nowrap [&>div]:!gap-2 [&_input]:!flex-none ${totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? "[&_input]:!w-[36px] [&_input]:!min-w-[36px]" : "[&_input]:!w-[44px] [&_input]:!min-w-[44px]"}`}>
+          <div className="w-full min-w-[280px] [&>div]:!flex [&>div]:!flex-nowrap [&>div]:!gap-2 [&_input]:!flex-none [&_input]:!w-[44px] [&_input]:!min-w-[44px]">
             <PinInput
-              key={totpModalOpen && totpModalAction === "enable_email_otp" ? `open-${totpModalMethod}` : totpModalOpen ? "open" : "closed"}
-              length={totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? 8 : 6}
+              key={totpModalOpen ? "open" : "closed"}
+              length={6}
               initialValue=""
               type="numeric"
               inputMode="number"
@@ -569,8 +488,8 @@ const SecurityTab = () => {
                 width: "100%",
               }}
               inputStyle={{
-                width: totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? "36px" : "44px",
-                minWidth: totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? "36px" : "44px",
+                width: "44px",
+                minWidth: "44px",
                 height: "48px",
                 border: "1.5px solid #C4C4C43D",
                 borderRadius: "5px",
@@ -596,10 +515,7 @@ const SecurityTab = () => {
               text={totpModalLoading ? <Loader /> : "Confirm"}
               ariaLabel="Confirm"
               primary
-              disabled={
-                totpModalLoading ||
-                (totpModalAction === "enable_email_otp" && totpModalMethod === "email" ? totpModalCode.length !== 8 : totpModalCode.length !== 6)
-              }
+              disabled={totpModalLoading || totpModalCode.length !== 6}
               onClick={handleTotpModalConfirm}
             />
           </div>

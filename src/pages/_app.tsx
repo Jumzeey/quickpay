@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
 });
 
 export default function App({ Component, pageProps }: AppProps) {
-  const { user } = useAuthentication() || {};
+  const { user, fetch2faStatus } = useAuthentication() || {};
   const [tracker, setTracker] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
   const [shouldLogout, setShouldLogout] = useState(true);
@@ -103,6 +103,13 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Fetch 2FA status when user is logged in so totp_enabled is available for sensitive actions
+  useEffect(() => {
+    if (user && typeof fetch2faStatus === "function") {
+      fetch2faStatus();
+    }
+  }, [user, fetch2faStatus]);
 
   useEffect(() => {
     const isAuthenticated = getToken();

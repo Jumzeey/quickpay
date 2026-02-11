@@ -91,6 +91,7 @@ export const apiEndpoints = {
     ADD_PAYOUT: '/merchant/disbursements/interbank',
     VERIFY_PAYOUT_OTP: '/merchant/disbursements/interbank/complete',
     INITIATE_BULK_PAYOUT: '/merchant/disbursements/interbank/bulk',
+    GET_BULK_PAYOUT_STATUS: '/merchant/disbursements/interbank/bulk',
     COMPLETE_BULK_PAYOUT: '/merchant/disbursements/interbank/bulk/complete',
     REQUERY_PAYOUT: '/merchant/disbursements/interbank/requery',
     EXPORT_PAYOUT_HISTORY_TRANSACTIONS: '/merchant/disbursements',
@@ -107,8 +108,6 @@ export const apiEndpoints = {
     SETUP_2FA: '/merchant/security/2fa/setup',
     CONFIRM_2FA: '/merchant/security/2fa/confirm',
     REGENERATE_RECOVERY_CODES: '/merchant/security/2fa/recovery-codes/regenerate',
-    DISABLE_2FA: '/merchant/security/2fa/disable',
-    ENABLE_EMAIL_OTP: '/merchant/security/2fa/email/enable',
     SEND_EMAIL_OTP_FOR_2FA: '/merchant/security/2fa/email/send-otp',
   },
   settings: {

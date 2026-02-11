@@ -3,9 +3,10 @@ import FormSelect from "@/components/FormSelect";
 import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
-import { initiateBulkPayout, completeBulkPayout } from "@/services/payout";
+import { initiateBulkPayout, completeBulkPayout, getBulkPayoutStatus } from "@/services/payout";
+import useAuthentication from "@/stores/useAuthentication";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
-import { notifyError, notifySuccess } from "@/util/utils";
+import { formatBalance, notifyError, notifySuccess } from "@/util/utils";
 import { extractFileHeaders, BULK_PAYOUT_MAPPING_KEYS, buildMappingHeaders, getFilePreview, BulkPayoutMappingKey } from "@/util/fileHeaders";
 import Icon from "@/components/icon";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -27,6 +28,9 @@ interface BulkPayoutFormValues {
 }
 
 const CODE_LENGTH = 6;
+const TOTP_LENGTH = 6;
+const RECOVERY_CODE_LENGTH = 10;
+const EMAIL_OTP_LENGTH = 8;
 
 const BulkPayout: React.FC<BulkPayoutProps> = ({
     isModalOpen,
@@ -50,9 +54,21 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
     const [previewRows, setPreviewRows] = useState<Record<string, string>[]>([]);
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+    const [completeOtpValue, setCompleteOtpValue] = useState("");
+    const [completeUseRecoveryCode, setCompleteUseRecoveryCode] = useState(false);
+    const [completeRecoveryCodeValue, setCompleteRecoveryCodeValue] = useState("");
+    const [bulkPayoutId, setBulkPayoutId] = useState<number | null>(null);
+    const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verification_completed' | 'failed' | null>(null);
+    const [bulkPayoutDetails, setBulkPayoutDetails] = useState<{ total: number; currency: string } | null>(null);
+    const [verificationFailure, setVerificationFailure] = useState<{
+        reason: string;
+        failedRows: Array<{ account_name: string; account_number: string; bank_name?: string; amount?: string; failure_reason: string }>;
+    } | null>(null);
     const mappingDropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { activeCurrencies, fetchActiveCurrencies } = useCurrency();
+    const { totp_enabled } = useAuthentication();
 
     // Generate currency options from active currencies, excluding USD
     const currencyOptions = useMemo(() => {
@@ -114,16 +130,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 }),
             otp: Yup.string()
                 .when([], {
-                    is: () => currentStep === 1,
+                    is: () => currentStep === 1 && !totp_enabled,
                     then: (schema) => schema
                         .required("OTP is required")
-                        .length(CODE_LENGTH, `OTP must be ${CODE_LENGTH} digits`),
+                        .length(EMAIL_OTP_LENGTH, `OTP must be ${EMAIL_OTP_LENGTH} digits`),
                     otherwise: (schema) => schema.nullable(),
                 }),
         };
 
         return Yup.object().shape(baseSchema);
-    }, [currentStep]);
+    }, [currentStep, totp_enabled]);
 
     const {
         control,
@@ -140,6 +156,15 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         },
         mode: 'onChange',
     });
+
+    // When main modal opens (e.g. user opens bulk payout again), close any previously open child modal
+    const prevModalOpenRef = useRef(isModalOpen);
+    useEffect(() => {
+        if (isModalOpen && !prevModalOpenRef.current) {
+            setShowConfirmationModal(false);
+        }
+        prevModalOpenRef.current = isModalOpen;
+    }, [isModalOpen]);
 
     // Fetch active currencies on mount
     useEffect(() => {
@@ -276,24 +301,46 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [openMappingKey]);
 
+    const getCompleteStepCode = (): string | null => {
+        if (completeUseRecoveryCode) {
+            const trimmed = completeRecoveryCodeValue.trim().toUpperCase();
+            return trimmed.length === RECOVERY_CODE_LENGTH && /^[A-Z0-9]+$/.test(trimmed) ? trimmed : null;
+        }
+        return completeOtpValue.length === TOTP_LENGTH ? completeOtpValue : null;
+    };
+
     const onSubmit = async (values: BulkPayoutFormValues) => {
-        // Handle OTP verification step
+        // Handle OTP verification step (complete bulk payout). Same API for 2FA or email OTP.
         if (currentStep === 1) {
+            const code = totp_enabled ? getCompleteStepCode() : values.otp;
+            if (!code) {
+                if (totp_enabled) {
+                    notifyError(completeUseRecoveryCode ? "Enter a valid 10-character recovery code" : "Enter the 6-digit authenticator code");
+                } else {
+                    notifyError(`Enter the ${EMAIL_OTP_LENGTH}-digit code sent to your email`);
+                }
+                return;
+            }
+            if (bulkPayoutId == null) {
+                notifyError("Bulk payout session expired. Please start again.");
+                return;
+            }
             setIsSubmitting(true);
             try {
                 const response = await completeBulkPayout({
-                    otp: values.otp,
+                    bulk_payout_id: bulkPayoutId,
+                    otp: code,
                 });
 
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
-                    handleClose();
                     await fetchPayoutHistory();
                 }
             } catch (error: any) {
                 notifyError(error?.message || "Failed to complete bulk payout");
             } finally {
                 setIsSubmitting(false);
+                handleClose();
             }
             return;
         }
@@ -329,6 +376,10 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             notifyError("Please select a file");
             return;
         }
+        await doInitiateBulkPayout(file, currency);
+    };
+
+    const doInitiateBulkPayout = async (file: File, currency: string) => {
         const mappingHeaders = buildMappingHeaders(headerMapping);
         setIsLoading(true);
         try {
@@ -338,6 +389,11 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 mapping_headers: mappingHeaders,
             });
             if (response?.status || response?.message) {
+                const id = response?.data?.bulk_payout_id ?? null;
+                if (id != null) {
+                    setBulkPayoutId(id);
+                    setVerificationStatus('pending');
+                }
                 notifySuccess(response?.message || "Bulk payout initiated. Please enter OTP to complete.");
                 setShowConfirmationModal(false);
                 setCurrentStep(1);
@@ -348,6 +404,70 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             setIsLoading(false);
         }
     };
+
+    // Poll bulk payout status until verification_completed or failed, then show OTP or failure
+    useEffect(() => {
+        if (currentStep !== 1 || bulkPayoutId == null || verificationStatus === 'verification_completed' || verificationStatus === 'failed') return;
+
+        const pollInterval = 2000;
+        const maxAttempts = 30;
+        let attempts = 0;
+        let cancelled = false;
+
+        const poll = async () => {
+            if (cancelled || attempts >= maxAttempts) return;
+            try {
+                const res = await getBulkPayoutStatus(bulkPayoutId);
+                if (cancelled) return;
+                const bulkPayout = res?.data?.bulk_payout;
+                const status = bulkPayout?.status;
+                const transactions = res?.data?.transactions;
+                const total = transactions?.total ?? 0;
+                const currency = bulkPayout?.currency ?? watch("currency") ?? "NGN";
+
+                if (status === 'verification_completed') {
+                    setVerificationStatus('verification_completed');
+                    setBulkPayoutDetails({ total, currency });
+                    return;
+                }
+                if (status === 'failed') {
+                    const reason = bulkPayout?.reason ?? "Verification failed.";
+                    const rows = transactions?.data ?? [];
+                    const failedRows = rows
+                        .filter((r: { failure_reason?: string }) => r?.failure_reason)
+                        .map((r: { account_name?: string; account_number?: string; bank_name?: string; amount?: string; failure_reason?: string }) => ({
+                            account_name: r.account_name ?? "",
+                            account_number: r.account_number ?? "",
+                            bank_name: r.bank_name,
+                            amount: r.amount,
+                            failure_reason: r.failure_reason ?? "",
+                        }));
+                    setVerificationStatus('failed');
+                    setVerificationFailure({ reason, failedRows });
+                    notifyError(reason);
+                    return;
+                }
+            } catch {
+                if (cancelled) return;
+            }
+            attempts += 1;
+            if (attempts < maxAttempts) {
+                pollTimeoutRef.current = setTimeout(poll, pollInterval);
+            } else {
+                notifyError("Verification is taking longer than expected. Please check your payout history.");
+            }
+        };
+
+        pollTimeoutRef.current = setTimeout(poll, 500);
+
+        return () => {
+            cancelled = true;
+            if (pollTimeoutRef.current) {
+                clearTimeout(pollTimeoutRef.current);
+                pollTimeoutRef.current = null;
+            }
+        };
+    }, [currentStep, bulkPayoutId, verificationStatus, watch]);
 
     const handleClose = () => {
         reset();
@@ -362,78 +482,273 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         setShowConfirmationModal(false);
         setPreviewRows([]);
         setCurrentStep(0);
+        setBulkPayoutId(null);
+        setVerificationStatus(null);
+        setBulkPayoutDetails(null);
+        setVerificationFailure(null);
+        setCompleteOtpValue("");
+        setCompleteRecoveryCodeValue("");
+        setCompleteUseRecoveryCode(false);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
         closeModal();
     };
 
-    const renderOtpVerificationStep = () => (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div className="space-y-4">
-                <h3 className="text-center text-lg font-medium">Enter Verification Code</h3>
-                <p className="text-center text-gray-500 text-sm">
-                    Please enter the {CODE_LENGTH}-digit code sent to you
-                </p>
+    const handleCompleteStepSubmit = async () => {
+        if (totp_enabled) {
+            const code = getCompleteStepCode();
+            if (!code) return;
+            if (bulkPayoutId == null) {
+                notifyError("Bulk payout session expired. Please start again.");
+                return;
+            }
+            setIsSubmitting(true);
+            try {
+                // Same API verifies OTP for both 2FA (TOTP/recovery) and email OTP
+                const response = await completeBulkPayout({ bulk_payout_id: bulkPayoutId, otp: code });
+                if (response?.status || response?.message) {
+                    notifySuccess(response?.message || 'Bulk payout completed successfully!');
+                    await fetchPayoutHistory();
+                }
+            } catch (error: any) {
+                notifyError(error?.message || "Failed to complete bulk payout");
+            } finally {
+                setIsSubmitting(false);
+                handleClose();
+            }
+        } else {
+            handleSubmit(onSubmit)();
+        }
+    };
 
-                <Controller
-                    name="otp"
-                    control={control}
-                    render={({ field }) => (
-                        <div className="space-y-2 flex items-center justify-center">
-                            <PinInput
-                                length={CODE_LENGTH}
-                                initialValue=""
-                                focus
-                                onChange={(value) => {
-                                    field.onChange(value);
-                                    if (value.length === CODE_LENGTH) {
-                                        setTimeout(() => {
-                                            field.onChange(value);
-                                            handleSubmit(onSubmit)();
-                                        }, 100);
-                                    }
-                                }}
-                                onComplete={(value) => {
-                                    field.onChange(value);
-                                    setTimeout(() => {
-                                        handleSubmit(onSubmit)();
-                                    }, 100);
-                                }}
-                                type="numeric"
-                                inputMode="number"
-                                style={{ padding: '10px' }}
-                                inputStyle={{
-                                    borderColor: errors.otp?.message ? 'red' : '#e2e8f0',
-                                    borderRadius: '8px',
-                                    margin: '0 4px',
-                                }}
-                                inputFocusStyle={{ borderColor: '#2563eb' }}
-                                autoSelect={true}
-                                regexCriteria={/^[0-9]*$/}
-                            />
-                            {errors.otp?.message && (
-                                <p className="text-red-500 text-xs">
-                                    {errors.otp?.message}
-                                </p>
-                            )}
+    const renderOtpVerificationStep = () => {
+        if (verificationStatus === 'failed' && verificationFailure) {
+            return (
+                <div className="space-y-5 py-6">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="rounded-full bg-red-100 p-3">
+                            <Icon name="red-cross" className="h-8 w-8 text-red-600" />
                         </div>
-                    )}
-                />
-            </div>
+                        <h3 className="text-center text-lg font-medium text-gray-800">
+                            Verification failed
+                        </h3>
+                        <p className="text-center text-gray-600 text-sm max-w-md">
+                            {verificationFailure.reason}
+                        </p>
+                        {verificationFailure.failedRows.length > 0 && (
+                            <div className="w-full max-h-48 overflow-auto rounded-lg border border-gray-200 bg-gray-50">
+                                <table className="w-full text-sm">
+                                    <thead className="sticky top-0 bg-gray-100 border-b border-gray-200">
+                                        <tr>
+                                            <th className="text-left py-2 px-3 font-medium text-gray-700">Account</th>
+                                            <th className="text-left py-2 px-3 font-medium text-gray-700 hidden sm:table-cell">Bank</th>
+                                            <th className="text-left py-2 px-3 font-medium text-gray-700">Reason</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {verificationFailure.failedRows.map((row, i) => (
+                                            <tr key={i} className="border-b border-gray-100 last:border-0">
+                                                <td className="py-2 px-3 text-gray-800">{row.account_name} ({row.account_number})</td>
+                                                <td className="py-2 px-3 text-gray-600 hidden sm:table-cell">{row.bank_name ?? "—"}</td>
+                                                <td className="py-2 px-3 text-red-600">{row.failure_reason}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        <Button
+                            className="openSansLight text-white text-lg p-2 rounded w-52"
+                            text="Start over"
+                            ariaLabel="Start over"
+                            primary
+                            type="button"
+                            onClick={handleClose}
+                        />
+                    </div>
+                </div>
+            );
+        }
 
-            <div className="flex justify-center mt-8">
-                <Button
-                    className="openSansLight text-white text-lg p-2 rounded w-52"
-                    text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
-                    ariaLabel="Complete Bulk Payout"
-                    disabled={isSubmitting}
-                    primary
-                    type="submit"
-                />
-            </div>
-        </form>
-    );
+        if (verificationStatus !== 'verification_completed') {
+            return (
+                <div className="space-y-5 py-8">
+                    <div className="flex flex-col items-center justify-center gap-5">
+                        <div className="flex items-center justify-center">
+                            <Icon name="loader" className="animate-spin h-10 w-10 text-primary" />
+                        </div>
+                        <div className="text-center space-y-1">
+                            <h3 className="text-lg font-medium text-gray-800">
+                                Verifying your bulk payout
+                            </h3>
+                            <p className="text-gray-500 text-sm max-w-sm">
+                                We’re verifying the accounts in your file. This usually takes a few seconds.
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                                You’ll be asked to enter a verification code when ready.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (totp_enabled) {
+            return (
+                <div className="space-y-5">
+                    {bulkPayoutDetails && (
+                        <p className="text-sm text-gray-600 text-center">
+                            {bulkPayoutDetails.total} recipient{bulkPayoutDetails.total !== 1 ? 's' : ''} verified. Enter your code to complete.
+                        </p>
+                    )}
+                    <div className="space-y-4">
+                        <h3 className="text-center text-lg font-medium">
+                            {completeUseRecoveryCode ? "Enter recovery code" : "Enter authenticator code"}
+                        </h3>
+                        <p className="text-center text-gray-500 text-sm">
+                            {completeUseRecoveryCode
+                                ? "Enter one of the 10-character recovery codes you saved when you set up 2FA."
+                                : "Enter the 6-digit code from your authenticator app to complete the bulk payout."}
+                        </p>
+                        <div className="mb-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCompleteUseRecoveryCode((prev: boolean) => !prev);
+                                    setCompleteOtpValue("");
+                                    setCompleteRecoveryCodeValue("");
+                                }}
+                                className="text-sm font-medium text-primary hover:text-blue-700"
+                            >
+                                {completeUseRecoveryCode ? "Use authenticator code" : "Use a backup code"}
+                            </button>
+                        </div>
+                        {completeUseRecoveryCode ? (
+                            <div className="flex flex-col">
+                                <label htmlFor="complete-recovery-code" className="text-sm font-medium text-[#111827] mb-1">
+                                    Recovery code
+                                </label>
+                                <input
+                                    id="complete-recovery-code"
+                                    type="text"
+                                    inputMode="text"
+                                    autoComplete="one-time-code"
+                                    maxLength={RECOVERY_CODE_LENGTH}
+                                    value={completeRecoveryCodeValue}
+                                    onChange={(e) =>
+                                        setCompleteRecoveryCodeValue(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                                    }
+                                    onKeyDown={(e) => e.key === "Enter" && handleCompleteStepSubmit()}
+                                    placeholder="e.g. WO1EBITAQJ"
+                                    className="w-full h-11 px-3 border border-[#C4C4C43D] rounded-lg text-center font-mono text-base tracking-widest text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                                />
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center">
+                                <label className="text-sm font-medium text-[#111827] mb-2 block">Authenticator code</label>
+                                <PinInput
+                                    length={TOTP_LENGTH}
+                                    initialValue=""
+                                    type="numeric"
+                                    inputMode="number"
+                                    focus
+                                    onChange={(value) => setCompleteOtpValue(value)}
+                                    onComplete={(value) => setCompleteOtpValue(value)}
+                                    style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}
+                                    inputStyle={{
+                                        width: "44px",
+                                        height: "50px",
+                                        border: "1.5px solid #C4C4C43D",
+                                        borderRadius: "5px",
+                                        fontSize: "16px",
+                                        color: "#111827",
+                                    }}
+                                    inputFocusStyle={{ border: "2px solid #2563EB", outline: "none" }}
+                                    autoSelect
+                                    regexCriteria={/^[0-9]*$/}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex justify-center mt-8">
+                        <Button
+                            className="openSansLight text-white text-lg p-2 rounded w-52"
+                            text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
+                            ariaLabel="Complete Bulk Payout"
+                            disabled={isSubmitting || !getCompleteStepCode()}
+                            primary
+                            type="button"
+                            onClick={handleCompleteStepSubmit}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                {bulkPayoutDetails && (
+                    <p className="text-sm text-gray-600 text-center">
+                        {bulkPayoutDetails.total} recipient{bulkPayoutDetails.total !== 1 ? 's' : ''} verified. Enter the code sent to your email to complete.
+                    </p>
+                )}
+                <div className="space-y-4">
+                    <h3 className="text-center text-lg font-medium">Enter verification code</h3>
+                    <p className="text-center text-gray-500 text-sm">
+                        Please enter the {EMAIL_OTP_LENGTH}-digit code sent to your email
+                    </p>
+                    <Controller
+                        name="otp"
+                        control={control}
+                        render={({ field }) => (
+                            <div className="space-y-2 flex items-center justify-center">
+                                <PinInput
+                                    length={EMAIL_OTP_LENGTH}
+                                    initialValue=""
+                                    focus
+                                    onChange={(value) => {
+                                        field.onChange(value);
+                                        if (value.length === EMAIL_OTP_LENGTH) {
+                                            setTimeout(() => handleSubmit(onSubmit)(), 100);
+                                        }
+                                    }}
+                                    onComplete={(value) => {
+                                        field.onChange(value);
+                                        setTimeout(() => handleSubmit(onSubmit)(), 100);
+                                    }}
+                                    type="numeric"
+                                    inputMode="number"
+                                    style={{ padding: '10px' }}
+                                    inputStyle={{
+                                        borderColor: errors.otp?.message ? 'red' : '#e2e8f0',
+                                        borderRadius: '8px',
+                                        margin: '0 4px',
+                                    }}
+                                    inputFocusStyle={{ borderColor: '#2563eb' }}
+                                    autoSelect={true}
+                                    regexCriteria={/^[0-9]*$/}
+                                />
+                                {errors.otp?.message && (
+                                    <p className="text-red-500 text-xs">{errors.otp?.message}</p>
+                                )}
+                            </div>
+                        )}
+                    />
+                </div>
+                <div className="flex justify-center mt-8">
+                    <Button
+                        className="openSansLight text-white text-lg p-2 rounded w-52"
+                        text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
+                        ariaLabel="Complete Bulk Payout"
+                        disabled={isSubmitting}
+                        primary
+                        type="submit"
+                    />
+                </div>
+            </form>
+        );
+    };
 
     const renderFileUploadStep = () => (
         <form onSubmit={handleSubmit(onSubmit)} className="mt-5">
@@ -646,9 +961,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                                                     setOpenMappingKey(null);
                                                                     setMappingSearchTerm("");
                                                                 }}
-                                                                className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${
-                                                                    selectedValue === option.value ? "bg-[#005BB00D]" : ""
-                                                                }`}
+                                                                className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${selectedValue === option.value ? "bg-[#005BB00D]" : ""
+                                                                    }`}
                                                             >
                                                                 {option.label}
                                                             </li>
@@ -681,8 +995,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                     />
                     <Button
                         type="submit"
-                        text={isLoadingPreview ? <Loader /> : "Process Bulk Payout"}
-                        ariaLabel="Process Bulk Payout"
+                        text={isLoadingPreview ? <Loader /> : "Continue"}
+                        ariaLabel="Continue"
                         className="flex-1"
                         disabled={
                             isLoading ||
@@ -697,6 +1011,13 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         </form>
     );
 
+    const formatBulkAmount = (currencyCode: string, raw: string): string => {
+        const cleaned = String(raw ?? "").replace(/,/g, "").trim();
+        const num = parseFloat(cleaned);
+        if (cleaned === "" || isNaN(num)) return raw || "—";
+        return formatBalance(num, currencyCode);
+    };
+
     const renderConfirmationModal = () => {
         const currency = watch("currency");
         return (
@@ -704,7 +1025,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 isOpen={showConfirmationModal}
                 onClose={() => setShowConfirmationModal(false)}
                 title="Confirm bulk payout"
-                className="max-w-2xl"
+                className="max-w-4xl"
             >
                 <div className="mt-4 space-y-4">
                     <p className="text-sm text-gray-600">
@@ -715,13 +1036,13 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         <span className="text-sm text-gray-800">{currency}</span>
                     </div>
                     <div className="overflow-x-auto rounded-lg border border-gray-200">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm" style={{ minWidth: "640px" }}>
                             <thead className="bg-[#005BB01A]">
                                 <tr>
                                     {BULK_PAYOUT_MAPPING_KEYS.map(({ label }) => (
                                         <th
                                             key={label}
-                                            className="px-4 py-3 text-left font-semibold text-[#005BB0]"
+                                            className="px-4 py-3 text-left font-semibold text-[#005BB0] whitespace-nowrap"
                                         >
                                             {label}
                                         </th>
@@ -743,7 +1064,9 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                         <tr key={rowIdx} className="hover:bg-gray-50">
                                             {BULK_PAYOUT_MAPPING_KEYS.map(({ key }) => (
                                                 <td key={key} className="px-4 py-2.5 text-gray-800">
-                                                    {row[headerMapping[key]] ?? "—"}
+                                                    {key === "amnt"
+                                                        ? formatBulkAmount(currency || "NGN", row[headerMapping[key]] ?? "")
+                                                        : (row[headerMapping[key]] ?? "—")}
                                                 </td>
                                             ))}
                                         </tr>

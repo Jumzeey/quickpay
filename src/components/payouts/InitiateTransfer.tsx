@@ -9,6 +9,7 @@ import { useEffectFetch } from "@/hooks/useEffectFetch";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { getBanks, performNameCheck } from "@/services/bank";
 import { BankResponse, getPayoutOptions } from "@/services/payout";
+import useAuthentication from "@/stores/useAuthentication";
 import usePayout from "@/stores/usePayout";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
 import { notifyError, notifySuccess, removeCommasFromValue, uuid } from "@/util/utils";
@@ -28,6 +29,9 @@ interface InitiateTransferProps {
 }
 
 const CODE_LENGTH = 6;
+const TOTP_LENGTH = 6;
+const RECOVERY_CODE_LENGTH = 10;
+const EMAIL_OTP_LENGTH = 8;
 
 const MOBILE_MONEY_PROVIDERS = [
     { value: 'mtn', label: 'MTN' },
@@ -62,8 +66,12 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     }
     const [state, setState] = useState<TransferState>(initialState);
     const [isBulkPayoutModalOpen, setIsBulkPayoutModalOpen] = useState(false);
+    const [transferOtpValue, setTransferOtpValue] = useState("");
+    const [transferUseRecoveryCode, setTransferUseRecoveryCode] = useState(false);
+    const [transferRecoveryCodeValue, setTransferRecoveryCodeValue] = useState("");
     const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
     const { selectedCurrency, activeCurrencies, fetchActiveCurrencies } = useCurrency();
+    const { totp_enabled } = useAuthentication();
 
     // Currency names mapping (same as CurrencySwitcher)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -275,17 +283,19 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         //     });
         // }
 
-        if (state.currentStep === 3) { // OTP step
-            return Yup.object().shape({
-                otp: Yup.string()
-                    .required("OTP is required")
-                    .length(CODE_LENGTH, `OTP must be ${CODE_LENGTH} digits`)
-                    .matches(/^\d+$/, "OTP must contain only digits"),
-            });
+        if (state.currentStep === 3) {
+            if (!totp_enabled) {
+                return Yup.object().shape({
+                    otp: Yup.string()
+                        .required("OTP is required")
+                        .length(EMAIL_OTP_LENGTH, `Enter ${EMAIL_OTP_LENGTH}-digit code sent to your email`),
+                });
+            }
+            return Yup.object().shape({});
         }
 
         return Yup.object().shape({});
-    }, [state.selectedOptionName, state.currentStep]);
+    }, [state.selectedOptionName, state.currentStep, totp_enabled]);
 
     const {
         control,
@@ -486,6 +496,14 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountNumber, currency, selectedBankCode, selectedChannel]);
 
+    const getTransferOtpCode = (): string | null => {
+        if (transferUseRecoveryCode) {
+            const trimmed = transferRecoveryCodeValue.trim().toUpperCase();
+            return trimmed.length === RECOVERY_CODE_LENGTH && /^[A-Z0-9]+$/.test(trimmed) ? trimmed : null;
+        }
+        return transferOtpValue.length === TOTP_LENGTH ? transferOtpValue : null;
+    };
+
     const handleFormSubmit = async (values: TransferFormValues & { otp: string }) => {
         console.log('🚀 Form submitted with values:', values);
         console.log('📋 Current state:', state);
@@ -502,10 +520,20 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         }
 
         try {
-            // Handle OTP verification
+            // Handle OTP verification (same API for 2FA or email OTP)
             if (state.currentStep === 3) {
+                const code = totp_enabled ? getTransferOtpCode() : values.otp;
+                if (!code) {
+                    if (totp_enabled) {
+                        notifyError(transferUseRecoveryCode ? "Enter a valid 10-character recovery code" : "Enter the 6-digit authenticator code");
+                    } else {
+                        notifyError(`Enter the ${EMAIL_OTP_LENGTH}-digit code sent to your email`);
+                    }
+                    setState((prev) => ({ ...prev, isSubmitting: false }));
+                    return;
+                }
                 const response = await verifyPayoutOtp({
-                    otp: values.otp,
+                    otp: code,
                 });
 
                 if (response?.success) {
@@ -517,7 +545,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 return;
             }
 
-            // Handle initial transfer submission
             // For NGN, require ref_id validation
             if (state.selectedOptionName === "Same Currency Transfer" && currency === "NGN" && !values.ref_id) {
                 console.warn('⚠️ NGN payout requires ref_id validation');
@@ -772,6 +799,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
     const closeModalAndReset = () => {
         resetForm();
+        setTransferOtpValue("");
+        setTransferRecoveryCodeValue("");
+        setTransferUseRecoveryCode(false);
 
         if (state.currentStep === 0 || state.currentStep === 3) {
             if (state.currentStep === 3) {
@@ -1718,70 +1748,160 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         return null;
     };
 
-    const renderOtpVerificationStep = () => (
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-            <div className="space-y-4">
-                <h3 className="text-center text-lg font-medium">Enter Verification Code</h3>
-                <p className="text-center text-gray-500 text-sm">
-                    Please enter the {CODE_LENGTH}-digit code sent to you
-                </p>
+    const handleOtpStepSubmit = () => {
+        if (totp_enabled) {
+            const code = getTransferOtpCode();
+            if (!code) return;
+            handleFormSubmit({ ...getValues(), otp: code } as TransferFormValues & { otp: string });
+        } else {
+            handleSubmit(handleFormSubmit)();
+        }
+    };
 
-                <Controller
-                    name="otp"
-                    control={control}
-                    render={({ field }) => (
-                        <div className="space-y-2 flex items-center justify-center">
-                            <PinInput
-                                length={CODE_LENGTH}
-                                initialValue=""
-                                focus
-                                onChange={(value) => {
-                                    field.onChange(value);
-                                    if (value.length === 6) {
-                                        setTimeout(() => {
-                                            field.onChange(value);
-                                            handleSubmit(handleFormSubmit)();
-                                        }, 100);
-                                    }
+    const renderOtpVerificationStep = () => {
+        if (totp_enabled) {
+            return (
+                <div className="space-y-5">
+                    <div className="space-y-4">
+                        <h3 className="text-center text-lg font-medium">
+                            {transferUseRecoveryCode ? "Enter recovery code" : "Enter authenticator code"}
+                        </h3>
+                        <p className="text-center text-gray-500 text-sm">
+                            {transferUseRecoveryCode
+                                ? "Enter one of the 10-character recovery codes you saved when you set up 2FA."
+                                : "Enter the 6-digit code from your authenticator app to verify the transfer."}
+                        </p>
+                        <div className="mb-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setTransferUseRecoveryCode((prev: boolean) => !prev);
+                                    setTransferOtpValue("");
+                                    setTransferRecoveryCodeValue("");
                                 }}
-                                onComplete={(value) => {
-                                    field.onChange(value);
-                                    setTimeout(() => {
-                                        handleSubmit(handleFormSubmit)();
-                                    }, 100);
-                                }}
-                                type="numeric"
-                                inputMode="number"
-                                style={{ padding: '10px' }}
-                                inputStyle={{
-                                    borderColor: errors.otp?.message ? 'red' : '#e2e8f0',
-                                    borderRadius: '8px',
-                                    margin: '0 4px',
-                                }}
-                                inputFocusStyle={{ borderColor: '#2563eb' }}
-                                autoSelect={true}
-                                regexCriteria={/^[0-9]*$/}
-                            />
-                            {errors.otp?.message && (
-                                <p className="text-red-500 text-xs">
-                                    {errors.otp?.message}
-                                </p>
-                            )}
+                                className="text-sm font-medium text-primary hover:text-blue-700"
+                            >
+                                {transferUseRecoveryCode ? "Use authenticator code" : "Use a backup code"}
+                            </button>
                         </div>
-                    )}
-                />
-            </div>
+                        {transferUseRecoveryCode ? (
+                            <div className="flex flex-col">
+                                <label htmlFor="transfer-recovery-code" className="text-sm font-medium text-[#111827] mb-1">
+                                    Recovery code
+                                </label>
+                                <input
+                                    id="transfer-recovery-code"
+                                    type="text"
+                                    inputMode="text"
+                                    autoComplete="one-time-code"
+                                    maxLength={RECOVERY_CODE_LENGTH}
+                                    value={transferRecoveryCodeValue}
+                                    onChange={(e) =>
+                                        setTransferRecoveryCodeValue(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                                    }
+                                    onKeyDown={(e) => e.key === "Enter" && handleOtpStepSubmit()}
+                                    placeholder="e.g. WO1EBITAQJ"
+                                    className="w-full h-11 px-3 border border-[#C4C4C43D] rounded-lg text-center font-mono text-base tracking-widest text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                                />
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center">
+                                <label className="text-sm font-medium text-[#111827] mb-2 block">Authenticator code</label>
+                                <PinInput
+                                    length={TOTP_LENGTH}
+                                    initialValue=""
+                                    type="numeric"
+                                    inputMode="number"
+                                    focus
+                                    onChange={(value) => setTransferOtpValue(value)}
+                                    onComplete={(value) => setTransferOtpValue(value)}
+                                    style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}
+                                    inputStyle={{
+                                        width: "44px",
+                                        height: "50px",
+                                        border: "1.5px solid #C4C4C43D",
+                                        borderRadius: "5px",
+                                        fontSize: "16px",
+                                        color: "#111827",
+                                    }}
+                                    inputFocusStyle={{ border: "2px solid #2563EB", outline: "none" }}
+                                    autoSelect
+                                    regexCriteria={/^[0-9]*$/}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex justify-center mt-8">
+                        <Button
+                            className="openSansLight text-white text-lg p-2 rounded w-52"
+                            text={state.isSubmitting ? <Loader /> : "Verify & Complete"}
+                            ariaLabel="Verify and complete transfer"
+                            disabled={state.isSubmitting || !getTransferOtpCode()}
+                            primary
+                            type="button"
+                            onClick={handleOtpStepSubmit}
+                        />
+                    </div>
+                </div>
+            );
+        }
 
-            <Button
-                className="openSansLight text-white mt-8 text-lg p-2 rounded w-52"
-                text={state.isSubmitting ? <Loader /> : "Verify & Complete"}
-                ariaLabel="Verify OTP"
-                disabled={!isValid || state.isSubmitting}
-                primary
-                type="submit"
-            />
-        </form>
-    );
+        return (
+            <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+                <div className="space-y-4">
+                    <h3 className="text-center text-lg font-medium">Enter verification code</h3>
+                    <p className="text-center text-gray-500 text-sm">
+                        Please enter the {EMAIL_OTP_LENGTH}-digit code sent to your email
+                    </p>
+                    <Controller
+                        name="otp"
+                        control={control}
+                        render={({ field }) => (
+                            <div className="space-y-2 flex items-center justify-center">
+                                <PinInput
+                                    length={EMAIL_OTP_LENGTH}
+                                    initialValue=""
+                                    focus
+                                    onChange={(value) => {
+                                        field.onChange(value);
+                                        if (value.length === EMAIL_OTP_LENGTH) {
+                                            setTimeout(() => handleSubmit(handleFormSubmit)(), 100);
+                                        }
+                                    }}
+                                    onComplete={(value) => {
+                                        field.onChange(value);
+                                        setTimeout(() => handleSubmit(handleFormSubmit)(), 100);
+                                    }}
+                                    type="numeric"
+                                    inputMode="number"
+                                    style={{ padding: '10px' }}
+                                    inputStyle={{
+                                        borderColor: errors.otp?.message ? 'red' : '#e2e8f0',
+                                        borderRadius: '8px',
+                                        margin: '0 4px',
+                                    }}
+                                    inputFocusStyle={{ borderColor: '#2563eb' }}
+                                    autoSelect={true}
+                                    regexCriteria={/^[0-9]*$/}
+                                />
+                                {errors.otp?.message && (
+                                    <p className="text-red-500 text-xs">{errors.otp?.message}</p>
+                                )}
+                            </div>
+                        )}
+                    />
+                </div>
+                <Button
+                    className="openSansLight text-white mt-8 text-lg p-2 rounded w-52"
+                    text={state.isSubmitting ? <Loader /> : "Verify & Complete"}
+                    ariaLabel="Verify OTP"
+                    disabled={!isValid || state.isSubmitting}
+                    primary
+                    type="submit"
+                />
+            </form>
+        );
+    };
 
     const renderStepContent = () => {
         if (state.currentStep === 0) return renderTransferOptions();

@@ -13,6 +13,7 @@ import PageHeader from "@/components/PageHeader";
 import Pagination from "@/components/pagination";
 import InitiateTransfer from "@/components/payouts/InitiateTransfer";
 import BulkPayout from "@/components/payouts/BulkPayout";
+import PayoutDropdown from "@/components/payouts/PayoutDropdown";
 import RaiseDispute from "@/components/payouts/RaiseDispute";
 import RequestRefund from "@/components/payouts/RequestRefund";
 import ReceiptModal from "@/components/payouts/ReceiptModal";
@@ -313,7 +314,7 @@ const PayoutHistory = () => {
 
       if (response.success && response.data) {
         const transaction = response.data.Transaction;
-        
+
         // Check if the transaction requery was successful
         if (transaction.success && transaction.data) {
           const transactionData = transaction.data;
@@ -330,7 +331,7 @@ const PayoutHistory = () => {
         } else {
           // Transaction requery failed - show the actual error message
           const errorMessage = transaction.message || "Transaction requery failed";
-          handleError({ 
+          handleError({
             message: errorMessage,
             responseText: errorMessage
           });
@@ -418,19 +419,14 @@ const PayoutHistory = () => {
         </div>
 
         <div className="relative flex gap-4 justify-end mt-4 md:mt-0">
-          <ActionButton
-            text="Initiate Payout"
-            ariaLabel="Initiate Payout button"
-            className="w-1/2 md:w-full"
-            onClick={() => toggleModal('isInitiateTransferModalOpen')}
-          />
-          <ActionButton
-            text="Bulk Payout"
-            ariaLabel="Bulk Payout button"
-            className="w-1/2 md:w-full"
-            onClick={() => toggleModal('isBulkPayoutModalOpen')}
-          />
-
+          <div className="w-1/2 md:w-60 h-14">
+            <PayoutDropdown
+              contentClassName="h-full"
+              className="h-full"
+              onSelectSingle={() => toggleModal('isInitiateTransferModalOpen')}
+              onSelectBulk={() => toggleModal('isBulkPayoutModalOpen')}
+            />
+          </div>
           <div className="w-1/2 h-14">
             <CurrencySwitcher
               contentClassName="h-full"
@@ -605,15 +601,10 @@ const PayoutHistory = () => {
             image="/images/dashboard/disbursement/disbursement-empty-state.svg"
           >
             <div className="flex gap-4 justify-center">
-              <ActionButton
-                text="Initiate Payout"
-                ariaLabel="Initiate Payout button"
-                onClick={() => toggleModal('isInitiateTransferModalOpen')}
-              />
-              <ActionButton
-                text="Bulk Payout"
-                ariaLabel="Bulk Payout button"
-                onClick={() => toggleModal('isBulkPayoutModalOpen')}
+              <PayoutDropdown
+                className="w-60"
+                onSelectSingle={() => toggleModal('isInitiateTransferModalOpen')}
+                onSelectBulk={() => toggleModal('isBulkPayoutModalOpen')}
               />
             </div>
           </EmptyState>

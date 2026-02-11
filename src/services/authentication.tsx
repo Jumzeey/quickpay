@@ -155,15 +155,6 @@ export async function regenerateRecoveryCodes(payload: { totp: string }) {
   }
 }
 
-export async function disable2fa(payload: { totp: string }) {
-  try {
-    const response = await api.post(apiEndpoints.security.DISABLE_2FA, payload);
-    return response;
-  } catch (error) {
-    throw error;
-  }
-}
-
 export async function sendEmailOtpFor2fa() {
   try {
     const response = await api.post(apiEndpoints.security.SEND_EMAIL_OTP_FOR_2FA);
@@ -173,14 +164,3 @@ export async function sendEmailOtpFor2fa() {
   }
 }
 
-export async function enableEmailOtp(payload: { totp?: string; otp?: string }) {
-  try {
-    const response = await api.post(
-      apiEndpoints.security.ENABLE_EMAIL_OTP,
-      payload
-    );
-    return response;
-  } catch (error) {
-    throw error;
-  }
-}

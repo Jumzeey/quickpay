@@ -2,10 +2,13 @@ import Button from "@/components/button";
 import { walletCurrencies } from "@/components/CurrencySwitcher";
 import FormInput from "@/components/FormInput";
 import FormSelect from "@/components/FormSelect";
+import Loader from "@/components/loader";
+import Modal from "@/components/modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import useScreenWidth from "@/hooks/useScreenWidth";
 import { addPaymentLink, PaymentLinkPayload } from "@/services/collections";
 import { getSubaccountHistory } from "@/services/sub-account";
+import useAuthentication from "@/stores/useAuthentication";
 import useClickEvent from "@/stores/useClickEvent";
 import {
   notifyError,
@@ -14,8 +17,11 @@ import {
   removeCommasFromValue,
 } from "@/util/utils";
 import { useEffect, useState } from "react";
+import PinInput from "react-pin-input";
 import * as Yup from "yup";
-import Loader from "../loader";
+
+const TOTP_LENGTH = 6;
+const RECOVERY_CODE_LENGTH = 10;
 
 interface AddPaymentLinkProps {
   createLink?: boolean;
@@ -44,11 +50,18 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
 }) => {
   const { selectedItem } = useClickEvent();
   const screenWidth = useScreenWidth();
+  const { totp_enabled } = useAuthentication();
 
   const [isLoading, setIsLoading] = useState(false);
   const [state, setState] = useState<PaymentLinkState>({
     subAccounts: [],
   });
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<PaymentLinkPayload | null>(null);
+  const [otpValue, setOtpValue] = useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const [recoveryCodeValue, setRecoveryCodeValue] = useState("");
+  const [isOtpSubmitting, setIsOtpSubmitting] = useState(false);
 
   const validationSchema = Yup.object().shape({
     title: Yup.string().required("Payment link name is required!"),
@@ -57,9 +70,12 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
     description: Yup.string().required("Description is required!"),
     redirectUrl: Yup.string()
       .notRequired()
-      .matches(
-        /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/,
-        "Enter a valid redirect URL!"
+      .test(
+        "valid-url",
+        "Enter a valid redirect URL!",
+        (value) =>
+          !value || value.trim() === "" ||
+          /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/.test(value)
       ),
     accountType: Yup.string()
       .when('currency', {
@@ -111,13 +127,8 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
     }
   }, [createLink, selectedItem, setValue]);
 
-  const createAndUpdatePaymentLink = async (formValues: FormValues) => {
+  const buildPayload = (formValues: FormValues): { payload: PaymentLinkPayload; updateStatus: boolean; id: number } => {
     const { title, currency, amount, description, redirectUrl, accountType, selectedSubAccount } = formValues;
-
-    setIsLoading(true);
-    let updateStatus;
-    let id;
-
     const payload: PaymentLinkPayload = {
       title,
       currency,
@@ -125,33 +136,69 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
       description,
       account_type: accountType,
     };
+    if (selectedSubAccount) payload["subaccount_id"] = selectedSubAccount;
+    if (redirectUrl) payload["redirect_url"] = `https://${redirectUrl}`;
+    const updateStatus = !createLink;
+    const id = createLink ? 0 : Number(selectedItem?.id) || 0;
+    return { payload, updateStatus, id };
+  };
 
-    if (selectedSubAccount) {
-      payload["subaccount_id"] = selectedSubAccount;
+  const createAndUpdatePaymentLink = async (formValues: FormValues) => {
+    const { payload, updateStatus, id } = buildPayload(formValues);
+    if (totp_enabled) {
+      setPendingPayload(payload);
+      setOtpValue("");
+      setRecoveryCodeValue("");
+      setUseRecoveryCode(false);
+      setOtpModalOpen(true);
+      return;
     }
-    if (redirectUrl) {
-      payload["redirect_url"] = `https://${redirectUrl}`;
-    }
-    if (createLink) {
-      updateStatus = false;
-      id = "";
-    } else {
-      updateStatus = true;
-      id = selectedItem.id;
-    }
-
+    setIsLoading(true);
     try {
       const response = await addPaymentLink(payload, updateStatus, id);
       // @ts-ignore
       notifySuccess(response.message);
-      fetchPaymentLinks && await fetchPaymentLinks();
+      fetchPaymentLinks && (await fetchPaymentLinks());
       closeModal && closeModal();
     } catch (error: any) {
-      closeModal && closeModal();
-      notifyError(error.message);
+      notifyError(error?.message ?? "Failed to save payment link");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getOtpCode = (): string => {
+    return useRecoveryCode ? recoveryCodeValue.trim().toUpperCase() : otpValue;
+  };
+
+  const submitWithOtp = async () => {
+    if (!pendingPayload) return;
+    const code = getOtpCode();
+    if (!code) return;
+    const updateStatus = !createLink;
+    const id = createLink ? 0 : Number(selectedItem?.id) || 0;
+    setIsOtpSubmitting(true);
+    try {
+      const response = await addPaymentLink({ ...pendingPayload, otp: code }, updateStatus, id);
+      // @ts-ignore
+      notifySuccess(response.message);
+      setOtpModalOpen(false);
+      setPendingPayload(null);
+      fetchPaymentLinks && (await fetchPaymentLinks());
+      closeModal && closeModal();
+    } catch (error: any) {
+      notifyError(error?.message ?? "Failed to save payment link");
+    } finally {
+      setIsOtpSubmitting(false);
+    }
+  };
+
+  const closeOtpModal = () => {
+    setOtpModalOpen(false);
+    setPendingPayload(null);
+    setOtpValue("");
+    setRecoveryCodeValue("");
+    setUseRecoveryCode(false);
   };
 
   const formCurrency = watch("currency");
@@ -242,8 +289,8 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
           <FormInput
             label={
               screenWidth < 700
-                ? "Redirect URL"
-                : "Redirect URL (e.g yourbusiness.com)"
+                ? "Redirect URL (optional)"
+                : "Redirect URL (optional, e.g yourbusiness.com)"
             }
             id="redirectUrl"
             htmlFor="redirectUrl"
@@ -277,14 +324,110 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
 
         <div className="flex justify-center mt-5 w-36">
           <Button
-            text={isLoading ? <Loader /> : createLink ? "Save Link" : "Update Link"}
-            ariaLabel="Create payment link"
-            // disabled={isLoading || !state?.accountType}
+            text={isLoading ? <Loader /> : (createLink ? "Save Link" : "Update Link")}
+            ariaLabel={createLink ? "Create payment link" : "Update payment link"}
             primary
             type="submit"
+            disabled={isLoading}
           />
         </div>
       </form>
+
+      {totp_enabled && (
+        <Modal
+          isOpen={otpModalOpen}
+          title={useRecoveryCode ? "Enter recovery code" : "Enter authenticator code"}
+          onClose={closeOtpModal}
+        >
+          <div className="space-y-4 px-4 pb-4">
+            <p className="text-sm text-[#7F7F7F]">
+              {useRecoveryCode
+                ? "Enter one of the 10-character recovery codes you saved when you set up 2FA."
+                : "Enter the 6-digit code from your authenticator app to save this payment link."}
+            </p>
+            <div className="mb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseRecoveryCode((prev: boolean) => !prev);
+                  setOtpValue("");
+                  setRecoveryCodeValue("");
+                }}
+                className="text-sm font-medium text-primary hover:text-blue-700"
+              >
+                {useRecoveryCode ? "Use authenticator code" : "Use a backup code"}
+              </button>
+            </div>
+            {useRecoveryCode ? (
+              <div className="flex flex-col">
+                <label htmlFor="payment-link-recovery-code" className="text-sm font-medium text-[#111827] mb-1">
+                  Recovery code
+                </label>
+                <input
+                  id="payment-link-recovery-code"
+                  type="text"
+                  inputMode="text"
+                  autoComplete="one-time-code"
+                  maxLength={RECOVERY_CODE_LENGTH}
+                  value={recoveryCodeValue}
+                  onChange={(e) =>
+                    setRecoveryCodeValue(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && submitWithOtp()}
+                  placeholder="e.g. WO1EBITAQJ"
+                  className="w-full h-11 px-3 border border-[#C4C4C43D] rounded-lg text-center font-mono text-base tracking-widest text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-[#111827] mb-2 block">Authenticator code</label>
+                <div className="flex justify-center">
+                  <PinInput
+                    length={TOTP_LENGTH}
+                    initialValue=""
+                    type="numeric"
+                    inputMode="number"
+                    focus
+                    onChange={(value) => setOtpValue(value)}
+                    onComplete={(value) => setOtpValue(value)}
+                    style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}
+                    inputStyle={{
+                      width: "44px",
+                      height: "50px",
+                      border: "1.5px solid #C4C4C43D",
+                      borderRadius: "5px",
+                      fontSize: "16px",
+                      color: "#111827",
+                    }}
+                    inputFocusStyle={{ border: "2px solid #2563EB", outline: "none" }}
+                    autoSelect
+                    regexCriteria={/^[0-9]*$/}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3 justify-end pt-4">
+              <Button
+                type="button"
+                text="Cancel"
+                ariaLabel="Cancel"
+                onClick={closeOtpModal}
+                className="min-w-[100px]"
+                plain
+              />
+              <Button
+                type="button"
+                text={isOtpSubmitting ? <Loader /> : (createLink ? "Save Link" : "Update Link")}
+                ariaLabel={createLink ? "Save payment link" : "Update payment link"}
+                primary
+                disabled={isOtpSubmitting || !getOtpCode()}
+                onClick={submitWithOtp}
+                className="min-w-[100px]"
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   );
 };

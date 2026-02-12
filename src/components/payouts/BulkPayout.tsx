@@ -30,7 +30,7 @@ interface BulkPayoutFormValues {
 const CODE_LENGTH = 6;
 const TOTP_LENGTH = 6;
 const RECOVERY_CODE_LENGTH = 10;
-const EMAIL_OTP_LENGTH = 8;
+const EMAIL_OTP_LENGTH = 6;
 
 const BulkPayout: React.FC<BulkPayoutProps> = ({
     isModalOpen,

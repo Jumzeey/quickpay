@@ -149,7 +149,7 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
       // Refetch all entries after adding
       await get().fetchIPWhitelist();
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       const message =
         error?.response?.data?.message ?? error?.message ?? "Failed to add IP";
       console.error("Add IP whitelist error:", error);
@@ -168,7 +168,7 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
       // Refetch all entries after updating
       await get().fetchIPWhitelist();
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       const message =
         error?.response?.data?.message ??
         error?.message ??
@@ -189,7 +189,7 @@ const useIPWhitelist = create<IPWhitelistStore>((set, get) => ({
       // Refetch all entries after deleting
       await get().fetchIPWhitelist();
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       const message =
         error?.response?.data?.message ??
         error?.message ??

@@ -335,12 +335,17 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    handleClose();
                 }
             } catch (error: any) {
-                notifyError(error?.message || "Failed to complete bulk payout");
+                const message = error?.message || "Failed to complete bulk payout";
+                notifyError(message);
+                // Close modal when user must reinitiate (too many failed attempts)
+                if (typeof message === 'string' && /reinitiate|too many failed attempts/i.test(message)) {
+                    handleClose();
+                }
             } finally {
                 setIsSubmitting(false);
-                handleClose();
             }
             return;
         }
@@ -510,12 +515,17 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    handleClose();
                 }
             } catch (error: any) {
-                notifyError(error?.message || "Failed to complete bulk payout");
+                const message = error?.message || "Failed to complete bulk payout";
+                notifyError(message);
+                // Close modal when user must reinitiate (too many failed attempts)
+                if (typeof message === 'string' && /reinitiate|too many failed attempts/i.test(message)) {
+                    handleClose();
+                }
             } finally {
                 setIsSubmitting(false);
-                handleClose();
             }
         } else {
             handleSubmit(onSubmit)();

@@ -1,5 +1,7 @@
 import Button from "@/components/button";
-import InitiateConversion from "@/components/conversions/InitiateConversion";
+import dynamic from "next/dynamic";
+
+const InitiateConversion = dynamic(() => import("@/components/conversions/InitiateConversion"), { ssr: false });
 import RaiseDispute from "@/components/conversions/RaiseDispute";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";

@@ -33,9 +33,15 @@ interface FormValues {
   agree_to_terms: boolean;
 }
 
+const nameRegex = /^[a-zA-Z\s\-']+$/;
+
 const validationSchema = Yup.object().shape({
-  firstname: Yup.string().required("First Name is required!"),
-  lastname: Yup.string().required("Last Name is required!"),
+  firstname: Yup.string()
+    .required("First Name is required!")
+    .matches(nameRegex, "First name can only contain letters"),
+  lastname: Yup.string()
+    .required("Last Name is required!")
+    .matches(nameRegex, "Last name can only contain letters"),
   email: Yup.string()
     .email("Enter a valid email")
     .matches(

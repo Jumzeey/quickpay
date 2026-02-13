@@ -4,14 +4,18 @@ import CurrencySwitcher from "@/components/CurrencySwitcher";
 import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
-import ExportModal from "@/components/export-modal";
 import Filter from "@/components/Filter";
 import { FilterExport } from "@/components/filter-export";
 import Icon from "@/components/icon";
 import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
 import Pagination from "@/components/pagination";
-import InitiateTransfer from "@/components/payouts/InitiateTransfer";
+import dynamic from "next/dynamic";
+
+const ExportModal = dynamic(() => import("@/components/export-modal"), { ssr: false });
+const InitiateTransfer = dynamic(() => import("@/components/payouts/InitiateTransfer"), { ssr: false });
+const BulkPayout = dynamic(() => import("@/components/payouts/BulkPayout"), { ssr: false });
+import PayoutDropdown from "@/components/payouts/PayoutDropdown";
 import RaiseDispute from "@/components/payouts/RaiseDispute";
 import RequestRefund from "@/components/payouts/RequestRefund";
 import ReceiptModal from "@/components/payouts/ReceiptModal";
@@ -67,6 +71,7 @@ const PayoutHistory = () => {
     isLoading: true,
     showFilterStatus: false,
     isInitiateTransferModalOpen: false,
+    isBulkPayoutModalOpen: false,
     isRequestRefundModalOpen: false,
     isRaiseDisputeModalOpen: false,
     isMoreActionsOpen: false,
@@ -311,7 +316,7 @@ const PayoutHistory = () => {
 
       if (response.success && response.data) {
         const transaction = response.data.Transaction;
-        
+
         // Check if the transaction requery was successful
         if (transaction.success && transaction.data) {
           const transactionData = transaction.data;
@@ -328,7 +333,7 @@ const PayoutHistory = () => {
         } else {
           // Transaction requery failed - show the actual error message
           const errorMessage = transaction.message || "Transaction requery failed";
-          handleError({ 
+          handleError({
             message: errorMessage,
             responseText: errorMessage
           });
@@ -416,13 +421,14 @@ const PayoutHistory = () => {
         </div>
 
         <div className="relative flex gap-4 justify-end mt-4 md:mt-0">
-          <ActionButton
-            text="Initiate Payout"
-            ariaLabel="Initiate Payout button"
-            className="w-1/2 md:w-full"
-            onClick={() => toggleModal('isInitiateTransferModalOpen')}
-          />
-
+          <div className="w-1/2 md:w-60 h-14">
+            <PayoutDropdown
+              contentClassName="h-full"
+              className="h-full"
+              onSelectSingle={() => toggleModal('isInitiateTransferModalOpen')}
+              onSelectBulk={() => toggleModal('isBulkPayoutModalOpen')}
+            />
+          </div>
           <div className="w-1/2 h-14">
             <CurrencySwitcher
               contentClassName="h-full"
@@ -596,17 +602,25 @@ const PayoutHistory = () => {
             subTitle="We couldn't find any Payout for this account"
             image="/images/dashboard/disbursement/disbursement-empty-state.svg"
           >
-            <ActionButton
-              text="Initiate Payout"
-              ariaLabel="Initiate Payout button"
-              onClick={() => toggleModal('isInitiateTransferModalOpen')}
-            />
+            <div className="flex gap-4 justify-center">
+              <PayoutDropdown
+                className="w-60"
+                onSelectSingle={() => toggleModal('isInitiateTransferModalOpen')}
+                onSelectBulk={() => toggleModal('isBulkPayoutModalOpen')}
+              />
+            </div>
           </EmptyState>
         )}
 
         <InitiateTransfer
           isModalOpen={state.isInitiateTransferModalOpen}
           closeModal={() => toggleModal('isInitiateTransferModalOpen')}
+          fetchPayoutHistory={handleRefreshPayoutHistory}
+        />
+
+        <BulkPayout
+          isModalOpen={state.isBulkPayoutModalOpen}
+          closeModal={() => toggleModal('isBulkPayoutModalOpen')}
           fetchPayoutHistory={handleRefreshPayoutHistory}
         />
 

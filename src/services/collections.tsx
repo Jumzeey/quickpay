@@ -15,6 +15,7 @@ export interface PaymentLinkPayload {
   redirect_url?: string;
   account_type: string;
   subaccount_id?: string;
+  otp?: string;
 }
 
 export interface VirtualAccountFormValues {

@@ -49,13 +49,21 @@ api.interceptors.response.use(
         // Extract first error message from nested structure
         const errors = response.data.errors;
         const firstError = Object.values(errors).flat()[0];
-        
+
         return Promise.reject(
-          new CustomHttpError(firstError || response.data?.message || "Request validation failed!", {
-            statusCode: 400,
-            responseText: firstError || response.data?.message || "Request validation failed!",
-            payload: response.data?.errors,
-          })
+          new CustomHttpError(
+            firstError ||
+              response.data?.message ||
+              "Request validation failed!",
+            {
+              statusCode: 400,
+              responseText:
+                firstError ||
+                response.data?.message ||
+                "Request validation failed!",
+              payload: response.data?.errors,
+            }
+          )
         );
       }
 
@@ -130,13 +138,16 @@ api.interceptors.response.use(
     //   };
     // }
 
-    // if (status === 403) {
-    //   notifyError("User does not have the right permissions.");
-    //   return {
-    //     success: false,
-    //     message: "User does not have the right permissions.",
-    //   };
-    // }
+    // 403 with requires_totp: TOTP verification required for sensitive action (caller can show TOTP prompt)
+    if (status === 403 && data?.requires_totp === true) {
+      return Promise.reject(
+        new CustomHttpError(data?.message || "TOTP verification required.", {
+          statusCode: status,
+          responseText: data?.message || "TOTP verification required.",
+          payload: { requires_totp: true, ...data },
+        })
+      );
+    }
 
     // Handle 404 errors with generic message
     if (status === 404) {

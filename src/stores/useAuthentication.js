@@ -1,4 +1,15 @@
-import { forgotPassword, forgotPasswordOtp, getSupportedCountries, newPassword, resendOtp, signIn, signUp, verifyEmail, verifyOtp } from "@/services/authentication";
+import {
+  forgotPassword,
+  forgotPasswordOtp,
+  get2faStatus,
+  getSupportedCountries,
+  newPassword,
+  resendOtp,
+  signIn,
+  signUp,
+  verifyEmail,
+  verifyOtp,
+} from "@/services/authentication";
 import api from "@/util/api";
 import { getAllCurrencies } from "@/util/utils";
 import Cookies from "js-cookie";
@@ -6,7 +17,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import useCurrency from "@/stores/useCurrency";
 
-const accessGet = globalThis.localStorage?.getItem('auth');
+const accessGet = globalThis.localStorage?.getItem("auth");
 const accessGetParse = accessGet ? JSON?.parse(accessGet) : null;
 const initialState = {
   accessToken: accessGetParse?.state?.accessToken || null,
@@ -20,6 +31,8 @@ const initialState = {
   newPasswordLoading: false,
   forgotPasswordLoading: false,
   forgotPasswordOtpLoading: false,
+  allowed_methods: accessGetParse?.state?.allowed_methods || [],
+  totp_enabled: accessGetParse?.state?.totp_enabled ?? false,
 };
 
 api.defaults.headers.common.Authorization = `Bearer ${initialState.accessToken}`;
@@ -46,39 +59,61 @@ const useAuthentication = create(
           ...state,
           signInLoading: true,
         }));
-        const { data, message } = await signIn(payload);
+        const response = await signIn(payload);
+        const { data, message } = response;
+        // When OTP/TOTP is required, API returns verify_reference + allowed_methods (no token)
+        // Persist allowed_methods so we know 2FA method (totp vs email_otp) and derive totp_enabled for sensitive actions
+        if (data?.verify_reference && !data?.token) {
+          const methods = data.allowed_methods || ["email_otp"];
+          const hasTotp = methods.includes("totp");
+          set((state) => ({
+            ...state,
+            verify_reference: data.verify_reference,
+            allowed_methods: methods,
+            totp_enabled: hasTotp,
+            signInLoading: false,
+          }));
+          return {
+            verify_reference: data.verify_reference,
+            allowed_methods: methods,
+            message,
+          };
+        }
         set((state) => ({
           ...state,
           user: data.user,
           accessToken: data.token,
           verify_reference: data.verify_reference,
+          allowed_methods: [],
           signInLoading: false,
         }));
         return { verify_reference: data.verify_reference, message };
       },
       formatSupportedCountries: (countriesData) => {
         // Get unique currencies and create country-like objects
-        const uniqueCurrencies = [...new Set(countriesData.map(item => item.currency))];
+        const uniqueCurrencies = [
+          ...new Set(countriesData.map((item) => item.currency)),
+        ];
 
         // Currency to country mapping (you can expand this)
         const currencyToCountry = {
-          'USD': { code: 'US', name: 'United States', flag: '🇺🇸' },
-          'NGN': { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
-          'KES': { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
-          'GHS': { code: 'GH', name: 'Ghana', flag: '🇬🇭' },
-          'TZS': { code: 'TZ', name: 'Tanzania', flag: '🇹🇿' },
-          'ZMW': { code: 'ZM', name: 'Zambia', flag: '🇿🇲' },
-          'EUR': { code: 'EU', name: 'European Union', flag: '🇪🇺' },
-          'GBP': { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+          USD: { code: "US", name: "United States", flag: "🇺🇸" },
+          NGN: { code: "NG", name: "Nigeria", flag: "🇳🇬" },
+          KES: { code: "KE", name: "Kenya", flag: "🇰🇪" },
+          GHS: { code: "GH", name: "Ghana", flag: "🇬🇭" },
+          TZS: { code: "TZ", name: "Tanzania", flag: "🇹🇿" },
+          ZMW: { code: "ZM", name: "Zambia", flag: "🇿🇲" },
+          EUR: { code: "EU", name: "European Union", flag: "🇪🇺" },
+          GBP: { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
         };
 
         return uniqueCurrencies
-          .filter(currency => currencyToCountry[currency]) // Only include currencies we have country data for
-          .map(currency => {
+          .filter((currency) => currencyToCountry[currency]) // Only include currencies we have country data for
+          .map((currency) => {
             const countryInfo = currencyToCountry[currency];
             const supportedProducts = countriesData
-              .filter(item => item.currency === currency && item.is_active)
-              .map(item => item.product_type);
+              .filter((item) => item.currency === currency && item.is_active)
+              .map((item) => item.product_type);
 
             return {
               id: countryInfo.code,
@@ -90,7 +125,7 @@ const useAuthentication = create(
               isActive: supportedProducts.length > 0,
               // For form compatibility
               value: countryInfo.code,
-              label: `${countryInfo.flag} ${countryInfo.name} (${currency})`
+              label: `${countryInfo.flag} ${countryInfo.name} (${currency})`,
             };
           });
       },
@@ -115,7 +150,7 @@ const useAuthentication = create(
           return {
             countries: formattedCountries,
             rawData: response.data,
-            message: 'Countries loaded successfully'
+            message: "Countries loaded successfully",
           };
         } catch (error) {
           set((state) => ({
@@ -129,7 +164,7 @@ const useAuthentication = create(
       // Get countries by supported product type
       getCountriesByProduct: (productType) => {
         const supportedCountries = get().supportedCountries;
-        return supportedCountries.filter(country =>
+        return supportedCountries.filter((country) =>
           country.supportedProducts.includes(productType)
         );
       },
@@ -138,12 +173,12 @@ const useAuthentication = create(
       getAvailableCurrencies: () => {
         const supportedCountries = get().supportedCountries;
         return supportedCountries
-          .filter(country => country.isActive)
-          .map(country => ({
+          .filter((country) => country.isActive)
+          .map((country) => ({
             code: country.currency,
             name: country.name,
             country: country.code,
-            label: `${country.currency} - ${country.name}`
+            label: `${country.currency} - ${country.name}`,
           }));
       },
       verifyOtp: async (payload) => {
@@ -151,12 +186,12 @@ const useAuthentication = create(
           ...state,
         }));
         const { data, message } = await verifyOtp(payload);
-        Cookies.set('accessToken', data.token);
+        Cookies.set("accessToken", data.token);
 
         const allCurrencies = getAllCurrencies(data.modules);
         if (allCurrencies.length > 0) {
-            useCurrency.getState().setCurrency(allCurrencies[0].value);
-            useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
+          useCurrency.getState().setCurrency(allCurrencies[0].value);
+          useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
         }
 
         set((state) => ({
@@ -169,7 +204,7 @@ const useAuthentication = create(
           user: data.user,
           modules: data.modules,
           accessToken: data.token,
-          message
+          message,
         };
       },
       verifyEmail: async (payload) => {
@@ -178,7 +213,7 @@ const useAuthentication = create(
         }));
         const { data, message } = await verifyEmail(payload);
         return {
-          message
+          message,
         };
       },
       forgotPassword: async (payload) => {
@@ -232,13 +267,20 @@ const useAuthentication = create(
           user: data.user,
           modules: data.modules,
           accessToken: data.token,
-          message
+          message,
         };
       },
     }),
     {
       name: "auth",
-      whitelist: ["user", "accessToken", "modules", "supportedCountries"],
+      whitelist: [
+        "user",
+        "accessToken",
+        "modules",
+        "supportedCountries",
+        "totp_enabled",
+        "allowed_methods",
+      ],
     }
   )
 );

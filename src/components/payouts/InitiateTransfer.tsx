@@ -20,7 +20,9 @@ import PinInput from "react-pin-input";
 import * as Yup from "yup";
 import { TRANSFER_OPTIONS } from "./constants";
 import { TransferFormValues, TransferState } from "./types";
-import BulkPayout from "./BulkPayout";
+import dynamic from "next/dynamic";
+
+const BulkPayout = dynamic(() => import("./BulkPayout"), { ssr: false });
 
 interface InitiateTransferProps {
     isModalOpen: boolean;

@@ -16,8 +16,10 @@ import { FilterExport } from '@/components/filter-export';
 import Dropdown from '@/components/Dropdown';
 import Filter from '@/components/Filter';
 import useFilter from '@/stores/useFilter';
-import ExportModal from '@/components/export-modal';
 import { apiEndpoints } from '@/util/endpoints';
+import dynamic from 'next/dynamic';
+
+const ExportModal = dynamic(() => import('@/components/export-modal'), { ssr: false });
 import { useApiResponse } from '@/hooks/useApiResponse';
 
 const actionMap: Record<string, string> = {
@@ -77,7 +79,7 @@ const WalletTransactions = ({ selectedWallet, selectedCurrency }: WalletTransact
         const searchTerm = searchInput.trim().toLowerCase();
         // Escape special regex characters but allow flexible matching
         const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        
+
         // Create a regex pattern that matches the search term anywhere in the string
         let searchRegex: RegExp;
         try {
@@ -92,13 +94,13 @@ const WalletTransactions = ({ selectedWallet, selectedCurrency }: WalletTransact
                 const amount = String(transaction?.amount || '').toLowerCase();
                 const status = String(transaction?.status || '').toLowerCase();
                 const type = String(transaction?.transaction_type || '').toLowerCase();
-                
+
                 return ref.includes(searchLower) ||
-                       desc.includes(searchLower) ||
-                       custRef.includes(searchLower) ||
-                       amount.includes(searchLower) ||
-                       status.includes(searchLower) ||
-                       type.includes(searchLower);
+                    desc.includes(searchLower) ||
+                    custRef.includes(searchLower) ||
+                    amount.includes(searchLower) ||
+                    status.includes(searchLower) ||
+                    type.includes(searchLower);
             });
         }
 

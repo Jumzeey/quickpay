@@ -1,7 +1,9 @@
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
-import ExportModal from "@/components/export-modal";
 // import ExportPendingJobs from "@/components/export-pending-job";
+import dynamic from "next/dynamic";
+
+const ExportModal = dynamic(() => import("@/components/export-modal"), { ssr: false });
 import { FilterExport } from "@/components/filter-export";
 import Icon from "@/components/icon";
 import Pagination from "@/components/pagination";

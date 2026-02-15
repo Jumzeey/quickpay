@@ -29,8 +29,8 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      staleTime: 3 * 60 * 1000, // 3 minutes
+      gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
     },
   },
 });
@@ -86,7 +86,8 @@ export default function App({ Component, pageProps }: AppProps) {
     return () => {
       clearInterval(interval)
     }
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleStillHere = () => activate();
 

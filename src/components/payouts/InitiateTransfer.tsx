@@ -20,7 +20,9 @@ import PinInput from "react-pin-input";
 import * as Yup from "yup";
 import { TRANSFER_OPTIONS } from "./constants";
 import { TransferFormValues, TransferState } from "./types";
-import BulkPayout from "./BulkPayout";
+import dynamic from "next/dynamic";
+
+const BulkPayout = dynamic(() => import("./BulkPayout"), { ssr: false });
 
 interface InitiateTransferProps {
     isModalOpen: boolean;
@@ -31,7 +33,7 @@ interface InitiateTransferProps {
 const CODE_LENGTH = 6;
 const TOTP_LENGTH = 6;
 const RECOVERY_CODE_LENGTH = 10;
-const EMAIL_OTP_LENGTH = 8;
+const EMAIL_OTP_LENGTH = 6;
 
 const MOBILE_MONEY_PROVIDERS = [
     { value: 'mtn', label: 'MTN' },

@@ -5,8 +5,10 @@ import { CollectionGatewayMetaResponse } from "@/components/collections/types";
 import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
-import ExportModal from "@/components/export-modal";
 import Filter from "@/components/Filter";
+import dynamic from "next/dynamic";
+
+const ExportModal = dynamic(() => import("@/components/export-modal"), { ssr: false });
 import Icon from "@/components/icon";
 import Loader from "@/components/loader";
 import Pagination from "@/components/pagination";

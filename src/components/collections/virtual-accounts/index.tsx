@@ -1,5 +1,7 @@
 import ActionButton from '@/components/action-button';
-import RequestVirtualAccount from '@/components/collections/RequestVirtualAcount';
+import dynamic from 'next/dynamic';
+
+const RequestVirtualAccount = dynamic(() => import('@/components/collections/RequestVirtualAcount'), { ssr: false });
 import Dropdown from '@/components/Dropdown';
 import EmptyState from '@/components/EmptyState';
 import Filter from '@/components/Filter';

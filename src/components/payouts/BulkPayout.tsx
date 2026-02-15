@@ -30,7 +30,7 @@ interface BulkPayoutFormValues {
 const CODE_LENGTH = 6;
 const TOTP_LENGTH = 6;
 const RECOVERY_CODE_LENGTH = 10;
-const EMAIL_OTP_LENGTH = 8;
+const EMAIL_OTP_LENGTH = 6;
 
 const BulkPayout: React.FC<BulkPayoutProps> = ({
     isModalOpen,
@@ -335,12 +335,17 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    handleClose();
                 }
             } catch (error: any) {
-                notifyError(error?.message || "Failed to complete bulk payout");
+                const message = error?.message || "Failed to complete bulk payout";
+                notifyError(message);
+                // Close modal when user must reinitiate (too many failed attempts)
+                if (typeof message === 'string' && /reinitiate|too many failed attempts/i.test(message)) {
+                    handleClose();
+                }
             } finally {
                 setIsSubmitting(false);
-                handleClose();
             }
             return;
         }
@@ -510,12 +515,17 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    handleClose();
                 }
             } catch (error: any) {
-                notifyError(error?.message || "Failed to complete bulk payout");
+                const message = error?.message || "Failed to complete bulk payout";
+                notifyError(message);
+                // Close modal when user must reinitiate (too many failed attempts)
+                if (typeof message === 'string' && /reinitiate|too many failed attempts/i.test(message)) {
+                    handleClose();
+                }
             } finally {
                 setIsSubmitting(false);
-                handleClose();
             }
         } else {
             handleSubmit(onSubmit)();

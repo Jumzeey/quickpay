@@ -220,9 +220,6 @@ const OtpPage = () => {
                         focus
                         onChange={(value) => {
                           setOtp(value);
-                          if (value.length === pinLength) {
-                            setTimeout(() => handleSubmit(value), 100);
-                          }
                         }}
                         onComplete={(value) => {
                           setOtp(value);

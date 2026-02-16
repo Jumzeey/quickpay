@@ -149,6 +149,11 @@ export const apiEndpoints = {
     UPDATE_IP_WHITELIST: '/merchant/ip-whitelist',
     DELETE_IP_WHITELIST: '/merchant/ip-whitelist',
   },
+  crypto: {
+    INITIATE_CRYPTO_PAYMENT: '/merchant/crypto/initiate',
+    GET_CRYPTO_ADDRESSES: '/merchant/crypto/addresses',
+    GET_CRYPTO_ADDRESS_TRANSACTIONS: '/merchant/crypto/addresses',
+  },
   settlements: {
     LIST_SETTLEMENTS: '/merchant/settlements',
     GET_SETTLEMENT_DETAILS: '/merchant/settlements/:id',

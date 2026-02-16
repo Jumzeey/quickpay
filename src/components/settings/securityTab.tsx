@@ -340,7 +340,7 @@ const SecurityTab = () => {
                       className="w-full"
                       text={twoFaLoading ? <Loader /> : "Set up 2FA"}
                       ariaLabel="Set up 2FA"
-                      disabled={twoFaLoading}
+                      disabled={true}
                       primary
                       onClick={handleSetup2fa}
                     />

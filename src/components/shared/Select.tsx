@@ -4,6 +4,7 @@ import Icon from "@/components/icon";
 export interface SelectOption {
     value: string;
     label: string;
+    disabled?: boolean;
 }
 
 interface SelectProps {
@@ -120,11 +121,12 @@ const Select: React.FC<SelectProps> = ({
                         ) : filteredOptions.length > 0 ? (
                             filteredOptions.map((option) => {
                                 const isSelected = value === option.value;
+                                const isDisabled = option.disabled === true;
                                 return (
                                     <li
                                         key={option.value}
-                                        onClick={() => handleSelect(option.value)}
-                                        className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${isSelected ? 'bg-[#005BB00D]' : ''}`}
+                                        onClick={() => !isDisabled && handleSelect(option.value)}
+                                        className={`px-4 py-2 text-sm font-medium ${isDisabled ? 'opacity-50 cursor-not-allowed text-gray-400' : 'cursor-pointer hover:bg-[#005BB01A]'} ${isSelected ? 'bg-[#005BB00D]' : ''}`}
                                     >
                                         {renderOption ? renderOption(option, isSelected) : option.label}
                                     </li>

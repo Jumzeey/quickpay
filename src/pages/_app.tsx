@@ -29,8 +29,8 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 3 * 60 * 1000, // 3 minutes
-      gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     },
   },
 });
@@ -86,8 +86,7 @@ export default function App({ Component, pageProps }: AppProps) {
     return () => {
       clearInterval(interval)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  })
 
   const handleStillHere = () => activate();
 
@@ -142,6 +141,17 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [tracker, user]);
 
+  // Load Headway widget only after the container is in the DOM (isClient = true)
+  useEffect(() => {
+    if (!isClient || typeof window === "undefined") return;
+    (window as any).HW_config = { selector: ".headway-widget", account: "7kE2Wy" };
+    if (document.querySelector('script[src="https://cdn.headwayapp.co/widget.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "https://cdn.headwayapp.co/widget.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, [isClient]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -181,6 +191,14 @@ export default function App({ Component, pageProps }: AppProps) {
                 </div>
               </div>
             </Modal>
+
+            {/* Headway changelog widget - only render on client to avoid hydration mismatch when Headway injects content */}
+            {isClient && (
+              <div
+                className="headway-widget fixed bottom-6 right-6 z-50 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                aria-hidden
+              />
+            )}
           </main>
         </SharedState>
       </ThemeProvider>

@@ -1897,7 +1897,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     className="openSansLight text-white mt-8 text-lg p-2 rounded w-52"
                     text={state.isSubmitting ? <Loader /> : "Verify & Complete"}
                     ariaLabel="Verify OTP"
-                    disabled={!isValid || state.isSubmitting}
+                    disabled={state.isSubmitting || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
                     primary
                     type="submit"
                 />

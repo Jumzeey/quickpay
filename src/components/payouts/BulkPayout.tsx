@@ -309,6 +309,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     const onSubmit = async (values: BulkPayoutFormValues) => {
         // Handle OTP verification step (complete bulk payout). Same API for 2FA or email OTP.
         if (currentStep === 1) {
+            setIsSubmitting(true);
             const code = totp_enabled ? getCompleteStepCode() : values.otp;
             if (!code) {
                 if (totp_enabled) {
@@ -316,13 +317,14 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 } else {
                     notifyError(`Enter the ${EMAIL_OTP_LENGTH}-digit code sent to your email`);
                 }
+                setIsSubmitting(false);
                 return;
             }
             if (bulkPayoutId == null) {
                 notifyError("Bulk payout session expired. Please start again.");
+                setIsSubmitting(false);
                 return;
             }
-            setIsSubmitting(true);
             try {
                 const response = await completeBulkPayout({
                     bulk_payout_id: bulkPayoutId,
@@ -646,7 +648,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                     onChange={(e) =>
                                         setCompleteRecoveryCodeValue(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
                                     }
-                                    onKeyDown={(e) => e.key === "Enter" && handleCompleteStepSubmit()}
+                                    onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
                                     placeholder="e.g. WO1EBITAQJ"
                                     className="w-full h-11 px-3 border border-[#C4C4C43D] rounded-lg text-center font-mono text-base tracking-widest text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                                 />
@@ -715,16 +717,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                         length={EMAIL_OTP_LENGTH}
                                         initialValue=""
                                         focus
-                                        onChange={(value) => {
-                                            field.onChange(value);
-                                            if (value.length === EMAIL_OTP_LENGTH) {
-                                                setTimeout(() => handleSubmit(onSubmit)(), 100);
-                                            }
-                                        }}
-                                        onComplete={(value) => {
-                                            field.onChange(value);
-                                            setTimeout(() => handleSubmit(onSubmit)(), 100);
-                                        }}
+                                        onChange={(value) => field.onChange(value)}
+                                        onComplete={(value) => field.onChange(value)}
                                         type="numeric"
                                         inputMode="number"
                                         style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', justifyContent: 'center' }}

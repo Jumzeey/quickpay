@@ -752,7 +752,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         className="openSansLight text-white text-lg p-2 rounded w-52"
                         text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
                         ariaLabel="Complete Bulk Payout"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
                         primary
                         type="submit"
                     />

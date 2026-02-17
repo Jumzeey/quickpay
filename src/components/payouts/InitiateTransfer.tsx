@@ -514,6 +514,35 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
         setState((prev) => ({ ...prev, isSubmitting: true }));
 
+        // OTP verification step – keep loading state from the start so button stays disabled
+        if (state.currentStep === 3) {
+            const code = totp_enabled ? getTransferOtpCode() : values.otp;
+            if (!code) {
+                if (totp_enabled) {
+                    notifyError(transferUseRecoveryCode ? "Enter a valid 10-character recovery code" : "Enter the 6-digit authenticator code");
+                } else {
+                    notifyError(`Enter the ${EMAIL_OTP_LENGTH}-digit code sent to your email`);
+                }
+                setState((prev) => ({ ...prev, isSubmitting: false }));
+                return;
+            }
+            try {
+                const response = await verifyPayoutOtp({ otp: code });
+                if (response?.success) {
+                    notifySuccess(response?.message || 'Payout completed successfully!');
+                    closeModalAndReset();
+                    await fetchPayoutHistory();
+                } else {
+                    notifyError(response?.message || "Verification failed. Please check the code and try again.");
+                }
+            } catch (err: any) {
+                notifyError(err?.message || "Verification failed. Please try again.");
+            } finally {
+                setState((prev) => ({ ...prev, isSubmitting: false }));
+            }
+            return;
+        }
+
         if (state.selectedOptionName === "Cross Currency Transfer" && state.currentStep === 1) {
             setState((prev) => ({ ...prev, currentStep: 2, isSubmitting: false }));
             setValue("targetAccountName", "");
@@ -522,31 +551,6 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         }
 
         try {
-            // Handle OTP verification (same API for 2FA or email OTP)
-            if (state.currentStep === 3) {
-                const code = totp_enabled ? getTransferOtpCode() : values.otp;
-                if (!code) {
-                    if (totp_enabled) {
-                        notifyError(transferUseRecoveryCode ? "Enter a valid 10-character recovery code" : "Enter the 6-digit authenticator code");
-                    } else {
-                        notifyError(`Enter the ${EMAIL_OTP_LENGTH}-digit code sent to your email`);
-                    }
-                    setState((prev) => ({ ...prev, isSubmitting: false }));
-                    return;
-                }
-                const response = await verifyPayoutOtp({
-                    otp: code,
-                });
-
-                if (response?.success) {
-                    notifySuccess(response?.message || 'Payout completed successfully!');
-                    closeModalAndReset();
-                    await fetchPayoutHistory();
-                }
-
-                return;
-            }
-
             // For NGN, require ref_id validation
             if (state.selectedOptionName === "Same Currency Transfer" && currency === "NGN" && !values.ref_id) {
                 console.warn('⚠️ NGN payout requires ref_id validation');
@@ -1801,7 +1805,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                                     onChange={(e) =>
                                         setTransferRecoveryCodeValue(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
                                     }
-                                    onKeyDown={(e) => e.key === "Enter" && handleOtpStepSubmit()}
+                                    onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
                                     placeholder="e.g. WO1EBITAQJ"
                                     className="w-full h-11 px-3 border border-[#C4C4C43D] rounded-lg text-center font-mono text-base tracking-widest text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                                 />
@@ -1864,16 +1868,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                                     length={EMAIL_OTP_LENGTH}
                                     initialValue=""
                                     focus
-                                    onChange={(value) => {
-                                        field.onChange(value);
-                                        if (value.length === EMAIL_OTP_LENGTH) {
-                                            setTimeout(() => handleSubmit(handleFormSubmit)(), 100);
-                                        }
-                                    }}
-                                    onComplete={(value) => {
-                                        field.onChange(value);
-                                        setTimeout(() => handleSubmit(handleFormSubmit)(), 100);
-                                    }}
+                                    onChange={(value) => field.onChange(value)}
+                                    onComplete={(value) => field.onChange(value)}
                                     type="numeric"
                                     inputMode="number"
                                     style={{ padding: '10px' }}

@@ -1,6 +1,7 @@
 import Chargebacks from "@/components/collections/Chargebacks";
 import CollectionHistory from "@/components/collections/History";
 import PaymentLinks from "@/components/collections/payment-links";
+import StableCoin from "@/components/collections/StableCoin";
 import VirtualAccounts from "@/components/collections/virtual-accounts";
 import CurrencySwitcher, { walletCurrencies } from "@/components/CurrencySwitcher";
 import Layout from "@/components/layout";
@@ -17,6 +18,7 @@ const tabs = [
   { title: "Collection History", link: "?tab=collection-history" },
   { title: "Virtual Accounts", link: "?tab=virtual-accounts" },
   { title: "Payment Links", link: "?tab=payment-links" },
+  { title: "Stable Coin", link: "?tab=stable-coin" },
   { title: "Chargebacks & Refunds", link: "?tab=chargebacks" }
 ]
 
@@ -67,6 +69,7 @@ const Collection = () => {
       {tab === "collection-history" && <CollectionHistory />}
       {tab === "virtual-accounts" && <VirtualAccounts />}
       {tab === "payment-links" && <PaymentLinks />}
+      {tab === "stable-coin" && <StableCoin />}
       {tab === "chargebacks" && <Chargebacks />}
     </Layout>
   );

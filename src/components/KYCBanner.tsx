@@ -36,43 +36,43 @@ const KYCBanner = () => {
     const kycStatus = kycData?.status as KycStatus | string;
     const rejectionReason = (kycData as UserKyc)?.comment;
 
-    // KYC verified but 2FA not enabled: show warning banner urging them to enable 2FA (commented out for now)
-    // if (kycStatus === KycStatus.APPROVED && !totp_enabled) {
-    //     if (isDismissed) return null;
+    // KYC verified but 2FA not enabled: show warning banner urging them to enable 2FA
+    if (kycStatus === KycStatus.APPROVED && !totp_enabled) {
+        if (isDismissed) return null;
 
-    //     const twoFaBannerClasses = cn(
-    //         'w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)]',
-    //         'border-t border-b',
-    //         'bg-[#FEF3C7] dark:bg-[#78350F]',
-    //         'border-[#FCD34D] dark:border-[#F59E0B]',
-    //         'text-[#92400E] dark:text-[#FCD34D]',
-    //         'py-4 mb-6 -mt-8 -ml-5 md:-ml-7'
-    //     );
+        const twoFaBannerClasses = cn(
+            'w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)]',
+            'border-t border-b',
+            'bg-[#FEF3C7] dark:bg-[#78350F]',
+            'border-[#FCD34D] dark:border-[#F59E0B]',
+            'text-[#92400E] dark:text-[#FCD34D]',
+            'py-4 mb-6 -mt-8 -ml-5 md:-ml-7'
+        );
 
-    //     return (
-    //         <div className={twoFaBannerClasses}>
-    //             <div className="px-5 md:px-7">
-    //                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-    //                     <div className="flex-1 min-w-0">
-    //                         <p className="font-semibold text-sm sm:text-base">
-    //                             Enable 2FA for better security
-    //                         </p>
-    //                         <p className="text-xs sm:text-sm mt-1 opacity-90">
-    //                             Your account is verified. Add an extra layer of protection by enabling two-factor authentication.
-    //                         </p>
-    //                     </div>
-    //                     <button
-    //                         onClick={() => router.push('/settings?section=security')}
-    //                         className="px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-200 whitespace-nowrap flex-shrink-0 w-full sm:w-auto bg-[#F59E0B] hover:bg-[#D97706] text-white"
-    //                         aria-label="Go to Security settings"
-    //                     >
-    //                         Enable 2FA
-    //                     </button>
-    //                 </div>
-    //             </div>
-    //         </div>
-    //     );
-    // }
+        return (
+            <div className={twoFaBannerClasses}>
+                <div className="px-5 md:px-7">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                        <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm sm:text-base">
+                                Enable 2FA for better security
+                            </p>
+                            <p className="text-xs sm:text-sm mt-1 opacity-90">
+                                Your account is verified. Add an extra layer of protection by enabling two-factor authentication.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => router.push('/settings?section=security')}
+                            className="px-4 sm:px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-200 whitespace-nowrap flex-shrink-0 w-full sm:w-auto bg-[#F59E0B] hover:bg-[#D97706] text-white"
+                            aria-label="Go to Security settings"
+                        >
+                            Enable 2FA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     // KYC verified and 2FA already enabled: no banner
     if (kycStatus === KycStatus.APPROVED) return null;

@@ -178,10 +178,44 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         }
     }, [defaultCurrency, setValue]);
 
+    const processFile = async (file: File) => {
+        setSelectedFile(file);
+        setValue('file', file, { shouldValidate: true });
+
+        setIsExtractingHeaders(true);
+        try {
+            const headers = await extractFileHeaders(file);
+            setFileHeaders(headers);
+            const autoMapping: Record<BulkPayoutMappingKey, string> = {
+                acct_no: "",
+                bank: "",
+                amnt: "",
+                acct_name: "",
+            };
+            headers.forEach((header) => {
+                const lowerHeader = header.toLowerCase().replace(/[_\s]/g, "");
+                if (lowerHeader.includes("acct") && lowerHeader.includes("no") || lowerHeader.includes("accountnumber") || lowerHeader.includes("accountno")) {
+                    if (!autoMapping.acct_no) autoMapping.acct_no = header;
+                } else if (lowerHeader.includes("bank") || lowerHeader.includes("bankname") || lowerHeader.includes("bankname")) {
+                    if (!autoMapping.bank) autoMapping.bank = header;
+                } else if (lowerHeader.includes("amnt") || lowerHeader.includes("amount") || lowerHeader.includes("amt")) {
+                    if (!autoMapping.amnt) autoMapping.amnt = header;
+                } else if (lowerHeader.includes("acct") && lowerHeader.includes("name") || lowerHeader.includes("accountname") || lowerHeader.includes("accountname")) {
+                    if (!autoMapping.acct_name) autoMapping.acct_name = header;
+                }
+            });
+            setHeaderMapping(autoMapping);
+        } catch (error: any) {
+            notifyError(error?.message || "Failed to extract file headers");
+            setFileHeaders([]);
+        } finally {
+            setIsExtractingHeaders(false);
+        }
+    };
+
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            // Validate file type
             const fileName = file.name.toLowerCase();
             const validExtensions = ['.csv', '.xlsx', '.xls'];
             const isValidType = validExtensions.some(ext => fileName.endsWith(ext));
@@ -194,7 +228,6 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 return;
             }
 
-            // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
                 notifyError("File size must be less than 10MB");
                 if (fileInputRef.current) {
@@ -203,40 +236,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 return;
             }
 
-            setSelectedFile(file);
-            setValue('file', file, { shouldValidate: true });
-
-            // Extract headers from the file
-            setIsExtractingHeaders(true);
-            try {
-                const headers = await extractFileHeaders(file);
-                setFileHeaders(headers);
-                // Auto-map headers if they match common patterns
-                const autoMapping: Record<BulkPayoutMappingKey, string> = {
-                    acct_no: "",
-                    bank: "",
-                    amnt: "",
-                    acct_name: "",
-                };
-                headers.forEach((header) => {
-                    const lowerHeader = header.toLowerCase().replace(/[_\s]/g, "");
-                    if (lowerHeader.includes("acct") && lowerHeader.includes("no") || lowerHeader.includes("accountnumber") || lowerHeader.includes("accountno")) {
-                        if (!autoMapping.acct_no) autoMapping.acct_no = header;
-                    } else if (lowerHeader.includes("bank") || lowerHeader.includes("bankname") || lowerHeader.includes("bankname")) {
-                        if (!autoMapping.bank) autoMapping.bank = header;
-                    } else if (lowerHeader.includes("amnt") || lowerHeader.includes("amount") || lowerHeader.includes("amt")) {
-                        if (!autoMapping.amnt) autoMapping.amnt = header;
-                    } else if (lowerHeader.includes("acct") && lowerHeader.includes("name") || lowerHeader.includes("accountname") || lowerHeader.includes("accountname")) {
-                        if (!autoMapping.acct_name) autoMapping.acct_name = header;
-                    }
-                });
-                setHeaderMapping(autoMapping);
-            } catch (error: any) {
-                notifyError(error?.message || "Failed to extract file headers");
-                setFileHeaders([]);
-            } finally {
-                setIsExtractingHeaders(false);
-            }
+            await processFile(file);
         }
     };
 
@@ -245,13 +245,12 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         e.stopPropagation();
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
 
         const file = e.dataTransfer.files?.[0];
         if (file) {
-            // Validate file type
             const fileName = file.name.toLowerCase();
             const validExtensions = ['.csv', '.xlsx', '.xls'];
             const isValidType = validExtensions.some(ext => fileName.endsWith(ext));
@@ -261,14 +260,12 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 return;
             }
 
-            // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
                 notifyError("File size must be less than 10MB");
                 return;
             }
 
-            setSelectedFile(file);
-            setValue('file', file, { shouldValidate: true });
+            await processFile(file);
         }
     };
 
@@ -665,7 +662,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                     focus
                                     onChange={(value) => setCompleteOtpValue(value)}
                                     onComplete={(value) => setCompleteOtpValue(value)}
-                                    style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}
+                                    style={{ display: "flex", gap: "8px", flexWrap: "nowrap", justifyContent: "center" }}
                                     inputStyle={{
                                         width: "44px",
                                         height: "50px",
@@ -712,35 +709,39 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         name="otp"
                         control={control}
                         render={({ field }) => (
-                            <div className="space-y-2 flex items-center justify-center">
-                                <PinInput
-                                    length={EMAIL_OTP_LENGTH}
-                                    initialValue=""
-                                    focus
-                                    onChange={(value) => {
-                                        field.onChange(value);
-                                        if (value.length === EMAIL_OTP_LENGTH) {
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="flex justify-center" style={{ flexWrap: 'nowrap' }}>
+                                    <PinInput
+                                        length={EMAIL_OTP_LENGTH}
+                                        initialValue=""
+                                        focus
+                                        onChange={(value) => {
+                                            field.onChange(value);
+                                            if (value.length === EMAIL_OTP_LENGTH) {
+                                                setTimeout(() => handleSubmit(onSubmit)(), 100);
+                                            }
+                                        }}
+                                        onComplete={(value) => {
+                                            field.onChange(value);
                                             setTimeout(() => handleSubmit(onSubmit)(), 100);
-                                        }
-                                    }}
-                                    onComplete={(value) => {
-                                        field.onChange(value);
-                                        setTimeout(() => handleSubmit(onSubmit)(), 100);
-                                    }}
-                                    type="numeric"
-                                    inputMode="number"
-                                    style={{ padding: '10px' }}
-                                    inputStyle={{
-                                        borderColor: errors.otp?.message ? 'red' : '#e2e8f0',
-                                        borderRadius: '8px',
-                                        margin: '0 4px',
-                                    }}
-                                    inputFocusStyle={{ borderColor: '#2563eb' }}
-                                    autoSelect={true}
-                                    regexCriteria={/^[0-9]*$/}
-                                />
+                                        }}
+                                        type="numeric"
+                                        inputMode="number"
+                                        style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', justifyContent: 'center' }}
+                                        inputStyle={{
+                                            borderColor: errors.otp?.message ? 'red' : '#e2e8f0',
+                                            borderRadius: '8px',
+                                            margin: '0 4px',
+                                            width: '44px',
+                                            height: '50px',
+                                        }}
+                                        inputFocusStyle={{ borderColor: '#2563eb' }}
+                                        autoSelect={true}
+                                        regexCriteria={/^[0-9]*$/}
+                                    />
+                                </div>
                                 {errors.otp?.message && (
-                                    <p className="text-red-500 text-xs">{errors.otp?.message}</p>
+                                    <p className="text-red-500 text-xs text-center w-full">{errors.otp?.message}</p>
                                 )}
                             </div>
                         )}
@@ -751,7 +752,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         className="openSansLight text-white text-lg p-2 rounded w-52"
                         text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
                         ariaLabel="Complete Bulk Payout"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
                         primary
                         type="submit"
                     />

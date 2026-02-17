@@ -70,9 +70,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     const { activeCurrencies, fetchActiveCurrencies } = useCurrency();
     const { totp_enabled } = useAuthentication();
 
-    // Generate currency options from active currencies, excluding USD
+    // Generate currency options from active currencies; only NGN is selectable, others are disabled (greyed out)
     const currencyOptions = useMemo(() => {
-        // Currency names mapping
         const currencyNames: Record<string, string> = {
             NGN: '₦ NGN',
             USD: '$ USD',
@@ -95,18 +94,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         };
 
         return activeCurrencies
-            .filter((code) => code !== 'USD') // Hide USD from payout currency list
+            .filter((code) => code !== 'USD')
             .map((code) => ({
                 value: code as CurrencyOption,
                 label: currencyNames[code] || code,
+                disabled: code !== 'NGN',
             }));
     }, [activeCurrencies]);
 
-    // Get default currency
-    const defaultCurrency = useMemo(() => {
-        const firstAvailable = activeCurrencies.find(c => c !== 'USD');
-        return (firstAvailable as CurrencyOption) || 'NGN';
-    }, [activeCurrencies]);
+    // Bulk payout defaults to NGN (only selectable currency)
+    const defaultCurrency: CurrencyOption = 'NGN';
 
     const validationSchema = useMemo(() => {
         const baseSchema = {

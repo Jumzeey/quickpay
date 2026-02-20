@@ -93,7 +93,6 @@ const OtpPage = () => {
       }
     } catch (error: any) {
       notifyError(error.message);
-    } finally {
       setVerifyOtpLoading(false);
     }
   };
@@ -223,7 +222,6 @@ const OtpPage = () => {
                         }}
                         onComplete={(value) => {
                           setOtp(value);
-                          setTimeout(() => handleSubmit(value), 100);
                         }}
                         style={{
                           display: 'flex',
@@ -254,7 +252,7 @@ const OtpPage = () => {
                           className="w-full py-2.5 text-sm font-medium rounded"
                           text={verifyOtpLoading ? "Verifying..." : isTotp ? "Verify" : "Verify OTP"}
                           ariaLabel={isTotp ? "Verify code" : "Verify OTP Button"}
-                          disabled={verifyOtpLoading}
+                          disabled={verifyOtpLoading || otp.length !== pinLength}
                           primary
                         />
                       </div>

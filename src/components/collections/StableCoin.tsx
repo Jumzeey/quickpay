@@ -161,6 +161,24 @@ const StableCoin = () => {
     setTimeLeft(0);
   };
 
+  const formatTimestamp = (timestamp: string | Date | null | undefined): string => {
+    if (!timestamp) return "N/A";
+    try {
+      const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return String(timestamp);
+    }
+  };
+
   // Address columns for DynamicTable
   const addressColumns = [
     {
@@ -235,9 +253,32 @@ const StableCoin = () => {
       },
     },
     {
-      key: "created_at",
-      title: "Created At",
-      render: (value: any) => value || "N/A",
+      key: "expires_at",
+      title: "Expiry Date",
+      render: (_value: any, row: any) => {
+        const expiresAt = row?.expires_at;
+        if (!expiresAt) return "N/A";
+        const expiryTime = new Date(expiresAt).getTime();
+        const isExpired = expiryTime < Date.now();
+        return (
+          <span className={isExpired ? "text-[#7F7F7F]" : "text-[#26A17B]"}>
+            {formatTimestamp(expiresAt)}
+          </span>
+        );
+      },
+    },
+    {
+      key: "options",
+      title: "",
+      render: (_value: any, row: any) => (
+        <Button
+          text="View Transactions"
+          ariaLabel="View address transactions"
+          className="px-4 !h-9 !w-[160px] p-0 !text-xs"
+          onClick={() => handleViewTransactions(row.address)}
+          primary
+        />
+      ),
     },
   ];
 
@@ -631,15 +672,7 @@ const StableCoin = () => {
             <DynamicTable
               columns={addressColumns}
               data={addresses}
-              primaryBtnContent={(row: any) => (
-                <Button
-                  text="View Transactions"
-                  ariaLabel="View address transactions"
-                  className="px-4 !h-12 !w-[175px] p-0"
-                  onClick={() => handleViewTransactions(row.address)}
-                  primary
-                />
-              )}
+              maxColumns={7}
             />
             {addressPagination && addressPagination.last_page > 1 && (
               <Pagination

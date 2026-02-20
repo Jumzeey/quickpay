@@ -18,7 +18,7 @@ const tabs = [
   { title: "Collection History", link: "?tab=collection-history" },
   { title: "Virtual Accounts", link: "?tab=virtual-accounts" },
   { title: "Payment Links", link: "?tab=payment-links" },
-  { title: "Stable Coin", link: "?tab=stable-coin" },
+  { title: "Crypto", link: "?tab=stable-coin" },
   { title: "Chargebacks & Refunds", link: "?tab=chargebacks" }
 ]
 

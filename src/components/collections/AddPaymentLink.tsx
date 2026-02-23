@@ -259,6 +259,7 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
           options={walletCurrencies}
           error={errors.currency?.message}
           touched={touchedFields.currency}
+          value={formCurrency}
           {...register("currency")}
         />
 
@@ -307,6 +308,7 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
           options={accountTypeOptions}
           error={errors.accountType?.message}
           touched={touchedFields.accountType}
+          value={accountType}
           {...register("accountType")}
         />
 
@@ -318,6 +320,7 @@ const AddPaymentLink: React.FC<AddPaymentLinkProps> = ({
             options={subAccountOptions}
             error={errors.selectedSubAccount?.message}
             touched={touchedFields.selectedSubAccount}
+            value={watch("selectedSubAccount")}
             {...register("selectedSubAccount")}
           />
         )}

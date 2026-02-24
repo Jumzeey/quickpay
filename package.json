@@ -15,8 +15,6 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.996.0",
-    "@aws-sdk/s3-request-presigner": "^3.996.0",
     "@headlessui/react": "^2.2.4",
     "@hookform/resolvers": "^5.1.1",
     "@openreplay/tracker": "^14.0.3",

@@ -36,7 +36,7 @@ export default async function handler(
     const { url, key: resolvedKey } = await getPresignedUploadUrl({
       key: normalizedKey,
       contentType: contentType.trim(),
-      expiresIn: 3600,
+      expiresIn: 900, // 15 minutes
     });
     return res.status(200).json({ url, key: resolvedKey });
   } catch (err) {

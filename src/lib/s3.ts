@@ -51,7 +51,8 @@ export async function getPresignedUploadUrl(
     ContentType: options.contentType,
   });
 
-  const expiresIn = options.expiresIn ?? 3600;
+  // Shorter expiry = less time the URL (and credential in it) is valid if leaked
+  const expiresIn = options.expiresIn ?? 900; // 15 minutes (was 3600)
   const url = await getSignedUrl(s3Client, command, { expiresIn });
 
   return { url, key: options.key };

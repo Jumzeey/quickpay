@@ -144,7 +144,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                 </div>
 
                 {hasError && (
-                    <span className="text-danger inline-block text-xs font-medium pt-0.5">
+                    <span className="text-danger block text-xs font-medium pt-0.5 whitespace-pre-line">
                         {error}
                     </span>
                 )}

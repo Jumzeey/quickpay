@@ -40,15 +40,20 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   function (response) {
     hideLoadingBar();
-    // Handle error responses (status === "error" or status === false)
-    if (response.data?.status === "error" || response.data?.status === false) {
+    // Handle error responses (status === "error" | status === false | success === false)
+    const isErrorResponse =
+      response.data?.status === "error" ||
+      response.data?.status === false ||
+      response.data?.success === false;
+
+    if (isErrorResponse) {
       if (
         response.data?.errors &&
-        Object.values(response.data?.errors).length
+        Object.keys(response.data.errors).length > 0
       ) {
-        // Extract first error message from nested structure
+        // Extract first error message from nested structure (e.g. { director_tin: ["Invalid format for Company TIN"] })
         const errors = response.data.errors;
-        const firstError = Object.values(errors).flat()[0];
+        const firstError = Object.values(errors).flat().find((v) => typeof v === "string") as string | undefined;
 
         return Promise.reject(
           new CustomHttpError(
@@ -68,9 +73,9 @@ api.interceptors.response.use(
       }
 
       return Promise.reject(
-        new CustomHttpError(response.data?.message, {
+        new CustomHttpError(response.data?.message || "Request failed", {
           statusCode: 400,
-          responseText: response.data?.message,
+          responseText: response.data?.message || "Request failed",
         })
       );
     }
@@ -81,11 +86,11 @@ api.interceptors.response.use(
     if (!err.response) {
       return Promise.reject(
         new CustomHttpError(
-          "Error occurred while sending the request, please check your internet settings",
+          "Error occurred while sending the request",
           {
             statusCode: 0,
             responseText:
-              "Error occurred while sending the request, please check your internet settings",
+              "Error occurred while sending the request",
           }
         )
       );

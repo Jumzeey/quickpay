@@ -273,9 +273,11 @@ export const addPayout = addInterBankPayout;
  * Key = column header from the uploaded file (e.g. act_num, bank_name).
  * Value = backend expected field name (e.g. account_number, bank_name).
  * Sent as mapping_headers[<key>] = value in form-data.
+ * Either file (multipart) or file_url (S3 URL after client upload) must be provided.
  */
 export interface BulkPayoutPayload {
-  file: File;
+  file?: File;
+  file_url?: string;
   currency: string;
   mapping_headers: Record<string, string>;
   otp?: string;
@@ -290,7 +292,12 @@ export interface BulkPayoutResponse {
 export async function initiateBulkPayout(payload: BulkPayoutPayload): Promise<BulkPayoutResponse> {
   try {
     const formData = new FormData();
-    formData.append('file', payload.file);
+    if (payload.file) {
+      formData.append('file', payload.file);
+    }
+    if (payload.file_url) {
+      formData.append('file_url', payload.file_url);
+    }
     formData.append('currency', payload.currency);
     Object.entries(payload.mapping_headers).forEach(([key, value]) => {
       formData.append(`mapping_headers[${key}]`, value);

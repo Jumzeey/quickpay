@@ -26,11 +26,8 @@ const s3Client = new S3Client({
 export { s3Client };
 
 export interface PresignedUploadOptions {
-  /** S3 object key (path + filename), e.g. "uploads/abc-123/image.png" */
   key: string;
-  /** MIME type, e.g. "image/png". Required for correct browser handling. */
   contentType: string;
-  /** URL validity in seconds. Default 3600 (1 hour). */
   expiresIn?: number;
 }
 

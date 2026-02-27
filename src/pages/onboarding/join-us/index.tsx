@@ -265,6 +265,7 @@ const RegisterPage = () => {
                         htmlFor="email"
                         error={errors.email?.message}
                         touched={!!errors.email}
+                        autoComplete="off"
                         {...field}
                       />
                     )}
@@ -302,6 +303,7 @@ const RegisterPage = () => {
                         htmlFor="password"
                         error={errors.password?.message}
                         touched={!!errors.password}
+                        autoComplete="off"
                         {...field}
                       />
                     )}
@@ -318,6 +320,7 @@ const RegisterPage = () => {
                         htmlFor="password_confirmation"
                         error={errors.password_confirmation?.message}
                         touched={!!errors.password_confirmation}
+                        autoComplete="off"
                         {...field}
                       />
                     )}

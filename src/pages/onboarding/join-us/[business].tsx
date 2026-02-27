@@ -319,6 +319,7 @@ const RegisterPage: React.FC = () => {
                 htmlFor="email"
                 formik={formik}
                 {...formik.getFieldProps("email")}
+                autoComplete="off"
               />
               <FloatingLabelInput
                 label="Password"
@@ -327,6 +328,7 @@ const RegisterPage: React.FC = () => {
                 htmlFor="password"
                 formik={formik}
                 {...formik.getFieldProps("password")}
+                autoComplete="off"
                 showError={false}
                 onFocus={() => setIsPasswordFocused(true)}
                 onBlur={() => setIsPasswordFocused(false)}
@@ -388,6 +390,7 @@ const RegisterPage: React.FC = () => {
                 htmlFor="password_confirmation"
                 formik={formik}
                 {...formik.getFieldProps("password_confirmation")}
+                autoComplete="off"
               />
               <div className="flex items-center">
                 <input

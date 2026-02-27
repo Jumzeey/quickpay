@@ -248,6 +248,7 @@ const CreateUpdateUserModal: React.FC<CreateUpdateUserModalProps> = ({
               htmlFor="email"
               error={errors.email?.message}
               touched={!!errors.email}
+              autoComplete="off"
               {...field}
             />
           )}
@@ -266,6 +267,7 @@ const CreateUpdateUserModal: React.FC<CreateUpdateUserModalProps> = ({
                 htmlFor="password"
                 error={errors.password?.message}
                 touched={!!errors.password}
+                autoComplete="off"
                 {...field}
               />
             )}

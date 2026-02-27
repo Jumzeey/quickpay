@@ -224,6 +224,7 @@ const AddUser: React.FC<AddUserProps> = ({
             htmlFor='email'
             formik={formik}
             {...formik.getFieldProps('email')}
+            autoComplete="off"
           />
 
           {!isUpdateUser && (
@@ -235,6 +236,7 @@ const AddUser: React.FC<AddUserProps> = ({
                 htmlFor='password'
                 formik={formik}
                 {...formik.getFieldProps('password')}
+                autoComplete="off"
               />
 
               <FloatingLabelInput
@@ -244,6 +246,7 @@ const AddUser: React.FC<AddUserProps> = ({
                 htmlFor='password_confirmation'
                 formik={formik}
                 {...formik.getFieldProps('password_confirmation')}
+                autoComplete="off"
               />
             </>
           )}

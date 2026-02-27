@@ -84,7 +84,12 @@ const registeredSchema = (isLicensed: boolean) =>
     business_description: Yup.string().required("Business Description is required!"),
     company_business_status: Yup.string().required("Company Business Status is required!"),
     document_beneficiary_type: Yup.string().required("Document Beneficiary Type is required!"),
-    director_tin: Yup.string().required("Director TIN is required!"),
+    director_tin: Yup.string()
+      .required("Director TIN is required!")
+      .matches(
+        /^[A-Z0-9\-]{3,25}$/i,
+        "TIN must be 3–25 characters.\nOnly letters, numbers and hyphens allowed.\nNo spaces, @ or _."
+      ),
     document_type: Yup.string().required("Document Type is required!"),
     cac_documents: Yup.string().required("Company Registration Certificate are required!"),
     document_beneficiary_file: Yup.string().required("Document Beneficiary File is required!"),

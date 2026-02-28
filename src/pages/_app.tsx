@@ -1,4 +1,5 @@
 "use client";
+import "../../sentry.client.config";
 import Button from '@/components/button';
 import Modal from '@/components/modal';
 import SharedState from "@/context/sharedState";

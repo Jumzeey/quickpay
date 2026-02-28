@@ -108,6 +108,7 @@ const ResetPassword: React.FC = () => {
                         htmlFor="password"
                         error={errors.password?.message}
                         touched={!!errors.password}
+                        autoComplete="off"
                         {...field}
                       />
                     )}
@@ -124,6 +125,7 @@ const ResetPassword: React.FC = () => {
                         htmlFor="password_confirmation"
                         error={errors.password_confirmation?.message}
                         touched={!!errors.password_confirmation}
+                        autoComplete="off"
                         {...field}
                       />
                     )}

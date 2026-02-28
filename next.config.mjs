@@ -1,4 +1,6 @@
 // next.config.mjs
+import { withSentryConfig } from "@sentry/nextjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -12,4 +14,17 @@ const nextConfig = {
   optimizeFonts: true,
 };
 
-export default nextConfig;
+const sentryWebpackPluginOptions = {
+  org: process.env.SENTRY_ORG ?? "ramp-technology",
+  project: process.env.SENTRY_PROJECT ?? "merchant-portal",
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+  disableLogger: true,
+  // Edge runtime (middleware) doesn't support OpenTelemetry/performance — disable to avoid "performance is not defined"
+  webpack: {
+    autoInstrumentMiddleware: false,
+  },
+};
+
+export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);

@@ -33,6 +33,9 @@ const CODE_LENGTH = 6;
 const TOTP_LENGTH = 6;
 const RECOVERY_CODE_LENGTH = 10;
 const EMAIL_OTP_LENGTH = 6;
+const BULK_PAYOUT_RECOMMENDED_MAX = 100;
+const VERIFICATION_WARN_AFTER_MS = 60 * 1000;   // 60s: show "takes longer for 100+"
+const VERIFICATION_TIMEOUT_MS = 5 * 60 * 1000;  // 5 min: show timeout message + Try again
 
 const BulkPayout: React.FC<BulkPayoutProps> = ({
     isModalOpen,
@@ -66,6 +69,9 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         reason: string;
         failedRows: Array<{ account_name: string; account_number: string; bank_name?: string; amount?: string; failure_reason: string }>;
     } | null>(null);
+    const [verificationLongMessage, setVerificationLongMessage] = useState(false);
+    const [verificationTimedOut, setVerificationTimedOut] = useState(false);
+    const verificationStartTimeRef = useRef<number | null>(null);
     const mappingDropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -404,6 +410,9 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (id != null) {
                     setBulkPayoutId(id);
                     setVerificationStatus('pending');
+                    setVerificationLongMessage(false);
+                    setVerificationTimedOut(false);
+                    verificationStartTimeRef.current = Date.now();
                 }
                 notifySuccess(response?.message || "Bulk payout initiated. Please enter OTP to complete.");
                 setShowConfirmationModal(false);
@@ -418,7 +427,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
     // Poll bulk payout status until verification_completed or failed, then show OTP or failure
     useEffect(() => {
-        if (currentStep !== 1 || bulkPayoutId == null || verificationStatus === 'verification_completed' || verificationStatus === 'failed') return;
+        if (currentStep !== 1 || bulkPayoutId == null || verificationStatus === 'verification_completed' || verificationStatus === 'failed' || verificationTimedOut) return;
 
         const pollInterval = 2000;
         const maxAttempts = 30;
@@ -427,6 +436,15 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
         const poll = async () => {
             if (cancelled || attempts >= maxAttempts) return;
+            const startTime = verificationStartTimeRef.current ?? 0;
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= VERIFICATION_TIMEOUT_MS) {
+                setVerificationTimedOut(true);
+                return;
+            }
+            if (elapsed >= VERIFICATION_WARN_AFTER_MS) {
+                setVerificationLongMessage(true);
+            }
             try {
                 const res = await getBulkPayoutStatus(bulkPayoutId);
                 if (cancelled) return;
@@ -465,7 +483,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             if (attempts < maxAttempts) {
                 pollTimeoutRef.current = setTimeout(poll, pollInterval);
             } else {
-                notifyError("Verification is taking longer than expected. Please check your payout history.");
+                setVerificationTimedOut(true);
             }
         };
 
@@ -478,7 +496,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 pollTimeoutRef.current = null;
             }
         };
-    }, [currentStep, bulkPayoutId, verificationStatus, watch]);
+    }, [currentStep, bulkPayoutId, verificationStatus, verificationTimedOut, watch]);
 
     const handleClose = () => {
         reset();
@@ -497,6 +515,9 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         setVerificationStatus(null);
         setBulkPayoutDetails(null);
         setVerificationFailure(null);
+        setVerificationLongMessage(false);
+        setVerificationTimedOut(false);
+        verificationStartTimeRef.current = null;
         setCompleteOtpValue("");
         setCompleteRecoveryCodeValue("");
         setCompleteUseRecoveryCode(false);
@@ -536,6 +557,18 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         } else {
             handleSubmit(onSubmit)();
         }
+    };
+
+    const handleTryAgainBulkPayout = () => {
+        setVerificationTimedOut(false);
+        setVerificationLongMessage(false);
+        setCurrentStep(0);
+        setBulkPayoutId(null);
+        setVerificationStatus(null);
+        setBulkPayoutDetails(null);
+        setCompleteOtpValue("");
+        setCompleteRecoveryCodeValue("");
+        setCompleteUseRecoveryCode(false);
     };
 
     const renderOtpVerificationStep = () => {
@@ -587,6 +620,35 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             );
         }
 
+        if (verificationTimedOut) {
+            return (
+                <div className="space-y-5 py-8">
+                    <div className="flex flex-col items-center gap-5">
+                        <div className="rounded-full bg-amber-100 p-3">
+                            <svg className="h-8 w-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="sr-only">Timeout</span>
+                        </div>
+                        <h3 className="text-center text-lg font-medium text-gray-800">
+                            Verification took too long
+                        </h3>
+                        <p className="text-center text-gray-600 text-sm max-w-sm">
+                            Please ensure your file has 100 or fewer recipients per batch and try again. For larger payouts, split your file into multiple files of 100 or fewer.
+                        </p>
+                        <Button
+                            className="openSansLight text-white text-lg p-2 rounded w-52"
+                            text="Try again"
+                            ariaLabel="Try again"
+                            primary
+                            type="button"
+                            onClick={handleTryAgainBulkPayout}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
         if (verificationStatus !== 'verification_completed') {
             return (
                 <div className="space-y-5 py-8">
@@ -599,7 +661,9 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                 Verifying your bulk payout
                             </h3>
                             <p className="text-gray-500 text-sm max-w-sm">
-                                We’re verifying the accounts in your file. This usually takes a few seconds.
+                                {verificationLongMessage
+                                    ? "Files with more than 100 recipients take longer to verify. We're still processing — you'll be prompted for a code when ready."
+                                    : "We're verifying the accounts in your file. This usually takes a few seconds."}
                             </p>
                             <p className="text-gray-400 text-xs">
                                 You’ll be asked to enter a verification code when ready.
@@ -767,6 +831,19 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             <p className="text-sm text-gray-500 mb-5">
                 Choose currency, upload your file, then map columns to the required fields.
             </p>
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-[#FFF8E1] dark:bg-[#F0B90B14] border border-[#F0B90B33] mb-5">
+                <span className="shrink-0 flex items-center justify-center size-6 rounded-full bg-[#F0B90B] text-white text-xs font-bold mt-0.5">
+                    !
+                </span>
+                <div>
+                    <p className="text-xs font-semibold text-[#B78A00] dark:text-[#F0B90B] mb-1">
+                        Important
+                    </p>
+                    <p className="text-xs text-[#8B6914] dark:text-[#F0B90B99] leading-relaxed">
+                        For best performance, limit each file to {BULK_PAYOUT_RECOMMENDED_MAX} recipients or fewer. For larger payouts, split your list into multiple files of {BULK_PAYOUT_RECOMMENDED_MAX} or fewer and upload in batches.
+                    </p>
+                </div>
+            </div>
             <div className="space-y-6">
                 {/* Currency Selection */}
                 <div>

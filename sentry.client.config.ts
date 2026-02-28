@@ -8,8 +8,8 @@ import * as Sentry from "@sentry/nextjs";
 const replayIntegration =
   typeof Sentry.replayIntegration === "function"
     ? Sentry.replayIntegration({
-        maskAllText: true,
-        blockAllMedia: true,
+        maskAllText: false,
+        blockAllMedia: false,
       })
     : null;
 

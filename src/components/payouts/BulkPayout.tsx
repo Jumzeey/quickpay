@@ -7,6 +7,7 @@ import { initiateBulkPayout, completeBulkPayout, getBulkPayoutStatus } from "@/s
 import useAuthentication from "@/stores/useAuthentication";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
 import { formatBalance, notifyError, notifySuccess } from "@/util/utils";
+import { uploadConfig } from "@/config/upload";
 import { uploadToS3 } from "@/lib/uploadToS3";
 import { extractFileHeaders, BULK_PAYOUT_MAPPING_KEYS, buildMappingHeaders, getFilePreview, BulkPayoutMappingKey } from "@/util/fileHeaders";
 import Icon from "@/components/icon";
@@ -385,12 +386,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         const mappingHeaders = buildMappingHeaders(headerMapping);
         setIsLoading(true);
         try {
-            const { url: fileUrl } = await uploadToS3({
-                file,
-                key: `bulk-payout/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
-            });
+            let fileUrl: string | undefined;
+            if (uploadConfig.useS3) {
+                const result = await uploadToS3({
+                    file,
+                    key: `bulk-payout/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
+                });
+                fileUrl = result.url;
+            }
             const response = await initiateBulkPayout({
-                file_url: fileUrl,
+                ...(fileUrl ? { file_url: fileUrl } : { file }),
                 currency,
                 mapping_headers: mappingHeaders,
             });

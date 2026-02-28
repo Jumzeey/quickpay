@@ -36,7 +36,7 @@ export interface PresignedUploadOptions {
  * Use this from an API route; do not call from the client.
  */
 export async function getPresignedUploadUrl(
-  options: PresignedUploadOptions
+  options: PresignedUploadOptions,
 ): Promise<{ url: string; key: string }> {
   if (!bucket) {
     throw new Error("BUCKET_NAME is not set");

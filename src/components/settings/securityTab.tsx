@@ -219,6 +219,7 @@ const SecurityTab = () => {
                   htmlFor="password"
                   error={errors.password?.message}
                   touched={touchedFields.password}
+                  autoComplete="off"
                   {...register("password")}
                 />
               </div>
@@ -231,6 +232,7 @@ const SecurityTab = () => {
                   htmlFor="password_confirmation"
                   error={errors.password_confirmation?.message}
                   touched={touchedFields.password_confirmation}
+                  autoComplete="off"
                   {...register("password_confirmation")}
                 />
               </div>

@@ -19,10 +19,11 @@ type FloatingLabelInputProps = {
   maxLength?: number | undefined;
   tooltip?: string | undefined;
   numberOnly?: boolean;
-  max?: string; 
+  max?: string;
   hasLink?: boolean;
   showError?: boolean;
   onFocus?: (e: FocusEvent<HTMLInputElement, Element>) => void;
+  autoComplete?: string;
 };
 
 const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
@@ -44,6 +45,7 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
   hasLink,
   divClassname,
   showError = true,
+  autoComplete,
 }) => {
   const errorMessage = formik && name && formik.errors[name];
   const hasError = errorMessage && formik.touched[name];
@@ -99,6 +101,7 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
         readOnly={readOnly}
         maxLength={maxLength}
         max={max}
+        autoComplete={autoComplete}
       />
 
       {type === "password" && (

@@ -1,5 +1,6 @@
 "use client";
 import "../../sentry.client.config";
+import * as Sentry from "@sentry/nextjs";
 import Button from '@/components/button';
 import Modal from '@/components/modal';
 import SharedState from "@/context/sharedState";
@@ -141,6 +142,20 @@ export default function App({ Component, pageProps }: AppProps) {
       tracker.setMetadata("business_type", user.business_type);
     }
   }, [tracker, user]);
+
+  // Set Sentry user for Session Replay and error attribution (replaces "Anonymous User")
+  useEffect(() => {
+    if (user?.email) {
+      Sentry.setUser({
+        email: user.email,
+        username: user.email,
+        ...(user.id != null && { id: String(user.id) }),
+        ...(user.business_name && { segment: user.business_name }),
+      });
+    } else {
+      Sentry.setUser(null);
+    }
+  }, [user]);
 
   // Load Headway widget only after the container is in the DOM (isClient = true)
   useEffect(() => {

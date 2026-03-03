@@ -199,12 +199,12 @@ const OtpPage = () => {
                           primary
                         />
                       </div>
-                      <p className="text-sm text-[#090727] font-medium underline cursor-pointer">
-                        Back to{' '}
-                        <Link href="/onboarding/sign-in" className="hover:text-blue-700">
-                          Sign in
-                        </Link>
-                      </p>
+                      <Link
+                        href="/onboarding/sign-in"
+                        className="text-sm text-[#090727] font-medium underline hover:text-blue-700 block"
+                      >
+                        Back to Sign in
+                      </Link>
                     </div>
                   </>
                 ) : (
@@ -256,12 +256,12 @@ const OtpPage = () => {
                           primary
                         />
                       </div>
-                      <p className="text-sm text-[#090727] font-medium underline cursor-pointer">
-                        Back to{' '}
-                        <Link href="/onboarding/sign-in" className="hover:text-blue-700">
-                          Sign in
-                        </Link>
-                      </p>
+                      <Link
+                        href="/onboarding/sign-in"
+                        className="text-sm text-[#090727] font-medium underline hover:text-blue-700 block"
+                      >
+                        Back to Sign in
+                      </Link>
                     </div>
                   </>
                 )}

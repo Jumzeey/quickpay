@@ -75,8 +75,8 @@ const CreateProduct: React.FC = () => {
     director_tin: Yup.string()
       .required("Director TIN is required!")
       .matches(
-        /^[A-Z0-9\-]{5,25}$/i,
-        "TIN must be 5–25 characters.\nOnly letters, numbers and hyphens allowed.\nNo spaces, @ or _."
+        /^[A-Z0-9\-]{3,25}$/i,
+        "TIN must be 3–25 characters.\nOnly letters, numbers and hyphens allowed.\nNo spaces, @ or _."
       ),
     document_type: Yup.string().required("Document Type is required!"),
     cac_documents: Yup.string().required(

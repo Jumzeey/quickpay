@@ -113,6 +113,7 @@ const SignInPage: React.FC = () => {
                         htmlFor="email"
                         error={errors.email?.message}
                         touched={!!errors.email}
+                        autoComplete="off"
                         {...field}
                       />
                     )}
@@ -130,6 +131,7 @@ const SignInPage: React.FC = () => {
                           htmlFor="password"
                           error={errors.password?.message}
                           touched={!!errors.password}
+                          autoComplete="off"
                           {...field}
                         />
 

@@ -86,11 +86,11 @@ api.interceptors.response.use(
     if (!err.response) {
       return Promise.reject(
         new CustomHttpError(
-          "Error occurred while sending the request, please check your internet settings",
+          "Error occurred while sending the request",
           {
             statusCode: 0,
             responseText:
-              "Error occurred while sending the request, please check your internet settings",
+              "Error occurred while sending the request",
           }
         )
       );

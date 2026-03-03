@@ -108,6 +108,7 @@ const ForgotPassword: React.FC = () => {
                         htmlFor="email"
                         error={errors.email?.message}
                         touched={!!errors.email}
+                        autoComplete="off"
                         {...field}
                       />
                     )}

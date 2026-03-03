@@ -3,7 +3,7 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - npm install
     build:
       commands:
         # Make server-side env vars available to Next.js API routes / SSR at runtime.

@@ -5,20 +5,20 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const region = process.env.STORAGE_BUCKET_REGION ?? "us-east-1";
-const bucket = process.env.STORAGE_BUCKET_NAME;
+const region = process.env.STORAGE_REGION ?? "us-east-1";
+const bucket = process.env.STORAGE_NAME;
 
 if (!bucket) {
-  console.warn("STORAGE_BUCKET_NAME is not set; S3 operations will fail.");
+  console.warn("STORAGE_NAME is not set; S3 operations will fail.");
 }
 
 const s3Client = new S3Client({
   region,
   credentials:
-    process.env.STORAGE_BUCKET_ACCESS_KEY_ID && process.env.STORAGE_BUCKET_SECRET_ACCESS_KEY
+    process.env.STORAGE_ACCESS_KEY_ID && process.env.STORAGE_SECRET_ACCESS_KEY
       ? {
-          accessKeyId: process.env.STORAGE_BUCKET_ACCESS_KEY_ID,
-          secretAccessKey: process.env.STORAGE_BUCKET_SECRET_ACCESS_KEY,
+          accessKeyId: process.env.STORAGE_ACCESS_KEY_ID,
+          secretAccessKey: process.env.STORAGE_SECRET_ACCESS_KEY,
         }
       : undefined,
 });
@@ -39,7 +39,7 @@ export async function getPresignedUploadUrl(
   options: PresignedUploadOptions,
 ): Promise<{ url: string; key: string }> {
   if (!bucket) {
-    throw new Error("STORAGE_BUCKET_NAME is not set");
+    throw new Error("STORAGE_NAME is not set");
   }
 
   const command = new PutObjectCommand({

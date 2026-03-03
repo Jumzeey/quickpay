@@ -144,16 +144,22 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [tracker, user]);
 
   // Set Sentry user for Session Replay and error attribution (replaces "Anonymous User")
+  // Only run when Sentry is enabled (DSN set) so we don't touch SDK when disabled
   useEffect(() => {
-    if (user?.email) {
-      Sentry.setUser({
-        email: user.email,
-        username: user.email,
-        ...(user.id != null && { id: String(user.id) }),
-        ...(user.business_name && { segment: user.business_name }),
-      });
-    } else {
-      Sentry.setUser(null);
+    if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+    try {
+      if (user?.email) {
+        Sentry.setUser({
+          email: user.email,
+          username: user.email,
+          ...(user.id != null && { id: String(user.id) }),
+          ...(user.business_name && { segment: user.business_name }),
+        });
+      } else {
+        Sentry.setUser(null);
+      }
+    } catch {
+      // ignore so Sentry user logic never breaks the app
     }
   }, [user]);
 

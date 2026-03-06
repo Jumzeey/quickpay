@@ -86,6 +86,8 @@ export const getStatusColor = (status: string) => {
     case 'completed':
     case 'successful':
       return '#2BD325';
+    case 'verification_completed':
+      return '#005BB0';
     case 'failed':
       return '#FD2727';
     case 'cancelled':

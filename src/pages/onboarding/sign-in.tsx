@@ -84,14 +84,16 @@ const SignInPage: React.FC = () => {
               {/* Logo Section */}
               <div className="px-8 pt-8 pb-4 bg-auth-header">
                 <div className="flex items-center">
-                  <Image
-                    src="/images/cray-logo.svg"
-                    alt="Cray"
-                    width={80}
-                    height={32}
-                    priority
-                    className="h-8 w-auto"
-                  />
+                  <Link href="/onboarding/sign-in" className="inline-flex cursor-pointer">
+                    <Image
+                      src="/images/cray-logo.svg"
+                      alt="Cray"
+                      width={80}
+                      height={32}
+                      priority
+                      className="h-8 w-auto"
+                    />
+                  </Link>
                 </div>
               </div>
 

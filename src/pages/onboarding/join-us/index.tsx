@@ -322,22 +322,23 @@ const RegisterPage = () => {
                   <Controller
                     name="password"
                     control={control}
-                    render={({ field }) => (
+                    render={({ field }) => {
+                      const { onBlur, ...fieldProps } = field;
+
+                      return (
                       <div className="space-y-3">
                         <FormInput
                           label="Password"
                           id="password"
                           type="password"
                           htmlFor="password"
-                          error={errors.password?.message}
-                          touched={!!errors.password}
                           autoComplete="off"
                           onFocus={() => setIsPasswordFocused(true)}
                           onBlur={() => {
-                            field.onBlur();
+                            onBlur();
                             setIsPasswordFocused(false);
                           }}
-                          {...field}
+                          {...fieldProps}
                         />
 
                         {showPasswordChecklist && (
@@ -415,7 +416,8 @@ const RegisterPage = () => {
                           </div>
                         )}
                       </div>
-                    )}
+                      );
+                    }}
                   />
 
                   <Controller

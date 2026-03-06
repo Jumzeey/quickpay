@@ -89,7 +89,9 @@ export const apiEndpoints = {
   payouts: {
     GET_PAYOUT_HISTORY: '/merchant/disbursements',
     ADD_PAYOUT: '/merchant/disbursements/interbank',
+    ADD_USDT_PAYOUT: '/merchant/disbursements/usdt',
     VERIFY_PAYOUT_OTP: '/merchant/disbursements/interbank/complete',
+    VERIFY_USDT_PAYOUT_OTP: '/merchant/disbursements/usdt/complete',
     INITIATE_BULK_PAYOUT: '/merchant/disbursements/interbank/bulk',
     GET_BULK_PAYOUT_STATUS: '/merchant/disbursements/interbank/bulk',
     GET_BULK_PAYOUT_TRANSACTIONS: '/merchant/disbursements/interbank/bulk/:id/transactions',

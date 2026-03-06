@@ -98,10 +98,9 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         XAF: 'XAF',
     };
 
-    // Generate currency options from active currencies, excluding USD
+    // Generate currency options from active currencies
     const currencyOptions = useMemo(() => {
         return activeCurrencies
-            .filter((code) => code !== 'USD') // Hide USD from payout currency list
             .map((code) => ({
                 value: code as CurrencyOption,
                 label: currencyNames[code] || code,
@@ -136,7 +135,11 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             return Yup.object().shape({
                 currency: Yup.string().required("Currency is required"),
                 amount: baseAmountValidation,
-                narration: Yup.string().required("Narration is required"),
+                narration: Yup.string().when("currency", {
+                    is: (val: string) => val !== "USD",
+                    then: (schema) => schema.required("Narration is required"),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
                 // Currency-specific validations
                 accountNumber: Yup.string()
                     .required("Account number is required")
@@ -180,7 +183,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     }),
                 // Channel selection for GHS, KES, TZS, and XOF
                 channel: Yup.string().when("currency", {
-                    is: (val: string) => ["GHS", "KES", "TZS", "XOF"].includes(val),
+                    is: (val: string) => ["GHS", "KES", "TZS", "XOF", "USD"].includes(val),
                     then: (schema) => schema.required("Please select a channel"),
                     otherwise: (schema) => schema.notRequired(),
                 }),
@@ -353,7 +356,10 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     }, [watchedCurrency, defaultCurrency]);
 
     // Only fetch payout options when on Same Currency Transfer step
-    const shouldFetchOptions = state.selectedOptionName === "Same Currency Transfer" && !!effectiveCurrency;
+    const shouldFetchOptions =
+        state.selectedOptionName === "Same Currency Transfer" &&
+        !!effectiveCurrency &&
+        effectiveCurrency !== "USD";
 
     // Fetch payout options instead of banks
     const { data: payoutOptionsData, loading: payoutOptionsLoading } = useEffectFetch(
@@ -403,7 +409,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
 
                 // Only reset channel when currency actually changes (not on initial load)
                 if (prevCurrencyRef.current !== undefined && prevCurrencyRef.current !== effectiveCurrency) {
-                    setValue("channel", undefined);
+                    setValue("channel", effectiveCurrency === "USD" ? "tron" : undefined);
                     setValue("bank", "");
                     setValue("network", "");
                     setValue("accountNumber", "");
@@ -498,6 +504,12 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountNumber, currency, selectedBankCode, selectedChannel]);
 
+    useEffect(() => {
+        if (currency === "USD" && selectedChannel !== "tron") {
+            setValue("channel", "tron");
+        }
+    }, [currency, selectedChannel, setValue]);
+
     const getTransferOtpCode = (): string | null => {
         if (transferUseRecoveryCode) {
             const trimmed = transferRecoveryCodeValue.trim().toUpperCase();
@@ -517,6 +529,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         // OTP verification step – keep loading state from the start so button stays disabled
         if (state.currentStep === 3) {
             const code = totp_enabled ? getTransferOtpCode() : values.otp;
+            const selectedFormCurrency = values.currency || currency;
+            const isUsdPayout = selectedFormCurrency === "USD";
             if (!code) {
                 if (totp_enabled) {
                     notifyError(transferUseRecoveryCode ? "Enter a valid 10-character recovery code" : "Enter the 6-digit authenticator code");
@@ -527,7 +541,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 return;
             }
             try {
-                const response = await verifyPayoutOtp({ otp: code });
+                const response = await verifyPayoutOtp({ otp: code, _isUsdtPayout: isUsdPayout } as any);
                 if (response?.success) {
                     notifySuccess(response?.message || 'Payout completed successfully!');
                     closeModalAndReset();
@@ -645,6 +659,11 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                         },
                         currency: "KES",
                     };
+                } else if (currency === "USD") {
+                    payload = {
+                        amount: Number(removeCommasFromValue(values.amount)),
+                        account_number: values.accountNumber,
+                    };
                 } else if (currency === "TZS") {
                     // TZS requires channel selection
                     payload = {
@@ -695,7 +714,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
             }
 
             // Check if required base fields are present
-            if (!payload.account_number || !payload.amount || !payload.currency) {
+            if (!payload.account_number || !payload.amount || (currency !== "USD" && !payload.currency)) {
                 console.error('❌ Payload missing required base fields:', {
                     account_number: payload.account_number,
                     amount: payload.amount,
@@ -760,7 +779,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                 }
             }
 
-            const response = await initiateInterBankPayout(payload);
+            const response = await initiateInterBankPayout({ ...payload, _isUsdtPayout: currency === "USD" });
             console.log('📥 API Response:', response);
             if (response?.message) {
                 notifySuccess(response?.message);
@@ -935,10 +954,11 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                             touched={!!errors.currency}
                             {...field}
                             value={field.value || defaultCurrency}
-                            onChange={(value) => {
-                                field.onChange(value);
+                            onChange={(event) => {
+                                const selectedValue = event?.target?.value;
+                                field.onChange(selectedValue);
                                 // Reset all fields when currency changes
-                                setValue("channel", undefined);
+                                setValue("channel", selectedValue === "USD" ? "tron" : undefined);
                                 setValue("bank", "");
                                 setValue("bank_code", "");
                                 setValue("network", "");
@@ -1205,6 +1225,60 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                                 />
                             )}
                         />
+                    </>
+                )}
+
+                {/* USD (USDT) Specific Fields */}
+                {currency === "USD" && (
+                    <>
+                        <Controller
+                            name="channel"
+                            control={control}
+                            render={({ field }) => (
+                                <FormSelect
+                                    id="channel"
+                                    htmlFor="channel"
+                                    label="Select Channel"
+                                    placeholder="Select Channel"
+                                    options={[{ value: "tron", label: "TRON" }]}
+                                    error={errors.channel?.message}
+                                    touched={!!errors.channel}
+                                    {...field}
+                                    value={field.value || "tron"}
+                                    disabled
+                                    onChange={() => field.onChange("tron")}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="accountNumber"
+                            control={control}
+                            render={({ field }) => (
+                                <FormInput
+                                    label="Wallet Address"
+                                    id="accountNumber"
+                                    type="text"
+                                    htmlFor="accountNumber"
+                                    error={errors.accountNumber?.message}
+                                    touched={!!errors.accountNumber}
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-[#FFF8E1] border border-[#F0B90B33]">
+                            <span className="shrink-0 flex items-center justify-center size-6 rounded-full bg-[#F0B90B] text-white text-xs font-bold mt-0.5">
+                                !
+                            </span>
+                            <div>
+                                <p className="text-xs font-semibold text-[#B78A00] mb-1">
+                                    Important
+                                </p>
+                                <p className="text-xs text-[#8B6914] leading-relaxed">
+                                    Only send <strong>USDT</strong> on the <strong>TRON</strong> network to this address.
+                                    Sending any other token or using a different network may result in permanent loss of funds.
+                                </p>
+                            </div>
+                        </div>
                     </>
                 )}
 
@@ -1543,21 +1617,23 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                     )}
                 />
 
-                <Controller
-                    name="narration"
-                    control={control}
-                    render={({ field }) => (
-                        <FormInput
-                            label="Narration"
-                            id="narration"
-                            type="text"
-                            htmlFor="narration"
-                            error={errors.narration?.message}
-                            touched={!!errors.narration}
-                            {...field}
-                        />
-                    )}
-                />
+                {currency !== "USD" && (
+                    <Controller
+                        name="narration"
+                        control={control}
+                        render={({ field }) => (
+                            <FormInput
+                                label="Narration"
+                                id="narration"
+                                type="text"
+                                htmlFor="narration"
+                                error={errors.narration?.message}
+                                touched={!!errors.narration}
+                                {...field}
+                            />
+                        )}
+                    />
+                )}
 
                 <div className="pt-10 w-52">
                     <Button
@@ -1569,7 +1645,7 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
                             state.isLoading ||
                             !currency ||
                             // Disable if channel is required but not selected or not available
-                            (["GHS", "KES", "TZS", "XOF"].includes(currency) && (!selectedChannel || channelOptions.length === 0))
+                            (["GHS", "KES", "TZS", "XOF", "USD"].includes(currency) && (!selectedChannel || (currency !== "USD" && channelOptions.length === 0)))
                         }
                         primary
                         type="submit"

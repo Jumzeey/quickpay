@@ -2,7 +2,7 @@ import { BankResponse } from "@/services/payout";
 
 export interface TransferFormValues {
   currency?: string;
-  channel?: "bank" | "momo";
+  channel?: "bank" | "momo" | "tron";
   bank: string;
   bank_code?: string; // For NGN at top level
   network?: string;

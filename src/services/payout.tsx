@@ -247,10 +247,10 @@ export async function getBulkPayoutTransactions(
   }
 }
 
-export async function addInterBankPayout(payload: InterbankPayoutPayload): Promise<PayoutResponse> {
+export async function addInterBankPayout(payload: InterbankPayoutPayload, isUsdtPayout: boolean = false): Promise<PayoutResponse> {
   try {
     const response = await api.post(
-      `${apiEndpoints.payouts.ADD_PAYOUT}`,
+      `${isUsdtPayout ? apiEndpoints.payouts.ADD_USDT_PAYOUT : apiEndpoints.payouts.ADD_PAYOUT}`,
       payload
     );
     // @ts-ignore
@@ -260,10 +260,10 @@ export async function addInterBankPayout(payload: InterbankPayoutPayload): Promi
   }
 }
 
-export async function verifyPayoutOtp(payload: VerifyPayoutOtpPayload): Promise<PayoutResponse> {
+export async function verifyPayoutOtp(payload: VerifyPayoutOtpPayload, isUsdtPayout: boolean = false): Promise<PayoutResponse> {
   try {
     const response = await api.post(
-      `${apiEndpoints.payouts.VERIFY_PAYOUT_OTP}`,
+      `${isUsdtPayout ? apiEndpoints.payouts.VERIFY_USDT_PAYOUT_OTP : apiEndpoints.payouts.VERIFY_PAYOUT_OTP}`,
       payload
     );
     // @ts-ignore

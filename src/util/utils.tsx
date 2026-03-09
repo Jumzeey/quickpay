@@ -429,7 +429,7 @@ export const getAllCurrencies = (modules: Modules[]): { value: CurrencyOption; l
   const currencySet = new Set<string>();
 
   modules.forEach((module) => {
-    if (module.sub_product.currency) {
+    if (module?.sub_product?.currency) {
       module.sub_product.currency.forEach((currency) => {
         currencySet.add(currency);
       });

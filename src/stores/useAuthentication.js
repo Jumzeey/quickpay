@@ -188,10 +188,12 @@ const useAuthentication = create(
         const { data, message } = await verifyOtp(payload);
         Cookies.set("accessToken", data.token);
 
-        const allCurrencies = getAllCurrencies(data.modules);
-        if (allCurrencies.length > 0) {
-          useCurrency.getState().setCurrency(allCurrencies[0].value);
-          useCurrency.getState().setDefaultCurrency(allCurrencies[0].value);
+        const modules = data?.modules ?? [];
+        const allCurrencies = getAllCurrencies(modules);
+        const firstCurrency = allCurrencies?.[0];
+        if (firstCurrency?.value) {
+          useCurrency.getState().setCurrency(firstCurrency.value);
+          useCurrency.getState().setDefaultCurrency(firstCurrency.value);
         }
 
         set((state) => ({

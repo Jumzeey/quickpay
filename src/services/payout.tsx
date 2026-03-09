@@ -60,6 +60,70 @@ export interface PayoutHistoryResponse {
   export_link?: string;
 }
 
+export interface BulkPayoutHistoryItem {
+  id: number;
+  external_bulk_payout_id: string | null;
+  merchant_id: number;
+  currency: string;
+  file_path: string;
+  status: string;
+  success_count: number;
+  failure_count: number;
+  total_amount: string;
+  failed_rows: unknown;
+  successful_rows: unknown;
+  reason: string | null;
+  created_at: string;
+  updated_at: string;
+  total_transaction: number;
+}
+
+export interface BulkPayoutHistoryResponse {
+  bulk_payouts: BulkPayoutHistoryItem[];
+  pagination: {
+    count: number;
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    next_page_url: string | null;
+    previous_page_url: string | null;
+  };
+}
+
+export interface BulkPayoutTransaction {
+  id: number;
+  bulk_payout_id: number;
+  merchant_id: string;
+  currency: string;
+  bank_name: string;
+  bank_code: string;
+  account_number: string;
+  account_name: string;
+  amount: string;
+  status: string;
+  reference: string;
+  customer_reference: string | null;
+  bulk_payout_reference: string | null;
+  failure_reason: string | null;
+  raw_response: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BulkPayoutTransactionsResponse {
+  transactions: BulkPayoutTransaction[];
+  pagination: {
+    count: number;
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    next_page_url: string | null;
+    previous_page_url: string | null;
+  };
+}
+
 export interface VerifyPayoutOtpPayload {
   otp: string;
 }
@@ -150,10 +214,43 @@ export async function getPayoutHistory(params?: PayoutHistoryParams): Promise<Pa
   }
 }
 
-export async function addInterBankPayout(payload: InterbankPayoutPayload): Promise<PayoutResponse> {
+export async function getBulkPayoutHistory(params?: {
+  page?: number;
+  per_page?: number;
+  currency?: string;
+}): Promise<BulkPayoutHistoryResponse> {
+  try {
+    const response = await api.get(
+      apiEndpoints.payouts.INITIATE_BULK_PAYOUT,
+      { params }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getBulkPayoutTransactions(
+  bulkPayoutId: number,
+  params?: { page?: number; per_page?: number; currency?: string }
+): Promise<BulkPayoutTransactionsResponse> {
+  try {
+    const response = await api.get(
+      apiEndpoints.payouts.GET_BULK_PAYOUT_TRANSACTIONS.replace(":id", String(bulkPayoutId)),
+      { params }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function addInterBankPayout(payload: InterbankPayoutPayload, isUsdtPayout: boolean = false): Promise<PayoutResponse> {
   try {
     const response = await api.post(
-      `${apiEndpoints.payouts.ADD_PAYOUT}`,
+      `${isUsdtPayout ? apiEndpoints.payouts.ADD_USDT_PAYOUT : apiEndpoints.payouts.ADD_PAYOUT}`,
       payload
     );
     // @ts-ignore
@@ -163,10 +260,10 @@ export async function addInterBankPayout(payload: InterbankPayoutPayload): Promi
   }
 }
 
-export async function verifyPayoutOtp(payload: VerifyPayoutOtpPayload): Promise<PayoutResponse> {
+export async function verifyPayoutOtp(payload: VerifyPayoutOtpPayload, isUsdtPayout: boolean = false): Promise<PayoutResponse> {
   try {
     const response = await api.post(
-      `${apiEndpoints.payouts.VERIFY_PAYOUT_OTP}`,
+      `${isUsdtPayout ? apiEndpoints.payouts.VERIFY_USDT_PAYOUT_OTP : apiEndpoints.payouts.VERIFY_PAYOUT_OTP}`,
       payload
     );
     // @ts-ignore

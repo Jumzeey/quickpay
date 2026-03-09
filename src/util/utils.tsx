@@ -86,6 +86,8 @@ export const getStatusColor = (status: string) => {
     case 'completed':
     case 'successful':
       return '#2BD325';
+    case 'verification_completed':
+      return '#005BB0';
     case 'failed':
       return '#FD2727';
     case 'cancelled':
@@ -427,7 +429,7 @@ export const getAllCurrencies = (modules: Modules[]): { value: CurrencyOption; l
   const currencySet = new Set<string>();
 
   modules.forEach((module) => {
-    if (module.sub_product.currency) {
+    if (module?.sub_product?.currency) {
       module.sub_product.currency.forEach((currency) => {
         currencySet.add(currency);
       });

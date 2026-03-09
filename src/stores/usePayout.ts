@@ -2,7 +2,6 @@ import {
     addInterBankPayout,
     getBankList,
     getPayoutHistory,
-    InterbankPayoutPayload,
     raiseDispute,
     requeryPayout,
     RequeryPayoutResponse,
@@ -96,7 +95,7 @@ interface PayoutActions {
     // API actions
     fetchPayoutHistory: (params?: PayoutHistoryParams) => Promise<{ success: boolean; data?: PayoutHistoryResponse }>;
     initiateInterBankPayout: (payload: any) => Promise<{ success: boolean; message?: string; data?: any; requiresOtp?: boolean }>;
-    verifyPayoutOtp: (payload: { otp: string; }) => Promise<{ success: boolean; message?: string; data?: any }>;
+    verifyPayoutOtp: (payload: { otp: string; _isUsdtPayout?: boolean }) => Promise<{ success: boolean; message?: string; data?: any }>;
     viewPayout: (id: string) => Promise<{ success: boolean; data?: Payout }>;
     validateBankAccount: (bankCode: string, accountNumber: string) => Promise<{ success: boolean; account_name?: string }>;
     fetchBanks: () => Promise<{ success: boolean; data?: Bank[] }>;
@@ -241,8 +240,9 @@ const usePayout = create<PayoutStore>()(
                 }
             },
 
-            initiateInterBankPayout: async (payload: InterbankPayoutPayload) => {
+            initiateInterBankPayout: async (payload: any) => {
                 const state = get();
+                const { _isUsdtPayout = false, ...requestPayload } = payload || {};
 
                 // Don't initiate if already loading
                 if (state.initiatePayoutLoading) {
@@ -256,12 +256,12 @@ const usePayout = create<PayoutStore>()(
                 }));
 
                 try {
-                    const response = await addInterBankPayout(payload);
+                    const response = await addInterBankPayout(requestPayload, _isUsdtPayout);
 
                     set((state) => ({
                         ...state,
                         pendingPayout: {
-                            ...payload,
+                            ...requestPayload,
                             total_charge: response.data?.total_charge,
                         },
                         initiatePayoutLoading: false,
@@ -282,8 +282,9 @@ const usePayout = create<PayoutStore>()(
                 }
             },
 
-            verifyPayoutOtp: async (payload: { otp: string }) => {
+            verifyPayoutOtp: async (payload: { otp: string; _isUsdtPayout?: boolean }) => {
                 const state = get();
+                const { _isUsdtPayout = false, ...requestPayload } = payload;
 
                 if (state.verifyOtpLoading) {
                     return { success: false };
@@ -296,7 +297,7 @@ const usePayout = create<PayoutStore>()(
                 }));
 
                 try {
-                    const response = await verifyPayoutOtp(payload);
+                    const response = await verifyPayoutOtp({ otp: requestPayload.otp }, _isUsdtPayout);
 
                     // Refresh payout history after successful completion
                     await get().fetchPayoutHistory();

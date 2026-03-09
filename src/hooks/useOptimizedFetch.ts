@@ -39,8 +39,10 @@ export function useStoreQuery<T = any>(
   const mountedRef = useRef(false);
   const lastParamsRef = useRef<string>("");
   const isInitialQueryRef = useRef(true);
+  const cacheKeyRef = useRef("");
 
   const cacheKey = `${key}:${JSON.stringify(params)}`;
+  cacheKeyRef.current = cacheKey;
   const currentParamsKey = JSON.stringify(params);
   const paramsChanged = currentParamsKey !== lastParamsRef.current;
 
@@ -124,12 +126,16 @@ export function useStoreQuery<T = any>(
     }
   }, [enabled, currentParamsKey, executeQuery]);
 
+  const refetch = useCallback(() => executeQuery(true), [executeQuery]);
+
+  const invalidate = useCallback(() => {
+    requestCache.delete(cacheKeyRef.current);
+    lastParamsRef.current = "";
+  }, []);
+
   return {
-    refetch: () => executeQuery(true),
-    invalidate: () => {
-      requestCache.delete(cacheKey);
-      lastParamsRef.current = "";
-    },
+    refetch,
+    invalidate,
   };
 }
 

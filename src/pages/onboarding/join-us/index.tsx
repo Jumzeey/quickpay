@@ -11,7 +11,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 // import { SupportedCountry } from "@/services/authentication";
 import useAuthentication from "@/stores/useAuthentication";
 import useLoadRecaptcha from "@/util/useLoadRecaptcha";
-import { notifyError, notifySuccess, passwordValidation } from "@/util/utils";
+import { notifyError, notifySuccess } from "@/util/utils";
 import { getData } from "country-list";
 import countryToCurrency, { Countries, Currencies } from "country-to-currency";
 import Image from "next/image";
@@ -35,6 +35,17 @@ interface FormValues {
 
 const nameRegex = /^[a-zA-Z\s\-']+$/;
 
+const signUpPasswordValidation = Yup.string()
+  .required("Password is required!")
+  .matches(
+    /[!@#$%^&*(),.?":{}|<>]/,
+    "Password must contain at least one symbol."
+  )
+  .matches(/\d/, "Password must contain at least one number.")
+  .min(8, "Password must be at least 8 characters long")
+  .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+  .matches(/[A-Z]/, "Password must contain at least one uppercase letter");
+
 const validationSchema = Yup.object().shape({
   firstname: Yup.string()
     .required("First Name is required!")
@@ -52,7 +63,7 @@ const validationSchema = Yup.object().shape({
   phone: Yup.string().required("Phone number is required!"),
   country: Yup.string().required("Country is required!"),
   business_name: Yup.string().required("Business Name is required!"),
-  password: passwordValidation,
+  password: signUpPasswordValidation,
   password_confirmation: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),
@@ -71,6 +82,7 @@ const RegisterPage = () => {
   } = useAuthentication();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // Load supported countries on component mount
   // useEffect(() => {
@@ -112,7 +124,8 @@ const RegisterPage = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    watch,
+    formState: { errors },
     reset
   } = useFormValidation<FormValues>(validationSchema, {
     defaultValues: {
@@ -128,6 +141,18 @@ const RegisterPage = () => {
     },
     mode: "onChange"
   });
+  const passwordValue = watch("password") || "";
+  const passwordRequirements = useMemo(
+    () => ({
+      hasLowercase: /[a-z]/.test(passwordValue),
+      hasUppercase: /[A-Z]/.test(passwordValue),
+      hasSpecialCharacter: /[!@#$%^&*(),.?":{}|<>]/.test(passwordValue),
+      hasNumber: /\d/.test(passwordValue),
+      hasMinLength: passwordValue.length >= 8
+    }),
+    [passwordValue]
+  );
+  const showPasswordChecklist = isPasswordFocused || passwordValue.length > 0;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -165,14 +190,16 @@ const RegisterPage = () => {
             {/* Logo Section */}
             <div className="px-8 pt-8 pb-4 bg-auth-header">
               <div className="flex items-center">
-                <Image
-                  src="/images/cray-logo.svg"
-                  alt="Cray"
-                  width={80}
-                  height={32}
-                  priority
-                  className="h-8 w-auto"
-                />
+                <Link href="/onboarding/sign-in" className="inline-flex cursor-pointer">
+                  <Image
+                    src="/images/cray-logo.svg"
+                    alt="Cray"
+                    width={80}
+                    height={32}
+                    priority
+                    className="h-8 w-auto"
+                  />
+                </Link>
               </div>
             </div>
 
@@ -295,18 +322,102 @@ const RegisterPage = () => {
                   <Controller
                     name="password"
                     control={control}
-                    render={({ field }) => (
-                      <FormInput
-                        label="Password"
-                        id="password"
-                        type="password"
-                        htmlFor="password"
-                        error={errors.password?.message}
-                        touched={!!errors.password}
-                        autoComplete="off"
-                        {...field}
-                      />
-                    )}
+                    render={({ field }) => {
+                      const { onBlur, ...fieldProps } = field;
+
+                      return (
+                      <div className="space-y-3">
+                        <FormInput
+                          label="Password"
+                          id="password"
+                          type="password"
+                          htmlFor="password"
+                          autoComplete="off"
+                          onFocus={() => setIsPasswordFocused(true)}
+                          onBlur={() => {
+                            onBlur();
+                            setIsPasswordFocused(false);
+                          }}
+                          {...fieldProps}
+                        />
+
+                        {showPasswordChecklist && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasLowercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasLowercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One lowercase letter
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasUppercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasUppercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One uppercase letter
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasSpecialCharacter ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasSpecialCharacter ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One special character
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasNumber ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasNumber ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One number
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasMinLength ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasMinLength ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                8 characters minimum
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      );
+                    }}
                   />
 
                   <Controller

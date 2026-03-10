@@ -736,7 +736,8 @@ const PayoutHistory = () => {
       </div>
 
       <div>
-        {isNgnCurrency && (
+        {/* Tab switch commented out – bulk payout disabled */}
+        {/* {isNgnCurrency && (
           <div className="mb-6 inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
             <button
               type="button"
@@ -753,7 +754,7 @@ const PayoutHistory = () => {
               Bulk Payout
             </button>
           </div>
-        )}
+        )} */}
 
         {!isBulkTab && payouts?.length > 0 && (
           <>
@@ -965,13 +966,15 @@ const PayoutHistory = () => {
                   primary
                 />
               ) : isBulkTab ? (
-                <Button
-                  text="Initiate Bulk Payout"
-                  ariaLabel="Initiate bulk payout"
-                  onClick={() => toggleModal('isBulkPayoutModalOpen')}
-                  className="!w-60 !h-12"
-                  primary
-                />
+                // Bulk payout initiate commented out – bulk payout disabled
+                // <Button
+                //   text="Initiate Bulk Payout"
+                //   ariaLabel="Initiate bulk payout"
+                //   onClick={() => toggleModal('isBulkPayoutModalOpen')}
+                //   className="!w-60 !h-12"
+                //   primary
+                // />
+                null
               ) : (
                 <PayoutDropdown
                   className="w-60"

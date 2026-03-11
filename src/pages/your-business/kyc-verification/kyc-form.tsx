@@ -405,6 +405,8 @@ const KYCForm = () => {
                   text="ID document"
                   folderName="kyc"
                   value={idFile}
+                  error={errors.id_file?.message}
+                  touched={!!errors.id_file}
                 />
                 <UploadComponent
                   className="min-h-[200px]"
@@ -414,6 +416,8 @@ const KYCForm = () => {
                   text="Proof of address"
                   folderName="kyc"
                   value={proofOfAddress}
+                  error={errors.proof_of_address?.message}
+                  touched={!!errors.proof_of_address}
                 />
               </div>
               <Controller
@@ -464,6 +468,8 @@ const KYCForm = () => {
                     folderName="kyc"
                     className="min-h-[180px]"
                     value={documentFile}
+                    error={errors.document_file?.message}
+                    touched={!!errors.document_file}
                   />
                 </div>
                 <div className="space-y-4">
@@ -475,6 +481,8 @@ const KYCForm = () => {
                     text="Company Registration Certificate (CAC)"
                     folderName="kyc"
                     value={cacDocuments}
+                    error={errors.cac_documents?.message}
+                    touched={!!errors.cac_documents}
                   />
                   <UploadComponent
                     className="min-h-[180px]"
@@ -484,6 +492,8 @@ const KYCForm = () => {
                     text="MEMART or equivalent"
                     folderName="kyc"
                     value={companyBusinessStatus}
+                    error={errors.company_business_status?.message}
+                    touched={!!errors.company_business_status}
                   />
                 </div>
               </div>
@@ -495,6 +505,8 @@ const KYCForm = () => {
                 text="Proof of business address (e.g. utility bill)"
                 folderName="kyc"
                 value={proofOfAddress}
+                error={errors.proof_of_address?.message}
+                touched={!!errors.proof_of_address}
               />
             </FormSection>
 
@@ -527,6 +539,8 @@ const KYCForm = () => {
                     folderName="kyc"
                     className="min-h-[180px]"
                     value={documentBeneficiaryFile}
+                    error={errors.document_beneficiary_file?.message}
+                    touched={!!errors.document_beneficiary_file}
                   />
                 </div>
               </div>

@@ -5,7 +5,7 @@ type PayoutType = "single" | "bulk";
 
 const PAYOUT_OPTIONS: { value: PayoutType; label: string }[] = [
   { value: "single", label: "Single Payout" },
-  { value: "bulk", label: "Bulk Payout" },
+  // { value: "bulk", label: "Bulk Payout" }, // commented out – bulk payout initiate disabled
 ];
 
 type PayoutDropdownProps = {

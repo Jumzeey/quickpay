@@ -1,6 +1,6 @@
 /**
  * File upload configuration.
- * When true, features that support S3 (e.g. bulk payout) will upload via S3 and send the file URL.
+ * When true, features that support S3 (e.g. bulk payout, upgrade account documents) will upload via S3 and send the file URL.
  * When false, the file is sent directly in the request (regular multipart upload).
  *
  * Set NEXT_PUBLIC_USE_S3_FILE_UPLOAD=true in env to enable S3 (default: false).

@@ -1,3 +1,16 @@
+/** Module slug required to show a sidebar link. Empty string = always show (e.g. Dashboard, Settings). */
+export const SIDEBAR_MODULE_SLUG: Record<string, string> = {
+  "/dashboard": "",
+  "/your-business": "",
+  "/payouts": "payout",
+  "/conversions": "conversions",
+  "/collections": "collections",
+  "/settlements": "settlements",
+  "/balance-history": "",
+  "/activity-log": "",
+  "/settings": "",
+};
+
 export const sidebarLinks = [
   {
     href: "/dashboard",

@@ -6,19 +6,21 @@ import Loader from '@/components/loader';
 import { notifyError, notifySuccess, uuid } from '@/util/utils';
 import ActionButton from '../action-button';
 import FormInput from '../FormInput';
+import { uploadFileByConfig } from '@/util/uploadFileByConfig';
 
 interface UploadedDoc {
   id: string;
   file: File;
   selectedType?: string;
   uploadUrl?: string;
+  uploadedFileUrl?: string;
   status: 'pending' | 'uploading' | 'uploaded' | 'error';
   label?: string;
 }
 
 interface Props {
   type: string;
-  onDocumentsUploaded: (docs: { type: string; file: File }[]) => void;
+  onDocumentsUploaded: (docs: { type: string; url: string; label?: string }[]) => void;
 }
 
 const USDVirtualAccountDocuments: React.FC<Props> = ({
@@ -32,7 +34,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
   useEffect(() => {
     return () => {
       files.forEach(file => {
-        if (file.uploadUrl) {
+        if (file.uploadUrl && file.uploadUrl.startsWith('blob:')) {
           URL.revokeObjectURL(file.uploadUrl);
         }
       });
@@ -128,36 +130,51 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
     }
 
     try {
-      // Create a blob URL for viewing the file
-      const blobUrl = URL.createObjectURL(fileObj.file);
-      
+      setFiles(prev =>
+        prev.map(f =>
+          f.id === fileObj.id ? { ...f, status: 'uploading' as const } : f
+        )
+      );
+
+      const uploadedUrl = await uploadFileByConfig(
+        fileObj.file,
+        'usd-virtual-account-documents'
+      );
+
       setFiles(prev => {
         const updated = prev.map(f =>
           f.id === fileObj.id
-            ? { 
-                ...f, 
+            ? {
+                ...f,
                 status: 'uploaded' as UploadedDoc['status'],
-                uploadUrl: blobUrl 
+                uploadUrl: uploadedUrl,
+                uploadedFileUrl: uploadedUrl,
               }
             : f
         );
 
-        // Sync after updating
         onDocumentsUploaded(
           updated
-            .filter(f => f.status === 'uploaded' && f.selectedType && f.file)
+            .filter(f => f.status === 'uploaded' && f.selectedType && f.uploadedFileUrl)
             .map(f => ({
               type: f.selectedType!,
-              file: f.file!,
+              url: f.uploadedFileUrl!,
+              label: f.label,
             }))
         );
 
         return updated;
       });
+
       notifySuccess('Document uploaded successfully');
     } catch (error: any) {
       console.error('Error marking file as uploaded:', error);
-      notifyError('Failed to mark document as uploaded');
+      setFiles(prev =>
+        prev.map(f =>
+          f.id === fileObj.id ? { ...f, status: 'error' as const } : f
+        )
+      );
+      notifyError(error?.message || 'Failed to upload document');
     }
   };
 
@@ -167,7 +184,7 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
     setFiles(prev => {
       // Find the file to revoke its blob URL
       const fileToDelete = prev.find(f => f.id === id);
-      if (fileToDelete?.uploadUrl) {
+      if (fileToDelete?.uploadUrl && fileToDelete.uploadUrl.startsWith('blob:')) {
         URL.revokeObjectURL(fileToDelete.uploadUrl);
       }
       
@@ -176,10 +193,11 @@ const USDVirtualAccountDocuments: React.FC<Props> = ({
       // Sync after deletion
       onDocumentsUploaded(
         updated
-          .filter(f => f.status === 'uploaded' && f.selectedType && f.file)
+          .filter(f => f.status === 'uploaded' && f.selectedType && f.uploadedFileUrl)
           .map(f => ({
             type: f.selectedType!,
-            file: f.file!,
+            url: f.uploadedFileUrl!,
+            label: f.label,
           }))
       );
       

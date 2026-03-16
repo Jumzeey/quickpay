@@ -3,6 +3,7 @@ import FormSelect from "@/components/FormSelect";
 import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
+import { useModuleOptions } from "@/hooks/useModuleAccess";
 import { initiateBulkPayout, completeBulkPayout, getBulkPayoutStatus } from "@/services/payout";
 import useAuthentication from "@/stores/useAuthentication";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
@@ -75,10 +76,17 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     const mappingDropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { activeCurrencies, fetchActiveCurrencies } = useCurrency();
+    const { activeCurrencies: userActiveCurrencies, fetchActiveCurrencies } = useCurrency();
+    const bulkPayoutAllowed = useModuleOptions("payout", "bulk-payout");
+    const singlePayoutAllowed = useModuleOptions("payout", "single-payout");
     const { totp_enabled } = useAuthentication();
 
-    // Generate currency options from active currencies; only NGN is selectable, others are disabled (greyed out)
+    const allowedBulkCurrencies = useMemo(() => {
+        if (bulkPayoutAllowed.length > 0) return new Set(bulkPayoutAllowed);
+        if (singlePayoutAllowed.length > 0) return new Set(singlePayoutAllowed);
+        return null;
+    }, [bulkPayoutAllowed, singlePayoutAllowed]);
+
     const currencyOptions = useMemo(() => {
         const currencyNames: Record<string, string> = {
             NGN: '₦ NGN',
@@ -100,18 +108,20 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             XOF: 'XOF',
             XAF: 'XAF',
         };
-
-        return activeCurrencies
+        const allCodes = userActiveCurrencies.length > 0 ? userActiveCurrencies : ["NGN", "USD", "GHS", "KES", "TZS", "XOF", "ZMW"];
+        return allCodes
             .filter((code) => code !== 'USD')
             .map((code) => ({
                 value: code as CurrencyOption,
                 label: currencyNames[code] || code,
-                disabled: code !== 'NGN',
+                disabled: allowedBulkCurrencies !== null ? !allowedBulkCurrencies.has(code) : false,
             }));
-    }, [activeCurrencies]);
+    }, [userActiveCurrencies, allowedBulkCurrencies]);
 
-    // Bulk payout defaults to NGN (only selectable currency)
-    const defaultCurrency: CurrencyOption = 'NGN';
+    const defaultCurrency: CurrencyOption = useMemo(() => {
+        const firstEnabled = currencyOptions.find((o) => !o.disabled);
+        return (firstEnabled?.value as CurrencyOption) ?? 'NGN';
+    }, [currencyOptions]);
 
     const validationSchema = useMemo(() => {
         const baseSchema = {

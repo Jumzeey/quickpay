@@ -195,6 +195,8 @@ interface UploadComponentProps {
   documents?: DocumentWithType[];
   setDocuments?: React.Dispatch<React.SetStateAction<DocumentWithType[]>>;
   maxFiles?: number;
+  /** When true (default), use S3 when uploadConfig.useS3 is enabled. When false, always use utility API. Set true for upgrade-account so it uses S3 config. */
+  useS3WhenEnabled?: boolean;
 }
 
 const UploadComponent: React.FC<UploadComponentProps> = ({
@@ -210,6 +212,7 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   documents = [],
   setDocuments,
   maxFiles = 10,
+  useS3WhenEnabled = true,
   value, // Server URL for existing uploaded file
   error,
   touched,
@@ -311,7 +314,7 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   };
 
   const uploadFileByConfig = async (file: File, folder?: string): Promise<string> => {
-    if (uploadConfig.useS3) {
+    if (uploadConfig.useS3 && useS3WhenEnabled) {
       const keyPrefix = (folder || "uploads").replace(/^\/+|\/+$/g, "");
       const key = `${keyPrefix}/${Date.now()}-${Math.random().toString(36).slice(2, 11)}-${file.name}`;
       const result = await uploadToS3({ file, key });

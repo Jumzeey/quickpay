@@ -5,6 +5,7 @@ import Icon from "@/components/icon";
 import { getWalletBalances } from "@/services/transaction";
 import { useConversionRate } from "@/services/conversionRates";
 import { initiateConversion, getQuote } from "@/services/conversions";
+import { useModuleOptions } from "@/hooks/useModuleAccess";
 import { notifyError, notifySuccess, removeCommasFromValue, formatBalance, currencySymbols } from "@/util/utils";
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
@@ -21,6 +22,7 @@ interface CurrencyOption {
     value: string;
     label: string;
     balance?: string;
+    disabled?: boolean;
 }
 
 const InitiateConversion: React.FC<InitiateConversionProps> = ({
@@ -69,10 +71,13 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
     const sourceDropdownRef = useRef<HTMLDivElement>(null);
     const destinationDropdownRef = useRef<HTMLDivElement>(null);
 
+    const conversionModuleCurrencies = useModuleOptions("conversions");
 
-    // Fetch all available currencies with main account type
+    // Fetch all wallet currencies; we show all and disable those not in the conversions module
     useEffect(() => {
         if (!isModalOpen) return;
+
+        const allowedSet = conversionModuleCurrencies.length > 0 ? new Set(conversionModuleCurrencies) : null;
 
         const fetchCurrencies = async () => {
             setIsLoadingCurrencies(true);
@@ -80,10 +85,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                 const response = await getWalletBalances();
                 const balances = response?.data?.balances || [];
 
-                // Filter for main accounts only and get unique currencies
                 const mainAccounts = balances.filter((acc: any) => acc.account_type === 'main');
-
-                // Create a map to ensure unique currencies (in case there are multiple main accounts per currency)
                 const currencyMap = new Map<string, CurrencyOption>();
 
                 mainAccounts.forEach((account: any) => {
@@ -93,6 +95,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                             value: currency,
                             label: currency,
                             balance: formatBalance(parseFloat(account.available_balance), currency),
+                            disabled: allowedSet !== null ? !allowedSet.has(currency) : false,
                         });
                     }
                 });
@@ -103,42 +106,32 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                 setSourceCurrencies(validCurrencies);
                 setDestinationCurrencies(validCurrencies);
 
-                // Set default currencies: NGN for source, USD for destination
-                const hasNGN = validCurrencies.some(c => c.value === 'NGN');
-                const hasUSD = validCurrencies.some(c => c.value === 'USD');
+                const enabledCurrencies = validCurrencies.filter(c => !c.disabled);
+                const firstEnabled = enabledCurrencies[0];
+                const ngnEnabled = validCurrencies.find(c => c.value === 'NGN' && !c.disabled);
+                const usdEnabled = validCurrencies.find(c => c.value === 'USD' && !c.disabled);
 
-                if (hasNGN) {
+                if (ngnEnabled) {
                     setSourceCurrency('NGN');
-                    const ngnCurrency = validCurrencies.find(c => c.value === 'NGN');
-                    setSourceBalance(ngnCurrency?.balance || '');
-
-                    // Filter destination currencies to exclude NGN
+                    setSourceBalance(ngnEnabled.balance || '');
                     const filteredDestinations = validCurrencies.filter(c => c.value !== 'NGN');
                     setDestinationCurrencies(filteredDestinations);
-
-                    // Set default destination currency
-                    if (hasUSD) {
+                    if (usdEnabled && usdEnabled.value !== 'NGN') {
                         setDestinationCurrency('USD');
                     } else if (filteredDestinations.length > 0) {
-                        // If USD is not available, set destination to first available currency that's not NGN
-                        setDestinationCurrency(filteredDestinations[0].value);
+                        const firstDest = filteredDestinations.find(c => !c.disabled) ?? filteredDestinations[0];
+                        setDestinationCurrency(firstDest.value);
                     }
-                } else {
-                    // If NGN is not available, set source to first available currency
-                    if (validCurrencies.length > 0) {
-                        setSourceCurrency(validCurrencies[0].value);
-                        setSourceBalance(validCurrencies[0].balance || '');
-
-                        // Filter destination currencies
-                        const filteredDestinations = validCurrencies.filter(c => c.value !== validCurrencies[0].value);
-                        setDestinationCurrencies(filteredDestinations);
-
-                        // Set destination to USD if available, otherwise first available
-                        if (hasUSD) {
-                            setDestinationCurrency('USD');
-                        } else if (filteredDestinations.length > 0) {
-                            setDestinationCurrency(filteredDestinations[0].value);
-                        }
+                } else if (firstEnabled) {
+                    setSourceCurrency(firstEnabled.value);
+                    setSourceBalance(firstEnabled.balance || '');
+                    const filteredDestinations = validCurrencies.filter(c => c.value !== firstEnabled.value);
+                    setDestinationCurrencies(filteredDestinations);
+                    if (usdEnabled) {
+                        setDestinationCurrency('USD');
+                    } else if (filteredDestinations.length > 0) {
+                        const firstDest = filteredDestinations.find(c => !c.disabled) ?? filteredDestinations[0];
+                        setDestinationCurrency(firstDest.value);
                     }
                 }
             } catch (error) {
@@ -150,7 +143,7 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
         };
 
         fetchCurrencies();
-    }, [isModalOpen]);
+    }, [isModalOpen, conversionModuleCurrencies]);
 
     // Update destination currencies when source currency changes
     useEffect(() => {
@@ -652,11 +645,12 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                                                 <li
                                                     key={option.value}
                                                     onClick={() => {
+                                                        if (option.disabled) return;
                                                         setSourceCurrency(option.value);
                                                         setIsSourceDropdownOpen(false);
                                                         setSourceSearchTerm('');
                                                     }}
-                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${sourceCurrency === option.value ? 'bg-[#005BB00D]' : ''
+                                                    className={`px-4 py-2 text-sm font-medium ${option.disabled ? 'opacity-50 cursor-not-allowed text-gray-400' : 'cursor-pointer hover:bg-[#005BB01A]'} ${sourceCurrency === option.value ? 'bg-[#005BB00D]' : ''
                                                         }`}
                                                 >
                                                     {option.label}
@@ -735,11 +729,12 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                                                 <li
                                                     key={option.value}
                                                     onClick={() => {
+                                                        if (option.disabled) return;
                                                         setDestinationCurrency(option.value);
                                                         setIsDestinationDropdownOpen(false);
                                                         setDestinationSearchTerm('');
                                                     }}
-                                                    className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${destinationCurrency === option.value ? 'bg-[#005BB00D]' : ''
+                                                    className={`px-4 py-2 text-sm font-medium ${option.disabled ? 'opacity-50 cursor-not-allowed text-gray-400' : 'cursor-pointer hover:bg-[#005BB01A]'} ${destinationCurrency === option.value ? 'bg-[#005BB00D]' : ''
                                                         }`}
                                                 >
                                                     {option.label}

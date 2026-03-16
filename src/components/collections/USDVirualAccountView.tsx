@@ -42,7 +42,7 @@ const USDVirtualAccountView: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [accountType, setAccountType] = useState('individual');
   const [uploadedDocuments, setUploadedDocuments] = useState<
-    { type: string; file: File }[]
+    { type: string; url: string; label?: string }[]
   >([]);
   const { handleError, handleSuccess } = useApiResponse();
 
@@ -119,12 +119,12 @@ const USDVirtualAccountView: React.FC<Props> = ({
         }
       });
 
-      // ✅ Append all file documents directly as files
+      // ✅ Append uploaded document URLs (new contract)
       console.log('Uploaded documents to append:', uploadedDocuments.length);
       uploadedDocuments.forEach(doc => {
-        if (doc.type && doc.file) {
-          console.log(`Appending file - Field: ${doc.type}, Name: ${doc.file.name}, Type: ${doc.file.type}, Size: ${doc.file.size}`);
-          formData.append(doc.type, doc.file); // actual file blob
+        if (doc.type && doc.url) {
+          console.log(`Appending document URL - Field: ${doc.type}, URL: ${doc.url}`);
+          formData.append(doc.type, doc.url);
         }
       });
 

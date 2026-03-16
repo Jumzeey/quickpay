@@ -33,13 +33,13 @@ import {
   getBulkPayoutTransactions,
   Payout
 } from "@/services/payout";
-import useAuthentication from "@/stores/useAuthentication";
 import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, copyToClipboard, formatDate, formatDateTime2, Modules } from "@/util/utils";
+import { useModuleAccess, useModuleOptionsAll } from "@/hooks/useModuleAccess";
+import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, copyToClipboard, formatDate, formatDateTime2 } from "@/util/utils";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -105,10 +105,8 @@ const PayoutHistory = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
 
-  const { modules } = useAuthentication();
-  const payoutCurrency: string[] = modules?.find((m: Modules) => m.product === 'Payout')?.sub_product?.currency;
-
-  console.log({ modules, payoutCurrency });
+  const payoutCurrency = useModuleOptionsAll("payout");
+  const hasBulkPayout = useModuleAccess("payout", "bulk-payout");
 
   const {
     requeryPayout,
@@ -736,8 +734,7 @@ const PayoutHistory = () => {
       </div>
 
       <div>
-        {/* Tab switch commented out – bulk payout disabled */}
-        {/* {isNgnCurrency && (
+        {hasBulkPayout && isNgnCurrency && (
           <div className="mb-6 inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
             <button
               type="button"
@@ -754,7 +751,7 @@ const PayoutHistory = () => {
               Bulk Payout
             </button>
           </div>
-        )} */}
+        )}
 
         {!isBulkTab && payouts?.length > 0 && (
           <>
@@ -966,15 +963,15 @@ const PayoutHistory = () => {
                   primary
                 />
               ) : isBulkTab ? (
-                // Bulk payout initiate commented out – bulk payout disabled
-                // <Button
-                //   text="Initiate Bulk Payout"
-                //   ariaLabel="Initiate bulk payout"
-                //   onClick={() => toggleModal('isBulkPayoutModalOpen')}
-                //   className="!w-60 !h-12"
-                //   primary
-                // />
-                null
+                hasBulkPayout ? (
+                  <Button
+                    text="Initiate Bulk Payout"
+                    ariaLabel="Initiate bulk payout"
+                    onClick={() => toggleModal('isBulkPayoutModalOpen')}
+                    className="!w-60 !h-12"
+                    primary
+                  />
+                ) : null
               ) : (
                 <PayoutDropdown
                   className="w-60"

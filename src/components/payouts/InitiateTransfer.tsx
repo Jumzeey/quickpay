@@ -12,6 +12,7 @@ import { BankResponse, getPayoutOptions } from "@/services/payout";
 import useAuthentication from "@/stores/useAuthentication";
 import usePayout from "@/stores/usePayout";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
+import { useModuleOptions } from "@/hooks/useModuleAccess";
 import { notifyError, notifySuccess, removeCommasFromValue, uuid } from "@/util/utils";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
@@ -72,7 +73,8 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
     const [transferUseRecoveryCode, setTransferUseRecoveryCode] = useState(false);
     const [transferRecoveryCodeValue, setTransferRecoveryCodeValue] = useState("");
     const { initiateInterBankPayout, verifyPayoutOtp } = usePayout();
-    const { selectedCurrency, activeCurrencies, fetchActiveCurrencies } = useCurrency();
+    const { selectedCurrency, activeCurrencies: userActiveCurrencies, fetchActiveCurrencies } = useCurrency();
+    const allowedPayoutCurrencies = useModuleOptions("payout", "single-payout");
     const { totp_enabled } = useAuthentication();
 
     // Currency names mapping (same as CurrencySwitcher)
@@ -98,28 +100,26 @@ const InitiateTransfer: React.FC<InitiateTransferProps> = ({
         XAF: 'XAF',
     };
 
-    // Generate currency options from active currencies
     const currencyOptions = useMemo(() => {
-        return activeCurrencies
-            .map((code) => ({
-                value: code as CurrencyOption,
-                label: currencyNames[code] || code,
-            }));
-    }, [activeCurrencies, currencyNames]);
+        const allCodes = userActiveCurrencies.length > 0 ? userActiveCurrencies : ["NGN", "USD", "GHS", "KES", "TZS", "XOF", "ZMW"];
+        const allowedSet = allowedPayoutCurrencies.length > 0 ? new Set(allowedPayoutCurrencies) : null;
+        return allCodes.map((code) => ({
+            value: code as CurrencyOption,
+            label: currencyNames[code] || code,
+            disabled: allowedSet !== null ? !allowedSet.has(code) : false,
+        }));
+    }, [userActiveCurrencies, allowedPayoutCurrencies, currencyNames]);
 
-    // Fetch active currencies on mount
     useEffect(() => {
         fetchActiveCurrencies();
     }, [fetchActiveCurrencies]);
 
-    // Get default currency (use selectedCurrency, fallback to first available or NGN)
     const defaultCurrency = useMemo(() => {
-        if (selectedCurrency && activeCurrencies.includes(selectedCurrency)) {
-            return selectedCurrency;
-        }
-        const firstAvailable = activeCurrencies[0];
-        return (firstAvailable as CurrencyOption) || 'NGN';
-    }, [selectedCurrency, activeCurrencies]);
+        const allowed = allowedPayoutCurrencies.length > 0 ? allowedPayoutCurrencies : (userActiveCurrencies.length > 0 ? userActiveCurrencies : ["NGN", "USD"]);
+        if (selectedCurrency && allowed.includes(selectedCurrency)) return selectedCurrency;
+        const firstAllowed = allowed[0];
+        return (firstAllowed as CurrencyOption) || 'NGN';
+    }, [selectedCurrency, allowedPayoutCurrencies, userActiveCurrencies]);
 
     const validationSchema = useMemo(() => {
         const baseAmountValidation = Yup.string()

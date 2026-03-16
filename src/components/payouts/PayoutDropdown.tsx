@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Icon from "@/components/icon";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 
 type PayoutType = "single" | "bulk";
 
-const PAYOUT_OPTIONS: { value: PayoutType; label: string }[] = [
+const PAYOUT_OPTIONS_BASE: { value: PayoutType; label: string }[] = [
   { value: "single", label: "Single Payout" },
-  // { value: "bulk", label: "Bulk Payout" }, // commented out – bulk payout initiate disabled
+  { value: "bulk", label: "Bulk Payout" },
 ];
 
 type PayoutDropdownProps = {
@@ -23,6 +24,14 @@ export default function PayoutDropdown({
 }: PayoutDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const hasSinglePayout = useModuleAccess("payout", "single-payout");
+  const hasBulkPayout = useModuleAccess("payout", "bulk-payout");
+
+  const payoutOptions = useMemo(() => {
+    return PAYOUT_OPTIONS_BASE.filter((opt) =>
+      opt.value === "single" ? hasSinglePayout : hasBulkPayout
+    );
+  }, [hasSinglePayout, hasBulkPayout]);
 
   const handleSelect = (value: PayoutType) => {
     if (value === "single") onSelectSingle();
@@ -55,7 +64,7 @@ export default function PayoutDropdown({
       {isOpen && (
         <div className="absolute z-50 mt-2 w-full bg-white text-black rounded-lg border border-grey-200 shadow-lg">
           <ul className="py-1">
-            {PAYOUT_OPTIONS.map((option) => (
+            {payoutOptions.map((option) => (
               <li
                 key={option.value}
                 onClick={() => handleSelect(option.value)}

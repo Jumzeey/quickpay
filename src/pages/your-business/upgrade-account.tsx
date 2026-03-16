@@ -8,7 +8,7 @@ import { useFormValidation } from '@/hooks/useFormValidation';
 import useKyc from '@/stores/useKyc';
 import { getFileIcon, getPreviewUrl, isImageFile, notifyError, notifySuccess } from '@/util/utils';
 import Image from "next/image";
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 import * as Yup from 'yup';
 
@@ -30,6 +30,8 @@ interface DocumentWithType {
     file: File;
     title: string;
     documentType: string;
+    /** URL after upload (S3 or utility API). Used for preview so the document loads reliably. */
+    uploadedUrl?: string;
 }
 
 interface UpgradeFormData {
@@ -121,14 +123,23 @@ interface PreviewModalProps {
     onClose: () => void;
     file: File | null;
     documentTitle: string;
+    /** When set, preview loads from this URL (e.g. S3) instead of the file blob. Use for uploaded documents so PDF/image loads reliably. */
+    documentUrl?: string | null;
 }
 
-const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, documentTitle }) => {
-    if (!file) return null;
+const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, documentTitle, documentUrl }) => {
+    const hasUrl = Boolean(documentUrl?.trim());
+    const hasFile = Boolean(file);
+    if (!hasFile && !hasUrl) return null;
 
-    const fileUrl = getPreviewUrl(file);
-    const isPdf = file.type === 'application/pdf';
-    const isImage = isImageFile(file.name);
+    const displayUrl = hasUrl ? documentUrl! : (hasFile ? getPreviewUrl(file!) : null);
+    const fileName = file?.name ?? documentTitle;
+    const isPdf = hasFile
+        ? file!.type === 'application/pdf'
+        : /\.pdf(\?|$)/i.test(documentUrl ?? '') || fileName.toLowerCase().endsWith('.pdf');
+    const isImage = hasFile ? isImageFile(file!.name) : /\.(jpe?g|png|gif|webp)(\?|$)/i.test(documentUrl ?? '') || /\.(jpe?g|png|gif|webp)$/i.test(fileName);
+
+    if (!displayUrl) return null;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={documentTitle || 'Document Preview'}>
@@ -136,23 +147,34 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, docu
                 {isImage && (
                     <div className="flex justify-center">
                         <Image
-                            src={fileUrl}
+                            src={displayUrl}
                             alt={documentTitle}
                             width={500}
                             height={500}
                             className="max-w-full h-auto object-contain"
                             style={{ maxHeight: '70vh' }}
+                            unoptimized={hasUrl}
                         />
                     </div>
                 )}
 
                 {isPdf && (
-                    <div className="w-full h-[70vh]">
-                        <iframe
-                            src={`${fileUrl}#toolbar=0`}
-                            className="w-full h-full"
-                            title={documentTitle}
-                        />
+                    <div className="w-full flex flex-col gap-2">
+                        <a
+                            href={displayUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary font-medium hover:underline"
+                        >
+                            Open in new tab
+                        </a>
+                        <div className="w-full h-[70vh]">
+                            <iframe
+                                src={`${displayUrl}#toolbar=0`}
+                                className="w-full h-full"
+                                title={documentTitle}
+                            />
+                        </div>
                     </div>
                 )}
 
@@ -160,21 +182,22 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, docu
                     <div className="text-center py-8">
                         <div className="mx-auto w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                             <Icon
-                                name={getFileIcon(file.name)}
+                                name={getFileIcon(fileName)}
                                 className="h-10 w-10 text-gray-500"
                             />
                         </div>
-                        <p className="text-lg font-medium text-gray-800 mb-2">{file.name}</p>
+                        <p className="text-lg font-medium text-gray-800 mb-2">{fileName}</p>
                         <p className="text-sm text-gray-500 mb-6">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type || 'Unknown file type'}
+                            {hasFile && file!.size != null ? `${(file!.size / 1024 / 1024).toFixed(2)} MB • ${file!.type || 'Unknown'}` : 'Uploaded document'}
                         </p>
                         <Button
                             text="Download File"
                             ariaLabel="Download document"
                             onClick={() => {
                                 const a = document.createElement('a');
-                                a.href = fileUrl;
-                                a.download = file.name;
+                                a.href = displayUrl;
+                                a.download = fileName;
+                                a.target = '_blank';
                                 document.body.appendChild(a);
                                 a.click();
                                 document.body.removeChild(a);
@@ -201,11 +224,28 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     const [previewModalOpen, setPreviewModalOpen] = useState(false);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
     const [previewTitle, setPreviewTitle] = useState('');
+    const [previewDocumentUrl, setPreviewDocumentUrl] = useState<string | null>(null);
 
-    // Function to open the preview modal
-    const handleOpenPreview = (file: File, title: string) => {
-        setPreviewFile(file);
+    // Document type dropdown (CurrencySwitcher-style): which row's dropdown is open
+    const [openDocDropdownId, setOpenDocDropdownId] = useState<string | null>(null);
+    const openDropdownRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!openDocDropdownId) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (openDropdownRef.current && !openDropdownRef.current.contains(e.target as Node)) {
+                setOpenDocDropdownId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [openDocDropdownId]);
+
+    // Function to open the preview modal. Prefer documentUrl when present (uploaded file) so PDF/image loads reliably.
+    const handleOpenPreview = (file: File | null, title: string, documentUrl?: string | null) => {
+        setPreviewFile(file ?? null);
         setPreviewTitle(title);
+        setPreviewDocumentUrl(documentUrl ?? null);
         setPreviewModalOpen(true);
     };
 
@@ -417,19 +457,25 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                         </div>
 
                         <div className="space-y-3">
-                            {documents.map((doc) => (
+                            {documents.map((doc) => {
+                                const previewSrc = doc.uploadedUrl || (doc.file ? getPreviewUrl(doc.file) : null);
+                                const sizeLabel = doc.file?.size != null && doc.file.size > 0
+                                    ? `${(doc.file.size / 1024 / 1024).toFixed(2)} MB`
+                                    : (doc.uploadedUrl ? 'Uploaded' : '0.00 MB');
+                                return (
                                 <div key={doc.id} className="flex items-center gap-4 px-2 py-1.5 bg-[#D9D9D90D] border border-[#C4C4C43D] rounded-lg">
                                     <div className="flex-1 flex items-center gap-4">
                                         <div>
-                                            {isImageFile(doc.file.name) ? (
-                                                <div className="relative">
+                                            {isImageFile(doc.file?.name ?? '') && previewSrc ? (
+                                                <div className="relative cursor-pointer">
                                                     <Image
-                                                        src={getPreviewUrl(doc.file)}
+                                                        src={previewSrc}
                                                         alt={doc.title}
                                                         width={36}
                                                         height={36}
                                                         className="w-9 h-9 object-cover rounded border group-hover:opacity-80 transition-opacity"
-                                                        onClick={() => handleOpenPreview(doc.file, doc.title)}
+                                                        unoptimized={Boolean(doc.uploadedUrl)}
+                                                        onClick={() => handleOpenPreview(doc.file ?? null, doc.title, doc.uploadedUrl)}
                                                     />
                                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded">
                                                         <Icon name="eye" className="h-4 w-4 text-white" />
@@ -437,11 +483,11 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                 </div>
                                             ) : (
                                                 <div
-                                                    className="w-9 h-9 bg-gray-100 rounded border flex items-center justify-center group-hover:bg-gray-200 transition-colors"
-                                                    onClick={() => handleOpenPreview(doc.file, doc.title)}
+                                                    className="w-9 h-9 bg-gray-100 rounded border flex items-center justify-center group-hover:bg-gray-200 transition-colors cursor-pointer"
+                                                    onClick={() => handleOpenPreview(doc.file ?? null, doc.title, doc.uploadedUrl)}
                                                 >
                                                     <Icon
-                                                        name={getFileIcon(doc.file.name)}
+                                                        name={getFileIcon(doc.file?.name ?? doc.title)}
                                                         className="h-5 w-5 text-gray-400 group-hover:text-gray-600"
                                                     />
                                                 </div>
@@ -451,10 +497,10 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                             <p className="font-medium text-sm text-[#7F7F7F]">{doc.title}</p>
                                             <p className="flex items-center gap-3 text-[10px] text-[#9F9F9F] divide-x divide-[#9F9F9F]">
                                                 <span>
-                                                    {(doc.file?.size / 1024 / 1024).toFixed(2)} MB
+                                                    {sizeLabel}
                                                 </span>
                                                 <button
-                                                    onClick={() => handleOpenPreview(doc.file, doc.title)}
+                                                    onClick={() => handleOpenPreview(doc.file ?? null, doc.title, doc.uploadedUrl)}
                                                     className="pl-3 hover:text-primary cursor-pointer transition-colors focus:outline-none"
                                                 >
                                                     Preview
@@ -462,33 +508,50 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex-shrink-0 w-64">
-                                        <select
-                                            value={doc.documentType || ''}
-                                            onChange={(e) => handleDocumentTypeChange(doc.id, e.target.value)}
-                                            className="w-full px-3 py-2 text-[#7F7F7F] border border-[#C4C4C43D] rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm"
+                                    <div
+                                        className="flex-shrink-0 w-64 relative"
+                                        ref={openDocDropdownId === doc.id ? openDropdownRef : null}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm"
+                                            onClick={() => setOpenDocDropdownId(prev => prev === doc.id ? null : doc.id)}
                                         >
-                                            <option value="">Select document type</option>
-                                            {getAvailableDocumentTypes().map(type => {
-                                                const isAlreadyUploaded = documents.some(d =>
-                                                    d.id !== doc.id && d.documentType === type.value
-                                                );
-                                                const isRequired = !documents.some(d => d.documentType === type.value);
-
-                                                return (
-                                                    <option
-                                                        key={type.value}
-                                                        value={type.value}
-                                                        className={isRequired ? 'font-bold' : ''}
-                                                    >
-                                                        {type.label} {isRequired ? '(Required)' : isAlreadyUploaded ? '(Already uploaded)' : ''}
-                                                    </option>
-                                                );
-                                            })}
-                                        </select>
+                                            <span className="truncate text-left">
+                                                {getAvailableDocumentTypes().find(t => t.value === doc.documentType)?.label ?? 'Select document type'}
+                                            </span>
+                                            <Icon name="caretDown" className="flex-shrink-0 ml-1" />
+                                        </button>
+                                        {openDocDropdownId === doc.id && (
+                                            <div className="absolute z-50 mt-2 w-full bg-white text-black rounded-lg border border-grey-200 shadow-lg">
+                                                <ul className="max-h-48 overflow-y-auto py-1">
+                                                    {getAvailableDocumentTypes().map(type => {
+                                                        const isAlreadyUploaded = documents.some(d =>
+                                                            d.id !== doc.id && d.documentType === type.value
+                                                        );
+                                                        const isRequired = !documents.some(d => d.documentType === type.value);
+                                                        const labelSuffix = isRequired ? ' (Required)' : isAlreadyUploaded ? ' (Already uploaded)' : '';
+                                                        const isSelected = doc.documentType === type.value;
+                                                        return (
+                                                            <li
+                                                                key={type.value}
+                                                                onClick={() => {
+                                                                    handleDocumentTypeChange(doc.id, type.value);
+                                                                    setOpenDocDropdownId(null);
+                                                                }}
+                                                                className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${isSelected ? 'bg-[#005BB00D]' : ''}`}
+                                                            >
+                                                                {type.label}{labelSuffix}
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
+                            );
+                            })}
                         </div>
                     </div>
                 )}
@@ -507,9 +570,13 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
 
             <PreviewModal
                 isOpen={previewModalOpen}
-                onClose={() => setPreviewModalOpen(false)}
+                onClose={() => {
+                    setPreviewModalOpen(false);
+                    setPreviewDocumentUrl(null);
+                }}
                 file={previewFile}
                 documentTitle={previewTitle}
+                documentUrl={previewDocumentUrl}
             />
         </div>
     );

@@ -377,6 +377,7 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                     documents={documents}
                     setDocuments={setDocuments}
                     maxFiles={15}
+                    useS3WhenEnabled={true}
                 />
 
                 {/* Document Type Selection - Separate from Upload Component */}

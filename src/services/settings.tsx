@@ -131,8 +131,16 @@ export async function generateEncrytionKey() {
   }
 }
 
-export async function updateProfileImage(avatar: File) {
+export async function updateProfileImage(avatar: File | string) {
   try {
+    // Prefer URL-based updates (new API contract). Keep File upload as fallback.
+    if (typeof avatar === "string") {
+      const response = await api.post(apiEndpoints.settings.UPDATE_PROFILE, {
+        avatar,
+      });
+      return response.data;
+    }
+
     const formData = new FormData();
     formData.append("avatar", avatar);
     const response = await api.post(apiEndpoints.settings.UPDATE_PROFILE, formData, {

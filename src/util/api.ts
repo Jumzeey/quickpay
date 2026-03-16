@@ -154,9 +154,11 @@ api.interceptors.response.use(
       );
     }
 
-    // Handle 404 errors with generic message
+    // Handle 404 errors: use server message when present
     if (status === 404) {
-      const errorMessage = "Failed, try again later.";
+      const errorMessage =
+        (typeof data?.message === "string" && data.message.trim()) ||
+        "Failed, try again later.";
       return Promise.reject(
         new CustomHttpError(errorMessage, {
           statusCode: status,
@@ -169,10 +171,11 @@ api.interceptors.response.use(
       );
     }
 
-    // Handle 500+ errors with generic message
+    // Handle 500+ errors: use server message when present
     if (status >= 500) {
-      const errorMessage = "Failed, try again later.";
-      // Don't show toast here - let the hook handle it to avoid duplicates
+      const errorMessage =
+        (typeof data?.message === "string" && data.message.trim()) ||
+        "Failed, try again later.";
       return Promise.reject(
         new CustomHttpError(errorMessage, {
           statusCode: status,

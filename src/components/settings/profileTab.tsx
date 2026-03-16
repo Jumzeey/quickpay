@@ -6,14 +6,16 @@ import useCurrency from "@/stores/useCurrency";
 import useKyc from "@/stores/useKyc";
 import { KycStatus } from "@/types/kyc";
 import { capitalizeFirstLetter, copyToClipboard, notifyError } from "@/util/utils";
+import { uploadFileByConfig } from "@/util/uploadFileByConfig";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
 const ProfileTab = () => {
   const { defaultCurrency, getCurrencyFlag } = useCurrency();
   const { user = {}, setUser } = useAuthentication();
-  const { userKyc } = useKyc();
+  const { userKyc, getKyc } = useKyc();
   const [updatingImage, setUpdatingImage] = useState(false);
+  const [upgradeChecking, setUpgradeChecking] = useState(false);
   const [avatar, setAvatar] = useState(user?.avatar || null);
   const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +31,8 @@ const ProfileTab = () => {
     if (file) {
       setUpdatingImage(true);
       try {
-        const response = await updateProfileImage(file);
+        const avatarUrl = await uploadFileByConfig(file, "business-logo");
+        const response = await updateProfileImage(avatarUrl);
         if (response?.avatar) {
           setAvatar(response.avatar);
           setImageError(false);
@@ -53,7 +56,7 @@ const ProfileTab = () => {
       <div className="flex items-center justify-between border-b border-[#C4C4C452] p-4">
         <div className="flex items-center gap-3">
           {avatar && !imageError ? (
-            <div className="w-[65px] h-[60px] rounded-lg flex items-center justify-center">
+            <div className="w-[65px] h-[60px] rounded-lg flex items-center justify-center overflow-hidden">
               <Image
                 src={`${avatar}?t=${new Date().getTime()}`}
                 alt="Profile Picture"
@@ -61,6 +64,7 @@ const ProfileTab = () => {
                 height={60}
                 className="rounded-lg object-cover"
                 priority
+                unoptimized={avatar.startsWith("http")}
                 onError={() => setImageError(true)}
               />
             </div>
@@ -96,22 +100,35 @@ const ProfileTab = () => {
         {user?.business_type === "starter business" && (
           <ActionButton
             ariaLabel="Upgrade to business account"
-            text="Upgrade to business account"
+            text={upgradeChecking ? "Checking..." : "Upgrade to business account"}
             className="!h-10 !px-4 !font-medium"
-            onClick={() => {
-              // Check KYC status before allowing upgrade
-              const kycStatus = userKyc?.status as KycStatus | string;
+            disabled={upgradeChecking}
+            onClick={async () => {
+              setUpgradeChecking(true);
+              try {
+                // Fetch fresh KYC so we use current API status (Settings may not have loaded KYC yet)
+                const { userKyc: freshKyc } = await getKyc();
+                const kycStatus = (freshKyc?.status ?? userKyc?.status) as KycStatus | string;
+                const isApproved =
+                  kycStatus === KycStatus.APPROVED ||
+                  String(kycStatus).trim().toLowerCase() === "approved";
 
-              if (kycStatus !== KycStatus.APPROVED) {
+                if (!isApproved) {
+                  notifyError(
+                    "Please have your account approved before you can upgrade to a business account.",
+                    "Account Approval Required"
+                  );
+                  return;
+                }
+
+                window.location.href = "/your-business?tab=upgrade-account";
+              } catch {
                 notifyError(
-                  "Please have your account approved before you can upgrade to a business account.",
-                  "Account Approval Required"
+                  "Unable to verify your account status. Please try again or go to Your Business to upgrade."
                 );
-                return;
+              } finally {
+                setUpgradeChecking(false);
               }
-
-              // Only navigate if KYC is approved
-              window.location.href = "/your-business?tab=upgrade-account";
             }}
           />
         )}

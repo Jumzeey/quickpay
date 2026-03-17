@@ -24,8 +24,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, width, title, 
           transition={{ duration: 0.3 }}
           className={`relative bg-white dark:bg-gray-800 w-[549px] m-auto flex-col flex rounded-xl mx-4 md:mx-auto ${width ? "modal-special-class" : ""} ${className}`}
         >
-     <div className={`flex items-center justify-between shrink-0 ${title ? "px-4 pt-3 pb-3 md:px-6 md:pt-4 md:pb-3" : "pt-2 md:pt-6 pr-2 md:pr-6"}`}>
-            {title ? <h2 className="text-lg font-extrabold text-black dark:text-white">{title}</h2> : <div />}
+     <div className={`flex items-center justify-between gap-3 shrink-0 ${title ? "px-4 pt-3 pb-3 md:px-6 md:pt-4 md:pb-3" : "pt-2 md:pt-6 pr-2 md:pr-6"}`}>
+            {title ? (
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-extrabold text-black dark:text-white truncate" title={title}>{title}</h2>
+              </div>
+            ) : <div />}
 
             {onClose ? (
               <button

@@ -197,6 +197,10 @@ interface UploadComponentProps {
   maxFiles?: number;
   /** When true (default), use S3 when uploadConfig.useS3 is enabled. When false, always use utility API. Set true for upgrade-account so it uses S3 config. */
   useS3WhenEnabled?: boolean;
+  /** Disable selecting/uploading files (e.g. require prerequisite selection). */
+  disabled?: boolean;
+  /** Optional helper text shown when disabled. */
+  disabledHint?: string;
 }
 
 const UploadComponent: React.FC<UploadComponentProps> = ({
@@ -213,11 +217,14 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   setDocuments,
   maxFiles = 10,
   useS3WhenEnabled = true,
+  disabled = false,
+  disabledHint,
   value, // Server URL for existing uploaded file
   error,
   touched,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputId = `upload-${name}-${multiple ? "multi" : "single"}`;
 
   // Legacy single file state (for backward compatibility)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -254,6 +261,7 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   }, [value, previewUrl]);
 
   const handleButtonClick = () => {
+    if (disabled) return;
     fileInputRef.current?.click();
   };
 
@@ -331,6 +339,11 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (disabled) {
+      // Reset file input so selecting the same file later still triggers onChange
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     const files = event.target.files;
     if (!files) return;
 
@@ -501,24 +514,29 @@ const UploadComponent: React.FC<UploadComponentProps> = ({
             />
           </div>
           <p className="text-sm font-medium text-[#7F7F7F] mt-3">
-            <button
-              onClick={handleButtonClick}
-              className="text-primary mr-1 cursor-pointer"
-              type="button"
+            <label
+              htmlFor={fileInputId}
+              className={`inline ${disabled ? "cursor-not-allowed opacity-60 pointer-events-none" : "cursor-pointer"}`}
             >
-              Click to upload {multiple ? 'files' : 'file'}
-            </button>
-            JPG, PNG or PDF {multiple ? 'files' : 'file'} (max. 10MB each)
+              <input
+                type="file"
+                id={fileInputId}
+                ref={fileInputRef}
+                name={name}
+                onChange={handleFileChange}
+                accept=".jpeg, .jpg, .png, .pdf, .doc, .docx"
+                multiple={multiple}
+                disabled={disabled}
+                className="hidden"
+              />
+              <span className="text-primary font-semibold">Click to upload {multiple ? "files" : "file"}</span>
+            </label>
+            {" "}
+            <span>JPG, PNG or PDF {multiple ? "files" : "file"} (max. 10MB each)</span>
           </p>
-          <input
-            type="file"
-            ref={fileInputRef}
-            name={name}
-            onChange={handleFileChange}
-            accept=".jpeg, .jpg, .png, .pdf"
-            multiple={multiple}
-            className="hidden"
-          />
+          {disabled && disabledHint ? (
+            <p className="mt-2 text-xs text-[#7F7F7F]">{disabledHint}</p>
+          ) : null}
         </div>
 
         {isUploading && (

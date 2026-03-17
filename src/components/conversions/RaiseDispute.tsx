@@ -31,7 +31,9 @@ interface FormValues {
 
 const validationSchema = Yup.object().shape({
     reason: Yup.string().required("Reason is required!"),
-    description: Yup.string().required("Description is required!"),
+    description: Yup.string()
+        .required("Description is required!")
+        .min(10, "The description must be at least 10 characters."),
     attachment: Yup.string().notRequired(),
 });
 
@@ -58,6 +60,7 @@ const RaiseDispute: React.FC<RaiseDisputeProps> = ({
         handleSubmit,
         formState: { errors, isValid },
         setValue,
+        setError,
         reset
     } = useFormValidation<FormValues>(validationSchema, {
         defaultValues: {
@@ -96,8 +99,16 @@ const RaiseDispute: React.FC<RaiseDisputeProps> = ({
             closeModalAndReset();
             await fetchConversionHistory();
         } catch (error: any) {
-            notifyError(error.message || "Failed to raise dispute");
             setState(prev => ({ ...prev, isSubmitting: false }));
+            const payload = error?.payload;
+            if (payload && typeof payload === "object" && Array.isArray(payload.description)) {
+                const msg = payload.description[0];
+                if (typeof msg === "string") {
+                    setError("description", { type: "server", message: msg });
+                    return;
+                }
+            }
+            notifyError(error.message || "Failed to raise dispute");
         }
     };
 

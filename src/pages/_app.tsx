@@ -109,8 +109,9 @@ export default function App({ Component, pageProps }: AppProps) {
 
   // Sync persisted auth.modules into module store on load (e.g. after refresh)
   useEffect(() => {
-    if (user && Array.isArray(modules) && modules.length > 0) {
-      useModuleStore.getState().setModules(modules);
+    if (user) {
+      // Always sync, even when empty, so we clear stale modules between accounts/sessions.
+      useModuleStore.getState().setModules(Array.isArray(modules) ? modules : []);
     }
   }, [user, modules]);
 

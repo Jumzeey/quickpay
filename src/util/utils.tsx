@@ -143,6 +143,13 @@ export const handleLogOut = async () => {
   try {
     Cookies.remove('accessToken');
     localStorage.clear();
+    try {
+      // Clear in-memory module state so UI doesn't briefly show stale modules.
+      const { useModuleStore } = await import("@/stores/module-store");
+      useModuleStore.getState().setModules([]);
+    } catch {
+      // ignore
+    }
     window.location.href = '/onboarding/sign-in';
   } catch (error) {
     notifyError('Log Out Failed');

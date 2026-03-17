@@ -8,6 +8,7 @@ import Filter from "@/components/Filter";
 import { FilterExport } from "@/components/filter-export";
 import Icon from "@/components/icon";
 import Layout from "@/components/layout";
+import PageGuard from "@/components/PageGuard";
 import PageHeader from "@/components/PageHeader";
 import Pagination from "@/components/pagination";
 import dynamic from "next/dynamic";
@@ -56,7 +57,7 @@ interface PayoutsProps {
 
 type PayoutTab = "single" | "bulk";
 
-const PayoutHistory = () => {
+const PayoutsContent = () => {
   const { handleError, handleSuccess } = useApiResponse();
   const { selectedCurrency } = useCurrency();
   const [mounted, setMounted] = useState(false);
@@ -1023,6 +1024,26 @@ const PayoutHistory = () => {
       {previewModal}
     </Layout>
   );
+};
+
+const PayoutHistory = () => {
+  const hasAccess = useModuleAccess("payout");
+  if (!hasAccess) {
+    return (
+      <Layout pageTitle="Pay Outs" icon="disbursement">
+        <WebPageTitle title="Payouts | Cray Merchant Portal" />
+        <PageHeader
+          className="!mb-0"
+          title="Payouts"
+          description="Manage and track all payouts seamlessly, ensuring smooth and transparent transactions."
+        />
+        <PageGuard moduleSlug="payout">
+          <div />
+        </PageGuard>
+      </Layout>
+    );
+  }
+  return <PayoutsContent />;
 };
 
 export default PayoutHistory;

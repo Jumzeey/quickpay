@@ -188,6 +188,23 @@ api.interceptors.response.use(
       );
     }
 
+    // Handle 422 (and 400) validation errors: show detailed messages from response.data.errors
+    if ((status === 422 || status === 400) && data?.errors && typeof data.errors === "object") {
+      const errors = data.errors;
+      const messages = (Object.values(errors) as unknown[])
+        .flat()
+        .filter((v): v is string => typeof v === "string");
+      const detail =
+        messages.length > 0 ? messages.join(" ") : (data?.message || "Validation failed");
+      return Promise.reject(
+        new CustomHttpError(detail, {
+          statusCode: status,
+          responseText: detail,
+          payload: errors,
+        })
+      );
+    }
+
     if (err.response.data && err.response.data.message) {
       return Promise.reject(
         new CustomHttpError(err.response.data.message, {

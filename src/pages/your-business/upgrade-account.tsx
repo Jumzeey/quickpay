@@ -6,7 +6,7 @@ import Modal from '@/components/modal';
 import UploadComponent from '@/components/upload-component';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import useKyc from '@/stores/useKyc';
-import { getFileIcon, getPreviewUrl, isImageFile, notifyError, notifySuccess } from '@/util/utils';
+import { getFileIcon, getPreviewUrl, isImageFile, notifyError, notifyInfo, notifySuccess } from '@/util/utils';
 import Image from "next/image";
 import React, { useState, useRef, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
@@ -141,9 +141,11 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, docu
 
     if (!displayUrl) return null;
 
+    const displayTitle = documentTitle || 'Document Preview';
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={documentTitle || 'Document Preview'}>
-            <div className="w-full py-4">
+        <Modal isOpen={isOpen} onClose={onClose} title={displayTitle}>
+            <div className="w-full py-4 min-w-0">
                 {isImage && (
                     <div className="flex justify-center">
                         <Image
@@ -179,14 +181,14 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, docu
                 )}
 
                 {!isImage && !isPdf && (
-                    <div className="text-center py-8">
+                    <div className="text-center py-8 min-w-0 overflow-hidden">
                         <div className="mx-auto w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                             <Icon
                                 name={getFileIcon(fileName)}
                                 className="h-10 w-10 text-gray-500"
                             />
                         </div>
-                        <p className="text-lg font-medium text-gray-800 mb-2">{fileName}</p>
+                        <p className="text-lg font-medium text-gray-800 mb-2 truncate px-4" title={fileName}>{fileName}</p>
                         <p className="text-sm text-gray-500 mb-6">
                             {hasFile && file!.size != null ? `${(file!.size / 1024 / 1024).toFixed(2)} MB • ${file!.type || 'Unknown'}` : 'Uploaded document'}
                         </p>
@@ -263,6 +265,18 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     );
 
     const selectedBusinessType = watch('businessType') as BusinessType;
+    const previousBusinessTypeRef = useRef<BusinessType | ''>('');
+
+    // UX: if user changes business type after uploading docs, reset docs (required docs change)
+    useEffect(() => {
+        const prev = previousBusinessTypeRef.current;
+        if (prev && selectedBusinessType && prev !== selectedBusinessType && documents.length > 0) {
+            setDocuments([]);
+            notifyInfo('Business type changed. Please upload documents for the newly selected business type.');
+        }
+        previousBusinessTypeRef.current = selectedBusinessType || '';
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedBusinessType]);
 
     const handleDocumentTypeChange = (documentId: string, documentType: string) => {
         setDocuments(prev =>
@@ -274,10 +288,42 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
         );
     };
 
+    const handleRemoveDocument = (documentId: string) => {
+        setOpenDocDropdownId(prev => (prev === documentId ? null : prev));
+        setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    };
+
     const getAvailableDocumentTypes = () => {
         if (!selectedBusinessType) return [];
         return DOCUMENT_TYPES[selectedBusinessType] || [];
     };
+
+    /** Number of required document types for the selected business type (used for max uploads). */
+    const requiredDocumentCount = selectedBusinessType
+        ? (DOCUMENT_TYPES[selectedBusinessType]?.length ?? 0)
+        : 0;
+
+    /** True only when every required document type has at least one uploaded file with that type assigned. */
+    const allRequiredDocumentsUploaded = (): boolean => {
+        if (!selectedBusinessType || requiredDocumentCount === 0) return false;
+        const required = DOCUMENT_TYPES[selectedBusinessType] || [];
+        const submittedTypes = documents
+            .filter(doc => doc.documentType)
+            .map(doc => doc.documentType);
+        return required.every(rt => submittedTypes.includes(rt.value));
+    };
+
+    /** Number of required types that have at least one document assigned (for progress/helper text). */
+    const requiredTypesCoveredCount = ((): number => {
+        if (!selectedBusinessType) return 0;
+        const required = DOCUMENT_TYPES[selectedBusinessType] || [];
+        const submittedTypes = documents.filter(doc => doc.documentType).map(doc => doc.documentType);
+        return required.filter(rt => submittedTypes.includes(rt.value)).length;
+    })();
+
+    /** Upload is disabled when no business type, or when max documents already uploaded (never when 0 docs and room for more). */
+    const atUploadLimit = requiredDocumentCount > 0 && documents.length >= requiredDocumentCount;
+    const uploadDisabled = !selectedBusinessType || atUploadLimit;
 
     const validateRequiredDocuments = () => {
         // Get required document types for the selected business type
@@ -356,7 +402,24 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 justify-start mt-10 w-full">
+        <div className="w-full mt-8">
+            {/* Stepper */}
+            <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
+                    <span className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-bold ${selectedBusinessType ? "bg-[#E6F4EA] text-[#22A447]" : "bg-[#005BB01A] text-[#005BB0]"}`}>
+                        Step 1
+                    </span>
+                    <p className="text-sm font-semibold text-[#090727]">Select business type</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <span className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-bold ${selectedBusinessType ? "bg-[#005BB01A] text-[#005BB0]" : "bg-[#EFEFEF] text-[#7F7F7F]"}`}>
+                        Step 2
+                    </span>
+                    <p className={`text-sm font-semibold ${selectedBusinessType ? "text-[#090727]" : "text-[#7F7F7F]"}`}>Upload required documents</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 justify-start w-full">
             <div className="space-y-6">
                 <Controller
                     name="businessType"
@@ -379,9 +442,10 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                 />
 
                 {selectedBusinessType ? (
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4 text-[#7F7F7F]">Required Documents</h3>
-                        <ul className="list-disc list-inside space-y-2">
+                    <div className="bg-white border border-[#C4C4C43D] rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-[#090727]">Required documents</h3>
+                        <p className="mt-1 text-xs text-[#7F7F7F]">Upload at least one file for each required document type.</p>
+                        <ul className="mt-3 list-disc list-inside space-y-2">
                             {DOCUMENT_TYPES[selectedBusinessType].map(doc => (
                                 <li key={doc.value} className="text-sm text-[#7F7F7F]">
                                     {doc.label}
@@ -390,50 +454,101 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                         </ul>
                     </div>
                 ) : (
-                    <div className="bg-[#D9D9D90D] border border-[#C4C4C43D] rounded-lg p-4">
-                        <div className="flex items-start">
-                            <div className="text-sm">
-                                <p className="font-semibold text-[#7F7F7F]">Important Information</p>
-                                <ul className="text-[#7F7F7F] mt-2 space-y-1">
-                                    <li>• Your account upgrade request will be reviewed by our compliance team</li>
-                                    <li>• The review process may take 3-5 business days</li>
-                                    <li>• We will notify you once the review is complete</li>
-                                    <li>• Ensure all documents are clear and legible</li>
-                                </ul>
-                            </div>
+                    <div className="bg-[#005BB00D] border border-[#005BB033] rounded-lg p-4">
+                        <p className="text-sm font-semibold text-[#090727]">Start here</p>
+                        <p className="mt-1 text-sm text-[#7F7F7F]">
+                            Select a business type first to see the required documents and unlock uploads.
+                        </p>
+                        <div className="mt-3 bg-white border border-[#C4C4C43D] rounded-md p-3">
+                            <p className="text-xs font-semibold text-[#7F7F7F]">Important</p>
+                            <ul className="text-[#7F7F7F] mt-2 space-y-1 text-xs">
+                                <li>• Review process may take 3-5 business days</li>
+                                <li>• Ensure all documents are clear and legible</li>
+                            </ul>
                         </div>
                     </div>
                 )}
             </div>
 
-            <div className="lg:col-span-2">
-                <UploadComponent
-                    className="h-auto"
-                    name="upgrade_documents"
-                    text="Upload Required Documents"
-                    folderName="kyc"
-                    multiple
-                    showPreview
-                    documents={documents}
-                    setDocuments={setDocuments}
-                    maxFiles={15}
-                    useS3WhenEnabled={true}
-                />
+            <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white border border-[#C4C4C43D] rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-3">
+                        <div>
+                            <h3 className="text-sm font-semibold text-[#090727]">Upload required documents</h3>
+                            <p className="mt-1 text-xs text-[#7F7F7F]">
+                                {requiredDocumentCount
+                                    ? `Upload ${requiredDocumentCount} document${requiredDocumentCount === 1 ? '' : 's'} (one per required type). JPG, PNG or PDF (max. 10MB each).`
+                                    : 'JPG, PNG or PDF files (max. 10MB each).'}
+                            </p>
+                        </div>
+                        {!selectedBusinessType ? (
+                            <span className="inline-flex h-7 items-center rounded-full px-3 text-xs font-bold bg-[#EFEFEF] text-[#7F7F7F]">
+                                Locked
+                            </span>
+                        ) : atUploadLimit ? (
+                            <span className="inline-flex h-7 items-center rounded-full px-3 text-xs font-bold bg-[#E6F4EA] text-[#22A447]">
+                                {requiredDocumentCount}/{requiredDocumentCount} uploaded
+                            </span>
+                        ) : null}
+                    </div>
+
+                    <div className="relative mt-4">
+                        <UploadComponent
+                            className="h-auto"
+                            name="upgrade_documents"
+                            text="Upload"
+                            folderName="kyc"
+                            multiple
+                            showPreview
+                            documents={documents}
+                            setDocuments={setDocuments}
+                            maxFiles={requiredDocumentCount || 1}
+                            useS3WhenEnabled={true}
+                            disabled={uploadDisabled}
+                            disabledHint={
+                                !selectedBusinessType
+                                    ? "Select a business type to enable uploads."
+                                    : atUploadLimit
+                                        ? `Maximum (${requiredDocumentCount}) documents uploaded. Assign each to a required type below.`
+                                        : undefined
+                            }
+                        />
+
+                        {!selectedBusinessType ? (
+                            <div className="absolute inset-0 rounded-lg flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
+                                <div className="max-w-md px-4 text-center">
+                                    <p className="text-sm font-semibold text-[#090727]">Select business type to continue</p>
+                                    <p className="mt-1 text-xs text-[#7F7F7F]">
+                                        You’ll see the exact list of required documents after selecting a type.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : atUploadLimit ? (
+                            <div className="absolute inset-0 rounded-lg flex items-center justify-center bg-white/80 backdrop-blur-[1px]">
+                                <div className="max-w-md px-4 text-center">
+                                    <p className="text-sm font-semibold text-[#090727]">Maximum documents uploaded</p>
+                                    <p className="mt-1 text-xs text-[#7F7F7F]">
+                                        Assign each document to a required type below. Submit when every required type has one document.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
 
                 {/* Document Type Selection - Separate from Upload Component */}
                 {documents.length > 0 && selectedBusinessType && (
                     <div className="mt-6 space-y-4">
                         <h4 className="text-sm font-medium text-[#7f7f7f]">
-                            Document ({documents.filter(doc => doc.documentType).length}/{documents.length} completed)
-                            {/* Documents ({documents.length}) */}
+                            Required types: {requiredTypesCoveredCount}/{requiredDocumentCount} covered
                         </h4>
 
                         {/* Add a progress indicator */}
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
                             <div
-                                className="bg-primary h-2.5 rounded-full"
+                                className="bg-primary h-2.5 rounded-full transition-all"
                                 style={{
-                                    width: `${(documents.filter(doc => doc.documentType).length / documents.length) * 100}%`
+                                    width: `${requiredDocumentCount ? (requiredTypesCoveredCount / requiredDocumentCount) * 100 : 0}%`
                                 }}
                             />
                         </div>
@@ -456,16 +571,17 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                             </div>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-3 pb-6">
                             {documents.map((doc) => {
                                 const previewSrc = doc.uploadedUrl || (doc.file ? getPreviewUrl(doc.file) : null);
                                 const sizeLabel = doc.file?.size != null && doc.file.size > 0
                                     ? `${(doc.file.size / 1024 / 1024).toFixed(2)} MB`
                                     : (doc.uploadedUrl ? 'Uploaded' : '0.00 MB');
+                                const selectedLabel = getAvailableDocumentTypes().find(t => t.value === doc.documentType)?.label;
                                 return (
-                                <div key={doc.id} className="flex items-center gap-4 px-2 py-1.5 bg-[#D9D9D90D] border border-[#C4C4C43D] rounded-lg">
-                                    <div className="flex-1 flex items-center gap-4">
-                                        <div>
+                                <div key={doc.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 px-3 py-3 sm:px-2 sm:py-1.5 bg-[#D9D9D90D] border border-[#C4C4C43D] rounded-lg">
+                                    <div className="flex-1 flex items-center gap-3 sm:gap-4 min-w-0">
+                                        <div className="flex-shrink-0">
                                             {isImageFile(doc.file?.name ?? '') && previewSrc ? (
                                                 <div className="relative cursor-pointer">
                                                     <Image
@@ -493,13 +609,12 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-end gap-2">
-                                            <p className="font-medium text-sm text-[#7F7F7F]">{doc.title}</p>
+                                        <div className="min-w-0 flex flex-col sm:flex-row sm:items-end sm:gap-2 gap-0.5">
+                                            <p className="font-medium text-sm text-[#7F7F7F] truncate">{doc.title}</p>
                                             <p className="flex items-center gap-3 text-[10px] text-[#9F9F9F] divide-x divide-[#9F9F9F]">
-                                                <span>
-                                                    {sizeLabel}
-                                                </span>
+                                                <span>{sizeLabel}</span>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleOpenPreview(doc.file ?? null, doc.title, doc.uploadedUrl)}
                                                     className="pl-3 hover:text-primary cursor-pointer transition-colors focus:outline-none"
                                                 >
@@ -508,43 +623,58 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                             </p>
                                         </div>
                                     </div>
+                                    <div className="flex flex-shrink-0 items-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveDocument(doc.id)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FFF5F5] hover:bg-[#FFEDEE] border border-[#FECACA] text-[#B91C1C] font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#FD2727]/30"
+                                        aria-label="Remove document"
+                                    >
+                                        <Icon name="delete" className="h-4 w-4" color="#B91C1C" />
+                                        <span>Remove</span>
+                                    </button>
+                                    </div>
                                     <div
-                                        className="flex-shrink-0 w-64 relative"
+                                        className="w-full sm:w-56 md:w-64 flex-shrink-0 relative order-last sm:order-none"
                                         ref={openDocDropdownId === doc.id ? openDropdownRef : null}
                                     >
                                         <button
                                             type="button"
-                                            className="flex justify-between items-center w-full h-12 rounded px-4 bg-[#005BB01A] text-[#005BB0] font-bold text-sm"
+                                            className="flex justify-between items-center w-full min-h-12 rounded px-4 py-2.5 bg-[#005BB01A] text-[#005BB0] font-bold text-sm text-left"
                                             onClick={() => setOpenDocDropdownId(prev => prev === doc.id ? null : doc.id)}
                                         >
-                                            <span className="truncate text-left">
-                                                {getAvailableDocumentTypes().find(t => t.value === doc.documentType)?.label ?? 'Select document type'}
+                                            <span className="truncate pr-2">
+                                                {selectedLabel ?? 'Select document type'}
                                             </span>
-                                            <Icon name="caretDown" className="flex-shrink-0 ml-1" />
+                                            <Icon name="caretDown" className="flex-shrink-0" />
                                         </button>
                                         {openDocDropdownId === doc.id && (
-                                            <div className="absolute z-50 mt-2 w-full bg-white text-black rounded-lg border border-grey-200 shadow-lg">
-                                                <ul className="max-h-48 overflow-y-auto py-1">
-                                                    {getAvailableDocumentTypes().map(type => {
-                                                        const isAlreadyUploaded = documents.some(d =>
-                                                            d.id !== doc.id && d.documentType === type.value
-                                                        );
-                                                        const isRequired = !documents.some(d => d.documentType === type.value);
-                                                        const labelSuffix = isRequired ? ' (Required)' : isAlreadyUploaded ? ' (Already uploaded)' : '';
-                                                        const isSelected = doc.documentType === type.value;
-                                                        return (
-                                                            <li
-                                                                key={type.value}
-                                                                onClick={() => {
-                                                                    handleDocumentTypeChange(doc.id, type.value);
-                                                                    setOpenDocDropdownId(null);
-                                                                }}
-                                                                className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${isSelected ? 'bg-[#005BB00D]' : ''}`}
-                                                            >
-                                                                {type.label}{labelSuffix}
-                                                            </li>
-                                                        );
-                                                    })}
+                                            <div className="absolute z-50 bottom-full mb-2 left-0 right-0 w-full min-w-0 max-w-[calc(100vw-1.5rem)] bg-white text-black rounded-lg border border-gray-200 shadow-lg sm:bottom-auto sm:mb-0 sm:mt-2 sm:left-auto sm:right-0 sm:w-[min(100%,320px)]">
+                                                <ul className="max-h-56 overflow-y-auto py-1">
+                                                    {getAvailableDocumentTypes()
+                                                        .filter(type => {
+                                                            const assignedToOther = documents.some(d =>
+                                                                d.id !== doc.id && d.documentType === type.value
+                                                            );
+                                                            return !assignedToOther;
+                                                        })
+                                                        .map(type => {
+                                                            const isRequired = !documents.some(d => d.documentType === type.value);
+                                                            const labelSuffix = isRequired ? ' (Required)' : '';
+                                                            const isSelected = doc.documentType === type.value;
+                                                            return (
+                                                                <li
+                                                                    key={type.value}
+                                                                    onClick={() => {
+                                                                        handleDocumentTypeChange(doc.id, type.value);
+                                                                        setOpenDocDropdownId(null);
+                                                                    }}
+                                                                    className={`px-4 py-2.5 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] whitespace-normal break-words ${isSelected ? 'bg-[#005BB00D]' : ''}`}
+                                                                >
+                                                                    {type.label}{labelSuffix}
+                                                                </li>
+                                                            );
+                                                        })}
                                                 </ul>
                                             </div>
                                         )}
@@ -557,15 +687,28 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                 )}
             </div>
 
-            <div className="flex justify-center mt-4 w-[28%] border-danger">
-                <Button
-                    text={isSubmitting ? <Loader /> : "Submit"}
-                    ariaLabel="Submit business account upgrade request"
-                    disabled={isSubmitting || !selectedBusinessType || documents.length === 0}
-                    onClick={handleSubmit(handleSubmitUpgrade)}
-                    primary
-                    type="submit"
-                />
+            </div>
+
+            <div className="mt-6 flex justify-end">
+                <div className="w-full lg:w-[420px]">
+                    <Button
+                        text={isSubmitting ? <Loader /> : "Submit for review"}
+                        ariaLabel="Submit business account upgrade request"
+                        disabled={isSubmitting || !selectedBusinessType || !allRequiredDocumentsUploaded()}
+                        onClick={handleSubmit(handleSubmitUpgrade)}
+                        primary
+                        type="submit"
+                    />
+                    {!selectedBusinessType ? (
+                        <p className="mt-2 text-xs text-[#7F7F7F]">
+                            Select a business type to enable uploads and submission.
+                        </p>
+                    ) : !allRequiredDocumentsUploaded() ? (
+                        <p className="mt-2 text-xs text-[#7F7F7F]">
+                            Assign a document to each required type ({requiredTypesCoveredCount}/{requiredDocumentCount} covered). Each type needs exactly one document.
+                        </p>
+                    ) : null}
+                </div>
             </div>
 
             <PreviewModal

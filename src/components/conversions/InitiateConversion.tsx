@@ -794,7 +794,8 @@ const InitiateConversion: React.FC<InitiateConversionProps> = ({
                         text={state.isSubmitting || isLoadingQuote ? <Loader /> : "Continue"}
                         ariaLabel="Continue"
                         disabled={
-                            !formik.isValid ||
+                            !formik.values.amount ||
+                            Number(removeCommasFromValue(formik.values.amount || "0")) <= 0 ||
                             state.isSubmitting ||
                             state.isLoading ||
                             isLoadingQuote ||

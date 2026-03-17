@@ -5,7 +5,7 @@ import useAuthentication from "@/stores/useAuthentication";
 import useCurrency from "@/stores/useCurrency";
 import useKyc from "@/stores/useKyc";
 import { KycStatus } from "@/types/kyc";
-import { capitalizeFirstLetter, copyToClipboard, notifyError } from "@/util/utils";
+import { capitalizeFirstLetter, copyToClipboard, notifyError, notifySuccess } from "@/util/utils";
 import { uploadFileByConfig } from "@/util/uploadFileByConfig";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -40,6 +40,7 @@ const ProfileTab = () => {
             ...user,
             avatar: response.avatar,
           });
+          notifySuccess("Profile picture updated successfully");
         }
       } catch (error) {
         notifyError("Error uploading image");
@@ -100,7 +101,7 @@ const ProfileTab = () => {
         {user?.business_type === "starter business" && (
           <ActionButton
             ariaLabel="Upgrade to business account"
-            text={upgradeChecking ? "Checking..." : "Upgrade to business account"}
+            text={upgradeChecking ? "Verifying KYC status…" : "Upgrade to business account"}
             className="!h-10 !px-4 !font-medium"
             disabled={upgradeChecking}
             onClick={async () => {

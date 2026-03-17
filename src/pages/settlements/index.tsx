@@ -1,16 +1,18 @@
 import CardSkeleton from "@/components/card-skeleton";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import Layout from "@/components/layout";
+import PageGuard from "@/components/PageGuard";
 import PageHeader from "@/components/PageHeader";
 import Details from "@/components/settlements/details";
 import History from "@/components/settlements/history";
 import Transactions from "@/components/settlements/transactions";
 import WebPageTitle from "@/components/WebPageTitle";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 
-const Settlements = () => {
+const SettlementsContent = () => {
   const router = useRouter();
   const { id, view } = router.query;
   const [mounted, setMounted] = useState<boolean>(false);
@@ -69,6 +71,30 @@ const Settlements = () => {
       )}
     </Layout>
   );
+};
+
+const Settlements = () => {
+  const hasAccess = useModuleAccess("settlements");
+  if (!hasAccess) {
+    return (
+      <Layout pageTitle="Settlement History" icon="history">
+        <WebPageTitle title="Settlement History | Cray Merchant Portal" />
+        <div className="flex flex-col md:flex-row justify-between mb-8">
+          <div>
+            <PageHeader
+              className="!mb-0"
+              title="Settlement"
+              description="Stay informed about your payouts with a transparent and reliable settlement history."
+            />
+          </div>
+        </div>
+        <PageGuard moduleSlug="settlements">
+          <div />
+        </PageGuard>
+      </Layout>
+    );
+  }
+  return <SettlementsContent />;
 };
 
 export default Settlements;

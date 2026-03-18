@@ -40,7 +40,7 @@ interface FrequencyTypeProp {
 const CreatePaymentMandate = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [mandateFile, setMandateFile] = useState<File | null>(null);
+  const [mandateFileUrl, setMandateFileUrl] = useState<string>("");
 
   const [state, setState] = useState<StateProps>({
     banks: [],
@@ -124,7 +124,7 @@ const CreatePaymentMandate = () => {
         payer_name: payerName,
         phone_number: phoneNumber,
         type: "physical",
-        mandate_file: mandateFile,
+        mandate_file: mandateFileUrl || undefined,
         must_submit: mustSubmit,
       };
 
@@ -338,7 +338,9 @@ const CreatePaymentMandate = () => {
               buttonText="Select File"
               name="mandateFile"
               text="Mandate document"
-              setMandateFile={setMandateFile}
+              folderName="payment-mandates"
+              onFileUpload={(url) => setMandateFileUrl(url)}
+              value={mandateFileUrl}
             />
 
             <TextArea

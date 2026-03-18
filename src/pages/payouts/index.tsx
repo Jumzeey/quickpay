@@ -8,6 +8,7 @@ import Filter from "@/components/Filter";
 import { FilterExport } from "@/components/filter-export";
 import Icon from "@/components/icon";
 import Layout from "@/components/layout";
+import PageGuard from "@/components/PageGuard";
 import PageHeader from "@/components/PageHeader";
 import Pagination from "@/components/pagination";
 import dynamic from "next/dynamic";
@@ -33,13 +34,13 @@ import {
   getBulkPayoutTransactions,
   Payout
 } from "@/services/payout";
-import useAuthentication from "@/stores/useAuthentication";
 import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, copyToClipboard, formatDate, formatDateTime2, Modules } from "@/util/utils";
+import { useModuleAccess, useModuleOptionsAll } from "@/hooks/useModuleAccess";
+import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, copyToClipboard, formatDate, formatDateTime2 } from "@/util/utils";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -56,7 +57,7 @@ interface PayoutsProps {
 
 type PayoutTab = "single" | "bulk";
 
-const PayoutHistory = () => {
+const PayoutsContent = () => {
   const { handleError, handleSuccess } = useApiResponse();
   const { selectedCurrency } = useCurrency();
   const [mounted, setMounted] = useState(false);
@@ -105,10 +106,8 @@ const PayoutHistory = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportParams, setExportParams] = useState<Record<string, any> | null>(null);
 
-  const { modules } = useAuthentication();
-  const payoutCurrency: string[] = modules?.find((m: Modules) => m.product === 'Payout')?.sub_product?.currency;
-
-  console.log({ modules, payoutCurrency });
+  const payoutCurrency = useModuleOptionsAll("payout");
+  const hasBulkPayout = useModuleAccess("payout", "bulk-payout");
 
   const {
     requeryPayout,
@@ -736,7 +735,7 @@ const PayoutHistory = () => {
       </div>
 
       <div>
-        {isNgnCurrency && (
+        {hasBulkPayout && isNgnCurrency && (
           <div className="mb-6 inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
             <button
               type="button"
@@ -965,13 +964,15 @@ const PayoutHistory = () => {
                   primary
                 />
               ) : isBulkTab ? (
-                <Button
-                  text="Initiate Bulk Payout"
-                  ariaLabel="Initiate bulk payout"
-                  onClick={() => toggleModal('isBulkPayoutModalOpen')}
-                  className="!w-60 !h-12"
-                  primary
-                />
+                hasBulkPayout ? (
+                  <Button
+                    text="Initiate Bulk Payout"
+                    ariaLabel="Initiate bulk payout"
+                    onClick={() => toggleModal('isBulkPayoutModalOpen')}
+                    className="!w-60 !h-12"
+                    primary
+                  />
+                ) : null
               ) : (
                 <PayoutDropdown
                   className="w-60"
@@ -1023,6 +1024,26 @@ const PayoutHistory = () => {
       {previewModal}
     </Layout>
   );
+};
+
+const PayoutHistory = () => {
+  const hasAccess = useModuleAccess("payout");
+  if (!hasAccess) {
+    return (
+      <Layout pageTitle="Pay Outs" icon="disbursement">
+        <WebPageTitle title="Payouts | Cray Merchant Portal" />
+        <PageHeader
+          className="!mb-0"
+          title="Payouts"
+          description="Manage and track all payouts seamlessly, ensuring smooth and transparent transactions."
+        />
+        <PageGuard moduleSlug="payout">
+          <div />
+        </PageGuard>
+      </Layout>
+    );
+  }
+  return <PayoutsContent />;
 };
 
 export default PayoutHistory;

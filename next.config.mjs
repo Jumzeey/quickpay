@@ -8,7 +8,9 @@ const nextConfig = {
     domains: [
       'avatars.dicebear.com',
       'rampadmindevbucket.s3.amazonaws.com',
+      'rampadmindevbucket.s3.us-east-1.amazonaws.com',
       'rampadminproductionbucket.s3.amazonaws.com',
+      'rampadminproductionbucket.s3.us-east-1.amazonaws.com',
     ],
   },
   optimizeFonts: true,

@@ -6,6 +6,7 @@ import Modal from '@/components/modal';
 import SharedState from "@/context/sharedState";
 import { ThemeProvider } from "@/context/ThemeContext";
 import useAuthentication from "@/stores/useAuthentication";
+import { useModuleStore } from "@/stores/module-store";
 import "@/styles/globals.css";
 import { getToken, handleLogOut } from "@/util/utils";
 import type { AppProps } from "next/app";
@@ -38,7 +39,7 @@ const queryClient = new QueryClient({
 });
 
 export default function App({ Component, pageProps }: AppProps) {
-  const { user, fetch2faStatus } = useAuthentication() || {};
+  const { user, modules, fetch2faStatus } = useAuthentication() || {};
   const [tracker, setTracker] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
   const [shouldLogout, setShouldLogout] = useState(true);
@@ -105,6 +106,14 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Sync persisted auth.modules into module store on load (e.g. after refresh)
+  useEffect(() => {
+    if (user) {
+      // Always sync, even when empty, so we clear stale modules between accounts/sessions.
+      useModuleStore.getState().setModules(Array.isArray(modules) ? modules : []);
+    }
+  }, [user, modules]);
 
   // Fetch 2FA status when user is logged in so totp_enabled is available for sensitive actions
   useEffect(() => {

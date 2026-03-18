@@ -3,8 +3,8 @@ import FancyFileUpload from '@/components/FancyFileUpload';
 import Loader from '@/components/loader';
 import Modal from '@/components/modal';
 import { useFormValidation } from '@/hooks/useFormValidation';
-import { uploadFile } from '@/services/kyc';
 import { notifyError, notifySuccess } from '@/util/utils';
+import { uploadFileByConfig } from '@/util/uploadFileByConfig';
 import React, { useEffect, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import Select from 'react-select';
@@ -103,10 +103,8 @@ const UpdateSubAccountModal: React.FC<UpdateSubAccountModalProps> = ({
             const uploadedDocuments = await Promise.all(
                 documents.map(async doc => {
                     if (doc.file) {
-                        const formData = new FormData();
-                        formData.append('file', doc.file);
-                        const uploadResponse = await uploadFile(formData);
-                        return { name: doc.title, url: uploadResponse.data.file };
+                        const url = await uploadFileByConfig(doc.file, 'subaccount_documents');
+                        return { name: doc.title, url };
                     }
                     return null;
                 })

@@ -6,10 +6,12 @@ import RaiseDispute from "@/components/conversions/RaiseDispute";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
 import Layout from "@/components/layout";
+import PageGuard from "@/components/PageGuard";
 import Pagination from "@/components/pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import { getConversionHistory } from "@/services/conversions";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 import useClickEvent from "@/stores/useClickEvent";
 import useConversion from "@/stores/useConversion";
 import useFilter from "@/stores/useFilter";
@@ -29,7 +31,7 @@ interface ConversionsProps {
   [key: string]: boolean;
 }
 
-const ConversionHistory = () => {
+const ConversionsContent = () => {
   const { selectedItem, handleClick } = useClickEvent();
   const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -586,6 +588,32 @@ const ConversionHistory = () => {
       </div>
     </Layout>
   );
+};
+
+const ConversionHistory = () => {
+  // Important: when module is disabled, do NOT mount conversions content (prevents API calls).
+  const hasAccess = useModuleAccess("conversions");
+
+  if (!hasAccess) {
+    return (
+      <Layout pageTitle="Conversions" icon="collection-history">
+        <WebPageTitle title="Conversions | Cray Merchant Portal" />
+        <div className="flex flex-col md:flex-row justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Conversions</h2>
+            <p className="text-sm pt-3 pb-5">
+              Easily transfer funds between your accounts with seamless and secure conversions.
+            </p>
+          </div>
+        </div>
+        <PageGuard moduleSlug="conversions">
+          <div />
+        </PageGuard>
+      </Layout>
+    );
+  }
+
+  return <ConversionsContent />;
 };
 
 export default ConversionHistory;

@@ -2,7 +2,7 @@ import env from "@/config/env";
 import useNetworkLoaderStore from "@/stores/useNetworkLoaderStore";
 import useKyc from "@/stores/useKyc";
 import { KycStatus } from "@/types/kyc";
-import { notifyError } from "@/util/utils";
+import { notifyError, FORBIDDEN_MESSAGE } from "@/util/utils";
 import Axios from "axios";
 import router from "next/router";
 import { CustomHttpError } from "./errors/CustomHttpError";
@@ -150,6 +150,17 @@ api.interceptors.response.use(
           statusCode: status,
           responseText: data?.message || "TOTP verification required.",
           payload: { requires_totp: true, ...data },
+        })
+      );
+    }
+
+    // 403 Forbidden: show a clear permission message (for both HTML and JSON responses).
+    if (status === 403) {
+      return Promise.reject(
+        new CustomHttpError(FORBIDDEN_MESSAGE, {
+          statusCode: status,
+          responseText: FORBIDDEN_MESSAGE,
+          payload: typeof data === "object" ? data : { raw: "forbidden" },
         })
       );
     }

@@ -4,7 +4,7 @@ import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { useModuleOptions } from "@/hooks/useModuleAccess";
-import { initiateBulkPayout, completeBulkPayout, getBulkPayoutStatus } from "@/services/payout";
+import { initiateBulkPayout, completeBulkPayout, getBulkPayoutStatus, cancelBulkPayout } from "@/services/payout";
 import useAuthentication from "@/stores/useAuthentication";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
 import { formatBalance, notifyError, notifySuccess } from "@/util/utils";
@@ -45,6 +45,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
     const [isExtractingHeaders, setIsExtractingHeaders] = useState(false);
     const [currentStep, setCurrentStep] = useState(0); // 0: file upload, 1: OTP verification
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -581,6 +582,21 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         setCompleteUseRecoveryCode(false);
     };
 
+    const handleCancelBulkPayout = async () => {
+        if (bulkPayoutId == null) return;
+        setIsCancelling(true);
+        try {
+            const response = await cancelBulkPayout(bulkPayoutId);
+            notifySuccess(response?.message || "Bulk payout cancelled.");
+            await fetchPayoutHistory();
+            handleClose();
+        } catch (error: any) {
+            notifyError(error?.message || "Failed to cancel bulk payout");
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+
     const renderOtpVerificationStep = () => {
         if (verificationStatus === 'failed' && verificationFailure) {
             return (
@@ -761,15 +777,25 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             </div>
                         )}
                     </div>
-                    <div className="flex justify-center mt-8">
+                    <div className="flex flex-col items-center gap-3 mt-8">
                         <Button
                             className="openSansLight text-white text-lg p-2 rounded w-52"
                             text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
                             ariaLabel="Complete Bulk Payout"
-                            disabled={isSubmitting || !getCompleteStepCode()}
+                            disabled={isSubmitting || isCancelling || !getCompleteStepCode()}
                             primary
                             type="button"
                             onClick={handleCompleteStepSubmit}
+                        />
+                        <Button
+                            className="openSansLight text-lg p-2 rounded"
+                            text={isCancelling ? <Loader /> : "Cancel bulk payout"}
+                            ariaLabel="Cancel bulk payout"
+                            plain
+                            medium
+                            type="button"
+                            disabled={isSubmitting || isCancelling}
+                            onClick={handleCancelBulkPayout}
                         />
                     </div>
                 </div>
@@ -822,14 +848,24 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         )}
                     />
                 </div>
-                <div className="flex justify-center mt-8">
+                <div className="flex flex-col items-center gap-3 mt-8">
                     <Button
                         className="openSansLight text-white text-lg p-2 rounded w-52"
                         text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
                         ariaLabel="Complete Bulk Payout"
-                        disabled={isSubmitting || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
+                        disabled={isSubmitting || isCancelling || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
                         primary
                         type="submit"
+                    />
+                    <Button
+                        className="openSansLight text-lg p-2 rounded"
+                        text={isCancelling ? <Loader /> : "Cancel bulk payout"}
+                        ariaLabel="Cancel bulk payout"
+                        plain
+                        medium
+                        type="button"
+                        disabled={isSubmitting || isCancelling}
+                        onClick={handleCancelBulkPayout}
                     />
                 </div>
             </form>

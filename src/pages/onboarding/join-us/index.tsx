@@ -133,7 +133,8 @@ const RegisterPage = () => {
       lastname: "",
       email: "",
       phone: "",
-      country: "NG",
+      // Keep empty so the Yup `.required()` rule actually forces the user to choose.
+      country: "",
       password: "",
       password_confirmation: "",
       business_name: "",
@@ -304,7 +305,7 @@ const RegisterPage = () => {
                   control={control}
                   render={({ field }) => (
                     <FormSelectSearch
-                      placeholder=""
+                      placeholder="Select country"
                       // placeholder={supportedCountriesLoading ? "Loading countries..." : "Select country"}
                       label="Country"
                       id="country"

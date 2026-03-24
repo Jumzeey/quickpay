@@ -67,9 +67,15 @@ export interface BulkPayoutHistoryItem {
   currency: string;
   file_path: string;
   status: string;
+  /** Present on newer bulk payout API responses */
+  lien_status?: string | null;
+  liens_placed_at?: string | null;
+  verification_completed_at?: string | null;
   success_count: number;
   failure_count: number;
   total_amount: string;
+  total_charge?: string | null;
+  total_lien_amount?: string | null;
   failed_rows: unknown;
   successful_rows: unknown;
   reason: string | null;
@@ -214,6 +220,32 @@ export async function getPayoutHistory(params?: PayoutHistoryParams): Promise<Pa
   }
 }
 
+const defaultBulkPagination = {
+  count: 0,
+  total: 0,
+  per_page: 20,
+  current_page: 1,
+  last_page: 1,
+  next_page_url: null as string | null,
+  previous_page_url: null as string | null,
+};
+
+function unwrapBulkHistoryPayload(raw: unknown): BulkPayoutHistoryResponse {
+  const r = raw as Record<string, unknown> | null | undefined;
+  if (!r || typeof r !== "object") {
+    return { bulk_payouts: [], pagination: { ...defaultBulkPagination } };
+  }
+  const inner =
+    Array.isArray(r.bulk_payouts) || (r.pagination && typeof r.pagination === "object")
+      ? r
+      : (r.data as Record<string, unknown> | undefined);
+  const bulk_payouts = (inner?.bulk_payouts as BulkPayoutHistoryItem[]) ?? [];
+  const pagination = (inner?.pagination as BulkPayoutHistoryResponse["pagination"]) ?? {
+    ...defaultBulkPagination,
+  };
+  return { bulk_payouts, pagination };
+}
+
 export async function getBulkPayoutHistory(params?: {
   page?: number;
   per_page?: number;
@@ -224,11 +256,30 @@ export async function getBulkPayoutHistory(params?: {
       apiEndpoints.payouts.INITIATE_BULK_PAYOUT,
       { params }
     );
-
-    return response.data;
+    const body = (response as { data?: unknown })?.data ?? response;
+    return unwrapBulkHistoryPayload(body);
   } catch (error) {
     throw error;
   }
+}
+
+function unwrapBulkTransactionsPayload(raw: unknown): BulkPayoutTransactionsResponse {
+  const r = raw as Record<string, unknown> | null | undefined;
+  if (!r || typeof r !== "object") {
+    return {
+      transactions: [],
+      pagination: { ...defaultBulkPagination },
+    };
+  }
+  const inner =
+    Array.isArray(r.transactions) || (r.pagination && typeof r.pagination === "object")
+      ? r
+      : (r.data as Record<string, unknown> | undefined);
+  const transactions = (inner?.transactions as BulkPayoutTransaction[]) ?? [];
+  const pagination = (inner?.pagination as BulkPayoutTransactionsResponse["pagination"]) ?? {
+    ...defaultBulkPagination,
+  };
+  return { transactions, pagination };
 }
 
 export async function getBulkPayoutTransactions(
@@ -240,8 +291,8 @@ export async function getBulkPayoutTransactions(
       apiEndpoints.payouts.GET_BULK_PAYOUT_TRANSACTIONS.replace(":id", String(bulkPayoutId)),
       { params }
     );
-
-    return response.data;
+    const body = (response as { data?: unknown })?.data ?? response;
+    return unwrapBulkTransactionsPayload(body);
   } catch (error) {
     throw error;
   }
@@ -441,6 +492,19 @@ export async function completeBulkPayout(payload: CompleteBulkPayoutPayload): Pr
     const response = await api.post(
       `${apiEndpoints.payouts.COMPLETE_BULK_PAYOUT}/${payload.bulk_payout_id}`,
       { otp: payload.otp }
+    );
+    // @ts-ignore
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/** Cancel an initiated bulk payout (e.g. user leaves the OTP step). PATCH /merchant/disbursements/interbank/bulk/:id */
+export async function cancelBulkPayout(bulk_payout_id: number): Promise<BulkPayoutResponse> {
+  try {
+    const response = await api.patch(
+      `${apiEndpoints.payouts.GET_BULK_PAYOUT_STATUS}/${bulk_payout_id}`
     );
     // @ts-ignore
     return response;

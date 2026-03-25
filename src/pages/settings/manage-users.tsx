@@ -158,7 +158,8 @@ const ManageUsers = () => {
       <p className="text-sm pt-3 pb-5">Manage users within your company</p>
       {!hasPermission ? <ForbiddenGuard /> : null}
       {hasPermission ? (
-      state.isLoading && state.isInitialLoad ? (
+        <>
+          {state.isLoading && state.isInitialLoad ? (
         <TableSkeleton singleButton />
       ) : state?.users?.length !== 0 ? (
         <Fragment>
@@ -307,13 +308,14 @@ const ManageUsers = () => {
             />
           </EmptyState>
         </Fragment>
-      )}
-      <AddUser
-        isModalOpen={isModalOpen}
-        closeModal={closeModal}
-        fetchUsers={fetchUsers}
-        isUpdateUser={isUpdateUser}
-      />
+          )}
+          <AddUser
+            isModalOpen={isModalOpen}
+            closeModal={closeModal}
+            fetchUsers={fetchUsers}
+            isUpdateUser={isUpdateUser}
+          />
+        </>
       ) : null}
     </Layout>
   );

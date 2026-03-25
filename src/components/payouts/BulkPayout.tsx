@@ -796,7 +796,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             onClick={handleCompleteStepSubmit}
                         />
                         <Button
-                            className="openSansLight text-lg p-2 rounded"
+                            className="openSansLight text-lg p-2 rounded !border-red-500 !text-red-600 hover:!bg-red-50 hover:!text-red-700"
                             text={isCancelling ? <Loader /> : "Cancel bulk payout"}
                             ariaLabel="Cancel bulk payout"
                             plain
@@ -866,7 +866,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         type="submit"
                     />
                     <Button
-                        className="openSansLight text-lg p-2 rounded"
+                        className="openSansLight text-lg p-2 rounded !border-red-500 !text-red-600 hover:!bg-red-50 hover:!text-red-700"
                         text={isCancelling ? <Loader /> : "Cancel bulk payout"}
                         ariaLabel="Cancel bulk payout"
                         plain

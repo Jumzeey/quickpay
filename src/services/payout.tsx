@@ -115,6 +115,27 @@ export interface BulkPayoutTransaction {
   raw_response: unknown;
   created_at: string;
   updated_at: string;
+  /** Present on newer bulk payout transactions API responses */
+  estimated_charge?: string | null;
+  lien_amount?: string | null;
+  mifos_transaction_id?: string | null;
+  lien_placed_at?: string | null;
+  verified_at?: string | null;
+  transaction?: {
+    id: number;
+    customer_reference?: string | null;
+    reference?: string;
+    /** Backwards compat: older payloads used `channel` */
+    channel?: string;
+    /** Newer payloads use `payment_type` for the same idea */
+    payment_type?: string;
+    available_balance_before?: string;
+    available_balance_after?: string;
+    amount?: string;
+    charge?: string;
+    status?: string;
+    created_at?: string;
+  } | null;
 }
 
 export interface BulkPayoutTransactionsResponse {

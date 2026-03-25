@@ -22,6 +22,7 @@ interface BulkPayoutProps {
     isModalOpen: boolean;
     closeModal: () => void;
     fetchPayoutHistory: () => void;
+    fetchBulkPayoutHistory?: () => void;
 }
 
 interface BulkPayoutFormValues {
@@ -42,6 +43,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     isModalOpen,
     closeModal,
     fetchPayoutHistory,
+    fetchBulkPayoutHistory,
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -350,6 +352,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    await fetchBulkPayoutHistory?.();
                     handleClose();
                 }
             } catch (error: any) {
@@ -553,6 +556,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    await fetchBulkPayoutHistory?.();
                     handleClose();
                 }
             } catch (error: any) {
@@ -583,12 +587,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     };
 
     const handleCancelBulkPayout = async () => {
-        if (bulkPayoutId == null) return;
+        if (bulkPayoutId == null) {
+            handleClose();
+            return;
+        }
         setIsCancelling(true);
         try {
             const response = await cancelBulkPayout(bulkPayoutId);
             notifySuccess(response?.message || "Bulk payout cancelled.");
             await fetchPayoutHistory();
+            await fetchBulkPayoutHistory?.();
             handleClose();
         } catch (error: any) {
             notifyError(error?.message || "Failed to cancel bulk payout");
@@ -782,7 +790,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             className="openSansLight text-white text-lg p-2 rounded w-52"
                             text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
                             ariaLabel="Complete Bulk Payout"
-                            disabled={isSubmitting || isCancelling || !getCompleteStepCode()}
+                            disabled={isSubmitting || !getCompleteStepCode()}
                             primary
                             type="button"
                             onClick={handleCompleteStepSubmit}
@@ -853,7 +861,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         className="openSansLight text-white text-lg p-2 rounded w-52"
                         text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
                         ariaLabel="Complete Bulk Payout"
-                        disabled={isSubmitting || isCancelling || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
+                        disabled={isSubmitting || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
                         primary
                         type="submit"
                     />
@@ -1247,7 +1255,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         <>
             <Modal
                 isOpen={isModalOpen}
-                onClose={handleClose}
+                onClose={currentStep === 1 ? undefined : handleClose}
                 title={getModalTitle()}
                 className="max-w-lg"
             >

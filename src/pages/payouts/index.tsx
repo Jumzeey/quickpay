@@ -40,7 +40,7 @@ import usePayout from "@/stores/usePayout";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
 import { useModuleAccess, useModuleOptionsAll } from "@/hooks/useModuleAccess";
-import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, copyToClipboard, formatDate, formatDateTime2, getStatusColor } from "@/util/utils";
+import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, copyToClipboard, currencySymbols, formatDate, formatDateTime2, getStatusColor } from "@/util/utils";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -277,6 +277,24 @@ const PayoutsContent = () => {
     }
   };
 
+  const formatBulkTransactionMoney = (currency: string | undefined, raw: string | null | undefined) => {
+    if (raw == null || String(raw).trim() === "") return "N/A";
+    const numericAmount = Number(String(raw).replace(/,/g, ""));
+    if (Number.isNaN(numericAmount)) return "N/A";
+    const code = (currency || "NGN").toUpperCase();
+    try {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: code,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(numericAmount);
+    } catch {
+      const symbol = currencySymbols[code] || code;
+      return `${symbol}${numericAmount.toFixed(2)}`;
+    }
+  };
+
   const bulkColumns = [{
     key: "id",
     title: "ID",
@@ -310,7 +328,7 @@ const PayoutsContent = () => {
     },
   }, {
     key: "status",
-    title: "Status",
+    title: "Process status",
     render: (_value: any, row: BulkPayoutHistoryItem) => {
       const raw = row?.status ? String(row.status) : "";
       const label = raw ? capitalizeFirstLetterOfEachWord(raw.replace(/_/g, " ")) : "N/A";
@@ -514,7 +532,8 @@ const PayoutsContent = () => {
     key: "status",
     title: "Status",
     render: (_value: any, row: BulkPayoutTransaction) => {
-      const raw = row?.status ? String(row.status) : "";
+      const rawStatus = row?.transaction?.status ?? row?.status ?? "";
+      const raw = rawStatus ? String(rawStatus) : "";
       const label = raw ? capitalizeFirstLetterOfEachWord(raw.replace(/_/g, " ")) : "N/A";
       const color = raw ? getStatusColor(raw) : "#7F7F7F";
       return (
@@ -526,16 +545,23 @@ const PayoutsContent = () => {
   }, {
     key: "reference",
     title: "Transaction reference",
-    render: (_value: any, row: BulkPayoutTransaction) => (
-      <p className="text-[#090727] text-sm font-medium flex items-center justify-between gap-3 min-w-0">
-        <span className="truncate">{row?.reference || "N/A"}</span>
-        {row?.reference ? (
-          <button type="button" onClick={() => copyToClipboard(row.reference)} aria-label="Copy transaction reference">
-            <Icon name="copy3" className="size-3 shrink-0 text-[#7F7F7F]" />
-          </button>
-        ) : null}
-      </p>
-    ),
+    render: (_value: any, row: BulkPayoutTransaction) => {
+      const txRef = row?.transaction?.reference || "";
+      return (
+        <p className="text-[#090727] text-sm font-medium flex items-center justify-between gap-3 min-w-0">
+          <span className="truncate">{txRef || "N/A"}</span>
+          {txRef ? (
+            <button
+              type="button"
+              onClick={() => copyToClipboard(txRef)}
+              aria-label="Copy transaction reference"
+            >
+              <Icon name="copy3" className="size-3 shrink-0 text-[#7F7F7F]" />
+            </button>
+          ) : null}
+        </p>
+      );
+    },
   }, {
     key: "bulk_payout_reference",
     title: "Bulk payout reference",
@@ -549,6 +575,26 @@ const PayoutsContent = () => {
         ) : null}
       </p>
     ),
+  }, {
+    key: "customer_reference",
+    title: "Customer reference",
+    render: (_value: any, row: BulkPayoutTransaction) =>
+      row?.transaction?.customer_reference || row?.customer_reference || "N/A",
+  }, {
+    key: "channel",
+    title: "Channel",
+    render: (_value: any, row: BulkPayoutTransaction) =>
+      row?.transaction?.payment_type || row?.transaction?.channel || "N/A",
+  }, {
+    key: "available_balance_before",
+    title: "Available balance before",
+    render: (_value: any, row: BulkPayoutTransaction) =>
+      formatBulkTransactionMoney(row?.currency, row?.transaction?.available_balance_before),
+  }, {
+    key: "available_balance_after",
+    title: "Available balance after",
+    render: (_value: any, row: BulkPayoutTransaction) =>
+      formatBulkTransactionMoney(row?.currency, row?.transaction?.available_balance_after),
   }, {
     key: "failure_reason",
     title: "Failure Reason",
@@ -670,6 +716,35 @@ const PayoutsContent = () => {
   const handleViewReceipt = (row: any) => {
     setSelectedPayout(row);
     setIsReceiptModalOpen(true);
+  };
+
+  const buildBulkTransactionReceipt = (row: BulkPayoutTransaction) => {
+    const currency = String(row?.currency || "NGN").toUpperCase();
+    const symbol = currencySymbols[currency] || "";
+
+    const statusRaw = row?.transaction?.status ?? row?.status ?? "";
+    const statusLabel = statusRaw
+      ? capitalizeFirstLetterOfEachWord(String(statusRaw).replace(/_/g, " "))
+      : "N/A";
+
+    const reference = row?.transaction?.reference || row?.reference || "N/A";
+    const createdAt = row?.transaction?.created_at || row?.created_at || new Date().toISOString();
+
+    return {
+      id: row?.transaction?.id ?? row?.id ?? 0,
+      reference,
+      customer_reference: row?.transaction?.customer_reference ?? row?.customer_reference ?? undefined,
+      currency,
+      currency_symbol: symbol,
+      amount: `${symbol}${row?.amount ?? "0.00"}`,
+      status: statusLabel,
+      transaction_type: "Bulk payout",
+      created_at: createdAt,
+      recipient_account_number: row?.account_number,
+      recipient_account_name: row?.account_name,
+      recipient_bank: row?.bank_name,
+      channel: row?.transaction?.payment_type || row?.transaction?.channel,
+    };
   };
 
   const handleRequery = async (reference: string) => {
@@ -931,6 +1006,19 @@ const PayoutsContent = () => {
                 columns={isBulkTransactionsView ? bulkTransactionColumns : bulkColumns}
                 data={isBulkTransactionsView ? bulkTransactions : bulkPayouts}
                 maxColumns={isBulkTransactionsView ? 5 : 6}
+                primaryBtnContent={
+                  isBulkTransactionsView
+                    ? (row: BulkPayoutTransaction) => (
+                      <Button
+                        text="View receipt"
+                        ariaLabel="View receipt button"
+                        className="!w-[191px] !h-[48px] p-0"
+                        onClick={() => handleViewReceipt(buildBulkTransactionReceipt(row))}
+                        primary
+                      />
+                    )
+                    : undefined
+                }
               />
             ) : (
               <DynamicTable
@@ -1097,6 +1185,7 @@ const PayoutsContent = () => {
           isModalOpen={state.isBulkPayoutModalOpen}
           closeModal={() => toggleModal('isBulkPayoutModalOpen')}
           fetchPayoutHistory={handleRefreshPayoutHistory}
+          fetchBulkPayoutHistory={fetchBulkHistory}
         />
 
         <ReceiptModal

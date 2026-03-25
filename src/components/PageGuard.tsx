@@ -33,10 +33,9 @@ export default function PageGuard({
   customTitle,
   children,
 }: PageGuardProps) {
+  const moduleAccessGranted = useModuleAccess(moduleSlug, subModuleSlug);
   const hasAccess =
-    typeof hasAccessOverride === "boolean"
-      ? hasAccessOverride
-      : useModuleAccess(moduleSlug, subModuleSlug);
+    typeof hasAccessOverride === "boolean" ? hasAccessOverride : moduleAccessGranted;
 
   if (!hasAccess) {
     const title = customTitle ?? "You don't have permission to view this module.";

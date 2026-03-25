@@ -6,6 +6,7 @@ interface PayoutReceiptProps {
         id: number;
         reference: string;
         customer_reference?: string;
+        transaction_type?: string;
         currency: string;
         currency_symbol: string;
         amount: string;
@@ -40,6 +41,24 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
     const receiptDate = payout.value_date
         ? formatReceiptDate(payout.value_date)
         : formatReceiptDate(payout.created_at);
+    const transactionType = payout.transaction_type || 'Payout';
+    const formattedAmount = (() => {
+        const raw = payout.amount ?? '';
+        const numeric = Number(String(raw).replace(/[^0-9.-]/g, ''));
+        if (Number.isNaN(numeric)) return raw;
+        const code = String(payout.currency || '').toUpperCase();
+        try {
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: code || 'NGN',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }).format(numeric);
+        } catch {
+            const symbol = payout.currency_symbol || code || '';
+            return `${symbol}${numeric.toFixed(2)}`;
+        }
+    })();
 
     return (
         <div className="w-full max-w-md mx-auto bg-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', minWidth: '400px' }}>
@@ -64,19 +83,12 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
                 </h1>
             </div>
 
-            {/* Transaction Reference */}
-            <div className="px-6 mb-6 overflow-x-auto">
-                <p className="text-sm text-gray-900 whitespace-nowrap" style={{ fontSize: '14px', fontWeight: 700 }}>
-                    Transaction Reference: <span style={{ fontWeight: 700 }}>{payout.reference}</span>
-                </p>
-            </div>
-
             {/* Transaction Details */}
             <div className="px-6 pb-8">
                 <div className="space-y-3">
                     <div className="flex justify-between items-start">
                         <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Transaction Type:</span>
-                        <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>Payout</span>
+                        <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>{transactionType}</span>
                     </div>
 
                     <div className="flex justify-between items-start">
@@ -86,7 +98,7 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
 
                     <div className="flex justify-between items-start">
                         <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Amount:</span>
-                        <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>{payout.amount}</span>
+                        <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>{formattedAmount}</span>
                     </div>
 
                     <div className="flex justify-between items-start">
@@ -128,6 +140,15 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
                             <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Recipient Account Name:</span>
                             <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
                                 {payout.recipient_account_name}
+                            </span>
+                        </div>
+                    )}
+
+                    {payout.recipient_bank && (
+                        <div className="flex justify-between items-start">
+                            <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Bank:</span>
+                            <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
+                                {payout.recipient_bank}
                             </span>
                         </div>
                     )}

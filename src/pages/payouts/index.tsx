@@ -744,6 +744,7 @@ const PayoutsContent = () => {
       recipient_account_name: row?.account_name,
       recipient_bank: row?.bank_name,
       channel: row?.transaction?.payment_type || row?.transaction?.channel,
+      session_id: row?.transaction?.session_id ?? null,
     };
   };
 

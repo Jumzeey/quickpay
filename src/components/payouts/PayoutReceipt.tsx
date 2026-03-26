@@ -153,14 +153,12 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
                         </div>
                     )}
 
-                    {payout.session_id && (
-                        <div className="flex justify-between items-start">
-                            <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Session ID:</span>
-                            <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
-                                {payout.session_id}
-                            </span>
-                        </div>
-                    )}
+                    <div className="flex justify-between items-start">
+                        <span className="text-sm text-gray-700" style={{ fontSize: '14px' }}>Session ID:</span>
+                        <span className="text-sm text-gray-900 text-right" style={{ fontSize: '14px', fontWeight: 500 }}>
+                            {payout.session_id ?? '--'}
+                        </span>
+                    </div>
                 </div>
             </div>
 

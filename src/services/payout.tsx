@@ -129,6 +129,7 @@ export interface BulkPayoutTransaction {
     channel?: string;
     /** Newer payloads use `payment_type` for the same idea */
     payment_type?: string;
+    session_id?: string | null;
     available_balance_before?: string;
     available_balance_after?: string;
     amount?: string;

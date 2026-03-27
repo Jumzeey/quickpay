@@ -110,7 +110,7 @@ const Webhook = () => {
   }, []);
 
   const submitWithPayload = async (values: FormValues, otp?: string) => {
-    const webhookUrl = values.enable_webhook && values.webhook_url?.trim()
+    const webhookUrl = values.webhook_url?.trim()
       ? `https://${values.webhook_url.trim()}`
       : "";
     const payload: { webhook_url: string; enable_webhook: boolean; otp?: string } = {
@@ -212,12 +212,59 @@ const Webhook = () => {
                       render={({ field }) => (
                         <Switch
                           checked={field.value}
-                          disabled={field.value}
                           onCheckedChange={(checked) => {
-                            // Once webhook is enabled, it cannot be disabled—only updated
-                            if (field.value && !checked) return;
+                            // Enabling flow (when currently disabled): if URL is already set, require OTP and persist immediately.
+                            if (!field.value && checked) {
+                              // If user hasn't entered a URL yet, just enable editing (do not call API).
+                              if (!webhookUrl?.trim()) {
+                                field.onChange(true);
+                                return;
+                              }
+
+                              const values = {
+                                webhook_url: webhookUrl || "",
+                                enable_webhook: true,
+                              };
+
+                              if (totp_enabled) {
+                                setPendingValues(values);
+                                setOtpValue("");
+                                setRecoveryCodeValue("");
+                                setUseRecoveryCode(false);
+                                setOtpModalOpen(true);
+                                return;
+                              }
+
+                              setIsLoading(true);
+                              submitWithPayload(values)
+                                .catch((error: any) => handleError(error, "Failed to update webhook details!"))
+                                .finally(() => setIsLoading(false));
+                              return;
+                            }
+
+                            // Enabling/disabling requires OTP when 2FA is enabled.
+                            if (field.value && !checked) {
+                              const values = {
+                                webhook_url: webhookUrl || "",
+                                enable_webhook: false,
+                              };
+                              if (totp_enabled) {
+                                setPendingValues(values);
+                                setOtpValue("");
+                                setRecoveryCodeValue("");
+                                setUseRecoveryCode(false);
+                                setOtpModalOpen(true);
+                                return;
+                              }
+                              // Non-2FA flow: disable immediately via API
+                              setIsLoading(true);
+                              submitWithPayload(values)
+                                .catch((error: any) => handleError(error, "Failed to update webhook details!"))
+                                .finally(() => setIsLoading(false));
+                              return;
+                            }
+
                             field.onChange(checked);
-                            if (!checked) setValue("webhook_url", "");
                           }}
                         />
                       )}

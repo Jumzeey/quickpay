@@ -24,7 +24,7 @@ const OtpPage = () => {
   const [isDisabled, setIsDisabled] = useState(true);
   const [countdown, setCountdown] = useState(60);
   const { source } = router.query;
-  const { verifyOtp, resendOtp, forgotPasswordOtp, verify_reference, allowed_methods = [] } = useAuthentication();
+  const { verifyOtp, resendOtp, verify_reference, allowed_methods = [] } = useAuthentication();
 
   const isTotp = allowed_methods.includes("totp");
   const pinLength = isTotp ? TOTP_LENGTH : EMAIL_OTP_LENGTH;
@@ -87,8 +87,11 @@ const OtpPage = () => {
         await verifyOtp(payload);
         router.push("/dashboard");
       } else {
-        const response = await forgotPasswordOtp(payload);
-        notifySuccess(response.message);
+        // Forgot password: OTP is verified together with new password on reset page.
+        localStorage.setItem(
+          "forgot-password-otp",
+          isRecovery ? codeValue.trim().toUpperCase() : codeValue
+        );
         router.push("/onboarding/reset-password");
       }
     } catch (error: any) {

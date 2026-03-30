@@ -688,7 +688,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
                     <div className="divide-y divide-gray-100">
                         <div className="flex items-center justify-between py-3">
-                            <span className="text-sm text-[#7F7F7F]">Total amount</span>
+                            <span className="text-sm text-[#7F7F7F]">Amount</span>
                             <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalAmount)}</span>
                         </div>
                         <div className="flex items-center justify-between py-3">
@@ -696,7 +696,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalCharge)}</span>
                         </div>
                         <div className="flex items-center justify-between py-3">
-                            <span className="text-sm text-[#7F7F7F]">Total lien amount</span>
+                            <span className="text-sm text-[#7F7F7F]">Total amount</span>
                             <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalLienAmount)}</span>
                         </div>
                     </div>

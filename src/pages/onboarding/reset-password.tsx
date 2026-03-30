@@ -7,54 +7,86 @@ import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import useAuthentication from "@/stores/useAuthentication";
-import { notifyError, notifySuccess, passwordValidation } from "@/util/utils";
+import { notifyError, notifySuccess } from "@/util/utils";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import * as Yup from "yup";
 
 interface FormValues {
   password: string;
-  password_confirmation: string;
+  confirm_password: string;
 }
 
+const resetPasswordValidation = Yup.string()
+  .required("Password is required!")
+  .matches(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one symbol.")
+  .matches(/\d/, "Password must contain at least one number.")
+  .min(8, "Password must be at least 8 characters long")
+  .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+  .matches(/[A-Z]/, "Password must contain at least one uppercase letter");
+
 const validationSchema = Yup.object().shape({
-  password: passwordValidation,
-  password_confirmation: Yup.string()
+  password: resetPasswordValidation,
+  confirm_password: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),
 });
 
 const ResetPassword: React.FC = () => {
   const router = useRouter();
-  const { newPassword } = useAuthentication();
+  const { forgotPasswordOtp, verify_reference } = useAuthentication();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors, isValid },
   } = useFormValidation<FormValues>(validationSchema, {
     defaultValues: {
       password: "",
-      password_confirmation: "",
+      confirm_password: "",
     },
     mode: "onChange",
   });
 
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const passwordValue = watch("password") || "";
+  const passwordRequirements = useMemo(
+    () => ({
+      hasLowercase: /[a-z]/.test(passwordValue),
+      hasUppercase: /[A-Z]/.test(passwordValue),
+      hasSpecialCharacter: /[!@#$%^&*(),.?":{}|<>]/.test(passwordValue),
+      hasNumber: /\d/.test(passwordValue),
+      hasMinLength: passwordValue.length >= 8
+    }),
+    [passwordValue]
+  );
+  const showPasswordChecklist = isPasswordFocused || passwordValue.length > 0;
+
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
+      const otp = localStorage.getItem("forgot-password-otp");
+      if (!verify_reference || !otp) {
+        notifyError("Reset session expired. Please start again.");
+        router.push("/onboarding/forgot-password");
+        return;
+      }
       const payload = {
-        ...values,
-        email: localStorage.getItem("user-email"),
+        verify_reference,
+        otp,
+        password: values.password,
+        confirm_password: values.confirm_password,
       };
-      const response = await newPassword(payload);
+      const response = await forgotPasswordOtp(payload);
       notifySuccess(response.message);
-      await localStorage.removeItem("user-email");
+      localStorage.removeItem("user-email");
+      localStorage.removeItem("forgot-password-otp");
       router.push("/onboarding/sign-in");
     } catch (error: any) {
       notifyError(error.message);
@@ -100,31 +132,106 @@ const ResetPassword: React.FC = () => {
                   <Controller
                     name="password"
                     control={control}
-                    render={({ field }) => (
-                      <FormInput
-                        label="New Password"
-                        id="password"
-                        type="password"
-                        htmlFor="password"
-                        error={errors.password?.message}
-                        touched={!!errors.password}
-                        autoComplete="off"
-                        {...field}
-                      />
-                    )}
+                    render={({ field }) => {
+                      const { onBlur, ...fieldProps } = field;
+                      return (
+                        <div className="space-y-3">
+                          <FormInput
+                            label="New Password"
+                            id="password"
+                            type="password"
+                            htmlFor="password"
+                            error={errors.password?.message}
+                            touched={!!errors.password}
+                            autoComplete="off"
+                            onFocus={() => setIsPasswordFocused(true)}
+                            onBlur={() => {
+                              onBlur();
+                              setIsPasswordFocused(false);
+                            }}
+                            {...fieldProps}
+                          />
+
+                          {showPasswordChecklist && (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasLowercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasLowercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One lowercase letter
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasUppercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasUppercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One uppercase letter
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasSpecialCharacter ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasSpecialCharacter ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One special character
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasNumber ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasNumber ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One number
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasMinLength ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasMinLength ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  8 characters minimum
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }}
                   />
 
                   <Controller
-                    name="password_confirmation"
+                    name="confirm_password"
                     control={control}
                     render={({ field }) => (
                       <FormInput
                         label="Confirm Password"
-                        id="password_confirmation"
+                        id="confirm_password"
                         type="password"
-                        htmlFor="password_confirmation"
-                        error={errors.password_confirmation?.message}
-                        touched={!!errors.password_confirmation}
+                        htmlFor="confirm_password"
+                        error={errors.confirm_password?.message}
+                        touched={!!errors.confirm_password}
                         autoComplete="off"
                         {...field}
                       />

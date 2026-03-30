@@ -18,7 +18,7 @@ import * as Yup from "yup";
 
 interface FormValues {
   password: string;
-  confirm_password: string;
+  password_confirmation: string;
 }
 
 const resetPasswordValidation = Yup.string()
@@ -31,7 +31,7 @@ const resetPasswordValidation = Yup.string()
 
 const validationSchema = Yup.object().shape({
   password: resetPasswordValidation,
-  confirm_password: Yup.string()
+  password_confirmation: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),
 });
@@ -49,7 +49,7 @@ const ResetPassword: React.FC = () => {
   } = useFormValidation<FormValues>(validationSchema, {
     defaultValues: {
       password: "",
-      confirm_password: "",
+      password_confirmation: "",
     },
     mode: "onChange",
   });
@@ -81,7 +81,7 @@ const ResetPassword: React.FC = () => {
         verify_reference,
         otp,
         password: values.password,
-        confirm_password: values.confirm_password,
+        password_confirmation: values.password_confirmation,
       };
       const response = await forgotPasswordOtp(payload);
       notifySuccess(response.message);
@@ -182,16 +182,16 @@ const ResetPassword: React.FC = () => {
                   />
 
                   <Controller
-                    name="confirm_password"
+                    name="password_confirmation"
                     control={control}
                     render={({ field }) => (
                       <FormInput
                         label="Confirm Password"
-                        id="confirm_password"
+                        id="password_confirmation"
                         type="password"
-                        htmlFor="confirm_password"
-                        error={errors.confirm_password?.message}
-                        touched={!!errors.confirm_password}
+                        htmlFor="password_confirmation"
+                        error={errors.password_confirmation?.message}
+                        touched={!!errors.password_confirmation}
                         autoComplete="off"
                         {...field}
                       />

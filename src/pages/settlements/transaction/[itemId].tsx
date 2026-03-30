@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import Layout from "@/components/layout";
+import PageGuard from "@/components/PageGuard";
 import Table from "@/components/table";
 import Image from "next/image";
 import Button from "@/components/button";
@@ -11,6 +12,7 @@ import TransactionDetails from "@/components/transactionDetails";
 import useClickEvent from "@/stores/useClickEvent";
 import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 
 interface SettlementTransactionProps {
   transactions: any[];
@@ -19,7 +21,7 @@ interface SettlementTransactionProps {
   showCollections: boolean;
 }
 
-const SettlementTransaction = () => {
+const SettlementTransactionContent = () => {
   const router = useRouter();
   const { selectedItem, rehydrated } = useClickEvent();
 
@@ -184,6 +186,23 @@ const SettlementTransaction = () => {
       )}
     </Layout>
   );
+};
+
+const SettlementTransaction = () => {
+  const hasAccess = useModuleAccess("settlements");
+  if (!hasAccess) {
+    return (
+      <Layout pageTitle="Settlement Transaction" icon="history">
+        <WebPageTitle title="Settlement Transactions | Cray Merchant Portal" />
+        <h2 className="text-xl pt-5 font-semibold">Manage Settlement Transaction</h2>
+        <p className="text-sm pt-3 pb-5">Manage settlement transaction within your company</p>
+        <PageGuard moduleSlug="settlements">
+          <div />
+        </PageGuard>
+      </Layout>
+    );
+  }
+  return <SettlementTransactionContent />;
 };
 
 export default SettlementTransaction;

@@ -100,7 +100,17 @@ const Navbar = ({
             </div>
 
             <div className="flex gap-2 items-center">
-              <Link href="/settings" className="block">
+              <button
+                type="button"
+                className="block"
+                aria-label="Open profile menu"
+                onClick={() =>
+                  setState((prev) => ({
+                    ...prev,
+                    showProfileMenu: !prev.showProfileMenu,
+                  }))
+                }
+              >
                 <div className="relative w-[50px] h-[40px] overflow-hidden bg-[#005BB01A] rounded">
                   <Image
                     src={avatar ? avatar : "/images/dashboard/avatar2.svg"}
@@ -109,9 +119,10 @@ const Navbar = ({
                     height={40}
                     className="absolute inset-0 w-full h-full object-cover"
                     sizes="(max-width: 640px) 50px"
+                    unoptimized={Boolean(avatar && avatar.startsWith("http"))}
                   />
                 </div>
-              </Link>
+              </button>
 
               <Icon
                 name={showSidebar ? "close-menu" : "hamburger"}
@@ -140,41 +151,41 @@ const Navbar = ({
               </div>
             </div>
 
-            <div className="hidden md:block">
-              <Dropdown
-                onOpen={state.showProfileMenu}
-                onClose={closeDropdown}
-                className="shadow-lg w-[230px] fixed z-10 right-8 top-[63px] dark:bg-[#121212] bg-white dark:border-gray-700 dark:text-[#EFF7FE]"
-              >
-                <ul className="list-none space-y-6">
-                  <li className="cursor-pointer">
-                    <Link
-                      href="/settings"
-                      className="flex items-center gap-3 text-xs font-medium cursor-pointer hover:text-primary"
-                    >
-                      <Icon name="settings2" className="flex" color="#164988" />
-                      <span>Account Settings</span>
-                    </Link>
-                  </li>
-                  <li className="cursor-pointer">
-                    <Link
-                      href="/activity-log"
-                      className="flex items-center gap-3 text-xs font-medium cursor-pointer hover:text-primary"
-                    >
-                      <Icon name="activityLog" className="flex" color="#164988" />
-                      <span>Activity Log</span>
-                    </Link>
-                  </li>
-                  <li
+            <Dropdown
+              onOpen={state.showProfileMenu}
+              onClose={closeDropdown}
+              className="shadow-lg w-[230px] fixed z-30 right-3 md:right-8 top-[68px] md:top-[63px] dark:bg-[#121212] bg-white dark:border-gray-700 dark:text-[#EFF7FE]"
+            >
+              <ul className="list-none space-y-6">
+                <li className="cursor-pointer">
+                  <Link
+                    href="/settings"
+                    onClick={closeDropdown as any}
                     className="flex items-center gap-3 text-xs font-medium cursor-pointer hover:text-primary"
-                    onClick={handleLogOut}
                   >
-                    <Icon name="signout" className="flex text-[#FD2727]" />
-                    <span>Sign out</span>
-                  </li>
-                </ul>
-              </Dropdown>
-            </div>
+                    <Icon name="settings2" className="flex" color="#164988" />
+                    <span>Account Settings</span>
+                  </Link>
+                </li>
+                <li className="cursor-pointer">
+                  <Link
+                    href="/activity-log"
+                    onClick={closeDropdown as any}
+                    className="flex items-center gap-3 text-xs font-medium cursor-pointer hover:text-primary"
+                  >
+                    <Icon name="activityLog" className="flex" color="#164988" />
+                    <span>Activity Log</span>
+                  </Link>
+                </li>
+                <li
+                  className="flex items-center gap-3 text-xs font-medium cursor-pointer hover:text-primary"
+                  onClick={handleLogOut}
+                >
+                  <Icon name="signout" className="flex text-[#FD2727]" />
+                  <span>Sign out</span>
+                </li>
+              </ul>
+            </Dropdown>
 
             {/* <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               {theme === "dark" ? (

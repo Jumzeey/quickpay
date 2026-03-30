@@ -77,11 +77,15 @@ export const walletCurrencies = [
       fetchActiveCurrencies();
     }, [fetchActiveCurrencies]);
 
-    // Enhanced filtering: match code, label, or full name AND only show active currencies
+    // When parent passes currencies (e.g. module options), use those; otherwise use activeCurrencies. "all" = no filter.
+    const allowedCodes =
+      Array.isArray(currencies) && currencies.length > 0 && currencies[0]?.toLowerCase() !== "all"
+        ? currencies
+        : activeCurrencies;
     const filteredCurrencies = Object.entries(currencyNames)
       .filter(
         ([code, fullName]) =>
-          activeCurrencies.includes(code) &&
+          allowedCodes.includes(code) &&
           (fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             code.toLowerCase().includes(searchTerm.toLowerCase()))
       )

@@ -2,7 +2,7 @@ import env from "@/config/env";
 import useNetworkLoaderStore from "@/stores/useNetworkLoaderStore";
 import useKyc from "@/stores/useKyc";
 import { KycStatus } from "@/types/kyc";
-import { notifyError } from "@/util/utils";
+import { notifyError, FORBIDDEN_MESSAGE } from "@/util/utils";
 import Axios from "axios";
 import router from "next/router";
 import { CustomHttpError } from "./errors/CustomHttpError";
@@ -154,9 +154,22 @@ api.interceptors.response.use(
       );
     }
 
-    // Handle 404 errors with generic message
+    // 403 Forbidden: show a clear permission message (for both HTML and JSON responses).
+    if (status === 403) {
+      return Promise.reject(
+        new CustomHttpError(FORBIDDEN_MESSAGE, {
+          statusCode: status,
+          responseText: FORBIDDEN_MESSAGE,
+          payload: typeof data === "object" ? data : { raw: "forbidden" },
+        })
+      );
+    }
+
+    // Handle 404 errors: use server message when present
     if (status === 404) {
-      const errorMessage = "Failed, try again later.";
+      const errorMessage =
+        (typeof data?.message === "string" && data.message.trim()) ||
+        "Failed, try again later.";
       return Promise.reject(
         new CustomHttpError(errorMessage, {
           statusCode: status,
@@ -169,10 +182,11 @@ api.interceptors.response.use(
       );
     }
 
-    // Handle 500+ errors with generic message
+    // Handle 500+ errors: use server message when present
     if (status >= 500) {
-      const errorMessage = "Failed, try again later.";
-      // Don't show toast here - let the hook handle it to avoid duplicates
+      const errorMessage =
+        (typeof data?.message === "string" && data.message.trim()) ||
+        "Failed, try again later.";
       return Promise.reject(
         new CustomHttpError(errorMessage, {
           statusCode: status,
@@ -181,6 +195,23 @@ api.interceptors.response.use(
             originalError: err.response.data,
             timestamp: new Date().toISOString(),
           },
+        })
+      );
+    }
+
+    // Handle 422 (and 400) validation errors: show detailed messages from response.data.errors
+    if ((status === 422 || status === 400) && data?.errors && typeof data.errors === "object") {
+      const errors = data.errors;
+      const messages = (Object.values(errors) as unknown[])
+        .flat()
+        .filter((v): v is string => typeof v === "string");
+      const detail =
+        messages.length > 0 ? messages.join(" ") : (data?.message || "Validation failed");
+      return Promise.reject(
+        new CustomHttpError(detail, {
+          statusCode: status,
+          responseText: detail,
+          payload: errors,
         })
       );
     }

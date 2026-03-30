@@ -315,6 +315,9 @@ export async function getSingleRefund(id: string) {
 export interface RaiseConversionDisputePayload {
   reason: string;
   description: string;
+  /** Optional URL pointing to an uploaded attachment (preferred). */
+  attachment_url?: string;
+  /** Legacy File-based attachment (kept for backward compatibility). */
   attachment?: File;
 }
 
@@ -332,9 +335,12 @@ export async function raiseConversionDispute(
     const formData = new FormData();
     formData.append('reason', payload.reason);
     formData.append('description', payload.description);
-    
-    // If attachment is provided, append the File object directly
-    if (payload.attachment) {
+
+    // Prefer URL-based attachment when provided
+    if (payload.attachment_url) {
+      formData.append('attachment_url', payload.attachment_url);
+    } else if (payload.attachment) {
+      // Fallback: support legacy File uploads
       formData.append('attachment', payload.attachment);
     }
 

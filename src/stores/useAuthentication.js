@@ -16,6 +16,7 @@ import Cookies from "js-cookie";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import useCurrency from "@/stores/useCurrency";
+import { useModuleStore } from "@/stores/module-store";
 
 const accessGet = globalThis.localStorage?.getItem("auth");
 const accessGetParse = accessGet ? JSON?.parse(accessGet) : null;
@@ -79,9 +80,18 @@ const useAuthentication = create(
             message,
           };
         }
+        const modules = data?.modules ?? [];
+        useModuleStore.getState().setModules(modules);
+        const allCurrencies = getAllCurrencies(modules);
+        const firstCurrency = allCurrencies?.[0];
+        if (firstCurrency?.value) {
+          useCurrency.getState().setCurrency(firstCurrency.value);
+          useCurrency.getState().setDefaultCurrency(firstCurrency.value);
+        }
         set((state) => ({
           ...state,
           user: data.user,
+          modules,
           accessToken: data.token,
           verify_reference: data.verify_reference,
           allowed_methods: [],
@@ -189,6 +199,7 @@ const useAuthentication = create(
         Cookies.set("accessToken", data.token);
 
         const modules = data?.modules ?? [];
+        useModuleStore.getState().setModules(modules);
         const allCurrencies = getAllCurrencies(modules);
         const firstCurrency = allCurrencies?.[0];
         if (firstCurrency?.value) {
@@ -199,12 +210,12 @@ const useAuthentication = create(
         set((state) => ({
           ...state,
           user: data.user,
-          modules: data.modules,
+          modules,
           accessToken: data.token,
         }));
         return {
           user: data.user,
-          modules: data.modules,
+          modules,
           accessToken: data.token,
           message,
         };
@@ -258,16 +269,25 @@ const useAuthentication = create(
           ...state,
         }));
         const { data, message } = await resendOtp(payload);
+        const modules = data?.modules ?? [];
+        useModuleStore.getState().setModules(modules);
+        const allCurrencies = getAllCurrencies(modules);
+        const firstCurrency = allCurrencies?.[0];
+        if (firstCurrency?.value) {
+          useCurrency.getState().setCurrency(firstCurrency.value);
+          useCurrency.getState().setDefaultCurrency(firstCurrency.value);
+        }
         set((state) => ({
           ...state,
           user: data.user,
+          modules,
           accessToken: data.token,
           verify_reference: data.verify_reference,
         }));
         return {
           verify_reference: data.verify_reference,
           user: data.user,
-          modules: data.modules,
+          modules,
           accessToken: data.token,
           message,
         };

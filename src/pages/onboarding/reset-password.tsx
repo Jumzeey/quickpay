@@ -155,24 +155,64 @@ const ResetPassword: React.FC = () => {
                           {showPasswordChecklist && (
                             <div className="space-y-1.5">
                               <div className="flex items-center gap-2">
-                                <span className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasLowercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"}`} />
-                                <p className={`text-xs ${passwordRequirements.hasLowercase ? "text-[#22A447]" : "text-[#7F7F7F]"}`}>One lowercase letter</p>
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasLowercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasLowercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One lowercase letter
+                                </p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasUppercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"}`} />
-                                <p className={`text-xs ${passwordRequirements.hasUppercase ? "text-[#22A447]" : "text-[#7F7F7F]"}`}>One uppercase letter</p>
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasUppercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasUppercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One uppercase letter
+                                </p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasSpecialCharacter ? "bg-[#22A447]" : "bg-[#B3B3B3]"}`} />
-                                <p className={`text-xs ${passwordRequirements.hasSpecialCharacter ? "text-[#22A447]" : "text-[#7F7F7F]"}`}>One special character</p>
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasSpecialCharacter ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasSpecialCharacter ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One special character
+                                </p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasNumber ? "bg-[#22A447]" : "bg-[#B3B3B3]"}`} />
-                                <p className={`text-xs ${passwordRequirements.hasNumber ? "text-[#22A447]" : "text-[#7F7F7F]"}`}>One number</p>
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasNumber ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasNumber ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  One number
+                                </p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasMinLength ? "bg-[#22A447]" : "bg-[#B3B3B3]"}`} />
-                                <p className={`text-xs ${passwordRequirements.hasMinLength ? "text-[#22A447]" : "text-[#7F7F7F]"}`}>8 characters minimum</p>
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${passwordRequirements.hasMinLength ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                    }`}
+                                />
+                                <p
+                                  className={`text-xs ${passwordRequirements.hasMinLength ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                    }`}
+                                >
+                                  8 characters minimum
+                                </p>
                               </div>
                             </div>
                           )}

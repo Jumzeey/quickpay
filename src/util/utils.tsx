@@ -5,6 +5,10 @@ import * as Yup from 'yup';
 import { type ClassValue, clsx } from 'clsx';
 import { toast } from "@/components/ui/use-toast";
 
+/** Message shown for 403 Forbidden (toast and PageGuard / ForbiddenGuard). */
+export const FORBIDDEN_MESSAGE =
+  "Please contact your supervisor to grant you access.";
+
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
@@ -85,12 +89,15 @@ export const getStatusColor = (status: string) => {
       return '#32CD32';
     case 'completed':
     case 'successful':
+    case 'success':
+    case 'paid':
       return '#2BD325';
     case 'verification_completed':
       return '#005BB0';
     case 'failed':
       return '#FD2727';
     case 'cancelled':
+    case 'canceled':
       return '#DC143C';
     case 'rejected':
       return '#B22222';
@@ -99,6 +106,7 @@ export const getStatusColor = (status: string) => {
     case 'settled':
       return '#008000';
     case 'approved':
+    case 'active':
       return '#005BB0';
     case 'overdue':
       return '#FF0000';
@@ -143,6 +151,13 @@ export const handleLogOut = async () => {
   try {
     Cookies.remove('accessToken');
     localStorage.clear();
+    try {
+      // Clear in-memory module state so UI doesn't briefly show stale modules.
+      const { useModuleStore } = await import("@/stores/module-store");
+      useModuleStore.getState().setModules([]);
+    } catch {
+      // ignore
+    }
     window.location.href = '/onboarding/sign-in';
   } catch (error) {
     notifyError('Log Out Failed');
@@ -404,12 +419,21 @@ export const formatAmount = (amountStr: string): string => {
 
 export interface Modules {
   id: number;
-  user_id: number;
-  product: string;
-  sub_product: {
+  user_id?: number;
+  product?: string;
+  slug?: string;
+  options?: string[];
+  sub_modules?: { options?: string[] }[];
+  sub_product?: {
     payment_type?: string[];
     currency?: string[];
   };
+}
+
+/** Detect new API module shape (slug + sub_modules) */
+function isNewModuleShape(modules: unknown[]): boolean {
+  const first = modules[0] as Record<string, unknown> | undefined;
+  return Boolean(first && "slug" in first && "sub_modules" in first);
 }
 
 export const getAllCurrencies = (modules: Modules[]): { value: CurrencyOption; label: string }[] => {
@@ -424,17 +448,22 @@ export const getAllCurrencies = (modules: Modules[]): { value: CurrencyOption; l
       { value: "ZMW" as CurrencyOption, label: "ZMW ZMW" },
       { value: "TZS" as CurrencyOption, label: "TZS TZS" },
     ];
-  };
+  }
 
   const currencySet = new Set<string>();
 
-  modules.forEach((module) => {
-    if (module?.sub_product?.currency) {
-      module.sub_product.currency.forEach((currency) => {
-        currencySet.add(currency);
-      });
-    }
-  });
+  if (isNewModuleShape(modules as unknown[])) {
+    (modules as Array<{ options?: string[]; sub_modules?: { options?: string[] }[] }>).forEach((mod) => {
+      (mod.options || []).forEach((c) => currencySet.add(c));
+      (mod.sub_modules || []).forEach((sub) => (sub.options || []).forEach((c) => currencySet.add(c)));
+    });
+  } else {
+    modules.forEach((module) => {
+      if (module?.sub_product?.currency) {
+        module.sub_product.currency.forEach((currency) => currencySet.add(currency));
+      }
+    });
+  }
 
   return Array.from(currencySet).map(currency => ({
     value: currency as CurrencyOption,

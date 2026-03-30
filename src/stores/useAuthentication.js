@@ -223,23 +223,44 @@ const useAuthentication = create(
           ...state,
           forgotPasswordLoading: true,
         }));
-        const { data, message } = await forgotPassword(payload);
-        set((state) => ({
-          ...state,
-          verify_reference: data.verify_reference,
-        }));
-        return { verify_reference: data.verify_reference, message };
+        try {
+          const { data, message } = await forgotPassword(payload);
+          const methods = data?.allowed_methods;
+          const next =
+            Array.isArray(methods) && methods.length > 0
+              ? {
+                  allowed_methods: methods,
+                  totp_enabled: methods.includes("totp"),
+                }
+              : {};
+          set((state) => ({
+            ...state,
+            verify_reference: data.verify_reference,
+            ...next,
+          }));
+          return { verify_reference: data.verify_reference, message };
+        } finally {
+          set((state) => ({
+            ...state,
+            forgotPasswordLoading: false,
+          }));
+        }
       },
       forgotPasswordOtp: async (payload) => {
         set((state) => ({
           ...state,
           forgotPasswordOtpLoading: true,
         }));
-        const { message } = await forgotPasswordOtp(payload);
-        set((state) => ({
-          ...state,
-        }));
-        return { message };
+        try {
+          const result = await forgotPasswordOtp(payload);
+          const message = result?.message ?? "Password updated successfully.";
+          return { message };
+        } finally {
+          set((state) => ({
+            ...state,
+            forgotPasswordOtpLoading: false,
+          }));
+        }
       },
       newPassword: async (payload) => {
         set((state) => ({

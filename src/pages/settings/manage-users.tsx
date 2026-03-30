@@ -21,6 +21,7 @@ import IconWrapper from "@/components/IconWrapper";
 import { changeUserStatus } from "@/services/settings";
 import { notifyError, notifySuccess } from "@/util/utils";
 import WebPageTitle from "@/components/WebPageTitle";
+import { ForbiddenGuard } from "@/components/PageGuard";
 
 interface StateProps {
   isLoading: boolean;
@@ -42,10 +43,11 @@ const ManageUsers = () => {
     isInitialLoad: true,
   });
 
+  const [hasPermission, setHasPermission] = useState(true);
   const [isUpdateUser, setIsUpdateUser] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
+    if (hasPermission) fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
@@ -56,6 +58,11 @@ const ManageUsers = () => {
         users,
       }));
     } catch (error: any) {
+      // If backend returns 403 (sometimes as HTML), treat as "no permission" and render PageGuard instead.
+      if (error?.statusCode === 403) {
+        setHasPermission(false);
+        return;
+      }
       notifyError(error.message);
     } finally {
       setState(prevState => ({
@@ -149,7 +156,10 @@ const ManageUsers = () => {
       />
       <h2 className="text-xl font-semibold">Manage users</h2>
       <p className="text-sm pt-3 pb-5">Manage users within your company</p>
-      {state.isLoading && state.isInitialLoad ? (
+      {!hasPermission ? <ForbiddenGuard /> : null}
+      {hasPermission ? (
+        <>
+          {state.isLoading && state.isInitialLoad ? (
         <TableSkeleton singleButton />
       ) : state?.users?.length !== 0 ? (
         <Fragment>
@@ -298,13 +308,15 @@ const ManageUsers = () => {
             />
           </EmptyState>
         </Fragment>
-      )}
-      <AddUser
-        isModalOpen={isModalOpen}
-        closeModal={closeModal}
-        fetchUsers={fetchUsers}
-        isUpdateUser={isUpdateUser}
-      />
+          )}
+          <AddUser
+            isModalOpen={isModalOpen}
+            closeModal={closeModal}
+            fetchUsers={fetchUsers}
+            isUpdateUser={isUpdateUser}
+          />
+        </>
+      ) : null}
     </Layout>
   );
 };

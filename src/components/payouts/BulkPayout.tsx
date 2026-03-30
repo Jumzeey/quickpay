@@ -4,7 +4,7 @@ import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { useModuleOptions } from "@/hooks/useModuleAccess";
-import { initiateBulkPayout, completeBulkPayout, getBulkPayoutStatus } from "@/services/payout";
+import { initiateBulkPayout, completeBulkPayout, getBulkPayoutStatus, cancelBulkPayout } from "@/services/payout";
 import useAuthentication from "@/stores/useAuthentication";
 import useCurrency, { CurrencyOption } from "@/stores/useCurrency";
 import { formatBalance, notifyError, notifySuccess } from "@/util/utils";
@@ -22,6 +22,7 @@ interface BulkPayoutProps {
     isModalOpen: boolean;
     closeModal: () => void;
     fetchPayoutHistory: () => void;
+    fetchBulkPayoutHistory?: () => void;
 }
 
 interface BulkPayoutFormValues {
@@ -42,9 +43,11 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     isModalOpen,
     closeModal,
     fetchPayoutHistory,
+    fetchBulkPayoutHistory,
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
     const [isExtractingHeaders, setIsExtractingHeaders] = useState(false);
     const [currentStep, setCurrentStep] = useState(0); // 0: file upload, 1: OTP verification
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -66,6 +69,14 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     const [bulkPayoutId, setBulkPayoutId] = useState<number | null>(null);
     const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verification_completed' | 'failed' | null>(null);
     const [bulkPayoutDetails, setBulkPayoutDetails] = useState<{ total: number; currency: string } | null>(null);
+    const [bulkPayoutSummary, setBulkPayoutSummary] = useState<{
+        currency: string;
+        totalAmount: string | null;
+        totalCharge: string | null;
+        totalLienAmount: string | null;
+        totalRecipients: number | null;
+    } | null>(null);
+    const [showVerificationSummary, setShowVerificationSummary] = useState(false);
     const [verificationFailure, setVerificationFailure] = useState<{
         reason: string;
         failedRows: Array<{ account_name: string; account_number: string; bank_name?: string; amount?: string; failure_reason: string }>;
@@ -349,13 +360,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    await fetchBulkPayoutHistory?.();
                     handleClose();
                 }
             } catch (error: any) {
-                const message = error?.message || "Failed to complete bulk payout";
+                const message = getApiErrorMessage(error);
                 notifyError(message);
                 // Close modal when user must reinitiate (too many failed attempts)
-                if (typeof message === 'string' && /reinitiate|too many failed attempts/i.test(message)) {
+                if (isTerminalBulkPayoutError(error)) {
+                    await fetchPayoutHistory();
+                    await fetchBulkPayoutHistory?.();
                     handleClose();
                 }
             } finally {
@@ -422,6 +436,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                     setVerificationStatus('pending');
                     setVerificationLongMessage(false);
                     setVerificationTimedOut(false);
+                    setShowVerificationSummary(false);
+                    setBulkPayoutSummary(null);
                     verificationStartTimeRef.current = Date.now();
                 }
                 notifySuccess(response?.message || "Bulk payout initiated. Please enter OTP to complete.");
@@ -450,6 +466,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             const elapsed = Date.now() - startTime;
             if (elapsed >= VERIFICATION_TIMEOUT_MS) {
                 setVerificationTimedOut(true);
+                setShowVerificationSummary(false);
                 return;
             }
             if (elapsed >= VERIFICATION_WARN_AFTER_MS) {
@@ -467,6 +484,14 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (status === 'verification_completed') {
                     setVerificationStatus('verification_completed');
                     setBulkPayoutDetails({ total, currency });
+                    setBulkPayoutSummary({
+                        currency,
+                        totalAmount: bulkPayout?.total_amount ?? null,
+                        totalCharge: bulkPayout?.total_charge ?? null,
+                        totalLienAmount: bulkPayout?.total_lien_amount ?? null,
+                        totalRecipients: transactions?.total ?? null,
+                    });
+                    setShowVerificationSummary(true);
                     return;
                 }
                 if (status === 'failed') {
@@ -483,6 +508,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         }));
                     setVerificationStatus('failed');
                     setVerificationFailure({ reason, failedRows });
+                    setShowVerificationSummary(false);
+                    setBulkPayoutSummary(null);
                     notifyError(reason);
                     return;
                 }
@@ -524,6 +551,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         setBulkPayoutId(null);
         setVerificationStatus(null);
         setBulkPayoutDetails(null);
+        setBulkPayoutSummary(null);
+        setShowVerificationSummary(false);
         setVerificationFailure(null);
         setVerificationLongMessage(false);
         setVerificationTimedOut(false);
@@ -552,13 +581,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 if (response?.status || response?.message) {
                     notifySuccess(response?.message || 'Bulk payout completed successfully!');
                     await fetchPayoutHistory();
+                    await fetchBulkPayoutHistory?.();
                     handleClose();
                 }
             } catch (error: any) {
-                const message = error?.message || "Failed to complete bulk payout";
+                const message = getApiErrorMessage(error);
                 notifyError(message);
                 // Close modal when user must reinitiate (too many failed attempts)
-                if (typeof message === 'string' && /reinitiate|too many failed attempts/i.test(message)) {
+                if (isTerminalBulkPayoutError(error)) {
+                    await fetchPayoutHistory();
+                    await fetchBulkPayoutHistory?.();
                     handleClose();
                 }
             } finally {
@@ -576,9 +608,124 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         setBulkPayoutId(null);
         setVerificationStatus(null);
         setBulkPayoutDetails(null);
+        setBulkPayoutSummary(null);
+        setShowVerificationSummary(false);
         setCompleteOtpValue("");
         setCompleteRecoveryCodeValue("");
         setCompleteUseRecoveryCode(false);
+    };
+
+    const getApiErrorMessage = (error: any): string => {
+        const candidates = [
+            error?.message,
+            error?.response?.data?.message,
+            error?.responseText,
+        ];
+        const apiMessage = candidates.find(
+            (candidate) => typeof candidate === "string" && candidate.trim().length > 0
+        );
+        return (apiMessage as string) || "";
+    };
+
+    const isTerminalBulkPayoutError = (error: any): boolean => {
+        return (
+            error?.error?.terminal === true ||
+            error?.payload?.terminal === true ||
+            error?.response?.data?.error?.terminal === true
+        );
+    };
+
+    const handleCancelBulkPayout = async () => {
+        if (bulkPayoutId == null) {
+            handleClose();
+            return;
+        }
+        setIsCancelling(true);
+        try {
+            const response = await cancelBulkPayout(bulkPayoutId);
+            notifySuccess(response?.message || "Bulk payout cancelled.");
+            await fetchPayoutHistory();
+            await fetchBulkPayoutHistory?.();
+            handleClose();
+        } catch (error: any) {
+            notifyError(error?.message || "Failed to cancel bulk payout");
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+
+    const formatBulkSummaryMoney = (raw: string | null | undefined) => {
+        if (raw == null || String(raw).trim() === "") return "--";
+        const cleaned = String(raw).replace(/,/g, "").trim();
+        const num = parseFloat(cleaned);
+        if (cleaned === "" || isNaN(num)) return "--";
+        const currencyCode = bulkPayoutSummary?.currency ?? (watch("currency") as string) ?? "NGN";
+        return formatBalance(num, currencyCode);
+    };
+
+    const renderBulkPayoutSummaryStep = () => {
+        const currencyCode = bulkPayoutSummary?.currency ?? (watch("currency") as string) ?? "NGN";
+        const totalAmount = bulkPayoutSummary?.totalAmount ?? null;
+        const totalCharge = bulkPayoutSummary?.totalCharge ?? null;
+        const totalLienAmount = bulkPayoutSummary?.totalLienAmount ?? null;
+        const totalRecipients = bulkPayoutSummary?.totalRecipients;
+
+        return (
+            <div className="space-y-5 py-6">
+                <div className="rounded-xl border border-[#C4C4C429] bg-white p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <p className="text-xs text-[#7F7F7F]">Bulk payout summary</p>
+                            <p className="text-sm font-semibold text-[#090727]">
+                                {totalRecipients != null ? `${totalRecipients} recipient${totalRecipients === 1 ? "" : "s"}` : "Recipients"}
+                            </p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-[#7F7F7F]">Currency</p>
+                            <p className="text-sm font-semibold text-[#090727]">{currencyCode}</p>
+                        </div>
+                    </div>
+
+                    <div className="divide-y divide-gray-100">
+                        <div className="flex items-center justify-between py-3">
+                            <span className="text-sm text-[#7F7F7F]">Amount</span>
+                            <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalAmount)}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                            <span className="text-sm text-[#7F7F7F]">Total charge to be collected</span>
+                            <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalCharge)}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                            <span className="text-sm text-[#7F7F7F]">Total amount</span>
+                            <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalLienAmount)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                    <Button
+                        type="button"
+                        text="Cancel"
+                        ariaLabel="Cancel"
+                        onClick={handleCancelBulkPayout}
+                        disabled={isLoading || isSubmitting || isCancelling}
+                        plain
+                        className="flex-1 !border-red-500 !text-red-600 hover:!bg-red-50 hover:!text-red-700"
+                    />
+                    <Button
+                        type="button"
+                        text={isLoading ? <Loader /> : "Continue"}
+                        ariaLabel="Continue to OTP"
+                        onClick={() => {
+                            setShowVerificationSummary(false);
+                        }}
+                        disabled={bulkPayoutId == null || isLoading || isSubmitting || isCancelling}
+                        primary
+                        className="flex-1"
+                    />
+                </div>
+            </div>
+        );
     };
 
     const renderOtpVerificationStep = () => {
@@ -684,6 +831,10 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             );
         }
 
+        if (verificationStatus === 'verification_completed' && showVerificationSummary) {
+            return renderBulkPayoutSummaryStep();
+        }
+
         if (totp_enabled) {
             return (
                 <div className="space-y-5">
@@ -761,7 +912,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             </div>
                         )}
                     </div>
-                    <div className="flex justify-center mt-8">
+                    <div className="flex flex-col items-center gap-3 mt-8">
                         <Button
                             className="openSansLight text-white text-lg p-2 rounded w-52"
                             text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
@@ -770,6 +921,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             primary
                             type="button"
                             onClick={handleCompleteStepSubmit}
+                        />
+                        <Button
+                            className="openSansLight text-lg p-2 rounded !border-red-500 !text-red-600 hover:!bg-red-50 hover:!text-red-700"
+                            text={isCancelling ? <Loader /> : "Cancel bulk payout"}
+                            ariaLabel="Cancel bulk payout"
+                            plain
+                            medium
+                            type="button"
+                            disabled={isSubmitting || isCancelling}
+                            onClick={handleCancelBulkPayout}
                         />
                     </div>
                 </div>
@@ -822,7 +983,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         )}
                     />
                 </div>
-                <div className="flex justify-center mt-8">
+                <div className="flex flex-col items-center gap-3 mt-8">
                     <Button
                         className="openSansLight text-white text-lg p-2 rounded w-52"
                         text={isSubmitting ? <Loader /> : "Complete Bulk Payout"}
@@ -830,6 +991,16 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         disabled={isSubmitting || (watch("otp")?.length !== EMAIL_OTP_LENGTH)}
                         primary
                         type="submit"
+                    />
+                    <Button
+                        className="openSansLight text-lg p-2 rounded !border-red-500 !text-red-600 hover:!bg-red-50 hover:!text-red-700"
+                        text={isCancelling ? <Loader /> : "Cancel bulk payout"}
+                        ariaLabel="Cancel bulk payout"
+                        plain
+                        medium
+                        type="button"
+                        disabled={isSubmitting || isCancelling}
+                        onClick={handleCancelBulkPayout}
                     />
                 </div>
             </form>
@@ -1211,7 +1382,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         <>
             <Modal
                 isOpen={isModalOpen}
-                onClose={handleClose}
+                onClose={currentStep === 1 ? undefined : handleClose}
                 title={getModalTitle()}
                 className="max-w-lg"
             >

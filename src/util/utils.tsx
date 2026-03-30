@@ -5,6 +5,10 @@ import * as Yup from 'yup';
 import { type ClassValue, clsx } from 'clsx';
 import { toast } from "@/components/ui/use-toast";
 
+/** Message shown for 403 Forbidden (toast and PageGuard / ForbiddenGuard). */
+export const FORBIDDEN_MESSAGE =
+  "Please contact your supervisor to grant you access.";
+
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
@@ -85,12 +89,15 @@ export const getStatusColor = (status: string) => {
       return '#32CD32';
     case 'completed':
     case 'successful':
+    case 'success':
+    case 'paid':
       return '#2BD325';
     case 'verification_completed':
       return '#005BB0';
     case 'failed':
       return '#FD2727';
     case 'cancelled':
+    case 'canceled':
       return '#DC143C';
     case 'rejected':
       return '#B22222';
@@ -99,6 +106,7 @@ export const getStatusColor = (status: string) => {
     case 'settled':
       return '#008000';
     case 'approved':
+    case 'active':
       return '#005BB0';
     case 'overdue':
       return '#FF0000';

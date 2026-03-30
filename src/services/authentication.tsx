@@ -55,9 +55,15 @@ export async function forgotPassword(payload: any) {
 
 export async function forgotPasswordOtp(payload: any) {
   try {
+    const body = {
+      verify_reference: payload.verify_reference,
+      otp: payload.otp,
+      password: payload.password,
+      password_confirmation: payload.confirm_password,
+    };
     const response = await api.post(
       `${apiEndpoints.auth.FORGOT_PASSWORD_OTP}/${payload.verify_reference}`,
-      payload
+      body
     );
     return response;
   } catch (error) {

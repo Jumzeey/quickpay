@@ -52,6 +52,12 @@ const ForgotPassword: React.FC = () => {
       const response = await forgotPassword({ email: values.email });
       notifySuccess(response.message);
       localStorage.setItem("user-email", values.email);
+      if (response.verify_reference) {
+        localStorage.setItem(
+          "forgot-password-verify-reference",
+          String(response.verify_reference)
+        );
+      }
       router.push({
         pathname: "/onboarding/otp",
         query: { source: "forgot-password" },

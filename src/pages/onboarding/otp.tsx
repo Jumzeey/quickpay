@@ -87,9 +87,11 @@ const OtpPage = () => {
         await verifyOtp(payload);
         router.push("/dashboard");
       } else {
-        // Forgot password flow: OTP verification is completed together with password reset.
-        // Store OTP temporarily and proceed to reset password form.
-        localStorage.setItem("forgot-password-otp", payload.otp);
+        // Forgot password: OTP is verified together with new password on reset page.
+        localStorage.setItem(
+          "forgot-password-otp",
+          isRecovery ? codeValue.trim().toUpperCase() : codeValue
+        );
         router.push("/onboarding/reset-password");
       }
     } catch (error: any) {

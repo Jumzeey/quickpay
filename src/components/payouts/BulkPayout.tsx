@@ -393,7 +393,12 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         setIsLoadingPreview(true);
         try {
             const { rows } = await getFilePreview(values.file, 10);
-            setPreviewRows(rows);
+            const mappedHeaders = BULK_PAYOUT_MAPPING_KEYS.map(({ key }) => headerMapping[key]?.trim()).filter(Boolean) as string[];
+            const meaningfulRows = rows.filter((row) => {
+                if (mappedHeaders.length === 0) return Object.values(row ?? {}).some((v) => String(v ?? "").trim());
+                return mappedHeaders.some((h) => String(row?.[h] ?? "").trim());
+            });
+            setPreviewRows(meaningfulRows);
             setShowConfirmationModal(true);
         } catch (err: any) {
             notifyError(err?.message || "Failed to load file preview");
@@ -1157,19 +1162,43 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                 {/* Header Mapping Section - CurrencySwitcher-style dropdowns */}
                 {fileHeaders.length > 0 && (
                     <div className="space-y-4 pt-5 border-t border-gray-200">
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-800 mb-1">
-                                Map your file columns
-                            </h3>
-                            <p className="text-xs text-gray-500">
-                                Match each required field to a column from your file.
-                            </p>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-800 mb-1">
+                                    Map your file columns
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                    Match each required field to a column from your file.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setHeaderMapping({
+                                        acct_no: "",
+                                        bank: "",
+                                        amnt: "",
+                                        acct_name: "",
+                                    });
+                                    setOpenMappingKey(null);
+                                    setMappingSearchTerm("");
+                                }}
+                                className="shrink-0 text-xs font-semibold text-[#005BB0] hover:underline"
+                            >
+                                Reset mapping
+                            </button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {BULK_PAYOUT_MAPPING_KEYS.map((mappingKey) => {
+                                const mappedByOthers = new Set(
+                                    Object.entries(headerMapping)
+                                        .filter(([k, v]) => k !== mappingKey.key && String(v ?? "").trim())
+                                        .map(([, v]) => String(v).trim())
+                                );
                                 const headerOptions = fileHeaders.map((header) => ({
                                     value: header,
                                     label: header,
+                                    disabled: mappedByOthers.has(header) && headerMapping[mappingKey.key] !== header,
                                 }));
                                 const selectedValue = headerMapping[mappingKey.key];
                                 const selectedLabel = selectedValue || "Select column...";
@@ -1224,6 +1253,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                                             <li
                                                                 key={option.value}
                                                                 onClick={() => {
+                                                                    if (option.disabled) return;
                                                                     setHeaderMapping((prev) => ({
                                                                         ...prev,
                                                                         [mappingKey.key]: option.value,
@@ -1231,7 +1261,8 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                                                     setOpenMappingKey(null);
                                                                     setMappingSearchTerm("");
                                                                 }}
-                                                                className={`px-4 py-2 text-sm font-medium cursor-pointer hover:bg-[#005BB01A] ${selectedValue === option.value ? "bg-[#005BB00D]" : ""
+                                                                className={`px-4 py-2 text-sm font-medium ${option.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-[#005BB01A]"
+                                                                    } ${selectedValue === option.value ? "bg-[#005BB00D]" : ""
                                                                     }`}
                                                             >
                                                                 {option.label}
@@ -1288,8 +1319,30 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         return formatBalance(num, currencyCode);
     };
 
+    const parseBulkAmount = (raw: unknown): number | null => {
+        const cleaned = String(raw ?? "").replace(/,/g, "").trim();
+        if (!cleaned) return null;
+        const num = parseFloat(cleaned);
+        if (Number.isNaN(num)) return null;
+        return num;
+    };
+
     const renderConfirmationModal = () => {
         const currency = watch("currency");
+        const hasNoAccountRows = previewRows.length === 0;
+        const invalidAmountRowIndexes = (() => {
+            const amountHeader = headerMapping.amnt;
+            if (!amountHeader) return [] as number[];
+            const bad: number[] = [];
+            previewRows.forEach((row, idx) => {
+                const amt = parseBulkAmount(row?.[amountHeader]);
+                if (amt != null && amt <= 0) bad.push(idx);
+            });
+            return bad;
+        })();
+        const hasInvalidAmounts = invalidAmountRowIndexes.length > 0;
+        const disableConfirm = isLoading || hasNoAccountRows;
+
         return (
             <Modal
                 isOpen={showConfirmationModal}
@@ -1301,6 +1354,36 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                     <p className="text-sm text-gray-600">
                         Please confirm the data below. Only the first 10 rows are shown. After you confirm, you will receive an OTP to complete the payout.
                     </p>
+                    {hasNoAccountRows && (
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-[#FFF8E1] border border-[#F0B90B33]">
+                            <span className="shrink-0 flex items-center justify-center size-6 rounded-full bg-[#F0B90B] text-white text-xs font-bold mt-0.5">
+                                !
+                            </span>
+                            <div>
+                                <p className="text-xs font-semibold text-[#B78A00] mb-1">
+                                    Warning
+                                </p>
+                                <p className="text-xs text-[#8B6914] leading-relaxed">
+                                    Uploaded file contains only headers, no account details present.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                    {hasInvalidAmounts && (
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-[#FFF8E1] border border-[#F0B90B33]">
+                            <span className="shrink-0 flex items-center justify-center size-6 rounded-full bg-[#F0B90B] text-white text-xs font-bold mt-0.5">
+                                !
+                            </span>
+                            <div>
+                                <p className="text-xs font-semibold text-[#B78A00] mb-1">
+                                    Warning
+                                </p>
+                                <p className="text-xs text-[#8B6914] leading-relaxed">
+                                    Some rows have an amount less than or equal to zero. Please correct the file and upload again.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     <div className="rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
                         <span className="text-sm font-medium text-gray-700">Currency: </span>
                         <span className="text-sm text-gray-800">{currency}</span>
@@ -1331,7 +1414,14 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                     </tr>
                                 ) : (
                                     previewRows.map((row, rowIdx) => (
-                                        <tr key={rowIdx} className="hover:bg-gray-50">
+                                        <tr
+                                            key={rowIdx}
+                                            className={
+                                                invalidAmountRowIndexes.includes(rowIdx)
+                                                    ? "bg-[#FFF8E1] hover:bg-[#FFF8E1]"
+                                                    : "hover:bg-gray-50"
+                                            }
+                                        >
                                             {BULK_PAYOUT_MAPPING_KEYS.map(({ key }) => (
                                                 <td key={key} className="px-4 py-2.5 text-gray-800">
                                                     {key === "amnt"
@@ -1363,7 +1453,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             text={isLoading ? <Loader /> : "Confirm"}
                             ariaLabel="Confirm bulk payout"
                             className="flex-1"
-                            disabled={isLoading}
+                            disabled={disableConfirm}
                             primary
                             onClick={handleConfirmBulkPayout}
                         />

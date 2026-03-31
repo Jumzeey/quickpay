@@ -19,6 +19,12 @@ const nextConfig = {
 const sentryWebpackPluginOptions = {
   org: process.env.SENTRY_ORG ?? "ramp-technology",
   project: process.env.SENTRY_PROJECT ?? "merchant-portal",
+  // Avoid failing local builds/commits due to missing/invalid Sentry credentials.
+  // Only attempt sourcemap upload in CI where credentials are expected.
+  authToken: process.env.CI ? process.env.SENTRY_AUTH_TOKEN : undefined,
+  sourcemaps: {
+    disable: !process.env.CI,
+  },
   silent: !process.env.CI,
   widenClientFileUpload: true,
   hideSourceMaps: true,

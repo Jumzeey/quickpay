@@ -8,7 +8,6 @@ import WebPageTitle from "@/components/WebPageTitle";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import useAuthentication from "@/stores/useAuthentication";
 import { notifyError, notifySuccess } from "@/util/utils";
-import { notifyError, notifySuccess } from "@/util/utils";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -56,7 +55,7 @@ const ResetPassword: React.FC = () => {
   } = useFormValidation<FormValues>(validationSchema, {
     defaultValues: {
       password: "",
-      confirm_password: "",
+      password_confirmation: "",
     },
     mode: "onChange",
   });
@@ -267,12 +266,12 @@ const ResetPassword: React.FC = () => {
                   />
 
                   <Controller
-                    name="confirm_password"
+                    name="password_confirmation"
                     control={control}
                     render={({ field }) => (
                       <FormInput
                         label="Confirm Password"
-                        id="confirm_password"
+                        id="password_confirmation"
                         type="password"
                         htmlFor="password_confirmation"
                         error={errors.password_confirmation?.message}

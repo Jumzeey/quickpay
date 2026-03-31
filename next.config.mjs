@@ -16,8 +16,17 @@ const nextConfig = {
 };
 
 const sentryWebpackPluginOptions = {
+  // Disable Sentry build-time hooks locally so commits/builds don't fail.
+  // In CI we keep Sentry enabled (release + sourcemaps upload).
+  disableSentryConfig: !process.env.CI,
   org: process.env.SENTRY_ORG ?? "ramp-technology",
   project: process.env.SENTRY_PROJECT ?? "merchant-portal",
+  // Only use an auth token in CI (local dev machines may have stale/invalid tokens).
+  // If a token exists locally, Sentry CLI can still pick it up from env, so we also disable Sentry config above.
+  authToken: process.env.CI ? process.env.SENTRY_AUTH_TOKEN : undefined,
+  sourcemaps: {
+    disable: !process.env.CI,
+  },
   silent: !process.env.CI,
   widenClientFileUpload: true,
   hideSourceMaps: true,

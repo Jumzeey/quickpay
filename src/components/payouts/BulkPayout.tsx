@@ -1345,38 +1345,42 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         const hasInvalidAmounts = invalidAmountRowIndexes.length > 0;
         const duplicateAccountRowIndexes = (() => {
             const acctHeader = headerMapping.acct_no;
-            if (!acctHeader) return [] as number[];
-            const indexesByAcct = new Map<string, number[]>();
+            const bankHeader = headerMapping.bank;
+            if (!acctHeader || !bankHeader) return [] as number[];
+            const indexesByAcctBank = new Map<string, number[]>();
             validationRows.forEach((row, idx) => {
-                const raw = String(row?.[acctHeader] ?? "").trim();
-                if (!raw) return;
-                const key = raw.replace(/\s+/g, "");
-                const existing = indexesByAcct.get(key) ?? [];
+                const rawAcct = String(row?.[acctHeader] ?? "").trim();
+                const rawBank = String(row?.[bankHeader] ?? "").trim();
+                if (!rawAcct || !rawBank) return;
+                const acctKey = rawAcct.replace(/\s+/g, "");
+                const bankKey = rawBank.toLowerCase().replace(/\s+/g, " ");
+                const key = `${acctKey}__${bankKey}`;
+                const existing = indexesByAcctBank.get(key) ?? [];
                 existing.push(idx);
-                indexesByAcct.set(key, existing);
+                indexesByAcctBank.set(key, existing);
             });
             const dupes: number[] = [];
-            indexesByAcct.forEach((idxs) => {
+            indexesByAcctBank.forEach((idxs) => {
                 if (idxs.length > 1) dupes.push(...idxs);
             });
             return dupes;
         })();
         const hasDuplicateAccounts = duplicateAccountRowIndexes.length > 0;
 
-        const invalidAmountPreviewRowIndexes = (() => {
-            const set = new Set<number>();
-            invalidAmountRowIndexes.forEach((idx) => {
-                if (idx >= 0 && idx < 10) set.add(idx);
+        const invalidAmountIndexSet = new Set<number>(invalidAmountRowIndexes);
+        const duplicateAccountIndexSet = new Set<number>(duplicateAccountRowIndexes);
+        const rowsToRender = (() => {
+            if (!hasDuplicateAccounts) {
+                return previewRows.map((row, idx) => ({ row, idx }));
+            }
+            // Show all rows when duplicates exist, and float duplicates to the top.
+            const all = validationRows.map((row, idx) => ({ row, idx }));
+            return all.sort((a, b) => {
+                const aDup = duplicateAccountIndexSet.has(a.idx) ? 1 : 0;
+                const bDup = duplicateAccountIndexSet.has(b.idx) ? 1 : 0;
+                if (aDup !== bDup) return bDup - aDup;
+                return a.idx - b.idx;
             });
-            return set;
-        })();
-
-        const duplicateAccountPreviewRowIndexes = (() => {
-            const set = new Set<number>();
-            duplicateAccountRowIndexes.forEach((idx) => {
-                if (idx >= 0 && idx < 10) set.add(idx);
-            });
-            return set;
         })();
 
         const disableConfirm = isLoading || hasNoAccountRows || hasInvalidAmounts || hasDuplicateAccounts;
@@ -1390,7 +1394,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
             >
                 <div className="mt-4 space-y-4">
                     <p className="text-sm text-gray-600">
-                        Please confirm the data below. Only the first 10 rows are shown. After you confirm, you will receive an OTP to complete the payout.
+                        Please confirm the data below. {!hasDuplicateAccounts ? "Only the first 10 rows are shown." : "All rows are shown because duplicates were detected."} After you confirm, you will receive an OTP to complete the payout.
                     </p>
                     {hasNoAccountRows && (
                         <div className="flex items-start gap-3 p-4 rounded-xl bg-[#FFF8E1] border border-[#F0B90B33]">
@@ -1432,7 +1436,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                     Warning
                                 </p>
                                 <p className="text-xs text-[#8B6914] leading-relaxed">
-                                    Duplicate account numbers detected in the uploaded file. Please remove duplicates and upload again.
+                                    Duplicate account numbers detected for the same bank in the uploaded file. Please remove duplicates and upload again.
                                 </p>
                             </div>
                         </div>
@@ -1456,7 +1460,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white">
-                                {previewRows.length === 0 ? (
+                                {rowsToRender.length === 0 ? (
                                     <tr>
                                         <td
                                             colSpan={BULK_PAYOUT_MAPPING_KEYS.length}
@@ -1466,11 +1470,11 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                         </td>
                                     </tr>
                                 ) : (
-                                    previewRows.map((row, rowIdx) => (
+                                    rowsToRender.map(({ row, idx }) => (
                                         <tr
-                                            key={rowIdx}
+                                            key={idx}
                                             className={
-                                                invalidAmountPreviewRowIndexes.has(rowIdx) || duplicateAccountPreviewRowIndexes.has(rowIdx)
+                                                invalidAmountIndexSet.has(idx) || duplicateAccountIndexSet.has(idx)
                                                     ? "bg-[#FFF8E1] hover:bg-[#FFF8E1]"
                                                     : "hover:bg-gray-50"
                                             }
@@ -1489,7 +1493,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         </table>
                     </div>
                     <p className="text-xs text-gray-500">
-                        Showing up to 10 rows. Full file will be processed on confirm.
+                        {!hasDuplicateAccounts ? "Showing up to 10 rows." : `Showing all ${rowsToRender.length} rows.`} Full file will be processed on confirm.
                     </p>
                     <div className="flex gap-4 pt-4">
                         <Button

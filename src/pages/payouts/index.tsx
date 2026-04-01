@@ -379,12 +379,6 @@ const PayoutsContent = () => {
       />
     ),
   }, {
-    key: "success_count",
-    title: "Success Count",
-  }, {
-    key: "failure_count",
-    title: "Failure Count",
-  }, {
     key: "total_charge",
     title: "Total charge",
     render: (_value: any, row: BulkPayoutHistoryItem) => formatBulkPayoutMoney(row, row?.total_charge),

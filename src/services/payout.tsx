@@ -135,6 +135,7 @@ export interface BulkPayoutTransaction {
     amount?: string;
     charge?: string;
     status?: string;
+    provider_status?: string | null;
     created_at?: string;
   } | null;
 }

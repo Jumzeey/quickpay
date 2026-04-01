@@ -254,7 +254,11 @@ const PayoutsContent = () => {
   }, {
     key: 'failure_reason',
     title: 'Failure Reason',
-    render: (value: any, row: any) => row?.failure_reason || 'N/A',
+    render: (_value: any, row: any) => {
+      const providerStatus = String(row?.provider_status ?? row?.transaction?.provider_status ?? '').trim();
+      if (providerStatus) return providerStatus;
+      return row?.failure_reason || 'N/A';
+    },
   }, {
     key: 'session_id',
     title: 'Provider Reference',
@@ -598,7 +602,11 @@ const PayoutsContent = () => {
   }, {
     key: "failure_reason",
     title: "Failure Reason",
-    render: (_value: any, row: BulkPayoutTransaction) => row?.failure_reason || "N/A",
+    render: (_value: any, row: BulkPayoutTransaction) => {
+      const providerStatus = String(row?.transaction?.provider_status ?? "").trim();
+      if (providerStatus) return providerStatus;
+      return row?.failure_reason || "N/A";
+    },
   }, {
     key: "created_at",
     title: "Time Stamp",

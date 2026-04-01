@@ -62,6 +62,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
     const [mappingSearchTerm, setMappingSearchTerm] = useState("");
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
     const [previewRows, setPreviewRows] = useState<Record<string, string>[]>([]);
+    const [validationRows, setValidationRows] = useState<Record<string, string>[]>([]);
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
     const [completeOtpValue, setCompleteOtpValue] = useState("");
     const [completeUseRecoveryCode, setCompleteUseRecoveryCode] = useState(false);
@@ -392,13 +393,14 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
         setIsLoadingPreview(true);
         try {
-            const { rows } = await getFilePreview(values.file, 10);
             const mappedHeaders = BULK_PAYOUT_MAPPING_KEYS.map(({ key }) => headerMapping[key]?.trim()).filter(Boolean) as string[];
+            const { rows } = await getFilePreview(values.file, Number.MAX_SAFE_INTEGER);
             const meaningfulRows = rows.filter((row) => {
                 if (mappedHeaders.length === 0) return Object.values(row ?? {}).some((v) => String(v ?? "").trim());
                 return mappedHeaders.some((h) => String(row?.[h] ?? "").trim());
             });
-            setPreviewRows(meaningfulRows);
+            setValidationRows(meaningfulRows);
+            setPreviewRows(meaningfulRows.slice(0, 10));
             setShowConfirmationModal(true);
         } catch (err: any) {
             notifyError(err?.message || "Failed to load file preview");
@@ -1329,19 +1331,55 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
 
     const renderConfirmationModal = () => {
         const currency = watch("currency");
-        const hasNoAccountRows = previewRows.length === 0;
+        const hasNoAccountRows = validationRows.length === 0;
         const invalidAmountRowIndexes = (() => {
             const amountHeader = headerMapping.amnt;
             if (!amountHeader) return [] as number[];
             const bad: number[] = [];
-            previewRows.forEach((row, idx) => {
+            validationRows.forEach((row, idx) => {
                 const amt = parseBulkAmount(row?.[amountHeader]);
                 if (amt != null && amt <= 0) bad.push(idx);
             });
             return bad;
         })();
         const hasInvalidAmounts = invalidAmountRowIndexes.length > 0;
-        const disableConfirm = isLoading || hasNoAccountRows;
+        const duplicateAccountRowIndexes = (() => {
+            const acctHeader = headerMapping.acct_no;
+            if (!acctHeader) return [] as number[];
+            const indexesByAcct = new Map<string, number[]>();
+            validationRows.forEach((row, idx) => {
+                const raw = String(row?.[acctHeader] ?? "").trim();
+                if (!raw) return;
+                const key = raw.replace(/\s+/g, "");
+                const existing = indexesByAcct.get(key) ?? [];
+                existing.push(idx);
+                indexesByAcct.set(key, existing);
+            });
+            const dupes: number[] = [];
+            indexesByAcct.forEach((idxs) => {
+                if (idxs.length > 1) dupes.push(...idxs);
+            });
+            return dupes;
+        })();
+        const hasDuplicateAccounts = duplicateAccountRowIndexes.length > 0;
+
+        const invalidAmountPreviewRowIndexes = (() => {
+            const set = new Set<number>();
+            invalidAmountRowIndexes.forEach((idx) => {
+                if (idx >= 0 && idx < 10) set.add(idx);
+            });
+            return set;
+        })();
+
+        const duplicateAccountPreviewRowIndexes = (() => {
+            const set = new Set<number>();
+            duplicateAccountRowIndexes.forEach((idx) => {
+                if (idx >= 0 && idx < 10) set.add(idx);
+            });
+            return set;
+        })();
+
+        const disableConfirm = isLoading || hasNoAccountRows || hasInvalidAmounts || hasDuplicateAccounts;
 
         return (
             <Modal
@@ -1384,6 +1422,21 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             </div>
                         </div>
                     )}
+                    {hasDuplicateAccounts && (
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-[#FFF8E1] border border-[#F0B90B33]">
+                            <span className="shrink-0 flex items-center justify-center size-6 rounded-full bg-[#F0B90B] text-white text-xs font-bold mt-0.5">
+                                !
+                            </span>
+                            <div>
+                                <p className="text-xs font-semibold text-[#B78A00] mb-1">
+                                    Warning
+                                </p>
+                                <p className="text-xs text-[#8B6914] leading-relaxed">
+                                    Duplicate account numbers detected in the uploaded file. Please remove duplicates and upload again.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     <div className="rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
                         <span className="text-sm font-medium text-gray-700">Currency: </span>
                         <span className="text-sm text-gray-800">{currency}</span>
@@ -1417,7 +1470,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                                         <tr
                                             key={rowIdx}
                                             className={
-                                                invalidAmountRowIndexes.includes(rowIdx)
+                                                invalidAmountPreviewRowIndexes.has(rowIdx) || duplicateAccountPreviewRowIndexes.has(rowIdx)
                                                     ? "bg-[#FFF8E1] hover:bg-[#FFF8E1]"
                                                     : "hover:bg-gray-50"
                                             }

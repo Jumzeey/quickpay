@@ -249,6 +249,10 @@ const PayoutsContent = () => {
     key: 'processing_fee',
     title: 'Processing Fee',
   }, {
+    key: 'stamp_duty',
+    title: 'Stamp Duty',
+    render: (_value: any, row: any) => row?.stamp_duty ?? 'N/A',
+  }, {
     key: 'channel',
     title: 'Channel',
   }, {
@@ -593,6 +597,11 @@ const PayoutsContent = () => {
     title: "Available balance after",
     render: (_value: any, row: BulkPayoutTransaction) =>
       formatBulkTransactionMoney(row?.currency, row?.transaction?.available_balance_after),
+  }, {
+    key: "stamp_duty",
+    title: "Stamp duty",
+    render: (_value: any, row: BulkPayoutTransaction) =>
+      formatBulkTransactionMoney(row?.currency, row?.transaction?.stamp_duty),
   }, {
     key: "failure_reason",
     title: "Failure Reason",

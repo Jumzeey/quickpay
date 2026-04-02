@@ -32,6 +32,7 @@ export interface Payout {
   currency_symbol: string;
   amount: string;
   processing_fee: string;
+  stamp_duty?: string | null;
   session_id: string | null;
   net_amount: string;
   balance_before: string;
@@ -136,6 +137,7 @@ export interface BulkPayoutTransaction {
     charge?: string;
     status?: string;
     provider_status?: string | null;
+    stamp_duty?: string | null;
     created_at?: string;
   } | null;
 }

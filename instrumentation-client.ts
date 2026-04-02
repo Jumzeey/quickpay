@@ -1,6 +1,6 @@
 /**
- * Sentry client-side init (instrumentation-client).
- * This file is imported from _app.tsx and only runs in the browser.
+ * Sentry browser init (Next.js instrumentation-client convention).
+ * Imported from _app.tsx; runs only in the browser.
  * Set NEXT_PUBLIC_SENTRY_DSN in your env (e.g. Amplify) to enable.
  */
 import * as Sentry from "@sentry/nextjs";
@@ -34,3 +34,5 @@ if (dsn) {
     ],
   });
 }
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

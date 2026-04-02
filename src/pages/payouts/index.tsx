@@ -520,6 +520,13 @@ const PayoutsContent = () => {
       }).format(numericAmount);
     },
   }, {
+    key: "charge",
+    title: "Charge",
+    render: (_value: any, row: BulkPayoutTransaction) => {
+      const raw = row?.transaction?.charge ?? row?.estimated_charge;
+      return formatBulkTransactionMoney(row?.currency, raw);
+    },
+  }, {
     key: "account_name",
     title: "Account Name",
     render: (_value: any, row: BulkPayoutTransaction) => capitalizeFirstLetter(row?.account_name) || "N/A",
@@ -1017,7 +1024,7 @@ const PayoutsContent = () => {
               <DynamicTable
                 columns={isBulkTransactionsView ? bulkTransactionColumns : bulkColumns}
                 data={isBulkTransactionsView ? bulkTransactions : bulkPayouts}
-                maxColumns={isBulkTransactionsView ? 5 : 6}
+                maxColumns={6}
                 primaryBtnContent={
                   isBulkTransactionsView
                     ? (row: BulkPayoutTransaction) => (

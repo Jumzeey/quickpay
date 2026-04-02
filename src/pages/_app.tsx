@@ -1,5 +1,5 @@
 "use client";
-import "../../sentry.client.config";
+import "../../instrumentation-client";
 import * as Sentry from "@sentry/nextjs";
 import Button from '@/components/button';
 import Modal from '@/components/modal';

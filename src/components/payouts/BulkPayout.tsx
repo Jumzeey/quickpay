@@ -74,6 +74,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         currency: string;
         totalAmount: string | null;
         totalCharge: string | null;
+        totalStampDuty: string | null;
         totalLienAmount: string | null;
         totalRecipients: number | null;
     } | null>(null);
@@ -495,6 +496,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                         currency,
                         totalAmount: bulkPayout?.total_amount ?? null,
                         totalCharge: bulkPayout?.total_charge ?? null,
+                        totalStampDuty: bulkPayout?.total_stamp_duty ?? null,
                         totalLienAmount: bulkPayout?.total_lien_amount ?? null,
                         totalRecipients: transactions?.total ?? null,
                     });
@@ -674,6 +676,7 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
         const currencyCode = bulkPayoutSummary?.currency ?? (watch("currency") as string) ?? "NGN";
         const totalAmount = bulkPayoutSummary?.totalAmount ?? null;
         const totalCharge = bulkPayoutSummary?.totalCharge ?? null;
+        const totalStampDuty = bulkPayoutSummary?.totalStampDuty ?? null;
         const totalLienAmount = bulkPayoutSummary?.totalLienAmount ?? null;
         const totalRecipients = bulkPayoutSummary?.totalRecipients;
 
@@ -703,9 +706,27 @@ const BulkPayout: React.FC<BulkPayoutProps> = ({
                             <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalCharge)}</span>
                         </div>
                         <div className="flex items-center justify-between py-3">
+                            <span className="text-sm text-[#7F7F7F]">Total stamp duty</span>
+                            <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalStampDuty)}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-3">
                             <span className="text-sm text-[#7F7F7F]">Total amount</span>
                             <span className="text-sm font-semibold text-[#090727]">{formatBulkSummaryMoney(totalLienAmount)}</span>
                         </div>
+                    </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-[#FFF8E1] border border-[#F0B90B33]">
+                    <span className="shrink-0 flex items-center justify-center size-6 rounded-full bg-[#F0B90B] text-white text-xs font-bold mt-0.5">
+                        !
+                    </span>
+                    <div>
+                        <p className="text-xs font-semibold text-[#B78A00] mb-1">
+                            Note
+                        </p>
+                        <p className="text-xs text-[#8B6914] leading-relaxed">
+                            A stamp duty of ₦50 will be debited for each transaction with an amount of ₦10,000 or more.
+                        </p>
                     </div>
                 </div>
 

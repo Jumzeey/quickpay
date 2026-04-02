@@ -170,12 +170,12 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, file, docu
                         >
                             Open in new tab
                         </a>
-                        <div className="w-full h-[70vh]">
-                            <iframe
+                    <div className="w-full h-[70vh]">
+                        <iframe
                                 src={`${displayUrl}#toolbar=0`}
-                                className="w-full h-full"
-                                title={documentTitle}
-                            />
+                            className="w-full h-full"
+                            title={documentTitle}
+                        />
                         </div>
                     </div>
                 )}
@@ -463,8 +463,8 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                             <p className="text-xs font-semibold text-[#7F7F7F]">Important</p>
                             <ul className="text-[#7F7F7F] mt-2 space-y-1 text-xs">
                                 <li>• Review process may take 3-5 business days</li>
-                                <li>• Ensure all documents are clear and legible</li>
-                            </ul>
+                                    <li>• Ensure all documents are clear and legible</li>
+                                </ul>
                         </div>
                     </div>
                 )}
@@ -493,17 +493,17 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                     </div>
 
                     <div className="relative mt-4">
-                        <UploadComponent
-                            className="h-auto"
-                            name="upgrade_documents"
+                <UploadComponent
+                    className="h-auto"
+                    name="upgrade_documents"
                             text="Upload"
-                            folderName="kyc"
-                            multiple
-                            showPreview
-                            documents={documents}
-                            setDocuments={setDocuments}
+                    folderName="kyc"
+                    multiple
+                    showPreview
+                    documents={documents}
+                    setDocuments={setDocuments}
                             maxFiles={requiredDocumentCount || 1}
-                            useS3WhenEnabled={true}
+                    useS3WhenEnabled={true}
                             disabled={uploadDisabled}
                             disabledHint={
                                 !selectedBusinessType
@@ -654,17 +654,17 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                     {getAvailableDocumentTypes()
                                                         .filter(type => {
                                                             const assignedToOther = documents.some(d =>
-                                                                d.id !== doc.id && d.documentType === type.value
-                                                            );
+                                                    d.id !== doc.id && d.documentType === type.value
+                                                );
                                                             return !assignedToOther;
                                                         })
                                                         .map(type => {
-                                                            const isRequired = !documents.some(d => d.documentType === type.value);
+                                                const isRequired = !documents.some(d => d.documentType === type.value);
                                                             const labelSuffix = isRequired ? ' (Required)' : '';
                                                             const isSelected = doc.documentType === type.value;
-                                                            return (
+                                                return (
                                                                 <li
-                                                                    key={type.value}
+                                                        key={type.value}
                                                                     onClick={() => {
                                                                         handleDocumentTypeChange(doc.id, type.value);
                                                                         setOpenDocDropdownId(null);
@@ -673,8 +673,8 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
                                                                 >
                                                                     {type.label}{labelSuffix}
                                                                 </li>
-                                                            );
-                                                        })}
+                                                );
+                                            })}
                                                 </ul>
                                             </div>
                                         )}
@@ -691,14 +691,14 @@ const UpgradeAccountForm: React.FC<UpgradeAccountFormProps> = ({
 
             <div className="mt-6 flex justify-end">
                 <div className="w-full lg:w-[420px]">
-                    <Button
+                <Button
                         text={isSubmitting ? <Loader /> : "Submit for review"}
-                        ariaLabel="Submit business account upgrade request"
+                    ariaLabel="Submit business account upgrade request"
                         disabled={isSubmitting || !selectedBusinessType || !allRequiredDocumentsUploaded()}
-                        onClick={handleSubmit(handleSubmitUpgrade)}
-                        primary
-                        type="submit"
-                    />
+                    onClick={handleSubmit(handleSubmitUpgrade)}
+                    primary
+                    type="submit"
+                />
                     {!selectedBusinessType ? (
                         <p className="mt-2 text-xs text-[#7F7F7F]">
                             Select a business type to enable uploads and submission.

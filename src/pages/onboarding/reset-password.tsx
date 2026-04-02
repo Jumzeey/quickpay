@@ -150,13 +150,13 @@ const ResetPassword: React.FC = () => {
                       const { onBlur, ...fieldProps } = field;
                       return (
                         <div className="space-y-3">
-                          <FormInput
-                            label="New Password"
-                            id="password"
-                            type="password"
-                            htmlFor="password"
-                            error={errors.password?.message}
-                            touched={!!errors.password}
+                      <FormInput
+                        label="New Password"
+                        id="password"
+                        type="password"
+                        htmlFor="password"
+                        error={errors.password?.message}
+                        touched={!!errors.password}
                             autoComplete="new-password"
                             onFocus={() => setIsPasswordFocused(true)}
                             onBlur={() => {

@@ -276,7 +276,7 @@ const ResetPassword: React.FC = () => {
                         htmlFor="password_confirmation"
                         error={errors.password_confirmation?.message}
                         touched={!!errors.password_confirmation}
-                        autoComplete="new-password"
+                        autoComplete="off"
                         {...field}
                       />
                     )}

@@ -86,8 +86,8 @@ const SignInPage: React.FC = () => {
                 <div className="flex items-center">
                   <Link href="/onboarding/sign-in" className="inline-flex cursor-pointer">
                     <Image
-                      src="/images/cray-logo.svg"
-                      alt="Cray"
+                      src="/images/quickpay-logo-blue.svg"
+                      alt="Quickpay"
                       width={80}
                       height={32}
                       priority
@@ -165,7 +165,7 @@ const SignInPage: React.FC = () => {
               {/* Create Account Section */}
               <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
                 <p className="text-sm text-[#7F7F7F] font-semibold">
-                  New to Cray?
+                  New to Quickpay?
                   <Link
                     href="/onboarding/join-us"
                     className="text-primary hover:text-blue-700 ml-1"

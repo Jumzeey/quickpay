@@ -193,8 +193,8 @@ const RegisterPage = () => {
               <div className="flex items-center">
                 <Link href="/onboarding/sign-in" className="inline-flex cursor-pointer">
                   <Image
-                    src="/images/cray-logo.svg"
-                    alt="Cray"
+                    src="/images/quickpay-logo-blue.svg"
+                    alt="Quickpay"
                     width={80}
                     height={32}
                     priority
@@ -457,7 +457,7 @@ const RegisterPage = () => {
                         I consent to the collection and processing of my personal data in line with data regulations as
                         described in the{' '}
                         <Link href={EXTERNAL_URLS.PRIVACY_POLICY} target="_blank" rel="noopener noreferrer" className="text-primary">
-                          Cray Privacy Policy
+                          Quickpay Privacy Policy
                         </Link>.
                       </label>
                     </div>

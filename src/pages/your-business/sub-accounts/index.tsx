@@ -234,7 +234,7 @@ const SubaccountHistory = () => {
               href={`/your-business/sub-accounts/transactions/${row.id}`}
               className="flex cursor-pointer items-center gap-2 hover:text-primary"
             >
-              <Icon name="edit2" className="text-[#005BB0]" />
+              <Icon name="edit2" className="text-[#DC143C]" />
 
               <span className="text-[#090727] text-sm font-semibold">Transactions</span>
             </Link>

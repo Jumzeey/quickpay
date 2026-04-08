@@ -6,7 +6,7 @@ import React from 'react';
 const Chargebacks = () => {
   return (
     <Layout pageTitle='Chargebacks' icon='disbursement'>
-      <WebPageTitle title='Chargebacks | Cray Merchant Portal' />
+      <WebPageTitle title='Chargebacks | Merchant Portal' />
       <EmptyState
         title='No Chargebacks Found'
         subTitle="You don't have any chargebacks yet."

@@ -71,7 +71,7 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
-      <WebPageTitle title="Forgot Password | Cray Merchant Portal" />
+      <WebPageTitle title="Forgot Password | Merchant Portal" />
       <NoSSR>
         <motion.div
           className="flex flex-col items-center justify-center"
@@ -86,8 +86,8 @@ const ForgotPassword: React.FC = () => {
               <div className="px-8 pt-8 pb-4 bg-auth-header">
                 <div className="flex items-center">
                   <Image
-                    src="/images/cray-logo.svg"
-                    alt="Cray"
+                    src="/images/logo.png"
+                    alt="Logo"
                     width={80}
                     height={32}
                     priority
@@ -98,7 +98,7 @@ const ForgotPassword: React.FC = () => {
 
               {/* Forgot Password Form */}
               <div className="px-8 pb-8 mt-12">
-                <h2 className="text-lg font-extrabold text-[#184078] mb-2">
+                <h2 className="text-lg font-extrabold text-[#000000] mb-2">
                   Request Password Reset
                 </h2>
 
@@ -139,7 +139,7 @@ const ForgotPassword: React.FC = () => {
                   Remember account password?
                   <Link
                     href="/onboarding/sign-in"
-                    className="text-primary hover:text-blue-700 ml-1"
+                    className="text-primary hover:text-red-700 ml-1"
                   >
                     Sign In
                   </Link>

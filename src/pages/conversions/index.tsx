@@ -483,7 +483,7 @@ const ConversionsContent = () => {
 
   return (
     <Layout pageTitle="Conversions" icon="collection-history">
-      <WebPageTitle title="Conversions | Cray Merchant Portal" />
+      <WebPageTitle title="Conversions | Merchant Portal" />
 
       <div className="flex flex-col md:flex-row justify-between">
         <div>
@@ -496,7 +496,7 @@ const ConversionsContent = () => {
           <Button
             text="Initiate Conversion"
             ariaLabel="Initiate Conversion button"
-            className="!w-[151px] !h-10 bg-[#EFF7FE] text-[#005BB0] font-medium"
+            className="!w-[151px] !h-10 bg-[#EFF7FE] text-[#DC143C] font-medium"
             onClick={() => toggleModal('isInitiateConversionModalOpen')}
           />
         </div>

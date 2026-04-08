@@ -132,7 +132,7 @@
 //           </div>
 //         )}
 //         {uploadedFileName && (
-//           <p className="mt-4 text-xs text-center sarepayPrimary font-semibold">
+//           <p className="mt-4 text-xs text-center quickpayPrimary font-semibold">
 //             Uploaded file: {uploadedFileName}
 //           </p>
 //         )}

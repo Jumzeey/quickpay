@@ -11,7 +11,7 @@ const TabComponent: React.FC = () => {
   var request = require('request');
   var options = {
     'method': 'POST',
-    'url': 'https://app.sarepay.com/api/payment/create',
+    'url': 'https://app.quickpay.com/api/payment/create',
     'headers': {},
     formData: {
       'token': 'MERCHANT_KEY',

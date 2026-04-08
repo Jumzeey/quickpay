@@ -19,13 +19,13 @@ const ActiveLink = ({ router, href, icon, title }: ActiveLinkProps) => {
         href={href}
         className={`flex items-center gap-3 px-2.5 py-2.5 w-full ${
           isActive
-            ? "text-[#005BB0] dark:text-white"
-            : "text-[#090727] dark:text-[#EFF7FE] hover:text-[#8db6ec]"
+            ? "text-[#DC143C] dark:text-white"
+            : "text-[#090727] dark:text-[#EFF7FE] hover:text-[#DC143C]"
         }`}
       >
         <Icon
           name={icon}
-          color={isActive ? "#005BB0" : "#090727"}
+          color={isActive ? "#DC143C" : "#090727"}
           className="flex items-center"
         />
         <span className="mt-0.5 font-semi-bold text-sm">{title}</span>

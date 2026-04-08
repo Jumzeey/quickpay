@@ -17,7 +17,7 @@ const Table: React.FC<TableProps> = ({
     <div className={`overflow-x-auto w-full ${!height ? 'h-auto' : ''}`}>
       <table className={`table w-full whitespace-nowrap ${className} border-separate border-spacing-0`}>
         <thead>
-          <tr className="sarepayGrey text-sm capitalize">
+          <tr className="quickpayGrey text-sm capitalize">
             {columns.map((column: any, index: number) => (
               <th
                 key={index}

@@ -8,7 +8,7 @@ export interface ConversionFormValues {
     targetAccountNumber?: string;
 }
 
-export type ConversionType = 'Same Currency Conversion' | 'Cray Balance Conversion' | 'Cross Currency Conversion';
+export type ConversionType = 'Same Currency Conversion' | 'Wallet Balance Conversion' | 'Cross Currency Conversion';
 
 export interface ConversionOption {
     id: number;

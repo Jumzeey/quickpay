@@ -299,7 +299,7 @@ const CreateSubAccountModal: React.FC<CreateSubAccountModalProps> = ({
                 {errors.contactEmail && (
                   <p className="text-red-500 text-xs mt-1">{errors.contactEmail.message}</p>
                 )}
-                <span className="text-xs text-[#005BB0] font-medium">
+                <span className="text-xs text-[#DC143C] font-medium">
                   If provided, this email address will get transaction notification
                 </span>
               </div>

@@ -29,7 +29,7 @@ const SettlementsContent = () => {
 
   return (
     <Layout pageTitle="Settlement History" icon="history">
-      <WebPageTitle title="Settlement History | Cray Merchant Portal" />
+      <WebPageTitle title="Settlement History | Merchant Portal" />
 
       <div className="flex flex-col md:flex-row justify-between mb-8">
         <div>

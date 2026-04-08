@@ -70,16 +70,16 @@ const ProfileTab = () => {
               />
             </div>
           ) : (
-            <div className="w-[65px] h-[60px] border border-dashed border-[#005BB0] rounded-lg flex items-center justify-center">
-              <Icon name="image" className="size-5 text-[#005BB0]" />
+            <div className="w-[65px] h-[60px] border border-dashed border-[#DC143C] rounded-lg flex items-center justify-center">
+              <Icon name="image" className="size-5 text-[#DC143C]" />
             </div>
           )}
 
           <button
             onClick={handleFileInputClick}
-            className="text-[#005BB0] text-xs md:text-[13px] font-medium cursor-pointer flex items-center gap-1"
+            className="text-[#DC143C] text-xs md:text-[13px] font-medium cursor-pointer flex items-center gap-1"
           >
-            <Icon name="upload" className="size-5 text-[#005BB0]" />
+            <Icon name="upload" className="size-5 text-[#DC143C]" />
             {updatingImage ? (
               <span>Updating...</span>
             ) : (

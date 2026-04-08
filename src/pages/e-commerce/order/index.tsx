@@ -120,7 +120,7 @@ const Orders = () => {
 
   return (
     <Layout pageTitle="Ecommerce Orders" icon="order">
-      <WebPageTitle title="Shipping Orders | Cray Merchant Portal" />
+      <WebPageTitle title="Shipping Orders | Merchant Portal" />
       {state.showOrders ? (
         <TransactionDetails
           selectedItem={selectedItem}

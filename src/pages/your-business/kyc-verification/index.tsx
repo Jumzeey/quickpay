@@ -24,7 +24,7 @@ const DocumentLink = ({ document, imageUrl }: DocumentLinkProps) => {
       href={`${imageUrl}/${document}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="sarepayPrimary underline font-bold text-sm"
+      className="quickpayPrimary underline font-bold text-sm"
     >
       View Document
     </Link>
@@ -135,7 +135,7 @@ const BusinessKYC = () => {
 
       {/* <Card>
         <div className="flex flex-col sm:flex-row justify-center items-center sm:justify-between p-5">
-          <h6 className={`text-center font-bold py-3 px-3 ${userKyc.status === 'Approved' ? 'sarepayPrimary' : 'text-danger'
+          <h6 className={`text-center font-bold py-3 px-3 ${userKyc.status === 'Approved' ? 'quickpayPrimary' : 'text-danger'
             }`}>
             KYC Status: {userKyc.status}
           </h6>
@@ -171,7 +171,7 @@ const BusinessKYC = () => {
             <KYCField
               label="STATUS"
               value={
-                <span className={userKyc.status === 'Approved' ? 'sarepayPrimary' : 'text-danger'}>
+                <span className={userKyc.status === 'Approved' ? 'quickpayPrimary' : 'text-danger'}>
                   {userKyc.status}
                 </span>
               }

@@ -171,7 +171,7 @@ const KYCPage: React.FC = () => {
 
   return (
     <Layout pageTitle="Create Online Store" icon="ecommerce">
-      <WebPageTitle title="Create Online Store | Cray Merchant Portal" />
+      <WebPageTitle title="Create Online Store | Merchant Portal" />
       <div className="pt-5">
         <Image
           src="/images/arrow-back.svg"

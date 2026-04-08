@@ -212,7 +212,7 @@ const RegisterPage: React.FC = () => {
         <WebPageTitle
           title={`${capitalizeFirstLetter(
             params?.business as string
-          )} | Cray Merchant Portal`}
+          )} | Merchant Portal`}
         />
         {/* <Sidebar /> */}
         <div className="w-full lg:w-1/2 md:w-1/2 p-4 lg:p-32 lg:py-10 bg-black/20 backdrop-blur-sm shadow-lg">
@@ -412,7 +412,7 @@ const RegisterPage: React.FC = () => {
                       rel="noopener noreferrer"
                       className="ml-1 font-medium underline-animation cursor-pointer"
                     >
-                      Cray Privacy Policy
+                      Privacy Policy
                     </a>
                   </Link>
                 </label>
@@ -461,7 +461,7 @@ const RegisterPage: React.FC = () => {
         <h6 className="text-center font-bold mt-5 text-2xl">Success</h6>
         <p className=" mt-5 text-center">
           A Verification Link Has Been Sent To Your Email. <br />
-          <span className="sarepayPrimary">{register?.email}</span>
+          <span className="quickpayPrimary">{register?.email}</span>
         </p>
         <div className="mt-5">
           <Button

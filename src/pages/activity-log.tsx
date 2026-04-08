@@ -120,7 +120,7 @@ const ActivityLog = () => {
 
   return (
     <Layout pageTitle="Audit Trail" icon="activity-log">
-      <WebPageTitle title="Audit Trail | Cray Merchant Portal" />
+      <WebPageTitle title="Audit Trail | Merchant Portal" />
       <PageHeader
         title="User Activities"
         description="Keep track of all user interactions in one place, making it easy to review and analyze activity."

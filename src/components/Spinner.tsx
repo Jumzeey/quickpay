@@ -1,4 +1,4 @@
-export const Spinner = ({ color = "#164988" }) => (
+export const Spinner = ({ color = "#DC143C" }) => (
     <svg
       className={`animate-spin mr-1 w-5 mt-px text-${color}`}
       xmlns="http://www.w3.org/2000/svg"

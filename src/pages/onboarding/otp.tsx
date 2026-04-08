@@ -129,8 +129,8 @@ const OtpPage = () => {
               <div className="flex items-center">
                 <Link href="/onboarding/sign-in" className="inline-flex cursor-pointer">
                   <Image
-                    src="/images/cray-logo.svg"
-                    alt="Cray"
+                    src="/images/quickpay-logo-blue.svg"
+                    alt="Quickpay"
                     width={80}
                     height={32}
                     priority

@@ -56,8 +56,8 @@ const Navbar = ({
         <div className="h-auto flex flex-row px-3 md:px-6 py-4 md:py-3 items-center justify-between">
           <Link href="/dashboard">
             <Image
-              src={theme === "light" ? "/images/cray-logo.svg" : "/images/cray-logo-white.svg"}
-              alt="Cray Logo"
+              src={theme === "light" ? "/images/quickpay-logo-blue.svg" : "/images/quickpay-logo.svg"}
+              alt="Quickpay Logo"
               className="h-7 w-auto"
               width={83}
               height={32}

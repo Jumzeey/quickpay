@@ -69,8 +69,8 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
             <div className="flex flex-col items-center py-8 px-6">
                 <div className="mb-2">
                     <Image
-                        src="/images/cray-logo.svg"
-                        alt="CRAY Logo"
+                        src="/images/quickpay-logo-blue.svg"
+                        alt="Quickpay Logo"
                         width={140}
                         height={50}
                         className="object-contain"
@@ -162,16 +162,16 @@ const PayoutReceipt: React.FC<PayoutReceiptProps> = ({ payout }) => {
                 </div>
             </div>
 
-            {/* Visit Cray Finance Link */}
+            {/* Visit Quickpay Link */}
             <div className="px-6 pb-8 text-center">
                 <a
-                    href="https://www.crayfinance.com/"
+                    href="https://quickpay.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#005BB0] text-sm font-medium hover:underline"
                     style={{ fontSize: '14px', color: '#005BB0', textDecoration: 'none' }}
                 >
-                    Visit Cray Finance
+                    Visit Quickpay
                 </a>
             </div>
         </div>

@@ -15,6 +15,7 @@ export const apiEndpoints = {
   },
   transaction: {
     GET_BALANCE: '/merchant/client/get-balance',
+    GET_WALLETS: '/merchant/client/get-balance',
     GET_MERCHANT_BALANCE: '/merchant/dashboard/balance',
     GET_TRANSACTIONS: '/merchant/dashboard/transactions',
     GET_SETTLEMENT_ACCOUNTS: '/merchant/settlements/accounts',
@@ -50,8 +51,11 @@ export const apiEndpoints = {
     GET_COLLECTION_EXPORT_STATUS: '/merchant/client/exports/:id/status',
   },
   conversions: {
-    GET_CONVERSION_HISTORY: '/conversions/history',
+    GET_CONVERSION_HISTORY: '/merchant/conversions',
     GET_CONVERSION_EXPORT: '/conversions/export',
+    GET_RATES: '/merchant/rates',
+    GET_QUOTE: '/merchant/quote',
+    INITIATE_CONVERSION: '/merchant/conversions/convert',
     GET_COLLECTION_HISTORY: '/merchant/collections-history',
     GET_PAYMENT_LINKS: '/merchant/payment-links',
     CREATE_PAYMENT_LINK: '/merchant/payment-links/store',
@@ -85,7 +89,13 @@ export const apiEndpoints = {
   payouts: {
     GET_PAYOUT_HISTORY: '/merchant/disbursements',
     ADD_PAYOUT: '/merchant/disbursements/interbank',
+    ADD_USDT_PAYOUT: '/merchant/disbursements/usdt',
     VERIFY_PAYOUT_OTP: '/merchant/disbursements/interbank/complete',
+    VERIFY_USDT_PAYOUT_OTP: '/merchant/disbursements/usdt/complete',
+    INITIATE_BULK_PAYOUT: '/merchant/disbursements/interbank/bulk',
+    GET_BULK_PAYOUT_STATUS: '/merchant/disbursements/interbank/bulk',
+    GET_BULK_PAYOUT_TRANSACTIONS: '/merchant/disbursements/interbank/bulk/:id/transactions',
+    COMPLETE_BULK_PAYOUT: '/merchant/disbursements/interbank/bulk/complete',
     REQUERY_PAYOUT: '/merchant/disbursements/interbank/requery',
     EXPORT_PAYOUT_HISTORY_TRANSACTIONS: '/merchant/disbursements',
     GET_PAYOUT_EXPORT_STATUS: '/merchant/client/exports/:id/status',
@@ -95,6 +105,13 @@ export const apiEndpoints = {
   webhooks: {
     GET_WEBHOOK: '/merchant/webhook',
     UPDATE_WEBHOOK: '/merchant/webhook/store',
+  },
+  security: {
+    GET_2FA_STATUS: '/merchant/security/2fa',
+    SETUP_2FA: '/merchant/security/2fa/setup',
+    CONFIRM_2FA: '/merchant/security/2fa/confirm',
+    REGENERATE_RECOVERY_CODES: '/merchant/security/2fa/recovery-codes/regenerate',
+    SEND_EMAIL_OTP_FOR_2FA: '/merchant/security/2fa/email/send-otp',
   },
   settings: {
     GET_API_CREDENTIALS: '/api-credentials',
@@ -122,6 +139,7 @@ export const apiEndpoints = {
   utilities: {
     UPLOAD_FILE: '/utilities/upload',
     SUPPORTED_COUNTRIES: '/utility/supported-countries',
+    GET_PAYOUT_OPTIONS: '/utilities/payout-options',
   },
   ecommerce: {
     GET_SHIPPING_SETTINGS: '/merchant/ecommerce/shippings',
@@ -133,6 +151,11 @@ export const apiEndpoints = {
     CREATE_IP_WHITELIST: '/merchant/ip-whitelist',
     UPDATE_IP_WHITELIST: '/merchant/ip-whitelist',
     DELETE_IP_WHITELIST: '/merchant/ip-whitelist',
+  },
+  crypto: {
+    INITIATE_CRYPTO_PAYMENT: '/merchant/crypto/initiate',
+    GET_CRYPTO_ADDRESSES: '/merchant/crypto/addresses',
+    GET_CRYPTO_ADDRESS_TRANSACTIONS: '/merchant/crypto/addresses',
   },
   settlements: {
     LIST_SETTLEMENTS: '/merchant/settlements',

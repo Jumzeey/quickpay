@@ -1,17 +1,22 @@
-import { forwardRef, SelectHTMLAttributes } from "react";
+import { forwardRef } from "react";
+import Select, { SelectOption } from "@/components/shared/Select";
 
 type FormSelectProps = {
     label: string;
     isLoading?: boolean;
     loadingText?: string;
-    options: { value: string; label: string }[];
+    options: SelectOption[];
     id: string;
     htmlFor: string;
     error?: string;
     touched?: boolean;
     className?: string;
     placeholder?: string;
-} & SelectHTMLAttributes<HTMLSelectElement>;
+    value?: string;
+    onChange?: (e: { target: { name?: string; value: string } }) => void;
+    name?: string;
+    disabled?: boolean;
+};
 
 const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
     ({ label,
@@ -23,10 +28,24 @@ const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
         htmlFor,
         touched,
         placeholder,
+        value,
+        onChange,
+        name,
+        disabled,
         ...props
     }, ref) => {
         const hasError = touched && error;
-        const { name } = props
+
+        const handleChange = (selectedValue: string) => {
+            if (onChange) {
+                onChange({
+                    target: {
+                        name: name,
+                        value: selectedValue
+                    }
+                });
+            }
+        };
 
         return (
             <div className="flex flex-col gap-0.5">
@@ -44,22 +63,16 @@ const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                     </div>
                 )}
 
-                <select
-                    ref={ref}
-                    id={id}
-                    name={name}
-                    className={`h-[60px] w-full rounded px-3 border ${hasError ? "border-danger" : "border-[#C4C4C43D]"} `}
-                    {...props}
-                >
-                    <option value="" disabled>
-                        {placeholder || ""}
-                    </option>
-                    {options.map((option, index) => (
-                        <option key={index} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
+                <Select
+                    options={options}
+                    value={value}
+                    onChange={handleChange}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    isLoading={isLoading}
+                    loadingText={loadingText}
+                    buttonClassName={hasError ? "border border-danger" : ""}
+                />
 
                 {hasError && (
                     <span className="text-danger inline-block text-xs font-medium pt-0.5">

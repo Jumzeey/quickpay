@@ -14,7 +14,7 @@ export interface SupportedCountriesResponse {
   meta: any;
 }
 
-export async function getSupportedCountries(): Promise<SupportedCountry[]> {
+export async function getSupportedCountries(): Promise<SupportedCountriesResponse> {
   try {
     const response = await api.get(apiEndpoints.utilities.SUPPORTED_COUNTRIES);
     return response.data;
@@ -25,7 +25,7 @@ export async function getSupportedCountries(): Promise<SupportedCountry[]> {
 
 export async function signIn(payload: any) {
   try {
-    const response = await api.post(apiEndpoints.auth.LOGIN,payload);
+    const response = await api.post(apiEndpoints.auth.LOGIN, payload);
     return response;
   } catch (error) {
     throw error;
@@ -35,8 +35,8 @@ export async function signIn(payload: any) {
 export async function verifyOtp(payload: any) {
   try {
     const response = await api.post(
-       `${apiEndpoints.auth.VERIFY_OTP}/${payload.verify_reference}`,
-       payload
+      `${apiEndpoints.auth.VERIFY_OTP}/${payload.verify_reference}`,
+      payload
     );
     return response;
   } catch (error) {
@@ -46,7 +46,7 @@ export async function verifyOtp(payload: any) {
 
 export async function forgotPassword(payload: any) {
   try {
-    const response = await api.post(apiEndpoints.auth.FORGOT_PASSWORD,payload);
+    const response = await api.post(apiEndpoints.auth.FORGOT_PASSWORD, payload);
     return response;
   } catch (error) {
     throw error;
@@ -55,11 +55,17 @@ export async function forgotPassword(payload: any) {
 
 export async function forgotPasswordOtp(payload: any) {
   try {
+    const body = {
+      verify_reference: payload.verify_reference,
+      otp: payload.otp,
+      password: payload.password,
+      password_confirmation: payload.password_confirmation,
+    };
     const response = await api.post(
       `${apiEndpoints.auth.FORGOT_PASSWORD_OTP}/${payload.verify_reference}`,
-      payload
-   );
-   return response;
+      body
+    );
+    return response;
   } catch (error) {
     throw error;
   }
@@ -67,7 +73,7 @@ export async function forgotPasswordOtp(payload: any) {
 
 export async function newPassword(payload: any) {
   try {
-    const response = await api.post(apiEndpoints.auth.RESET_PASSWORD,payload);
+    const response = await api.post(apiEndpoints.auth.RESET_PASSWORD, payload);
     return response;
   } catch (error) {
     throw error;
@@ -87,7 +93,7 @@ export async function resendOtp(verify_reference: any) {
 
 export async function signUp(payload: any) {
   try {
-    const response = await api.post(apiEndpoints.auth.REGISTER,payload);
+    const response = await api.post(apiEndpoints.auth.REGISTER, payload);
     return response;
   } catch (error) {
     throw error;
@@ -113,3 +119,54 @@ export async function verifyEmail(token: any) {
     throw error;
   }
 }
+
+export async function get2faStatus() {
+  try {
+    const response = await api.get(apiEndpoints.security.GET_2FA_STATUS);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function setup2fa() {
+  try {
+    const response = await api.post(apiEndpoints.security.SETUP_2FA, {
+      method: "totp",
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function confirm2fa(payload: { totp: string }) {
+  try {
+    const response = await api.post(apiEndpoints.security.CONFIRM_2FA, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function regenerateRecoveryCodes(payload: { totp: string }) {
+  try {
+    const response = await api.post(
+      apiEndpoints.security.REGENERATE_RECOVERY_CODES,
+      payload
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function sendEmailOtpFor2fa() {
+  try {
+    const response = await api.post(apiEndpoints.security.SEND_EMAIL_OTP_FOR_2FA);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+

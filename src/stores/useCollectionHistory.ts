@@ -1,4 +1,7 @@
-import { CollectionHistoryResponse, CollectionsTypes } from '@/components/collections/types';
+import {
+  CollectionHistoryResponse,
+  CollectionsTypes,
+} from "@/components/collections/types";
 import {
   createVirtualAccount,
   getCollectionHistory,
@@ -7,9 +10,13 @@ import {
   getSingleRefund,
   getVirtualAccounts,
   VirtualAccountFormValues,
-} from '@/services/collections';
-import { Pagination } from '@/stores/useWalletLogs';
-import { create } from 'zustand';
+} from "@/services/collections";
+import { Pagination } from "@/stores/useWalletLogs";
+import useKyc from "@/stores/useKyc";
+import { KycStatus } from "@/types/kyc";
+import { notifyError } from "@/util/utils";
+import { create } from "zustand";
+import router from "next/router";
 
 export interface VirtualAccount {
   id: string;
@@ -41,7 +48,6 @@ export interface SearchParams {
   endDate?: Date;
   [key: string]: any;
 }
-
 
 interface CollectionHistoryState {
   getCollectionHistoryLoading: boolean;
@@ -77,15 +83,21 @@ const initialState: CollectionHistoryState = {
 };
 
 interface CollectionHistoryStore extends CollectionHistoryState {
-  fetchCollectionHistory: (searchParams?: SearchParams) => Promise<{ collections: CollectionsTypes[] }>;
-  fetchVirtualAccounts: (searchParams?: SearchParams) => Promise<{ virtual_accounts: VirtualAccount[] }>;
-  fetchPaymentMandates: (searchParams: SearchParams) => Promise<{ mandates: PaymentMandate[] }>;
-  fetchRefund: (id: string) => Promise<{ refund: Refund[], error?: any }>;
+  fetchCollectionHistory: (
+    searchParams?: SearchParams
+  ) => Promise<{ collections: CollectionsTypes[] }>;
+  fetchVirtualAccounts: (
+    searchParams?: SearchParams
+  ) => Promise<{ virtual_accounts: VirtualAccount[] }>;
+  fetchPaymentMandates: (
+    searchParams: SearchParams
+  ) => Promise<{ mandates: PaymentMandate[] }>;
+  fetchRefund: (id: string) => Promise<{ refund: Refund[]; error?: any }>;
   fetchRefunds: (searchParams: SearchParams) => Promise<{ refund: Refund[] }>;
 }
 
 const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split("T")[0];
 };
 
 const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
@@ -99,12 +111,16 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
     try {
       const params = {
         ...searchParams,
-        ...(searchParams && searchParams.startDate && searchParams.endDate && {
-          start_date: formatDate(searchParams.startDate),
-          end_date: formatDate(searchParams.endDate),
-        }),
+        ...(searchParams &&
+          searchParams.startDate &&
+          searchParams.endDate && {
+            start_date: formatDate(searchParams.startDate),
+            end_date: formatDate(searchParams.endDate),
+          }),
       };
-      const { collections = [], pagination } = (await getCollectionHistory(params) as CollectionHistoryResponse) || {};
+      const { collections = [], pagination } =
+        ((await getCollectionHistory(params)) as CollectionHistoryResponse) ||
+        {};
       set((state) => ({
         ...state,
         collections,
@@ -127,18 +143,61 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
     try {
       const params = {
         ...(searchParams || {}),
-        ...((searchParams && searchParams.startDate && searchParams.endDate) && {
-          start_date: formatDate(searchParams.startDate),
-          end_date: formatDate(searchParams.endDate),
-        }),
+        ...(searchParams &&
+          searchParams.startDate &&
+          searchParams.endDate && {
+            start_date: formatDate(searchParams.startDate),
+            end_date: formatDate(searchParams.endDate),
+          }),
       };
-      const { virtual_accounts = [], pagination } = await getVirtualAccounts(params) || {};
+      const { virtual_accounts = [], pagination } =
+        (await getVirtualAccounts(params)) || {};
       set((state) => ({
         ...state,
         virtual_accounts,
         pagination: pagination || initialState.pagination,
       }));
       return { virtual_accounts };
+    } catch (error: any) {
+      // Check if error is about Accept header (which indicates KYC not submitted)
+      const errorMessage = error?.message || error?.responseText || "";
+      if (
+        errorMessage.includes("Accept") &&
+        errorMessage.includes("application/json")
+      ) {
+        try {
+          // Check KYC status
+          const { getKyc } = useKyc.getState();
+          const { userKyc } = await getKyc();
+
+          // If KYC status is "Pending", "Unverified", or "Rejected", redirect to your-business page
+          const status = userKyc?.status as KycStatus | string;
+          if (
+            status === KycStatus.PENDING ||
+            status === KycStatus.UNVERIFIED ||
+            status === KycStatus.REJECTED ||
+            !userKyc?.fields ||
+            userKyc?.fields?.length === 0
+          ) {
+            notifyError(
+              "Please complete your KYC verification to access virtual accounts. You will be redirected to complete your business verification.",
+              "KYC Verification Required"
+            );
+            router.push("/your-business");
+            return { virtual_accounts: [] };
+          }
+        } catch (kycError) {
+          // If getKyc fails, still redirect to your-business page
+          notifyError(
+            "Please complete your KYC verification to access virtual accounts. You will be redirected to complete your business verification.",
+            "KYC Verification Required"
+          );
+          router.push("/your-business");
+          return { virtual_accounts: [] };
+        }
+      }
+      // Error will be handled by the onError callback in the component
+      throw error;
     } finally {
       set((state) => ({
         ...state,
@@ -161,7 +220,7 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
       await get().fetchVirtualAccounts();
       return response;
     } catch (error) {
-      console.error('Error creating virtual account:', error);
+      console.error("Error creating virtual account:", error);
       throw error;
     } finally {
       set((state) => ({
@@ -179,12 +238,14 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
     try {
       const params = {
         ...searchParams,
-        ...(searchParams.startDate && searchParams.endDate && {
-          start_date: formatDate(searchParams.startDate),
-          end_date: formatDate(searchParams.endDate),
-        }),
+        ...(searchParams.startDate &&
+          searchParams.endDate && {
+            start_date: formatDate(searchParams.startDate),
+            end_date: formatDate(searchParams.endDate),
+          }),
       };
-      const { mandates = [], pagination } = await getPaymentMandates(params) || {};
+      const { mandates = [], pagination } =
+        (await getPaymentMandates(params)) || {};
       set((state) => ({
         ...state,
         mandates,
@@ -216,11 +277,14 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
       const status = error?.response?.status;
 
       if (status >= 400 && status < 600) {
-        console.error('Refund fetch error:', error?.response?.data || error.message);
+        console.error(
+          "Refund fetch error:",
+          error?.response?.data || error.message
+        );
         set((state) => ({
           ...state,
           refund: [],
-          refundError: error?.response?.data?.message || 'An error occurred',
+          refundError: error?.response?.data?.message || "An error occurred",
         }));
         return { refund: [], error: error?.response?.data };
       }
@@ -229,7 +293,7 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
         set((state) => ({
           ...state,
           refund: [],
-          refundError: error?.response?.data?.message || 'An error occurred',
+          refundError: error?.response?.data?.message || "An error occurred",
         }));
         return { refund: [], error: error?.response?.data };
       }
@@ -251,12 +315,13 @@ const useCollectionHistory = create<CollectionHistoryStore>((set, get) => ({
     try {
       const params = {
         ...searchParams,
-        ...(searchParams.startDate && searchParams.endDate && {
-          start_date: formatDate(searchParams.startDate),
-          end_date: formatDate(searchParams.endDate),
-        }),
+        ...(searchParams.startDate &&
+          searchParams.endDate && {
+            start_date: formatDate(searchParams.startDate),
+            end_date: formatDate(searchParams.endDate),
+          }),
       };
-      const { refund = [], pagination } = await getRefunds(params) || {};
+      const { refund = [], pagination } = (await getRefunds(params)) || {};
       set((state) => ({
         ...state,
         refund,

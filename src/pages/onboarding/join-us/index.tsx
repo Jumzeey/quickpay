@@ -6,11 +6,12 @@ import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
+import { EXTERNAL_URLS } from "@/constants";
 import { useFormValidation } from "@/hooks/useFormValidation";
 // import { SupportedCountry } from "@/services/authentication";
 import useAuthentication from "@/stores/useAuthentication";
 import useLoadRecaptcha from "@/util/useLoadRecaptcha";
-import { notifyError, notifySuccess, passwordValidation } from "@/util/utils";
+import { notifyError, notifySuccess } from "@/util/utils";
 import { getData } from "country-list";
 import countryToCurrency, { Countries, Currencies } from "country-to-currency";
 import Image from "next/image";
@@ -32,9 +33,26 @@ interface FormValues {
   agree_to_terms: boolean;
 }
 
+const nameRegex = /^[a-zA-Z\s\-']+$/;
+
+const signUpPasswordValidation = Yup.string()
+  .required("Password is required!")
+  .matches(
+    /[!@#$%^&*(),.?":{}|<>]/,
+    "Password must contain at least one symbol."
+  )
+  .matches(/\d/, "Password must contain at least one number.")
+  .min(8, "Password must be at least 8 characters long")
+  .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+  .matches(/[A-Z]/, "Password must contain at least one uppercase letter");
+
 const validationSchema = Yup.object().shape({
-  firstname: Yup.string().required("First Name is required!"),
-  lastname: Yup.string().required("Last Name is required!"),
+  firstname: Yup.string()
+    .required("First Name is required!")
+    .matches(nameRegex, "First name can only contain letters"),
+  lastname: Yup.string()
+    .required("Last Name is required!")
+    .matches(nameRegex, "Last name can only contain letters"),
   email: Yup.string()
     .email("Enter a valid email")
     .matches(
@@ -45,7 +63,7 @@ const validationSchema = Yup.object().shape({
   phone: Yup.string().required("Phone number is required!"),
   country: Yup.string().required("Country is required!"),
   business_name: Yup.string().required("Business Name is required!"),
-  password: passwordValidation,
+  password: signUpPasswordValidation,
   password_confirmation: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),
@@ -64,6 +82,7 @@ const RegisterPage = () => {
   } = useAuthentication();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // Load supported countries on component mount
   // useEffect(() => {
@@ -105,7 +124,8 @@ const RegisterPage = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    watch,
+    formState: { errors },
     reset
   } = useFormValidation<FormValues>(validationSchema, {
     defaultValues: {
@@ -113,7 +133,8 @@ const RegisterPage = () => {
       lastname: "",
       email: "",
       phone: "",
-      country: "NG",
+      // Keep empty so the Yup `.required()` rule actually forces the user to choose.
+      country: "",
       password: "",
       password_confirmation: "",
       business_name: "",
@@ -121,6 +142,18 @@ const RegisterPage = () => {
     },
     mode: "onChange"
   });
+  const passwordValue = watch("password") || "";
+  const passwordRequirements = useMemo(
+    () => ({
+      hasLowercase: /[a-z]/.test(passwordValue),
+      hasUppercase: /[A-Z]/.test(passwordValue),
+      hasSpecialCharacter: /[!@#$%^&*(),.?":{}|<>]/.test(passwordValue),
+      hasNumber: /\d/.test(passwordValue),
+      hasMinLength: passwordValue.length >= 8
+    }),
+    [passwordValue]
+  );
+  const showPasswordChecklist = isPasswordFocused || passwordValue.length > 0;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -150,7 +183,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
-      <WebPageTitle title="Register | Merchant Portal" />
+      <WebPageTitle title="Register | Cray Merchant Portal" />
       <NoSSR>
         <div className="w-full max-w-2xl mx-auto">
           {/* Card Container */}
@@ -158,21 +191,23 @@ const RegisterPage = () => {
             {/* Logo Section */}
             <div className="px-8 pt-8 pb-4 bg-auth-header">
               <div className="flex items-center">
-                <Image
-                  src="/images/logo.png"
-                  alt="Logo"
-                  width={80}
-                  height={32}
-                  priority
-                  className="h-8 w-auto"
-                />
+                <Link href="/onboarding/sign-in" className="inline-flex cursor-pointer">
+                  <Image
+                    src="/images/cray-logo.svg"
+                    alt="Cray"
+                    width={80}
+                    height={32}
+                    priority
+                    className="h-8 w-auto"
+                  />
+                </Link>
               </div>
             </div>
 
             {/* Registration Form */}
             <div className="px-8 pb-8 mt-12">
               <div className="space-y-2 mb-8">
-                <h2 className="text-lg font-extrabold text-[#000000]">
+                <h2 className="text-lg font-extrabold text-[#184078]">
                   Create account
                 </h2>
                 <p className="text-sm font-semibold text-[#00000080]">
@@ -258,6 +293,7 @@ const RegisterPage = () => {
                         htmlFor="email"
                         error={errors.email?.message}
                         touched={!!errors.email}
+                        autoComplete="off"
                         {...field}
                       />
                     )}
@@ -269,7 +305,7 @@ const RegisterPage = () => {
                   control={control}
                   render={({ field }) => (
                     <FormSelectSearch
-                      placeholder=""
+                      placeholder="Select country"
                       // placeholder={supportedCountriesLoading ? "Loading countries..." : "Select country"}
                       label="Country"
                       id="country"
@@ -287,17 +323,102 @@ const RegisterPage = () => {
                   <Controller
                     name="password"
                     control={control}
-                    render={({ field }) => (
-                      <FormInput
-                        label="Password"
-                        id="password"
-                        type="password"
-                        htmlFor="password"
-                        error={errors.password?.message}
-                        touched={!!errors.password}
-                        {...field}
-                      />
-                    )}
+                    render={({ field }) => {
+                      const { onBlur, ...fieldProps } = field;
+
+                      return (
+                      <div className="space-y-3">
+                        <FormInput
+                          label="Password"
+                          id="password"
+                          type="password"
+                          htmlFor="password"
+                          autoComplete="off"
+                          onFocus={() => setIsPasswordFocused(true)}
+                          onBlur={() => {
+                            onBlur();
+                            setIsPasswordFocused(false);
+                          }}
+                          {...fieldProps}
+                        />
+
+                        {showPasswordChecklist && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasLowercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasLowercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One lowercase letter
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasUppercase ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasUppercase ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One uppercase letter
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasSpecialCharacter ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasSpecialCharacter ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One special character
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasNumber ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasNumber ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                One number
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  passwordRequirements.hasMinLength ? "bg-[#22A447]" : "bg-[#B3B3B3]"
+                                }`}
+                              />
+                              <p
+                                className={`text-xs ${
+                                  passwordRequirements.hasMinLength ? "text-[#22A447]" : "text-[#7F7F7F]"
+                                }`}
+                              >
+                                8 characters minimum
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      );
+                    }}
                   />
 
                   <Controller
@@ -311,6 +432,7 @@ const RegisterPage = () => {
                         htmlFor="password_confirmation"
                         error={errors.password_confirmation?.message}
                         touched={!!errors.password_confirmation}
+                        autoComplete="off"
                         {...field}
                       />
                     )}
@@ -334,8 +456,8 @@ const RegisterPage = () => {
                       <label htmlFor="agree_to_terms" className="text-sm font-medium text-[#7F7F7F] leading-snug">
                         I consent to the collection and processing of my personal data in line with data regulations as
                         described in the{' '}
-                        <Link href="/privacy-policy" className="text-primary">
-                          Privacy Policy
+                        <Link href={EXTERNAL_URLS.PRIVACY_POLICY} target="_blank" rel="noopener noreferrer" className="text-primary">
+                          Cray Privacy Policy
                         </Link>.
                       </label>
                     </div>
@@ -365,7 +487,7 @@ const RegisterPage = () => {
                 Already have an account?{" "}
                 <Link
                   href="/onboarding/sign-in"
-                  className="text-primary hover:text-red-700 ml-1"
+                  className="text-primary hover:text-blue-700 ml-1"
                 >
                   Sign in
                 </Link>

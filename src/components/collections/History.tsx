@@ -5,14 +5,17 @@ import { CollectionGatewayMetaResponse } from "@/components/collections/types";
 import Dropdown from "@/components/Dropdown";
 import DynamicTable from "@/components/DynamicTable";
 import EmptyState from "@/components/EmptyState";
-import ExportModal from "@/components/export-modal";
 import Filter from "@/components/Filter";
+import dynamic from "next/dynamic";
+
+const ExportModal = dynamic(() => import("@/components/export-modal"), { ssr: false });
 import Icon from "@/components/icon";
 import Loader from "@/components/loader";
 import Pagination from "@/components/pagination";
 import TableSkeleton from "@/components/TableSkeleton";
 import TransactionDetails from "@/components/transactionDetails";
 import { usePaginatedEffect } from "@/hooks/useEffectFetch";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import { getCollectionGatewayMeta, repushNotification } from "@/services/collections";
 import useClickEvent from "@/stores/useClickEvent";
 import useCollectionHistory from "@/stores/useCollectionHistory";
@@ -20,7 +23,7 @@ import useCurrency from "@/stores/useCurrency";
 import useFilter from "@/stores/useFilter";
 import debounce from "@/util/debounce";
 import { apiEndpoints } from "@/util/endpoints";
-import { copyToClipboard, formatDate, notifyError, notifySuccess } from "@/util/utils";
+import { copyToClipboard, formatDate, notifyError, formatAmount, formatBalance } from "@/util/utils";
 import Link from "next/link";
 import React, { useCallback, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -35,6 +38,7 @@ interface CollectionsProps {
 }
 
 const CollectionHistory = () => {
+    const { handleError, handleSuccess } = useApiResponse();
     const { selectedItem, handleClick } = useClickEvent();
     const [searchInput, setSearchInput] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -52,6 +56,37 @@ const CollectionHistory = () => {
 
     const { selectedCurrency } = useCurrency();
     const { showFilter, toggleFilter } = useFilter();
+
+    // Helper function to format amounts with commas
+    const formatAmountValue = (value: any, currency?: string): string => {
+        if (!value || value === 'N/A') return 'N/A';
+
+        // If it's already a formatted string with currency symbol, extract and format
+        if (typeof value === 'string' && /^[₦$€£¥]/.test(value.trim())) {
+            const currencySymbol = value.trim().charAt(0);
+            const numberPart = value.trim().slice(1).replace(/,/g, '').trim();
+            const numValue = parseFloat(numberPart);
+
+            if (!isNaN(numValue) && isFinite(numValue)) {
+                // Format with commas and ensure 2 decimal places
+                const formatted = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${currencySymbol}${formatted}`;
+            }
+        }
+
+        // If it's a number, use formatBalance
+        if (typeof value === 'number') {
+            return formatBalance(value, currency || selectedCurrency);
+        }
+
+        // If it's a string that looks like a number, try to format it
+        const numValue = parseFloat(value.toString().replace(/[^0-9.-]/g, ''));
+        if (!isNaN(numValue) && isFinite(numValue)) {
+            return formatBalance(numValue, currency || selectedCurrency);
+        }
+
+        return value;
+    };
 
     const [state, setState] = useState<CollectionsProps>({
         collectionHistory: [],
@@ -80,7 +115,7 @@ const CollectionHistory = () => {
     }, {
         key: 'amount',
         title: 'Amount',
-        render: (value: any, row: any) => row?.amount || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.amount, row?.currency),
     }, {
         key: 'channel',
         title: 'Transaction Type',
@@ -100,15 +135,15 @@ const CollectionHistory = () => {
     }, {
         key: 'processing_fee',
         title: 'Processing Fee',
-        render: (value: any, row: any) => row?.processing_fee || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.processing_fee, row?.currency),
     }, {
         key: 'net_amount',
         title: 'Net Amount',
-        render: (value: any, row: any) => row?.net_amount || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.net_amount, row?.currency),
     }, {
         key: 'converted_amount',
         title: 'Converted Amount',
-        render: (value: any, row: any) => row?.converted_amount || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.converted_amount, row?.currency),
     }, {
         key: 'rate',
         title: 'Rate',
@@ -116,7 +151,7 @@ const CollectionHistory = () => {
     }, {
         key: 'refunded',
         title: 'Refunded Value',
-        render: (value: any, row: any) => row?.refunded || 'N/A',
+        render: (value: any, row: any) => formatAmountValue(row?.refunded, row?.currency),
     }, {
         key: 'value_date',
         title: 'Value Date',
@@ -232,7 +267,7 @@ const CollectionHistory = () => {
 
             toggleModal('viewTransactionMeta');
         } catch (error: any) {
-            notifyError(error.message);
+            handleError(error);
         } finally {
             setIsLoadingMeta(false);
         }
@@ -260,12 +295,12 @@ const CollectionHistory = () => {
         // try {
         //     const response = await getCollectionHistory({ export: true });
         //     if (!response || !response.export_link) {
-        //         notifyError("Export link is not available.");
+        //         handleError({ message: "Export link is not available." });
         //         return;
         //     }
         //     downloadFile(response.export_link);
         // } catch (error: any) {
-        //     notifyError(error.message);
+        //     handleError(error);
         // }
         try {
             // Show loading state
@@ -283,7 +318,7 @@ const CollectionHistory = () => {
             });
         } catch (error: any) {
             console.error("Failed to get account ID for export:", error);
-            notifyError("Failed to prepare export. Please try again.");
+            handleError(error, "Failed to prepare export. Please try again.");
             setIsExportModalOpen(false);
         }
     };
@@ -297,10 +332,10 @@ const CollectionHistory = () => {
             // @ts-ignore
             if (response?.message) {
                 // @ts-ignore
-                notifySuccess(response.message);
+                handleSuccess(response);
             }
         } catch (error: any) {
-            notifyError(error.message);
+            handleError(error);
         } finally {
             setState({ ...state, isLoading: false });
         }

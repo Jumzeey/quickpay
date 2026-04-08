@@ -2,6 +2,7 @@
 
 import React, { useEffect, Fragment, useState } from "react";
 import Layout from "@/components/layout";
+import PageGuard from "@/components/PageGuard";
 import Table from "@/components/table";
 import Image from "next/image";
 import Button from "@/components/button";
@@ -13,8 +14,9 @@ import TableSkeleton from "@/components/TableSkeleton";
 import WebPageTitle from "@/components/WebPageTitle";
 import { getSettlementBreakdown } from "@/services/transaction";
 import { notifyError } from "@/util/utils";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 
-const SettlementBreakdown = () => {
+const SettlementBreakdownContent = () => {
   const router = useRouter();
 
   const [state, setState] = useState({
@@ -171,6 +173,23 @@ const SettlementBreakdown = () => {
       )}
     </Layout>
   );
+};
+
+const SettlementBreakdown = () => {
+  const hasAccess = useModuleAccess("settlements");
+  if (!hasAccess) {
+    return (
+      <Layout pageTitle="Settlement Breakdown" icon="history">
+        <WebPageTitle title="Settlement Breakdown | Cray Merchant Portal" />
+        <h2 className="text-xl pt-5 font-semibold">Manage Settlement Breakdown</h2>
+        <p className="text-sm pt-3 pb-5">Manage settlement breakdown within your company</p>
+        <PageGuard moduleSlug="settlements">
+          <div />
+        </PageGuard>
+      </Layout>
+    );
+  }
+  return <SettlementBreakdownContent />;
 };
 
 export default SettlementBreakdown;

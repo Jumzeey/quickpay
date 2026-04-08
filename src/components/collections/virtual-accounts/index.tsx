@@ -1,5 +1,7 @@
 import ActionButton from '@/components/action-button';
-import RequestVirtualAccount from '@/components/collections/RequestVirtualAcount';
+import dynamic from 'next/dynamic';
+
+const RequestVirtualAccount = dynamic(() => import('@/components/collections/RequestVirtualAcount'), { ssr: false });
 import Dropdown from '@/components/Dropdown';
 import EmptyState from '@/components/EmptyState';
 import Filter from '@/components/Filter';
@@ -9,6 +11,7 @@ import { ReferenceSearch } from '@/components/reference-search';
 import Table from '@/components/table';
 import TableSkeleton from '@/components/TableSkeleton';
 import { usePaginatedEffect } from '@/hooks/useEffectFetch';
+import { useApiResponse } from '@/hooks/useApiResponse';
 import { getVirtualAccounts } from '@/services/collections';
 import useClickEvent from '@/stores/useClickEvent';
 import useCollectionHistory from '@/stores/useCollectionHistory';
@@ -20,10 +23,10 @@ import {
   downloadFile,
   formatDate,
   formatDateTime2,
-  notifyError,
 } from '@/util/utils';
 import { useRouter } from 'next/router';
 import React, { useCallback, useState } from 'react';
+import useKyc from '@/stores/useKyc';
 import USDVirtualAccountView from '../USDVirualAccountView';
 
 interface VirtualAccounts {
@@ -52,6 +55,7 @@ interface AccountProps {
 }
 
 const VirtualAccounts = () => {
+  const { handleError } = useApiResponse();
   const { handleClick } = useClickEvent();
   const [searchInput, setSearchInput] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -118,7 +122,26 @@ const VirtualAccounts = () => {
       console.log(response);
       response?.export_link && downloadFile(response.export_link);
     } catch (error: any) {
-      notifyError(error.message);
+      // Check if error is about Accept header (which indicates KYC not submitted)
+      const errorMessage = error?.message || error?.responseText || '';
+      if (errorMessage.includes("Accept") && errorMessage.includes("application/json")) {
+        try {
+          // Check KYC status
+          const { getKyc } = useKyc.getState();
+          const { userKyc } = await getKyc();
+
+          // If KYC status is "Pending", redirect to your-business page
+          if (userKyc?.status === "Pending" || !userKyc?.fields || userKyc?.fields?.length === 0) {
+            router.push("/your-business");
+            return;
+          }
+        } catch (kycError) {
+          // If getKyc fails, still redirect to your-business page
+          router.push("/your-business");
+          return;
+        }
+      }
+      handleError(error);
     }
   };
 
@@ -144,7 +167,7 @@ const VirtualAccounts = () => {
     },
     {
       onError: error => {
-        console.error('Failed to fetch virtual accounts history:', error);
+        handleError(error, 'Failed to fetch virtual accounts');
       },
     }
   );
@@ -208,8 +231,8 @@ const VirtualAccounts = () => {
                       <tr
                         key={index}
                         className={`${index !== virtual_accounts.length - 1
-                            ? '[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700'
-                            : ''
+                          ? '[&>td]:border-b [&>td]:border-[#C4C4C452] dark:border-gray-700'
+                          : ''
                           } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
                       >
                         <td className='text-sm px-5 py-6 font-medium text-gray-900 dark:text-gray-100'>

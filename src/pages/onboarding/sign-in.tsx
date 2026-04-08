@@ -6,8 +6,8 @@ import Loader from "@/components/loader";
 import NoSSR from "@/components/noSSR";
 import WebPageTitle from "@/components/WebPageTitle";
 import { useFormValidation } from "@/hooks/useFormValidation";
+import { useApiResponse } from "@/hooks/useApiResponse";
 import useAuthentication from "@/stores/useAuthentication";
-import { notifyError, notifySuccess } from "@/util/utils";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,6 +35,7 @@ const validationSchema = Yup.object().shape({
 const SignInPage: React.FC = () => {
   const router = useRouter();
   const { signIn } = useAuthentication();
+  const { handleError, handleSuccess } = useApiResponse();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -54,14 +55,14 @@ const SignInPage: React.FC = () => {
 
     try {
       const response = await signIn(values);
-      notifySuccess(response.message);
+      handleSuccess(response);
       localStorage.setItem("user-email", values.email);
       router.push({
         pathname: "/onboarding/otp",
         query: { source: "sign-in" },
       });
     } catch (error: any) {
-      notifyError(error.message);
+      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +70,7 @@ const SignInPage: React.FC = () => {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-auth bg-opacity-10">
-      <WebPageTitle title="Login | Merchant Portal" />
+      <WebPageTitle title="Login | Cray Merchant Portal" />
       <NoSSR>
         <motion.div
           className="flex flex-col items-center justify-center "
@@ -83,20 +84,22 @@ const SignInPage: React.FC = () => {
               {/* Logo Section */}
               <div className="px-8 pt-8 pb-4 bg-auth-header">
                 <div className="flex items-center">
-                  <Image
-                    src="/images/logo.png"
-                    alt="Logo"
-                    width={80}
-                    height={32}
-                    priority
-                    className="h-8 w-auto"
-                  />
+                  <Link href="/onboarding/sign-in" className="inline-flex cursor-pointer">
+                    <Image
+                      src="/images/cray-logo.svg"
+                      alt="Cray"
+                      width={80}
+                      height={32}
+                      priority
+                      className="h-8 w-auto"
+                    />
+                  </Link>
                 </div>
               </div>
 
               {/* Sign In Form */}
               <div className="px-8 pb-8 mt-12">
-                <h2 className="text-lg font-extrabold text-[#000000] mb-8">
+                <h2 className="text-lg font-extrabold text-[#184078] mb-8">
                   Sign in.
                 </h2>
 
@@ -112,6 +115,7 @@ const SignInPage: React.FC = () => {
                         htmlFor="email"
                         error={errors.email?.message}
                         touched={!!errors.email}
+                        autoComplete="off"
                         {...field}
                       />
                     )}
@@ -129,13 +133,14 @@ const SignInPage: React.FC = () => {
                           htmlFor="password"
                           error={errors.password?.message}
                           touched={!!errors.password}
+                          autoComplete="off"
                           {...field}
                         />
 
                         <div className="flex justify-end">
                           <Link
                             href="/onboarding/forgot-password"
-                            className="text-[13px] font-semibold text-primary hover:text-red-700"
+                            className="text-[13px] font-semibold text-primary hover:text-blue-700"
                           >
                             Forgot your password?
                           </Link>
@@ -160,10 +165,10 @@ const SignInPage: React.FC = () => {
               {/* Create Account Section */}
               <div className="mt-6 mx-2 mb-2 bg-[#EFF7FE] rounded-b-lg py-6 flex items-center justify-center">
                 <p className="text-sm text-[#7F7F7F] font-semibold">
-                  New user?
+                  New to Cray?
                   <Link
                     href="/onboarding/join-us"
-                    className="text-primary hover:text-red-700 ml-1"
+                    className="text-primary hover:text-blue-700 ml-1"
                   >
                     Create an account
                   </Link>

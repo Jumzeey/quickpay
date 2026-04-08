@@ -21,16 +21,15 @@ export const VIRTUAL_ACCOUNT_TYPES: { id: number; name: string }[] = [
   { id: 1, name: 'Onetime' },
   { id: 2, name: 'Permanent' },
 ];
-
 export const VIRTUAL_ACCOUNT_CURRENCIES: {
   value: string;
   label: string;
   disabled?: boolean;
 }[] = [
-  { value: 'NGN', label: '₦ Nigerian Naira (NGN)' },
-  { value: 'USD', label: '$ US Dollar (USD)' },
-  { value: 'EUR', label: '€ Euro (EUR)', disabled: true },
-];
+    { value: 'NGN', label: '₦ Nigerian Naira (NGN)' },
+    { value: 'USD', label: '$ US Dollar (USD)' },
+    { value: 'EUR', label: '€ Euro (EUR)', disabled: true },
+  ];
 
 interface AddAccountProps {
   isModalOpen: boolean;
@@ -52,6 +51,7 @@ export type VirtualAccountFormValues = {
   account_name?: string;
   customer_email?: string;
   provider?: string;
+  phone_number?: string;
 
   // Personal / Individual account fields
   first_name?: string;
@@ -80,6 +80,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
     account_name: '',
     customer_email: '',
     provider: '',
+    phone_number: '',
     first_name: '',
     last_name: '',
     other_name: '',
@@ -115,8 +116,20 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       // provider only required when currency is NGN
       provider:
         state.currency === 'NGN'
-          ? Yup.string().required('Provider is required')
+          ? Yup.string().required('Bank is required')
           : Yup.string().notRequired(),
+      // phone_number required when provider is Bloc
+      phone_number: Yup.string().test(
+        'phone-required-for-bloc',
+        'Phone number is required when Bloc Microfinanace Bank is selected',
+        function (value) {
+          const provider = this.parent?.provider;
+          if (provider === 'Bloc') {
+            return !!value && value.trim().length > 0;
+          }
+          return true;
+        }
+      ),
     };
 
     if (state.accountType === 'Individual') {
@@ -181,7 +194,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       currentStep: 2,
     }));
   };
-  
+
   const handleOptionClick = (option: (typeof VIRTUAL_ACCOUNT_TYPES)[0]) => {
     if (option.name === 'Onetime') {
       notifyInfo('Onetime virtual accounts are not supported at the moment.');
@@ -193,6 +206,7 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
       currentStep: 1,
       isLoading: false,
     }));
+    reset();
     reset();
   };
 
@@ -231,6 +245,8 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
         currency: state.currency,
         // provider only included for NGN (and only present in form when NGN)
         ...(state.currency === 'NGN' && { provider: values.provider }),
+        // phone_number only included when provider is Bloc
+        ...(values.provider === 'Bloc' && values.phone_number && { phone_number: values.phone_number }),
         bvn: values.bvn,
         account_name: values.account_name,
         customer_email: values.customer_email,
@@ -370,11 +386,10 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                   <li key={option.id}>
                     <button
                       type='button'
-                      className={`w-full flex items-center justify-between font-semibold text-sm text-black dark:text-white py-5 ${
-                        option.id !== VIRTUAL_ACCOUNT_TYPES.length
-                          ? 'border-b border-[#C4C4C452]'
-                          : ''
-                      }`}
+                      className={`w-full flex items-center justify-between font-semibold text-sm text-black dark:text-white py-5 ${option.id !== VIRTUAL_ACCOUNT_TYPES.length
+                        ? 'border-b border-[#C4C4C452]'
+                        : ''
+                        }`}
                       onClick={() => handleOptionClick(option)}
                     >
                       {option.name}
@@ -399,16 +414,14 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                       type='button'
                       disabled={!!currency.disabled}
                       className={`w-full flex items-center justify-between font-semibold text-sm 
-                      ${
-                        currency.disabled
+                      ${currency.disabled
                           ? 'text-gray-400 cursor-not-allowed'
                           : 'text-black dark:text-white cursor-pointer'
-                      }
-                      py-5 ${
-                        index !== VIRTUAL_ACCOUNT_CURRENCIES.length - 1
+                        }
+                      py-5 ${index !== VIRTUAL_ACCOUNT_CURRENCIES.length - 1
                           ? 'border-b border-[#C4C4C452]'
                           : ''
-                      }`}
+                        }`}
                       onClick={() =>
                         !currency.disabled &&
                         handleCurrencySelect(currency.value)
@@ -525,15 +538,36 @@ const RequestVirtualAccount: React.FC<AddAccountProps> = ({
                                   control={control}
                                   render={({ field }) => (
                                     <FormSelect
-                                      label='Provider'
+                                      label='Bank'
                                       id='provider'
                                       htmlFor='provider'
                                       error={errors.provider?.message}
                                       touched={!!errors.provider}
                                       options={[
-                                        { value: 'Wema', label: 'Wema' },
-                                        { value: 'monnify', label: 'Monnify' },
+                                        { value: 'Wema', label: 'Wema Bank' },
+                                        { value: 'monnify', label: 'Moniepoint Microfinance Bank' },
+                                        { value: 'Bloc', label: 'Bloc Microfinance Bank' },
                                       ]}
+                                      {...field}
+                                    />
+                                  )}
+                                />
+                              </div>
+                            )}
+
+                            {state.currency === 'NGN' && watch('provider') === 'Bloc' && (
+                              <div>
+                                <Controller
+                                  name='phone_number'
+                                  control={control}
+                                  render={({ field }) => (
+                                    <FormInput
+                                      label='Phone number'
+                                      id='phone_number'
+                                      type='tel'
+                                      htmlFor='phone_number'
+                                      error={errors.phone_number?.message}
+                                      touched={!!errors.phone_number}
                                       {...field}
                                     />
                                   )}

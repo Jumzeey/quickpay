@@ -2,16 +2,17 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import Button from '@/components/button';
 import Modal from '@/components/modal';
 import FloatingLabelInput from '@/components/floating-input';
+import TotpInput from '@/components/TotpInput';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
-  nigerianPhoneNumberSchema,
   notifyError,
   notifySuccess,
 } from '@/util/utils';
 import Loader from '@/components/loader';
 import { addUser } from '@/services/settings';
 import { getRoles } from '@/services/settings';
+import useAuthentication from '@/stores/useAuthentication';
 import useClickEvent from '@/stores/useClickEvent';
 
 interface AddUserProps {
@@ -62,17 +63,17 @@ const AddUser: React.FC<AddUserProps> = ({
       password: isUpdateUser
         ? Yup.string().notRequired()
         : Yup.string()
-            .required('Password is required!')
-            .matches(
-              /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/,
-              'Password must have at least: 1 upper case, 1 digit, 1 special character and minimum eight characters'
-            ),
+          .required('Password is required!')
+          .matches(
+            /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/,
+            'Password must have at least: 1 upper case, 1 digit, 1 special character and minimum eight characters'
+          ),
 
       password_confirmation: isUpdateUser
         ? Yup.string().notRequired()
         : Yup.string()
-            .oneOf([Yup.ref('password')], 'Passwords must match')
-            .required('Confirm Password is required'),
+          .oneOf([Yup.ref('password')], 'Passwords must match')
+          .required('Confirm Password is required'),
 
       // phone: nigerianPhoneNumberSchema,
     }),
@@ -109,9 +110,11 @@ const AddUser: React.FC<AddUserProps> = ({
     try {
       const roles = await getRoles();
       setState({ ...state, roles, isLoading: false });
-    } catch (error) {}
+    } catch (error) { }
   };
 
+  const { totp_enabled } = useAuthentication();
+  const [otp, setOtp] = useState('');
   const [state, setState] = useState<StateProps>({
     isLoading: false,
     roles: [],
@@ -169,6 +172,7 @@ const AddUser: React.FC<AddUserProps> = ({
       isLoading: false,
       selectedRole: '',
     });
+    setOtp('');
     formik.setValues({
       firstname: '',
       lastname: '',
@@ -220,6 +224,7 @@ const AddUser: React.FC<AddUserProps> = ({
             htmlFor='email'
             formik={formik}
             {...formik.getFieldProps('email')}
+            autoComplete="off"
           />
 
           {!isUpdateUser && (
@@ -231,6 +236,7 @@ const AddUser: React.FC<AddUserProps> = ({
                 htmlFor='password'
                 formik={formik}
                 {...formik.getFieldProps('password')}
+                autoComplete="off"
               />
 
               <FloatingLabelInput
@@ -240,6 +246,7 @@ const AddUser: React.FC<AddUserProps> = ({
                 htmlFor='password_confirmation'
                 formik={formik}
                 {...formik.getFieldProps('password_confirmation')}
+                autoComplete="off"
               />
             </>
           )}
@@ -260,7 +267,7 @@ const AddUser: React.FC<AddUserProps> = ({
             className='openSansLight text-white mt-2 text-xs p-2 rounded'
             text={state.isLoading ? <Loader /> : 'Submit'}
             ariaLabel='Submit'
-            disabled={!formik.isValid || state.isLoading}
+            disabled={!formik.isValid || state.isLoading || (totp_enabled && !otp.trim())}
             primary
           />
         </form>

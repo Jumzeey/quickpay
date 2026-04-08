@@ -279,7 +279,7 @@ import { ExportType, useExportJob } from '@/hooks/useExportJob';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { formatDate } from '@/util/utils';
 import Image from "next/image";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { DateRangePicker } from 'react-date-range';
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -315,12 +315,6 @@ const FILE_TYPES = [
     { value: 'csv', label: 'CSV File' }
 ];
 
-const initialSelectionDate = {
-    startDate: new Date(),
-    endDate: new Date(),
-    key: "selection",
-}
-
 const ExportModal: React.FC<ExportModalProps> = ({
     isOpen,
     onClose,
@@ -341,8 +335,22 @@ const ExportModal: React.FC<ExportModalProps> = ({
         downloadUrl,
         isCompleted
     } = useExportJob();
-    const [selectionRange, setSelectionRange] = useState(initialSelectionDate)
+    
+    // Initialize date range only once, preserve user selection
+    const getInitialDateRange = useCallback(() => ({
+        startDate: new Date(),
+        endDate: new Date(),
+        key: "selection",
+    }), []);
+    
+    const [selectionRange, setSelectionRange] = useState(() => ({
+        startDate: new Date(),
+        endDate: new Date(),
+        key: "selection",
+    }));
     const [currentStep, setCurrentStep] = useState<ExportStep>('get_statement');
+    const prevIsOpenRef = useRef(false);
+    const hasInitializedRef = useRef(false);
 
     const validationSchema = Yup.object().shape({
         downloadChannel: Yup.string().required('Please select a download channel'),
@@ -371,13 +379,19 @@ const ExportModal: React.FC<ExportModalProps> = ({
     const selectedChannel = watch('downloadChannel');
     const selectedFileType = watch('fileType');
 
-    // Reset modal state when opened
+    // Reset modal state when opened (but preserve date selection during interaction)
     useEffect(() => {
-        if (isOpen) {
+        // Only reset when modal transitions from closed to open
+        if (isOpen && !prevIsOpenRef.current) {
             setCurrentStep('get_statement');
             reset();
+            // Only reset date range when modal first opens, not on every render
+            setSelectionRange(getInitialDateRange());
+            hasInitializedRef.current = true;
         }
-    }, [isOpen, reset]);
+        prevIsOpenRef.current = isOpen;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]); // Removed reset from dependencies to prevent unnecessary re-runs
 
     // Handle export status changes
     useEffect(() => {
@@ -397,6 +411,9 @@ const ExportModal: React.FC<ExportModalProps> = ({
         }
         setCurrentStep('get_statement');
         reset();
+        // Reset date range when closing
+        setSelectionRange(getInitialDateRange());
+        hasInitializedRef.current = false;
         onClose();
     };
 
@@ -473,9 +490,15 @@ const ExportModal: React.FC<ExportModalProps> = ({
         }
     };
 
-    const handleDateChange = (range: any) => {
-        setSelectionRange(range.selection)
-    }
+    const handleDateChange = useCallback((ranges: any) => {
+        // react-date-range passes ranges object with a selection property
+        if (ranges.selection) {
+            setSelectionRange(ranges.selection);
+        }
+    }, []);
+
+    // Memoize the ranges array to prevent unnecessary re-renders
+    const rangesArray = useMemo(() => [selectionRange], [selectionRange]);
 
     const renderGetStatement = () => (
         <div className="text-center py-8">
@@ -484,7 +507,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                     onChange={handleDateChange}
                     moveRangeOnFirstSelection={false}
                     months={2}
-                    ranges={[selectionRange]}
+                    ranges={rangesArray}
                     direction="horizontal"
                     color="#000"
                     rangeColors={["#DC143C"]}

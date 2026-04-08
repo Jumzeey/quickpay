@@ -24,12 +24,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, width, title, 
           transition={{ duration: 0.3 }}
           className={`relative bg-white dark:bg-gray-800 w-[549px] m-auto flex-col flex rounded-xl mx-4 md:mx-auto ${width ? "modal-special-class" : ""} ${className}`}
         >
-          <div className={`flex items-center justify-between ${title ? "p-2 md:p-6" : "pt-2 md:pt-6 pr-2 md:pr-6"}`}>
-            {title ? <h2 className="text-lg font-extrabold text-black dark:text-white">{title}</h2> : <div />}
+     <div className={`flex items-center justify-between gap-3 shrink-0 ${title ? "px-4 pt-3 pb-3 md:px-6 md:pt-4 md:pb-3" : "pt-2 md:pt-6 pr-2 md:pr-6"}`}>
+            {title ? (
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-extrabold text-black dark:text-white truncate" title={title}>{title}</h2>
+              </div>
+            ) : <div />}
 
             {onClose ? (
               <button
+                type="button"
                 onClick={onClose}
+                className="p-2 -mr-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                aria-label="Close"
               >
                 <Icon name="cancel" className="size-6" />
               </button>
@@ -38,7 +45,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, width, title, 
 
           {title && <div className="border-b border-[#C4C4C452] dark:border-gray-600" />}
 
-          <div className="px-2 md:px-6 pb-2 md:pb-6 text-gray-900 dark:text-gray-100">{children}</div>
+          <div className="px-4 md:px-6 pt-2 pb-4 md:pb-6 text-gray-900 dark:text-gray-100">{children}</div>
         </motion.div>
       </div>
     </Fragment>

@@ -1,3 +1,16 @@
+/** Module slug required to show a sidebar link. Empty string = always show (e.g. Dashboard, Settings). */
+export const SIDEBAR_MODULE_SLUG: Record<string, string> = {
+  "/dashboard": "",
+  "/your-business": "",
+  "/payouts": "payout",
+  "/conversions": "conversions",
+  "/collections": "collections",
+  "/settlements": "settlements",
+  "/balance-history": "",
+  "/activity-log": "",
+  "/settings": "",
+};
+
 export const sidebarLinks = [
   {
     href: "/dashboard",
@@ -13,6 +26,11 @@ export const sidebarLinks = [
     href: "/payouts",
     icon: "payout2",
     title: "Payouts",
+  },
+  {
+    href: "/conversions",
+    icon: "conversions",
+    title: "Conversions",
   },
   {
     href: "/collections",
@@ -174,3 +192,10 @@ export const collections = [
   //   title: "Payment Mandate",
   // },
 ];
+
+// External Legal URLs
+export const EXTERNAL_URLS = {
+  PRIVACY_POLICY: "https://www.crayfinance.com/privacy-policy",
+  TERMS_OF_SERVICE: "https://www.crayfinance.com/terms-of-service",
+  SOLUTIONS: "https://www.crayfinance.com/solutions",
+};

@@ -1,16 +1,20 @@
 "use client";
+import "../../instrumentation-client";
+import * as Sentry from "@sentry/nextjs";
 import Button from '@/components/button';
 import Modal from '@/components/modal';
 import SharedState from "@/context/sharedState";
 import { ThemeProvider } from "@/context/ThemeContext";
 import useAuthentication from "@/stores/useAuthentication";
+import { useModuleStore } from "@/stores/module-store";
 import "@/styles/globals.css";
 import { getToken, handleLogOut } from "@/util/utils";
 import type { AppProps } from "next/app";
 import { Manrope } from "next/font/google";
 import { useEffect, useState } from "react";
 import { useIdleTimer } from 'react-idle-timer';
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -22,8 +26,20 @@ const manrope = Manrope({
 const timeout = 10 * 60 * 1000 // 10 minutes
 const promptBeforeIdle = 1 * 60 * 1000 // (1 minute)
 
+// Create a client for TanStack Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    },
+  },
+});
+
 export default function App({ Component, pageProps }: AppProps) {
-  const { user } = useAuthentication() || {};
+  const { user, modules, fetch2faStatus } = useAuthentication() || {};
   const [tracker, setTracker] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
   const [shouldLogout, setShouldLogout] = useState(true);
@@ -91,6 +107,21 @@ export default function App({ Component, pageProps }: AppProps) {
     setIsClient(true);
   }, []);
 
+  // Sync persisted auth.modules into module store on load (e.g. after refresh)
+  useEffect(() => {
+    if (user) {
+      // Always sync, even when empty, so we clear stale modules between accounts/sessions.
+      useModuleStore.getState().setModules(Array.isArray(modules) ? modules : []);
+    }
+  }, [user, modules]);
+
+  // Fetch 2FA status when user is logged in so totp_enabled is available for sensitive actions
+  useEffect(() => {
+    if (user && typeof fetch2faStatus === "function") {
+      fetch2faStatus();
+    }
+  }, [user, fetch2faStatus]);
+
   useEffect(() => {
     const isAuthenticated = getToken();
     setShouldLogout(!isAuthenticated ? false : true);
@@ -121,46 +152,87 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [tracker, user]);
 
+  // Set Sentry user for Session Replay and error attribution (replaces "Anonymous User")
+  // Only run when Sentry is enabled (DSN set) so we don't touch SDK when disabled
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+    try {
+      if (user?.email) {
+        Sentry.setUser({
+          email: user.email,
+          username: user.email,
+          ...(user.id != null && { id: String(user.id) }),
+          ...(user.business_name && { segment: user.business_name }),
+        });
+      } else {
+        Sentry.setUser(null);
+      }
+    } catch {
+      // ignore so Sentry user logic never breaks the app
+    }
+  }, [user]);
+
+  // Load Headway widget only after the container is in the DOM (isClient = true)
+  useEffect(() => {
+    if (!isClient || typeof window === "undefined") return;
+    (window as any).HW_config = { selector: ".headway-widget", account: "7kE2Wy" };
+    if (document.querySelector('script[src="https://cdn.headwayapp.co/widget.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "https://cdn.headwayapp.co/widget.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, [isClient]);
+
   return (
-    <ThemeProvider>
-      <SharedState>
-        <main className={isClient ? `${manrope.variable} font-sans` : "font-sans"}>
-          <Toaster position="top-center" richColors />
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, maximum-scale=1"
-          />
-          <Component {...pageProps} />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <SharedState>
+          <main className={isClient ? `${manrope.variable} font-sans` : "font-sans"}>
+            <Toaster />
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1, maximum-scale=1"
+            />
+            <Component {...pageProps} />
 
-          <Modal
-            isOpen={state === 'Prompted' && open && shouldLogout}
-            onClose={() => { }}
-            title="Session Timeout Warning"
-          >
-            <div className="p-4">
-              <p className="mb-4">
-                Your session will expire in {remaining} {seconds} due to inactivity.
-                Would you like to continue your session?
-              </p>
+            <Modal
+              isOpen={state === 'Prompted' && open && shouldLogout}
+              onClose={() => { }}
+              title="Session Timeout Warning"
+            >
+              <div className="p-4">
+                <p className="mb-4">
+                  Your session will expire in {remaining} {seconds} due to inactivity.
+                  Would you like to continue your session?
+                </p>
 
-              <div className="flex justify-end gap-3">
-                <Button
-                  text="Log Out Now"
-                  ariaLabel="Log out now"
-                  onClick={handleLogoutTimer}
-                  className="bg-gray-200 text-gray-800"
-                />
-                <Button
-                  text="Continue Session"
-                  ariaLabel="Continue session"
-                  onClick={handleStillHere}
-                  primary
-                />
+                <div className="flex justify-end gap-3">
+                  <Button
+                    text="Log Out Now"
+                    ariaLabel="Log out now"
+                    onClick={handleLogoutTimer}
+                    className="bg-gray-200 text-gray-800"
+                  />
+                  <Button
+                    text="Continue Session"
+                    ariaLabel="Continue session"
+                    onClick={handleStillHere}
+                    primary
+                  />
+                </div>
               </div>
-            </div>
-          </Modal>
-        </main>
-      </SharedState>
-    </ThemeProvider>
+            </Modal>
+
+            {/* Headway changelog widget - only render on client to avoid hydration mismatch when Headway injects content */}
+            {isClient && (
+              <div
+                className="headway-widget fixed bottom-6 right-6 z-50 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                aria-hidden
+              />
+            )}
+          </main>
+        </SharedState>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

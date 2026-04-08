@@ -10,12 +10,37 @@ import useKyc from "@/stores/useKyc";
 import { documentTypes } from "@/util/constants";
 import { notifyError, notifySuccess } from "@/util/utils";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Controller } from "react-hook-form";
 import * as Yup from "yup";
 
+const FormSection = ({
+  title,
+  description,
+  children,
+  className = ""
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <section
+    className={`rounded-xl border border-[#E5E7EB] bg-white p-5 md:p-6 shadow-sm ${className}`}
+  >
+    <div className="mb-4">
+      <h3 className="text-base font-semibold text-[#090727]">{title}</h3>
+      {description && (
+        <p className="mt-1 text-sm text-[#7F7F7F]">{description}</p>
+      )}
+    </div>
+    <div className="space-y-4 md:space-y-5">{children}</div>
+  </section>
+);
+
 interface FormValues {
   business_type: string;
+  is_licensed: boolean;
   id_number: string;
   id_type: string;
   dob: string;
@@ -36,38 +61,69 @@ interface FormValues {
   document_file: string;
 }
 
-const starterSchema = Yup.object().shape({
-  business_type: Yup.string().required("Business Type is required!"),
-  id_number: Yup.string().required("Identification Number is required!"),
-  id_type: Yup.string().required("ID Type is required!"),
-  dob: Yup.string().required("Date Of Birth is required!"),
-  id_file: Yup.string().required("ID File is required!"),
-  proof_of_address: Yup.string().required("Proof Of Address is required!"),
-  nin: Yup.string().required("NIN is required!")
-});
+const starterSchema = (isLicensed: boolean) =>
+  Yup.object().shape({
+    business_type: Yup.string().required("Business Type is required!"),
+    id_number: Yup.string().required("Identification Number is required!"),
+    id_type: Yup.string().required("ID Type is required!"),
+    dob: Yup.string().required("Date Of Birth is required!"),
+    id_file: Yup.string().required("ID File is required!"),
+    proof_of_address: Yup.string().required("Proof Of Address is required!"),
+    nin: isLicensed
+      ? Yup.string().required("NIN is required!").matches(/^\d{11}$/, "NIN must be exactly 11 digits")
+      : Yup.string(),
+    bvn: isLicensed
+      ? Yup.string().required("BVN is required!").matches(/^\d{11}$/, "BVN must be exactly 11 digits")
+      : Yup.string()
+  });
 
-const registeredSchema = Yup.object().shape({
-  business_type: Yup.string().required("Business Type is required!"),
-  proof_of_address: Yup.string().required("Proof Of Address is required!"),
-  business_description: Yup.string().required("Business Description is required!"),
-  company_business_status: Yup.string().required("Company Business Status is required!"),
-  document_beneficiary_type: Yup.string().required("Document Beneficiary Type is required!"),
-  director_tin: Yup.string().required("Director TIN is required!"),
-  document_type: Yup.string().required("Document Type is required!"),
-  cac_documents: Yup.string().required("Company Registration Certificate are required!"),
-  document_beneficiary_file: Yup.string().required("Document Beneficiary File is required!"),
-  document_file: Yup.string().required("Document File is required!")
-});
+const registeredSchema = (isLicensed: boolean) =>
+  Yup.object().shape({
+    business_type: Yup.string().required("Business Type is required!"),
+    proof_of_address: Yup.string().required("Proof Of Address is required!"),
+    business_description: Yup.string().required("Business Description is required!"),
+    company_business_status: Yup.string().required("Company Business Status is required!"),
+    document_beneficiary_type: Yup.string().required("Document Beneficiary Type is required!"),
+    director_tin: Yup.string()
+      .required("Director TIN is required!")
+      .matches(
+        /^[A-Z0-9\-]{3,25}$/i,
+        "TIN must be 3–25 characters.\nOnly letters, numbers and hyphens allowed.\nNo spaces, @ or _."
+      ),
+    document_type: Yup.string().required("Document Type is required!"),
+    cac_documents: Yup.string().required("Company Registration Certificate are required!"),
+    document_beneficiary_file: Yup.string().required("Document Beneficiary File is required!"),
+    document_file: Yup.string().required("Document File is required!"),
+    director_nin: isLicensed
+      ? Yup.string().required("Director NIN is required!").matches(/^\d{11}$/, "NIN must be exactly 11 digits")
+      : Yup.string(),
+    director_bvn: isLicensed
+      ? Yup.string().required("Director BVN is required!").matches(/^\d{11}$/, "BVN must be exactly 11 digits")
+      : Yup.string()
+  });
 
 const KYCForm = () => {
   const router = useRouter();
-  const { createKyc } = useKyc();
+  const { createKyc, getKyc } = useKyc();
   const [isLoading, setIsLoading] = useState(false);
 
-  const validationSchema = Yup.lazy(values => {
+  useEffect(() => {
+    const fetchKyc = async () => {
+      try {
+        const result = await getKyc();
+        console.log("get kyc", result);
+      } catch (error) {
+        console.error("Error fetching KYC:", error);
+      }
+    };
+    fetchKyc();
+  }, [getKyc]);
+
+  const validationSchema = Yup.lazy((values: FormValues) => {
+    const isLicensed = !!values?.is_licensed;
     return values.business_type === "starter"
-      ? starterSchema
-      : registeredSchema;
+      ? starterSchema(isLicensed)
+      : registeredSchema(isLicensed);
   });
 
   const {
@@ -81,6 +137,7 @@ const KYCForm = () => {
     {
       defaultValues: {
         business_type: "registered",
+        is_licensed: false,
         id_number: "",
         id_type: "",
         dob: "",
@@ -90,9 +147,9 @@ const KYCForm = () => {
         bvn: "",
         nin: "",
         business_description: "",
-        director_nin: "12345678901",
+        director_nin: "",
         company_business_status: "",
-        director_bvn: "12345678901",
+        director_bvn: "",
         document_beneficiary_type: "",
         director_tin: "",
         document_type: "",
@@ -106,6 +163,15 @@ const KYCForm = () => {
 
   const businessType = watch("business_type");
   const isStarterBusiness = businessType === "starter";
+  const isLicensed = watch("is_licensed");
+
+  // Watch file upload fields to pass to UploadComponent
+  const idFile = watch("id_file");
+  const proofOfAddress = watch("proof_of_address");
+  const documentFile = watch("document_file");
+  const documentBeneficiaryFile = watch("document_beneficiary_file");
+  const cacDocuments = watch("cac_documents");
+  const companyBusinessStatus = watch("company_business_status");
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -153,15 +219,15 @@ const KYCForm = () => {
           id_file: values.id_file,
           proof_of_address: values.proof_of_address,
           note: values.note,
-          bvn: values.bvn,
-          nin: values.nin,
+          ...(values.is_licensed && {
+            bvn: values.bvn,
+            nin: values.nin
+          }),
           documents: starterDocuments
         } : {
           business_type: values.business_type,
           business_description: values.business_description,
-          director_nin: values.director_nin,
           company_business_status: values.company_business_status,
-          director_bvn: values.director_bvn,
           document_beneficiary_type: values.document_beneficiary_type,
           director_tin: values.director_tin,
           document_type: values.document_type,
@@ -170,6 +236,10 @@ const KYCForm = () => {
           document_file: values.document_file,
           proof_of_address: values.proof_of_address,
           note: values.note,
+          ...(values.is_licensed && {
+            director_bvn: values.director_bvn,
+            director_nin: values.director_nin
+          }),
           documents: registeredDocuments
         };
 
@@ -192,99 +262,170 @@ const KYCForm = () => {
   };
 
   return (
-    <div className="w-full">
-      <div>
+    <div className="w-full px-4 md:px-0 max-w-4xl">
+      <div className="mb-8">
         <BusinessHeader isStarterBusiness={isStarterBusiness} />
-
-        <p className="my-5 text-[13px] text-[#7F7F7F] font-medium">
-          Please provide the following details and submit your account for review
+        <p className="mt-3 text-sm text-[#7F7F7F] leading-relaxed">
+          Please complete the sections below. All documents should be clear, valid, and in JPG, PNG or PDF (max 10MB).
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-3 gap-6 justify-start mt-10 w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <FormSection
+          title="Business licensing"
+          description="If your business holds a regulatory or trade licence, we’ll need additional verification."
+        >
+          <Controller
+            name="is_licensed"
+            control={control}
+            render={({ field }) => (
+              <div className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]">
+                <input
+                  type="checkbox"
+                  id="is_licensed"
+                  className="w-4 h-4 rounded border-[#7F7F7F] text-primary focus:ring-primary"
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+                <label htmlFor="is_licensed" className="text-sm font-medium text-[#090727] cursor-pointer">
+                  Yes, my business / merchant is licensed
+                </label>
+              </div>
+            )}
+          />
+        </FormSection>
+
         {businessType === "starter" ? (
           <>
-            <div className="row-span-2 space-y-6">
-              <Controller
-                name="id_type"
-                control={control}
-                render={({ field }) => (
-                  <FormSelect
-                    label="ID Type"
-                    id="id_type"
-                    htmlFor="id_type"
-                    options={documentTypes}
-                    error={errors.id_type?.message}
-                    touched={!!errors.id_type}
-                    {...field}
-                  />
+            <FormSection
+              title="Identity details"
+              description="Provide a valid ID and your date of birth."
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <Controller
+                  name="id_type"
+                  control={control}
+                  render={({ field }) => (
+                    <FormSelect
+                      label="ID Type"
+                      id="id_type"
+                      htmlFor="id_type"
+                      options={documentTypes}
+                      error={errors.id_type?.message}
+                      touched={!!errors.id_type}
+                      {...field}
+                    />
+                  )}
+                />
+                <Controller
+                  name="id_number"
+                  control={control}
+                  render={({ field }) => (
+                    <FormInput
+                      label="Identification Number"
+                      id="id_number"
+                      type="text"
+                      htmlFor="id_number"
+                      error={errors.id_number?.message}
+                      touched={!!errors.id_number}
+                      numberOnly
+                      {...field}
+                    />
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <Controller
+                  name="dob"
+                  control={control}
+                  render={({ field }) => (
+                    <FormInput
+                      label="Date of birth"
+                      id="dob"
+                      type="date"
+                      htmlFor="dob"
+                      error={errors.dob?.message}
+                      touched={!!errors.dob}
+                      max={new Date().toISOString().split("T")[0]}
+                      {...field}
+                    />
+                  )}
+                />
+                {isLicensed && (
+                  <>
+                    <Controller
+                      name="nin"
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="National ID Number (NIN)"
+                          id="nin"
+                          type="text"
+                          htmlFor="nin"
+                          error={errors.nin?.message}
+                          touched={!!errors.nin}
+                          numberOnly
+                          maxLength={11}
+                          {...field}
+                        />
+                      )}
+                    />
+                    <Controller
+                      name="bvn"
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Bank Verification Number (BVN)"
+                          id="bvn"
+                          type="text"
+                          htmlFor="bvn"
+                          error={errors.bvn?.message}
+                          touched={!!errors.bvn}
+                          numberOnly
+                          maxLength={11}
+                          {...field}
+                        />
+                      )}
+                    />
+                  </>
                 )}
-              />
+              </div>
+            </FormSection>
 
-              <Controller
-                name="id_number"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    label="Identification Number"
-                    id="id_number"
-                    type="text"
-                    htmlFor="id_number"
-                    error={errors.id_number?.message}
-                    touched={!!errors.id_number}
-                    numberOnly
-                    {...field}
-                  />
-                )}
-              />
-
-            </div>
-
-            <div className="row-span-2 space-y-6">
-              <Controller
-                name="nin"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    label="National ID Number"
-                    id="nin"
-                    type="text"
-                    htmlFor="nin"
-                    error={errors.nin?.message}
-                    touched={!!errors.nin}
-                    numberOnly
-                    {...field}
-                  />
-                )}
-              />
-
-              <Controller
-                name="dob"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    label="Date of birth"
-                    id="dob"
-                    type="date"
-                    htmlFor="dob"
-                    error={errors.dob?.message}
-                    touched={!!errors.dob}
-                    max={new Date().toISOString().split("T")[0]}
-                    {...field}
-                  />
-                )}
-              />
-
-
-            </div>
-
-            <div className="row-span-3 space-y-6">
+            <FormSection
+              title="Documents"
+              description="Upload a clear copy of your ID and a recent proof of address (e.g. utility bill)."
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <UploadComponent
+                  className="min-h-[200px]"
+                  onFileUpload={onFileUpload}
+                  buttonText="Select File"
+                  name="id_file"
+                  text="ID document"
+                  folderName="kyc"
+                  value={idFile}
+                  error={errors.id_file?.message}
+                  touched={!!errors.id_file}
+                />
+                <UploadComponent
+                  className="min-h-[200px]"
+                  onFileUpload={onFileUpload}
+                  buttonText="Select File"
+                  name="proof_of_address"
+                  text="Proof of address"
+                  folderName="kyc"
+                  value={proofOfAddress}
+                  error={errors.proof_of_address?.message}
+                  touched={!!errors.proof_of_address}
+                />
+              </div>
               <Controller
                 name="note"
                 control={control}
                 render={({ field }) => (
                   <FormInput
-                    label="Note"
+                    label="Note (optional)"
                     id="note"
                     type="text"
                     htmlFor="note"
@@ -294,132 +435,187 @@ const KYCForm = () => {
                   />
                 )}
               />
-
-              <UploadComponent
-                className="min-h-[380px]"
-                onFileUpload={onFileUpload}
-                buttonText="Select File"
-                name="proof_of_address"
-                text="Proof of Address (e.g Utility Bill)"
-                folderName="kyc"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <UploadComponent
-                className="min-h-[230px]"
-                onFileUpload={onFileUpload}
-                buttonText="Select File"
-                name="id_file"
-                text="Upload ID FILE"
-                folderName="kyc"
-              />
-            </div>
+            </FormSection>
           </>
         ) : (
           <>
-            <div className="row-span-2 space-y-6">
-              <Controller
-                name="document_type"
-                control={control}
-                render={({ field }) => (
-                  <FormSelect
-                    label="Document Type"
-                    id="document_type"
-                    htmlFor="document_type"
-                    options={documentTypes}
-                    error={errors.document_type?.message}
-                    touched={!!errors.document_type}
-                    {...field}
+            <FormSection
+              title="Company documents"
+              description="Upload your company registration and business address proof."
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="space-y-4">
+                  <Controller
+                    name="document_type"
+                    control={control}
+                    render={({ field }) => (
+                      <FormSelect
+                        label="Document type"
+                        id="document_type"
+                        htmlFor="document_type"
+                        options={documentTypes}
+                        error={errors.document_type?.message}
+                        touched={!!errors.document_type}
+                        {...field}
+                      />
+                    )}
                   />
-                )}
-              />
-
+                  <UploadComponent
+                    onFileUpload={onFileUpload}
+                    buttonText="Select File"
+                    name="document_file"
+                    text="Upload document"
+                    folderName="kyc"
+                    className="min-h-[180px]"
+                    value={documentFile}
+                    error={errors.document_file?.message}
+                    touched={!!errors.document_file}
+                  />
+                </div>
+                <div className="space-y-4">
+                  <UploadComponent
+                    className="min-h-[180px]"
+                    onFileUpload={onFileUpload}
+                    buttonText="Select File"
+                    name="cac_documents"
+                    text="Company Registration Certificate (CAC)"
+                    folderName="kyc"
+                    value={cacDocuments}
+                    error={errors.cac_documents?.message}
+                    touched={!!errors.cac_documents}
+                  />
+                  <UploadComponent
+                    className="min-h-[180px]"
+                    onFileUpload={onFileUpload}
+                    buttonText="Select File"
+                    name="company_business_status"
+                    text="MEMART or equivalent"
+                    folderName="kyc"
+                    value={companyBusinessStatus}
+                    error={errors.company_business_status?.message}
+                    touched={!!errors.company_business_status}
+                  />
+                </div>
+              </div>
               <UploadComponent
+                className="min-h-[180px]"
                 onFileUpload={onFileUpload}
                 buttonText="Select File"
-                name="document_file"
-                text="Document Upload"
+                name="proof_of_address"
+                text="Proof of business address (e.g. utility bill)"
                 folderName="kyc"
-                className="min-h-[230px]"
+                value={proofOfAddress}
+                error={errors.proof_of_address?.message}
+                touched={!!errors.proof_of_address}
               />
-            </div>
+            </FormSection>
 
-            <div className="row-span-2 space-y-6">
-              <Controller
-                name="document_beneficiary_type"
-                control={control}
-                render={({ field }) => (
-                  <FormSelect
-                    label="Document Type (Ultimate Beneficial Owner)"
-                    id="document_beneficiary_type"
-                    htmlFor="document_beneficiary_type"
-                    options={documentTypes}
-                    error={errors.document_beneficiary_type?.message}
-                    touched={!!errors.document_beneficiary_type}
-                    {...field}
+            <FormSection
+              title="Ultimate Beneficial Owner (UBO)"
+              description="The person who ultimately owns or controls the business. Provide their ID type and upload a copy."
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="space-y-4">
+                  <Controller
+                    name="document_beneficiary_type"
+                    control={control}
+                    render={({ field }) => (
+                      <FormSelect
+                        label="UBO document type"
+                        id="document_beneficiary_type"
+                        htmlFor="document_beneficiary_type"
+                        options={documentTypes}
+                        error={errors.document_beneficiary_type?.message}
+                        touched={!!errors.document_beneficiary_type}
+                        {...field}
+                      />
+                    )}
                   />
-                )}
-              />
+                  <UploadComponent
+                    onFileUpload={onFileUpload}
+                    buttonText="Select File"
+                    name="document_beneficiary_file"
+                    text="UBO document upload"
+                    folderName="kyc"
+                    className="min-h-[180px]"
+                    value={documentBeneficiaryFile}
+                    error={errors.document_beneficiary_file?.message}
+                    touched={!!errors.document_beneficiary_file}
+                  />
+                </div>
+              </div>
+            </FormSection>
 
-              <UploadComponent
-                onFileUpload={onFileUpload}
-                buttonText="Select File"
-                name="document_beneficiary_file"
-                text="Document Upload (Ultimate Beneficial Owner)"
-                folderName="kyc"
-                className="min-h-[230px]"
-              />
-            </div>
-
-            <Controller
-              name="director_tin"
-              control={control}
-              render={({ field }) => (
-                <FormInput
-                  label="Tax Identification Number"
-                  id="director_tin"
-                  htmlFor="director_tin"
-                  error={errors.director_tin?.message}
-                  touched={!!errors.director_tin}
-                  {...field}
+            <FormSection
+              title="Director details"
+              description="Tax and verification details for the director."
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <Controller
+                  name="director_tin"
+                  control={control}
+                  render={({ field }) => (
+                    <FormInput
+                      label="Tax Identification Number (TIN)"
+                      id="director_tin"
+                      htmlFor="director_tin"
+                      error={errors.director_tin?.message}
+                      touched={!!errors.director_tin}
+                      {...field}
+                    />
+                  )}
                 />
-              )}
-            />
-            <UploadComponent
-              className="min-h-[230px]"
-              onFileUpload={onFileUpload}
-              buttonText="Select File"
-              name="proof_of_address"
-              text="Proof Of Business Address (e.g Utility Bill)"
-              folderName="kyc"
-            />
+                {isLicensed && (
+                  <>
+                    <Controller
+                      name="director_nin"
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Director NIN"
+                          id="director_nin"
+                          type="text"
+                          htmlFor="director_nin"
+                          error={errors.director_nin?.message}
+                          touched={!!errors.director_nin}
+                          numberOnly
+                          maxLength={11}
+                          {...field}
+                        />
+                      )}
+                    />
+                    <Controller
+                      name="director_bvn"
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Director BVN"
+                          id="director_bvn"
+                          type="text"
+                          htmlFor="director_bvn"
+                          error={errors.director_bvn?.message}
+                          touched={!!errors.director_bvn}
+                          numberOnly
+                          maxLength={11}
+                          {...field}
+                        />
+                      )}
+                    />
+                  </>
+                )}
+              </div>
+            </FormSection>
 
-
-            <UploadComponent
-              className="min-h-[260px]"
-              onFileUpload={onFileUpload}
-              buttonText="Select File"
-              name="cac_documents"
-              text="Company Registration Certificate"
-              folderName="kyc"
-            />
-            <UploadComponent
-              className="min-h-[260px]"
-              onFileUpload={onFileUpload}
-              buttonText="Select File"
-              name="company_business_status"
-              text="MEMART or its equivalent"
-              folderName="kyc"
-            />
-
-            <div className="space-y-6">
+            <FormSection
+              title="Additional information"
+              description="Brief description of your business and any notes for the reviewer."
+            >
               <Controller
                 name="business_description"
                 control={control}
                 render={({ field }) => (
                   <FormTextArea
-                    label="Business Description"
+                    label="Business description"
                     id="business_description"
                     htmlFor="business_description"
                     error={errors.business_description?.message}
@@ -428,13 +624,12 @@ const KYCForm = () => {
                   />
                 )}
               />
-
               <Controller
                 name="note"
                 control={control}
                 render={({ field }) => (
                   <FormInput
-                    label="Note"
+                    label="Note (optional)"
                     id="note"
                     type="text"
                     htmlFor="note"
@@ -444,17 +639,21 @@ const KYCForm = () => {
                   />
                 )}
               />
-            </div>
+            </FormSection>
           </>
         )}
 
-        <div className="flex justify-center mt-4 w-[28%] border-danger">
+        <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 md:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-[#7F7F7F] text-center sm:text-left">
+            By submitting, you confirm that the information provided is accurate. We’ll review and get back to you.
+          </p>
           <Button
-            text={isLoading ? <Loader /> : "Submit"}
+            text={isLoading ? <Loader /> : "Submit for review"}
             ariaLabel="Submit Button"
             disabled={isLoading}
             primary
             type="submit"
+            className="w-full sm:w-auto sm:min-w-[180px]"
           />
         </div>
       </form>

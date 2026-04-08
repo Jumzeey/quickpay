@@ -104,7 +104,7 @@ const BarChart: React.FC<Props> = ({
                 {showBalance ? settlementBalance : "********"}
               </h1>
 
-              <Link href="/settlement-history">
+              <Link href="/settlements">
                 <span className="underline text-primary text-[13px] font-medium">
                   View all Settlements
                 </span>

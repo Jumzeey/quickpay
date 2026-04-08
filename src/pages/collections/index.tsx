@@ -1,53 +1,94 @@
 import Chargebacks from "@/components/collections/Chargebacks";
 import CollectionHistory from "@/components/collections/History";
 import PaymentLinks from "@/components/collections/payment-links";
+import StableCoin from "@/components/collections/StableCoin";
 import VirtualAccounts from "@/components/collections/virtual-accounts";
-import CurrencySwitcher, { walletCurrencies } from "@/components/CurrencySwitcher";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
 import Layout from "@/components/layout";
 import PageHeader from "@/components/PageHeader";
+import PageGuard from "@/components/PageGuard";
 import TabHeader from "@/components/TabHeader";
 import WebPageTitle from "@/components/WebPageTitle";
-import useAuthentication from "@/stores/useAuthentication";
+import { useModuleAccess, useModuleOptions, useModuleSubModuleSlugs } from "@/hooks/useModuleAccess";
 import useCurrency from "@/stores/useCurrency";
-import { Modules } from "@/util/utils";
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
-const tabs = [
-  { title: "Collection History", link: "?tab=collection-history" },
-  { title: "Virtual Accounts", link: "?tab=virtual-accounts" },
-  { title: "Payment Links", link: "?tab=payment-links" },
-  { title: "Chargebacks & Refunds", link: "?tab=chargebacks" }
-]
+/** Tab config with submodule slug from API – only tabs in the user's config are shown. */
+const COLLECTION_TABS = [
+  { title: "Collection History", link: "?tab=collection-history", subModuleSlug: "collections-history" },
+  { title: "Virtual Accounts", link: "?tab=virtual-accounts", subModuleSlug: "virtual-accounts" },
+  { title: "Payment Links", link: "?tab=payment-links", subModuleSlug: "payment-link" },
+  { title: "Crypto", link: "?tab=stable-coin", subModuleSlug: "crypto" },
+  { title: "Chargebacks & Refunds", link: "?tab=chargebacks", subModuleSlug: "chargebacks" },
+];
 
-const Collection = () => {
-  const router = useRouter()
+const tabIdFromLink = (link: string) => link.replace("?tab=", "");
+
+const CollectionsContent = () => {
+  const router = useRouter();
   const { selectedCurrency, setCurrency } = useCurrency();
+  const subModuleSlugs = useModuleSubModuleSlugs("collections");
+
+  const visibleTabs = useMemo(
+    () => COLLECTION_TABS.filter((t) => subModuleSlugs.includes(t.subModuleSlug)),
+    [subModuleSlugs]
+  );
 
   const { tab: urlTab } = router.query;
-  const tab = urlTab || (tabs.length > 0 ? tabs[0].link.replace('?tab=', '') : '');
+  const tabParam = typeof urlTab === "string" ? urlTab : undefined;
+  const defaultTab = visibleTabs.length > 0 ? tabIdFromLink(visibleTabs[0].link) : "collection-history";
+  const tab = tabParam || defaultTab;
 
-  const { modules } = useAuthentication();
+  // If current tab is not in the user's config (e.g. bookmarked Crypto but no access), redirect to first visible tab
+  useEffect(() => {
+    if (visibleTabs.length === 0) return;
+    const currentTabId = tabParam || defaultTab;
+    const isVisible = visibleTabs.some((t) => tabIdFromLink(t.link) === currentTabId);
+    if (!isVisible && tabParam) {
+      router.replace({ pathname: router.pathname, query: { tab: defaultTab } }, undefined, { shallow: true });
+    }
+  }, [tabParam, defaultTab, visibleTabs, router]);
 
-  // Set NGN as default currency when virtual accounts tab is active
+  const collectionHistoryOptions = useModuleOptions("collections", "collections-history");
+  const collectionModuleOptions = useModuleOptions("collections");
+  const virtualAccountOptions = useModuleOptions("collections", "virtual-accounts");
+  const paymentLinkOptions = useModuleOptions("collections", "payment-link");
+  const cryptoOptions = useModuleOptions("collections", "crypto");
+
   useEffect(() => {
     if (tab === 'virtual-accounts' && !selectedCurrency) {
       setCurrency('NGN');
     }
   }, [tab, selectedCurrency, setCurrency]);
 
-  const cardSubProduct = modules?.find((m: Modules) => m.product === 'Card Payments')?.sub_product;
-  const cardCurrency: string[] = cardSubProduct?.currency || (cardSubProduct?.payment_type?.includes('all') ? walletCurrencies.map(currency => currency.value) : []);
+  const currencies = useMemo(() => {
+    if (tab === "collection-history") return collectionHistoryOptions.length > 0 ? collectionHistoryOptions : collectionModuleOptions;
+    if (tab === "virtual-accounts") return virtualAccountOptions;
+    if (tab === "payment-links") return paymentLinkOptions;
+    if (tab === "stable-coin") return cryptoOptions;
+    return [];
+  }, [tab, collectionHistoryOptions, collectionModuleOptions, virtualAccountOptions, paymentLinkOptions, cryptoOptions]);
 
-  const virtualAccountCurrency: string[] = modules?.find((m: Modules) => m.product === 'Virtual Account')?.sub_product?.currency;
-  const collectionHistoryCurrency = Array.from(new Set([...(cardCurrency || []), ...(virtualAccountCurrency || [])]));
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <TabHeader tabs={visibleTabs} />
+        {tab !== "stable-coin" && currencies?.length > 0 && <CurrencySwitcher currencies={currencies} />}
+      </div>
 
-  const currencies =
-    tab === "collection-history" ? collectionHistoryCurrency
-      // tab === "collection-history" ? virtualAccountCurrency
-      : tab === "virtual-accounts" ? virtualAccountCurrency
-        // : tab === "payment-links" ? cardCurrency
-        : [];
+      {tab === "collection-history" && <CollectionHistory />}
+      {tab === "virtual-accounts" && <VirtualAccounts />}
+      {tab === "payment-links" && <PaymentLinks />}
+      {tab === "stable-coin" && <StableCoin />}
+      {tab === "chargebacks" && <Chargebacks />}
+    </>
+  );
+};
+
+const Collection = () => {
+  // Important: when module is disabled, do NOT run module-specific hooks/effects that could trigger work.
+  const hasAccess = useModuleAccess("collections");
 
   return (
     <Layout pageTitle="Pay In History" icon="collection-history">
@@ -58,16 +99,13 @@ const Collection = () => {
         description="Stay on top of all the payments coming in, hassle-free."
       />
 
-      <div className="flex items-center justify-between">
-        <TabHeader tabs={tabs} />
-
-        {currencies?.length > 0 && <CurrencySwitcher currencies={currencies} />}
-      </div>
-
-      {tab === "collection-history" && <CollectionHistory />}
-      {tab === "virtual-accounts" && <VirtualAccounts />}
-      {tab === "payment-links" && <PaymentLinks />}
-      {tab === "chargebacks" && <Chargebacks />}
+      {!hasAccess ? (
+        <PageGuard moduleSlug="collections">
+          <div />
+        </PageGuard>
+      ) : (
+        <CollectionsContent />
+      )}
     </Layout>
   );
 };

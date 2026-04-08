@@ -1,10 +1,32 @@
-import { defaults } from "chart.js/auto";
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  defaults,
+  Filler,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+} from "chart.js";
 import { motion } from "framer-motion";
 import { ChangeEvent } from "react";
 import { Line } from "react-chartjs-2";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import Select from "../select";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+);
 
 defaults.maintainAspectRatio = false;
 defaults.responsive = true;

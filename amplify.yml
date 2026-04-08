@@ -1,0 +1,21 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm install
+    build:
+      commands:
+        # Make server-side env vars available to Next.js API routes / SSR at runtime.
+        # Amplify sets env in the build environment; Next.js only loads from .env files.
+        - env | grep -e STORAGE_NAME -e STORAGE_REGION -e STORAGE_ACCESS_KEY_ID -e STORAGE_SECRET_ACCESS_KEY >> .env.production || true
+        - env | grep -e NEXT_PUBLIC_ >> .env.production || true
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*

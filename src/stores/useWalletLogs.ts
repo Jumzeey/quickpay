@@ -1,5 +1,4 @@
 import { getMerchantBalance, getWalletHistory } from '@/services/transaction';
-import { notifyError } from '@/util/utils';
 import { create } from 'zustand';
 import useCurrency, { CurrencyOption } from './useCurrency';
 
@@ -49,7 +48,7 @@ interface Account {
 }
 
 interface MerchantBalanceResponse {
-  accounts: Account[];
+  accounts: Account[] | { message: string };
   [key: string]: any;
 }
 
@@ -97,7 +96,21 @@ export const getAccountId = async (currency: CurrencyOption): Promise<string> =>
     console.log(`No account found for ${currency}, fetching account info...`);
 
     const balanceResponse: MerchantBalanceResponse = await getMerchantBalance(currency);
-    const accounts = balanceResponse?.accounts || [];
+    
+    // Check if accounts is an array or an object with a message
+    const accounts = balanceResponse?.accounts;
+    
+    // If accounts is not an array or is empty, throw an error
+    if (!Array.isArray(accounts)) {
+      const errorMessage = typeof accounts === 'object' && 'message' in accounts
+        ? accounts.message 
+        : `No accounts found for currency: ${currency}`;
+      throw new Error(errorMessage);
+    }
+    
+    if (accounts.length === 0) {
+      throw new Error(`No accounts found for currency: ${currency}`);
+    }
 
     // Find main and reserve accounts
     const mainAccount = accounts.find((acc: Account) => acc.account_type === 'main');
@@ -165,7 +178,7 @@ const useWalletLogs = create<WalletLogsState & { currentCurrency: CurrencyOption
       return { wallet };
     } catch (error: any) {
       console.error('Error fetching wallet history:', error);
-      notifyError("Failed to fetch wallet history.");
+      // Error handling moved to component level with useApiResponse hook
 
       // if the current account is not the same as previous, reset wallet logs
       const currencyChanged = previousCurrency !== get().currentCurrency;

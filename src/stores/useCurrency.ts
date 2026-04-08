@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getSupportedCountries } from '@/services/authentication';
 
-export type CurrencyOption = "NGN" | "USD" | "GHS" | "TZX" | "KES" | "ZMW" | "EUR" | "GBP";
+export type CurrencyOption = "NGN" | "USD" | "GHS" | "TZS" | "KES" | "ZMW" | "EUR" | "GBP" | "XOF" | "TZX";
 
 interface AccountInfo {
     main_account_id: string;
@@ -16,20 +17,26 @@ interface CurrencyState {
     defaultCurrency: CurrencyOption;
     selectedCurrency: CurrencyOption;
     accounts: CurrencyAccounts;
+    activeCurrencies: string[];
+    isLoadingCurrencies: boolean;
     setCurrency: (currency: CurrencyOption) => void;
+    setDefaultCurrency: (currency: CurrencyOption) => void;
     setAccounts: (currency: CurrencyOption, accounts: AccountInfo) => void;
     getAccountId: (currency: CurrencyOption, accountType?: 'main' | 'reserve') => string | null;
     getCurrencySymbol: () => string;
     getCurrencyFlag: (type?: "selected" | "default") => string;
+    fetchActiveCurrencies: (forceRefresh?: boolean) => Promise<void>;
 }
 
 const useCurrency = create<CurrencyState>()(
     persist(
         (set, get) => ({
-            selectedCurrency: null as unknown as CurrencyOption,
-            defaultCurrency: null as unknown as CurrencyOption,
+            selectedCurrency: 'NGN' as CurrencyOption,
+            defaultCurrency: 'NGN' as CurrencyOption,
 
             accounts: {},
+            activeCurrencies: [],
+            isLoadingCurrencies: false,
 
             setCurrency: (currency: CurrencyOption) => {
                 set({ selectedCurrency: currency });
@@ -89,6 +96,29 @@ const useCurrency = create<CurrencyState>()(
                     case "KES": return "🇰🇪";
                     case "ZMW": return "🇿🇲";
                     default: return "🇳🇬";
+                }
+            },
+
+            fetchActiveCurrencies: async (forceRefresh = false) => {
+                const { activeCurrencies } = get();
+                // Only fetch if not already loaded or if force refresh is requested
+                if (activeCurrencies.length > 0 && !forceRefresh) return;
+
+                set({ isLoadingCurrencies: true });
+                try {
+                    const response = await getSupportedCountries();
+                    const active = response.data
+                        .filter((item) => item.is_active && item.product_type === 'wallet')
+                        .map((item) => item.currency);
+                    const uniqueActive: string[] = Array.from(new Set(active));
+                    set({ activeCurrencies: uniqueActive, isLoadingCurrencies: false });
+                } catch (error) {
+                    console.error('Failed to fetch active currencies:', error);
+                    // Fallback to default currencies
+                    set({ 
+                        activeCurrencies: ['NGN', 'USD', 'GHS', 'KES', 'TZS', 'XOF', 'ZMW'],
+                        isLoadingCurrencies: false 
+                    });
                 }
             }
         }),

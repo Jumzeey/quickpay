@@ -7,6 +7,7 @@ interface AddUser {
   email: string;
   // phone: string;
   role?: string;
+  otp?: string;
 }
 
 export async function getAPICredentials() {
@@ -130,8 +131,16 @@ export async function generateEncrytionKey() {
   }
 }
 
-export async function updateProfileImage(avatar: File) {
+export async function updateProfileImage(avatar: File | string) {
   try {
+    // Prefer URL-based updates (new API contract). Keep File upload as fallback.
+    if (typeof avatar === "string") {
+      const response = await api.post(apiEndpoints.settings.UPDATE_PROFILE, {
+        avatar,
+      });
+      return response.data;
+    }
+
     const formData = new FormData();
     formData.append("avatar", avatar);
     const response = await api.post(apiEndpoints.settings.UPDATE_PROFILE, formData, {
@@ -149,7 +158,7 @@ export async function getUserLog(params?: object) {
   try {
     const response = await api.get(
       `${apiEndpoints.settings.GET_USER_LOG}`,
-      {params}
+      { params }
     );
     return response.data;
   } catch (error) {
@@ -161,7 +170,7 @@ export async function getMids(params?: object) {
   try {
     const response = await api.get(
       `${apiEndpoints.mids.GET_MIDS}`,
-      {params}
+      { params }
     );
     return response.data;
   } catch (error) {
@@ -169,11 +178,11 @@ export async function getMids(params?: object) {
   }
 }
 
-export async function getCategories(params?:object) {
+export async function getCategories(params?: object) {
   try {
     const response = await api.get(
       `${apiEndpoints.categories.GET_CATEGORIES}`,
-      {params}
+      { params }
     );
     return response.data;
   } catch (error) {

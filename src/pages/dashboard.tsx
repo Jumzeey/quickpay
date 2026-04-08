@@ -2,6 +2,7 @@ import BarChart from "@/components/charts/BarChart";
 import LineChart from "@/components/charts/LineChart";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import Icon from "@/components/icon";
+import KYCBanner from "@/components/KYCBanner";
 import Layout from "@/components/layout";
 import Switch from "@/components/Switch";
 import TableSkeleton from "@/components/TableSkeleton";
@@ -114,6 +115,8 @@ const Dashboard = () => {
           setAccounts(selectedCurrency, accountInfo);
         }
 
+        console.log({ total_collections, total_disbursements, selectedCurrency });
+
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -207,6 +210,8 @@ const Dashboard = () => {
   return (
     <Layout pageTitle='Dashboard' icon='dashboard'>
       <WebPageTitle title='Dashboard | Merchant Portal' />
+
+      <KYCBanner />
 
       <div className="flex flex-row md:items-center justify-between ">
         <div className="flex flex-col gap-1">

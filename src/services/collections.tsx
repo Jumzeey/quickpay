@@ -15,6 +15,7 @@ export interface PaymentLinkPayload {
   redirect_url?: string;
   account_type: string;
   subaccount_id?: string;
+  otp?: string;
 }
 
 export interface VirtualAccountFormValues {
@@ -114,7 +115,12 @@ export async function getVirtualAccounts(params?: object) {
   try {
     const response = await api.get(
       `${apiEndpoints.collections.GET_VIRTUAL_ACCOUNTS}`,
-      { params }
+      {
+        params,
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
     );
     return response.data;
   } catch (error) {
@@ -142,6 +148,7 @@ export async function createVirtualAccount(payload: FormData) {
       {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
         },
       }
     );

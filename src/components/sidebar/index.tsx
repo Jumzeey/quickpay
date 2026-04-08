@@ -1,7 +1,7 @@
 import { sidebarLinks } from "@/constants";
 import { handleLogOut } from "@/util/utils";
 import { useRouter } from "next/router";
-import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import ActiveLink from "../activeLink";
 import Icon from "../icon";
 
@@ -23,13 +23,8 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
   const router = useRouter();
   const bgRef = useRef<HTMLDivElement>(null);
 
-  const renderSidebarMenu = () => {
-    return setState({
-      ...state,
-      activeSidebar: sidebarLinks,
-      subLinksTitle: "",
-    });
-    // switch (true) {
+  // Sidebar menu items (no module filtering; all items visible)
+  // switch (true) {
     //   case router.pathname.includes("/your-business"):
     //     setState({
     //       ...state,
@@ -85,11 +80,6 @@ const Sidebar = ({ showSidebar, setShowSidebar }: ComponentProps) => {
     //     });
     //     break;
     // }
-  };
-
-  useLayoutEffect(() => {
-    renderSidebarMenu();
-  }, []);
 
   return (
     <Fragment>

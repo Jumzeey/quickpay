@@ -5,6 +5,7 @@ import Loader from "@/components/loader";
 import Modal from "@/components/modal";
 import WebPageTitle from "@/components/WebPageTitle";
 import env from "@/config/env";
+import { EXTERNAL_URLS } from "@/constants";
 import useAuthentication from "@/stores/useAuthentication";
 import useLoadRecaptcha from "@/util/useLoadRecaptcha";
 import {
@@ -103,8 +104,12 @@ const RegisterPage: React.FC = () => {
       business_type: params?.business,
     },
     validationSchema: Yup.object().shape({
-      firstname: Yup.string().required("First Name is required!"),
-      lastname: Yup.string().required("Last Name is required!"),
+      firstname: Yup.string()
+        .required("First Name is required!")
+        .matches(/^[a-zA-Z\s\-']+$/, "First name can only contain letters"),
+      lastname: Yup.string()
+        .required("Last Name is required!")
+        .matches(/^[a-zA-Z\s\-']+$/, "Last name can only contain letters"),
       phone: Yup.string().required("Phone number is required!"),
       // bvn: Yup.string()
       //   .required("BVN is required!")
@@ -314,6 +319,7 @@ const RegisterPage: React.FC = () => {
                 htmlFor="email"
                 formik={formik}
                 {...formik.getFieldProps("email")}
+                autoComplete="off"
               />
               <FloatingLabelInput
                 label="Password"
@@ -322,6 +328,7 @@ const RegisterPage: React.FC = () => {
                 htmlFor="password"
                 formik={formik}
                 {...formik.getFieldProps("password")}
+                autoComplete="off"
                 showError={false}
                 onFocus={() => setIsPasswordFocused(true)}
                 onBlur={() => setIsPasswordFocused(false)}
@@ -383,6 +390,7 @@ const RegisterPage: React.FC = () => {
                 htmlFor="password_confirmation"
                 formik={formik}
                 {...formik.getFieldProps("password_confirmation")}
+                autoComplete="off"
               />
               <div className="flex items-center">
                 <input
@@ -398,7 +406,7 @@ const RegisterPage: React.FC = () => {
                 >
                   I consent to the collection and processing of my personal data
                   in line with data regulations as described in the
-                  <Link href={`${publicUrl}/privacy-policy`} legacyBehavior>
+                  <Link href={EXTERNAL_URLS.PRIVACY_POLICY} legacyBehavior>
                     <a
                       target="_blank"
                       rel="noopener noreferrer"

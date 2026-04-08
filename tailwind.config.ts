@@ -20,7 +20,7 @@ const config: Config = {
       },
     },
     colors: {
-      primary: "#005BB0",
+      primary: "#DC143C",
       available: "#6147db",
       income: "#12B593",
       expenses: "#FF5555",
@@ -31,7 +31,7 @@ const config: Config = {
       "grey-300": "#8C8C8C",
       "grey-400": "#3d3939",
       "grey-500": "#9499a1",
-      danger: "#EB5757",
+      danger: "#DC143C",
       warning: "#F2C94C",
       disabled: "#eeeeee",
       success: "#27AE60",

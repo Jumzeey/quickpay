@@ -6,15 +6,6 @@
 
 :root {
   --font-plus-jakarta: "Plus Jakarta Sans", sans-serif;
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  --ring-offset-background: 0 0% 100%;
-  --secondary: 210 40% 96.1%;
-  --muted: 210 40% 96.1%;
 }
 
 /* Utility class to ensure consistent font rendering */
@@ -79,23 +70,21 @@ body,
   position: relative;
 }
 
-.sarepayAsh {
+.quickpayAsh {
   color: #9499a1;
 }
 
-.sarepayGreen {
+.quickpayGreen {
   color: #17da7c;
 }
-
 .secondaryColor {
   color: #36a2eb;
 }
-
-.sarepayPrimary {
-  color: #042468;
+.quickpayPrimary {
+  color: #DC143C;
 }
 
-.sarepayGrey {
+.quickpayGrey {
   color: #6e6893;
 }
 
@@ -110,7 +99,6 @@ body,
 
 .bg-auth-header {
   background-image: url("/images/mesh-gradient.png");
-  -webkit-backdrop-filter: blur(40px);
   backdrop-filter: blur(40px);
   background-color: #f6f4f433;
   background-size: cover;
@@ -148,7 +136,7 @@ body,
   /* background: linear-gradient(0deg, rgba(24, 64, 120, 0.4), rgba(24, 64, 120, 0.4)),
     url(/images/auth-background.png); */
   /* opacity: 0.1; */
-  border-bottom: 5px solid #184078;
+  border-bottom: 5px solid #DC143C;
   /* 
   position: absolute;
   width: 1440px;
@@ -159,9 +147,9 @@ body,
   /* background: url(mesh-gradient.png); */
 }
 
-.bg-sarepay {
+.bg-quickpay {
   background-image: url("/images/background-pattern.svg");
-  background-color: #042468;
+  background-color: #000000;
   min-height: 100vh;
 }
 
@@ -197,26 +185,6 @@ body,
   margin-left: 1rem;
   font-family: "InterLight";
   font-size: 14px;
-}
-
-.appInput ::-webkit-input-placeholder {
-  color: #9a9ab0;
-  font-size: 12px;
-}
-
-.appInput ::-moz-placeholder {
-  color: #9a9ab0;
-  font-size: 12px;
-}
-
-.appInput :-ms-input-placeholder {
-  color: #9a9ab0;
-  font-size: 12px;
-}
-
-.appInput ::-ms-input-placeholder {
-  color: #9a9ab0;
-  font-size: 12px;
 }
 
 .appInput ::placeholder {
@@ -277,15 +245,12 @@ body,
 .class-0 {
   font-weight: 700;
 }
-
 .class-1 {
   font-weight: 300;
 }
-
 .class-2 {
   font-weight: 300;
 }
-
 .border-bottom {
   border: 1px solid #f5f8fa;
 }
@@ -324,7 +289,6 @@ body,
 .Poppins-Semibold {
   font-family: "Poppins-Semibold", sans-serif;
 }
-
 .testimonials-section {
   background-image: url("../../public/images/testimonials-bg.svg");
   background-size: contain;
@@ -351,7 +315,7 @@ body,
   bottom: -2px;
   width: 0px;
   height: 1.5px;
-  background-color: #042468;
+  background-color: #DC143C;
   transition: width 0.3s ease-in-out;
 }
 
@@ -366,7 +330,6 @@ body,
 .description input {
   text-transform: capitalize;
 }
-
 .customPassword {
   margin: 0;
   padding: 0;
@@ -390,27 +353,4 @@ body,
 .rdrDefinedRangesWrapper,
 .rdrDateDisplayWrapper {
   display: none;
-}
-
-/* Wallet scroll container styles */
-.wallet-scroll-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.wallet-scroll-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.wallet-scroll-container::-webkit-scrollbar-thumb {
-  background: #C4C4C4;
-  border-radius: 4px;
-}
-
-.wallet-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #A0A0A0;
-}
-
-.wallet-scroll-container {
-  scrollbar-width: thin;
-  scrollbar-color: #C4C4C4 transparent;
 }
